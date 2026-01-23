@@ -13,8 +13,37 @@ export const useDesignerStore = defineStore('designer', {
     isDragging: false,
     showGrid: true,
     guides: [],
+    historyPast: [],
+    historyFuture: [],
   }),
   actions: {
+    snapshot() {
+      this.historyPast.push(cloneDeep(this.pages));
+      this.historyFuture = [];
+    },
+    undo() {
+      if (this.historyPast.length === 0) return;
+      const prev = this.historyPast.pop()!;
+      this.historyFuture.push(cloneDeep(this.pages));
+      this.pages = cloneDeep(prev);
+      // Ensure selected element index still valid
+      if (this.selectedElementId) {
+        const exists = this.pages.some(p => p.elements.some(e => e.id === this.selectedElementId));
+        if (!exists) this.selectedElementId = null;
+      }
+      if (this.currentPageIndex >= this.pages.length) {
+        this.currentPageIndex = Math.max(0, this.pages.length - 1);
+      }
+    },
+    redo() {
+      if (this.historyFuture.length === 0) return;
+      const next = this.historyFuture.pop()!;
+      this.historyPast.push(cloneDeep(this.pages));
+      this.pages = cloneDeep(next);
+      if (this.currentPageIndex >= this.pages.length) {
+        this.currentPageIndex = Math.max(0, this.pages.length - 1);
+      }
+    },
     addGuide(guide: { type: 'horizontal' | 'vertical', position: number }) {
       this.guides.push({ ...guide, id: uuidv4() });
     },
@@ -34,11 +63,13 @@ export const useDesignerStore = defineStore('designer', {
       this.guides = [];
     },
     addElement(element: Omit<PrintElement, 'id'>) {
+      this.snapshot();
       const newElement = { ...element, id: uuidv4() };
       this.pages[this.currentPageIndex].elements.push(newElement);
       this.selectedElementId = newElement.id;
     },
     updateElement(id: string, updates: Partial<PrintElement>) {
+      this.snapshot();
       for (const page of this.pages) {
         const index = page.elements.findIndex(e => e.id === id);
         if (index !== -1) {
@@ -48,6 +79,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     removeElement(id: string) {
+      this.snapshot();
       for (const page of this.pages) {
         const index = page.elements.findIndex(e => e.id === id);
         if (index !== -1) {
@@ -73,16 +105,19 @@ export const useDesignerStore = defineStore('designer', {
       this.zoom = zoom;
     },
     setCanvasSize(width: number, height: number) {
+      this.snapshot();
       this.canvasSize = { width, height };
     },
     setShowGrid(show: boolean) {
       this.showGrid = show;
     },
     addPage() {
+      this.snapshot();
       this.pages.push({ id: uuidv4(), elements: [] });
     },
     deletePage(index: number) {
       if (this.pages.length > 1) {
+        this.snapshot();
         this.pages.splice(index, 1);
         if (this.currentPageIndex >= this.pages.length) {
           this.currentPageIndex = this.pages.length - 1;
@@ -90,6 +125,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     paginateTable(elementId: string) {
+      this.snapshot();
       // 1. Find Element and Page
       let pageIndex = -1;
       let elementIndex = -1;

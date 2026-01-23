@@ -6,6 +6,7 @@ import Sidebar from './layout/Sidebar.vue';
 import PropertiesPanel from './layout/PropertiesPanel.vue';
 import Canvas from './canvas/Canvas.vue';
 import Ruler from './layout/Ruler.vue';
+import Shortcuts from './layout/Shortcuts.vue';
 
 const store = useDesignerStore();
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -156,6 +157,7 @@ const handleGuideMouseUp = (e: MouseEvent) => {
     <div class="flex-1 flex overflow-hidden">
       <Sidebar />
       <main class="flex-1 overflow-hidden relative flex flex-col">
+        <Shortcuts />
         <!-- Rulers Area -->
         <div class="relative w-full h-full flex flex-col overflow-hidden">
            <!-- Top Ruler -->

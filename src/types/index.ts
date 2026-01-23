@@ -66,6 +66,8 @@ export interface DesignerState {
   isDragging: boolean;
   showGrid: boolean;
   guides: Guide[];
+  historyPast: Page[][];
+  historyFuture: Page[][];
 }
 
 export interface Guide {
