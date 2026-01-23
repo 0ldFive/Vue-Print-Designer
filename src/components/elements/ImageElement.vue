@@ -6,6 +6,20 @@ defineProps<{
 }>();
 </script>
 
+<script lang="ts">
+import type { ElementPropertiesSchema } from '@/types';
+export const elementPropertiesSchema: ElementPropertiesSchema = {
+  sections: [
+    {
+      title: 'Image',
+      fields: [
+        { label: 'Image URL', type: 'text', target: 'element', key: 'content', placeholder: 'https://...' }
+      ]
+    }
+  ]
+};
+</script>
+
 <template>
   <div class="w-full h-full overflow-hidden bg-gray-50 flex items-center justify-center">
     <img 

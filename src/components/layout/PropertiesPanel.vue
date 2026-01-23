@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
-import { ElementType } from '@/types';
+import { ElementType, type ElementPropertiesSchema, type PropertyField } from '@/types';
+import { elementPropertiesSchema as TextSchema } from '@/components/elements/TextElement.vue';
+import { elementPropertiesSchema as ImageSchema } from '@/components/elements/ImageElement.vue';
+import { elementPropertiesSchema as TableSchema } from '@/components/elements/TableElement.vue';
 
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
@@ -20,12 +23,38 @@ const handleStyleChange = (key: string, value: any) => {
   }
 };
 
-const handleDataChange = (e: Event) => {
+const handleDataJsonChange = (fieldKey: string, e: Event) => {
   try {
     const value = (e.target as HTMLInputElement).value;
-    handleChange('data', JSON.parse(value));
+    handleChange(fieldKey, JSON.parse(value));
   } catch (err) {
     window.alert('Invalid JSON');
+  }
+};
+
+const getSchema = (type: ElementType): ElementPropertiesSchema | null => {
+  switch (type) {
+    case ElementType.TEXT: return TextSchema;
+    case ElementType.IMAGE: return ImageSchema;
+    case ElementType.TABLE: return TableSchema;
+    default: return null;
+  }
+};
+
+const handleFieldInput = (field: PropertyField, rawValue: any) => {
+  if (!element.value) return;
+  const value = field.type === 'number' ? Number(rawValue) : rawValue;
+  if (field.target === 'style' && field.key) {
+    handleStyleChange(field.key, value);
+  } else if (field.target === 'element' && field.key) {
+    handleChange(field.key, value);
+  }
+};
+
+const handleFieldAction = (field: PropertyField) => {
+  if (!element.value || !field.actionName) return;
+  if (field.actionName === 'paginateTable') {
+    store.paginateTable(element.value.id);
   }
 };
 </script>
@@ -80,87 +109,62 @@ const handleDataChange = (e: Event) => {
         </div>
       </div>
 
-      <!-- Specific Properties -->
-      <div v-if="element.type === ElementType.TEXT" class="space-y-3">
-        <h3 class="text-xs font-bold text-gray-500 uppercase">Text Style</h3>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Content</label>
-          <textarea 
-            :value="element.content" 
-            @input="(e) => handleChange('content', (e.target as HTMLInputElement).value)"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-20"
-          ></textarea>
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Font Size (px)</label>
-          <input 
-            type="number" 
-            :value="element.style.fontSize || 14" 
-            @input="(e) => handleStyleChange('fontSize', Number((e.target as HTMLInputElement).value))"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Align</label>
-          <select 
-            :value="element.style.textAlign || 'left'"
-            @change="(e) => handleStyleChange('textAlign', (e.target as HTMLSelectElement).value)"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
-          >
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-          </select>
-        </div>
-      </div>
-
-      <div v-if="element.type === ElementType.IMAGE" class="space-y-3">
-         <h3 class="text-xs font-bold text-gray-500 uppercase">Image Settings</h3>
-         <div>
-          <label class="block text-xs text-gray-500 mb-1">URL</label>
-          <input 
-            type="text"
-            :value="element.content" 
-            @input="(e) => handleChange('content', (e.target as HTMLInputElement).value)"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
-          />
-        </div>
-      </div>
-
-      <div v-if="element.type === ElementType.TABLE" class="space-y-3">
-         <h3 class="text-xs font-bold text-gray-500 uppercase">Table Settings</h3>
-         <button 
-           @click="store.paginateTable(element.id)"
-           class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
-         >
-           Auto Paginate
-         </button>
-         <div>
-          <label class="block text-xs text-gray-500 mb-1">Header Height (px)</label>
-          <input 
-            type="number" 
-            :value="element.style.headerHeight || 40" 
-            @input="(e) => handleStyleChange('headerHeight', Number((e.target as HTMLInputElement).value))"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Row Height (px)</label>
-          <input 
-            type="number" 
-            :value="element.style.rowHeight || 30" 
-            @input="(e) => handleStyleChange('rowHeight', Number((e.target as HTMLInputElement).value))"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Data (JSON)</label>
-          <textarea 
-            :value="JSON.stringify(element.data, null, 2)" 
-            @change="handleDataChange"
-            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-40 font-mono text-xs"
-          ></textarea>
-        </div>
+      <!-- Dynamic Element-Specific Properties from Component Schema -->
+      <div v-if="getSchema(element.type)" class="space-y-6">
+        <template v-for="(section, si) in getSchema(element.type)?.sections" :key="si">
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold text-gray-500 uppercase">{{ section.title }}</h3>
+            <template v-for="(field, fi) in section.fields" :key="fi">
+              <div v-if="field.type !== 'action'">
+                <label class="block text-xs text-gray-500 mb-1">{{ field.label }}</label>
+                <template v-if="field.type === 'number'">
+                  <input
+                    type="number"
+                    :min="field.min"
+                    :max="field.max"
+                    :step="field.step || 1"
+                    :value="field.target === 'style' ? element.style[field.key!] ?? '' : (element as any)[field.key!]"
+                    @input="(e) => handleFieldInput(field, (e.target as HTMLInputElement).value)"
+                    class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+                  />
+                </template>
+                <template v-else-if="field.type === 'text'">
+                  <input
+                    type="text"
+                    :placeholder="field.placeholder"
+                    :value="field.target === 'style' ? element.style[field.key!] ?? '' : (element as any)[field.key!]"
+                    @input="(e) => handleFieldInput(field, (e.target as HTMLInputElement).value)"
+                    class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+                  />
+                </template>
+                <template v-else-if="field.type === 'color'">
+                  <input
+                    type="color"
+                    :value="field.target === 'style' ? element.style[field.key!] ?? '#000000' : (element as any)[field.key!]"
+                    @input="(e) => handleFieldInput(field, (e.target as HTMLInputElement).value)"
+                    class="w-full h-8 px-1 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+                  />
+                </template>
+                <template v-else-if="field.type === 'textarea'">
+                  <textarea
+                    :placeholder="field.placeholder"
+                    :value="field.key === 'data' ? JSON.stringify(element.data, null, 2) : (field.target === 'style' ? element.style[field.key!] ?? '' : (element as any)[field.key!])"
+                    @change="field.key === 'data' ? handleDataJsonChange(field.key!, $event) : handleFieldInput(field, ( $event.target as HTMLTextAreaElement ).value)"
+                    class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24"
+                  ></textarea>
+                </template>
+              </div>
+              <div v-else>
+                <button
+                  @click="handleFieldAction(field)"
+                  class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  {{ field.label }}
+                </button>
+              </div>
+            </template>
+          </div>
+        </template>
       </div>
       
       <!-- Style -->

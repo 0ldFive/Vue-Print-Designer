@@ -73,3 +73,25 @@ export interface Guide {
   type: 'horizontal' | 'vertical';
   position: number; // pixel position
 }
+
+// Dynamic properties schema for element-specific fields
+export interface PropertyField {
+  label: string;
+  type: 'number' | 'text' | 'textarea' | 'color' | 'action';
+  target: 'element' | 'style' | 'data';
+  key?: string; // required for non-action fields
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  actionName?: string; // required for action fields
+}
+
+export interface PropertySection {
+  title: string;
+  fields: PropertyField[];
+}
+
+export interface ElementPropertiesSchema {
+  sections: PropertySection[];
+}

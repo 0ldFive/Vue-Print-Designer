@@ -6,6 +6,22 @@ defineProps<{
 }>();
 </script>
 
+<script lang="ts">
+import type { ElementPropertiesSchema } from '@/types';
+export const elementPropertiesSchema: ElementPropertiesSchema = {
+  sections: [
+    {
+      title: 'Text',
+      fields: [
+        { label: 'Content', type: 'textarea', target: 'element', key: 'content', placeholder: 'Enter text' },
+        { label: 'Font Size (px)', type: 'number', target: 'style', key: 'fontSize', min: 8, max: 96, step: 1 },
+        { label: 'Color', type: 'color', target: 'style', key: 'color' }
+      ]
+    }
+  ]
+};
+</script>
+
 <template>
   <div class="w-full h-full overflow-hidden" :style="{
     fontSize: `${element.style.fontSize}px`,

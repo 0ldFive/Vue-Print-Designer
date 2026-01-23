@@ -6,6 +6,23 @@ defineProps<{
 }>();
 </script>
 
+<script lang="ts">
+import type { ElementPropertiesSchema } from '@/types';
+export const elementPropertiesSchema: ElementPropertiesSchema = {
+  sections: [
+    {
+      title: 'Table Settings',
+      fields: [
+        { label: 'Auto Paginate', type: 'action', target: 'element', actionName: 'paginateTable' },
+        { label: 'Header Height (px)', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
+        { label: 'Row Height (px)', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
+        { label: 'Data (JSON)', type: 'textarea', target: 'element', key: 'data', placeholder: '[{...}]' }
+      ]
+    }
+  ]
+};
+</script>
+
 <template>
   <div class="w-full h-full overflow-hidden bg-white">
     <table class="w-full border-collapse" :style="{
