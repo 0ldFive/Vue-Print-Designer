@@ -189,11 +189,11 @@ const handleGuideMouseUp = (e: MouseEvent) => {
               </div>
               
               <!-- Canvas Area -->
-              <div 
+              <div
                 ref="scrollContainer"
                 class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center items-start relative"
                 @scroll="handleScroll"
-                  @click="store.selectGuide(null)"
+                  @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
               >
                  <Canvas ref="canvasContainer" />
 
