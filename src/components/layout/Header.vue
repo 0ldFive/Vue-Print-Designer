@@ -12,6 +12,8 @@ const selectedPaper = ref<PaperSizeKey>('A4');
 const customWidth = ref(PAPER_SIZES.A4.width);
 const customHeight = ref(PAPER_SIZES.A4.height);
 const showPaperSettings = ref(false);
+const showZoomSettings = ref(false);
+const zoomPercent = ref(Math.round(store.zoom * 100));
 
 const handlePaperChange = () => {
   if (selectedPaper.value !== 'CUSTOM') {
@@ -48,10 +50,24 @@ watch(() => store.canvasSize, (newSize) => {
 
 const handleZoomIn = () => {
   store.setZoom(Math.min(store.zoom + 0.1, 3));
+  zoomPercent.value = Math.round(store.zoom * 100);
+  showZoomSettings.value = true;
 };
 
 const handleZoomOut = () => {
   store.setZoom(Math.max(store.zoom - 0.1, 0.5));
+  zoomPercent.value = Math.round(store.zoom * 100);
+  showZoomSettings.value = true;
+};
+
+watch(() => store.zoom, (z) => {
+  zoomPercent.value = Math.round(z * 100);
+});
+
+const handleZoomSlider = () => {
+  const clamped = Math.max(50, Math.min(300, zoomPercent.value));
+  zoomPercent.value = clamped;
+  store.setZoom(clamped / 100);
 };
 
 const handlePrint = () => {
@@ -144,7 +160,7 @@ const handleExport = async () => {
 
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Width (px)</label>
+                <label class="block text-xs text-gray-500 mb-1">Width (PX)</label>
                 <input 
                   type="number" 
                   v-model.number="customWidth"
@@ -153,7 +169,7 @@ const handleExport = async () => {
                 />
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">Height (px)</label>
+                <label class="block text-xs text-gray-500 mb-1">Height (PX)</label>
                 <input 
                   type="number" 
                   v-model.number="customHeight"
@@ -173,14 +189,44 @@ const handleExport = async () => {
 
       <div class="h-6 w-px bg-gray-300"></div>
 
-      <div class="flex items-center bg-gray-100 rounded-lg p-1">
-        <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 rounded" title="Zoom Out">
-          <ZoomOut class="w-4 h-4" />
-        </button>
-        <span class="text-xs w-12 text-center">{{ Math.round(store.zoom * 100) }}%</span>
-        <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 rounded" title="Zoom In">
-          <ZoomIn class="w-4 h-4" />
-        </button>
+      <!-- Zoom Settings -->
+      <div class="relative">
+        <div class="flex items-center bg-gray-100 rounded-lg p-1">
+          <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 rounded" title="Zoom Out">
+            <ZoomOut class="w-4 h-4" />
+          </button>
+          <button 
+            @click="showZoomSettings = !showZoomSettings" 
+            class="text-xs w-12 text-center hover:bg-gray-200 rounded px-1 py-0.5"
+            title="Zoom Settings"
+          >
+            {{ Math.round(store.zoom * 100) }}%
+          </button>
+          <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 rounded" title="Zoom In">
+            <ZoomIn class="w-4 h-4" />
+          </button>
+        </div>
+
+        <div v-if="showZoomSettings" class="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-4 z-50">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Zoom</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Zoom Level (50% - 300%)</label>
+              <input 
+                type="range" 
+                min="50" 
+                max="300" 
+                step="1" 
+                v-model.number="zoomPercent" 
+                @input="handleZoomSlider"
+                class="w-full"
+              />
+              <div class="text-right text-xs text-gray-600 mt-1">{{ zoomPercent }}%</div>
+            </div>
+          </div>
+
+          <div class="fixed inset-0 z-[-1]" @click="showZoomSettings = false"></div>
+        </div>
       </div>
       
       <div class="h-6 w-px bg-gray-300"></div>

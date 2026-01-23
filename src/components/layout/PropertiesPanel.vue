@@ -71,7 +71,7 @@ const handleFieldAction = (field: PropertyField) => {
         <h3 class="text-xs font-bold text-gray-500 uppercase">Position & Size</h3>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">X (px)</label>
+            <label class="block text-xs text-gray-500 mb-1">X (PX)</label>
             <input 
               type="number" 
               :value="element.x" 
@@ -80,7 +80,7 @@ const handleFieldAction = (field: PropertyField) => {
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Y (px)</label>
+            <label class="block text-xs text-gray-500 mb-1">Y (PX)</label>
             <input 
               type="number" 
               :value="element.y" 
@@ -89,7 +89,7 @@ const handleFieldAction = (field: PropertyField) => {
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Width (px)</label>
+            <label class="block text-xs text-gray-500 mb-1">Width (PX)</label>
             <input 
               type="number" 
               :value="element.width" 
@@ -98,7 +98,7 @@ const handleFieldAction = (field: PropertyField) => {
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Height (px)</label>
+            <label class="block text-xs text-gray-500 mb-1">Height (PX)</label>
             <input 
               type="number" 
               :value="element.height" 

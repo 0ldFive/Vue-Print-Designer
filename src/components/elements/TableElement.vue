@@ -14,8 +14,8 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       title: 'Table Settings',
       fields: [
         { label: 'Auto Paginate', type: 'action', target: 'element', actionName: 'paginateTable' },
-        { label: 'Header Height (px)', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
-        { label: 'Row Height (px)', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
+        { label: 'Header Height (PX)', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
+        { label: 'Row Height (PX)', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
         { label: 'Data (JSON)', type: 'textarea', target: 'element', key: 'data', placeholder: '[{...}]' }
       ]
     }
