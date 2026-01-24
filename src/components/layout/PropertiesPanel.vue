@@ -8,6 +8,7 @@ import { elementPropertiesSchema as TableSchema } from '@/components/elements/Ta
 
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
+const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
 
 const handleChange = (key: string, value: any) => {
   if (element.value) {
@@ -17,8 +18,8 @@ const handleChange = (key: string, value: any) => {
 
 const handleStyleChange = (key: string, value: any) => {
   if (element.value) {
-    store.updateElement(element.value.id, { 
-      style: { ...element.value.style, [key]: value } 
+    store.updateElement(element.value.id, {
+      style: { ...element.value.style, [key]: value }
     });
   }
 };
@@ -57,6 +58,14 @@ const handleFieldAction = (field: PropertyField) => {
     store.paginateTable(element.value.id);
   }
 };
+
+const handleDeleteSelected = () => {
+  if (isMultiSelected.value) {
+    store.removeSelectedElements();
+  } else if (element.value) {
+    store.removeElement(element.value.id);
+  }
+};
 </script>
 
 <template>
@@ -65,43 +74,62 @@ const handleFieldAction = (field: PropertyField) => {
       <h2 class="font-semibold text-gray-700">Properties</h2>
     </div>
 
-    <div v-if="element" class="p-4 space-y-6">
+    <!-- Multi-selected elements -->
+    <div v-if="isMultiSelected" class="p-6 text-center">
+      <div class="mb-4">
+        <div class="text-3xl font-bold text-blue-600 mb-2">
+          {{ store.selectedElementIds.length }}
+        </div>
+        <p class="text-sm text-gray-600">
+          {{ store.selectedElementIds.length === 1 ? 'element' : 'elements' }} selected
+        </p>
+      </div>
+      <button
+        @click="handleDeleteSelected"
+        class="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-sm font-medium"
+      >
+        Delete Selected Elements
+      </button>
+    </div>
+
+    <!-- Single element properties -->
+    <div v-else-if="element" class="p-4 space-y-6">
       <!-- Common Properties -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold text-gray-500 uppercase">Position & Size</h3>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-xs text-gray-500 mb-1">X (PX)</label>
-            <input 
-              type="number" 
-              :value="element.x" 
+            <input
+              type="number"
+              :value="element.x"
               @input="(e) => handleChange('x', Number((e.target as HTMLInputElement).value))"
               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
             />
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Y (PX)</label>
-            <input 
-              type="number" 
-              :value="element.y" 
+            <input
+              type="number"
+              :value="element.y"
               @input="(e) => handleChange('y', Number((e.target as HTMLInputElement).value))"
               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
             />
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Width (PX)</label>
-            <input 
-              type="number" 
-              :value="element.width" 
+            <input
+              type="number"
+              :value="element.width"
               @input="(e) => handleChange('width', Number((e.target as HTMLInputElement).value))"
               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
             />
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Height (PX)</label>
-            <input 
-              type="number" 
-              :value="element.height" 
+            <input
+              type="number"
+              :value="element.height"
               @input="(e) => handleChange('height', Number((e.target as HTMLInputElement).value))"
               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
             />
@@ -166,15 +194,15 @@ const handleFieldAction = (field: PropertyField) => {
           </div>
         </template>
       </div>
-      
+
       <!-- Style -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold text-gray-500 uppercase">Style</h3>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Border (e.g. 1px solid black)</label>
-          <input 
-            type="text" 
-            :value="element.style.border || ''" 
+          <input
+            type="text"
+            :value="element.style.border || ''"
             @input="(e) => handleStyleChange('border', (e.target as HTMLInputElement).value)"
             class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
             placeholder="none"
@@ -182,17 +210,17 @@ const handleFieldAction = (field: PropertyField) => {
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Background Color</label>
-          <input 
-            type="color" 
-            :value="element.style.backgroundColor || '#ffffff'" 
+          <input
+            type="color"
+            :value="element.style.backgroundColor || '#ffffff'"
             @input="(e) => handleStyleChange('backgroundColor', (e.target as HTMLInputElement).value)"
             class="w-full h-8 px-1 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
           />
         </div>
       </div>
-      
-      <button 
-        @click="store.removeElement(element.id)"
+
+      <button
+        @click="handleDeleteSelected"
         class="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-sm font-medium"
       >
         Delete Element

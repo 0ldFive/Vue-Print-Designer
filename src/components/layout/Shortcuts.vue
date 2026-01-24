@@ -17,7 +17,10 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (target && (target.closest('input, textarea, select, [contenteditable="true"]'))) return;
   // Delete
   if (e.key === 'Delete') {
-    if (store.selectedElementId) {
+    if (store.selectedElementIds.length > 1) {
+      e.preventDefault();
+      store.removeSelectedElements();
+    } else if (store.selectedElementId) {
       e.preventDefault();
       store.removeElement(store.selectedElementId);
     } else if (store.selectedGuideId) {
@@ -118,9 +121,11 @@ onUnmounted(() => {
     <div class="bg-white border border-gray-200 shadow-xl rounded-md min-w-[160px] py-1">
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
-        :disabled="(!store.selectedElementId && !store.selectedGuideId)"
+        :disabled="(store.selectedElementIds.length === 0 && !store.selectedGuideId)"
         @click="() => {
-          if (store.selectedElementId) {
+          if (store.selectedElementIds.length > 1) {
+            store.removeSelectedElements();
+          } else if (store.selectedElementId) {
             store.removeElement(store.selectedElementId);
           } else if (store.selectedGuideId) {
             store.removeGuide(store.selectedGuideId);
@@ -128,7 +133,7 @@ onUnmounted(() => {
           showMenu=false;
         }"
       >
-        Delete
+        Delete{{ store.selectedElementIds.length > 1 ? ` (${store.selectedElementIds.length})` : '' }}
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"

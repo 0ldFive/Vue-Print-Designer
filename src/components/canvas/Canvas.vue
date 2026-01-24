@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType } from '@/types';
 import ElementWrapper from '../elements/ElementWrapper.vue';
@@ -12,6 +12,34 @@ const store = useDesignerStore();
 const pages = computed(() => store.pages);
 const zoom = computed(() => store.zoom);
 const canvasSize = computed(() => store.canvasSize);
+
+// Selection box state
+const isBoxSelecting = ref(false);
+const boxSelectionStart = ref({ x: 0, y: 0 });
+const boxSelectionEnd = ref({ x: 0, y: 0 });
+const currentSelectingPageIndex = ref<number | null>(null);
+const justFinishedBoxSelection = ref(false);
+
+const selectionBoxStyle = computed(() => {
+  if (!isBoxSelecting.value) return { display: 'none' } as const;
+
+  const x = Math.min(boxSelectionStart.value.x, boxSelectionEnd.value.x);
+  const y = Math.min(boxSelectionStart.value.y, boxSelectionEnd.value.y);
+  const width = Math.abs(boxSelectionEnd.value.x - boxSelectionStart.value.x);
+  const height = Math.abs(boxSelectionEnd.value.y - boxSelectionStart.value.y);
+
+  return {
+    position: 'absolute' as const,
+    left: `${x}px`,
+    top: `${y}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+    border: '1px solid #3b82f6',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    pointerEvents: 'none' as const,
+    zIndex: 1000,
+  };
+});
 
 const getComponent = (type: ElementType) => {
   switch (type) {
@@ -67,35 +95,137 @@ const handleDragOver = (event: DragEvent) => {
   event.preventDefault();
 };
 
-const handleBackgroundClick = () => {
-  store.selectElement(null);
+const handleBackgroundClick = (e: MouseEvent) => {
+  // Don't clear selection if Ctrl key is pressed (multi-select mode)
+  // Also don't clear if we just finished box selection
+  if (!e.ctrlKey && !e.metaKey && !justFinishedBoxSelection.value) {
+    store.selectElement(null);
+  }
 };
 
+// Box selection handlers
+const handlePageMouseDown = (e: MouseEvent, pageIndex: number) => {
+  // Only left click and when not Ctrl pressed
+  if (e.button !== 0 || e.ctrlKey || e.metaKey) return;
+
+  // Check if clicking on an element (should be handled by ElementWrapper)
+  const target = e.target as HTMLElement;
+  if (target.closest('.element-wrapper')) return;
+
+  // Start box selection
+  e.preventDefault();
+  e.stopPropagation();
+
+  isBoxSelecting.value = true;
+  currentSelectingPageIndex.value = pageIndex;
+
+  const pageElement = e.currentTarget as HTMLElement;
+  const rect = pageElement.getBoundingClientRect();
+
+  // Convert to page coordinates (consider zoom)
+  boxSelectionStart.value = {
+    x: (e.clientX - rect.left) / zoom.value,
+    y: (e.clientY - rect.top) / zoom.value,
+  };
+  boxSelectionEnd.value = { ...boxSelectionStart.value };
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+};
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!isBoxSelecting.value) return;
+
+  // Find the page element that started the selection
+  const pageElement = document.querySelector('.print-page') as HTMLElement;
+  if (!pageElement) return;
+
+  const rect = pageElement.getBoundingClientRect();
+  boxSelectionEnd.value = {
+    x: (e.clientX - rect.left) / zoom.value,
+    y: (e.clientY - rect.top) / zoom.value,
+  };
+};
+
+const handleMouseUp = () => {
+  if (!isBoxSelecting.value) return;
+
+  // Calculate selection bounds
+  const x = Math.min(boxSelectionStart.value.x, boxSelectionEnd.value.x);
+  const y = Math.min(boxSelectionStart.value.y, boxSelectionEnd.value.y);
+  const width = Math.abs(boxSelectionEnd.value.x - boxSelectionStart.value.x);
+  const height = Math.abs(boxSelectionEnd.value.y - boxSelectionStart.value.y);
+
+  // Find elements within selection box
+  const selectedIds: string[] = [];
+  if (currentSelectingPageIndex.value !== null) {
+    const page = pages.value[currentSelectingPageIndex.value];
+    if (page) {
+      for (const element of page.elements) {
+        // Check if element intersects with selection box
+        const elementRight = element.x + element.width;
+        const elementBottom = element.y + element.height;
+        const selectionRight = x + width;
+        const selectionBottom = y + height;
+
+        if (
+          element.x < selectionRight &&
+          elementRight > x &&
+          element.y < selectionBottom &&
+          elementBottom > y
+        ) {
+          selectedIds.push(element.id);
+        }
+      }
+    }
+  }
+
+  // Apply selection
+  if (selectedIds.length > 0) {
+    store.setSelection(selectedIds);
+  }
+
+  isBoxSelecting.value = false;
+  currentSelectingPageIndex.value = null;
+  justFinishedBoxSelection.value = true;
+
+  // Reset the flag after a short delay to prevent immediate clear
+  setTimeout(() => {
+    justFinishedBoxSelection.value = false;
+  }, 50);
+
+  window.removeEventListener('mousemove', handleMouseMove);
+  window.removeEventListener('mouseup', handleMouseUp);
+};
 </script>
 
 <template>
   <div class="flex flex-col gap-8 pb-20" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top center' }">
-    <div 
-      v-for="(page, index) in pages" 
+    <div
+      v-for="(page, index) in pages"
       :key="page.id"
       :id="`page-${index}`"
       class="print-page bg-white shadow-lg relative overflow-hidden transition-all"
       :style="{ width: `${canvasSize.width}px`, height: `${canvasSize.height}px` }"
       @drop="(e) => handleDrop(e, index)"
       @dragover="handleDragOver"
+      @mousedown="(e) => handlePageMouseDown(e, index)"
       @click.self="handleBackgroundClick"
     >
       <!-- Grid Background -->
-      <div v-if="store.showGrid" class="absolute inset-0 pointer-events-none opacity-50" 
+      <div v-if="store.showGrid" class="absolute inset-0 pointer-events-none opacity-50"
            style="background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
       </div>
+
+      <!-- Selection Box -->
+      <div v-if="isBoxSelecting" :style="selectionBoxStyle"></div>
 
       <!-- Elements -->
       <ElementWrapper
         v-for="element in page.elements"
         :key="element.id"
         :element="element"
-        :is-selected="store.selectedElementId === element.id"
+        :is-selected="store.selectedElementId === element.id || store.selectedElementIds.includes(element.id)"
         :zoom="zoom"
       >
         <component :is="getComponent(element.type)" :element="element" />

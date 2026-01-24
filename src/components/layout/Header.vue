@@ -132,10 +132,10 @@ const handleSave = () => {
 
   try {
     localStorage.setItem('localdata', JSON.stringify(data));
-    alert('保存成功！');
+    alert('Save successful');
   } catch (error) {
     console.error('Save failed', error);
-    alert('保存失败');
+    alert('Save failed');
   }
 };
 </script>

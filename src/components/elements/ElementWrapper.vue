@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 
@@ -12,15 +12,19 @@ const props = defineProps<{
 const store = useDesignerStore();
 const elementRef = ref<HTMLElement | null>(null);
 
-const style = computed(() => ({
-  left: `${props.element.x}px`,
-  top: `${props.element.y}px`,
-  width: `${props.element.width}px`,
-  height: `${props.element.height}px`,
-  zIndex: props.element.style.zIndex || 1,
-  ...props.element.style,
-  border: props.isSelected ? '1px solid #3b82f6' : props.element.style.border || '1px dashed transparent',
-}));
+const style = computed(() => {
+  const isMultiSelected = !props.isSelected && store.selectedElementIds.includes(props.element.id);
+  const actualIsSelected = props.isSelected || isMultiSelected;
+  return {
+    left: `${props.element.x}px`,
+    top: `${props.element.y}px`,
+    width: `${props.element.width}px`,
+    height: `${props.element.height}px`,
+    zIndex: props.element.style.zIndex || 1,
+    ...props.element.style,
+    border: actualIsSelected ? '2px solid #3b82f6' : props.element.style.border || '1px dashed transparent',
+  };
+});
 
 // Dragging Logic
 let startX = 0;
@@ -32,15 +36,17 @@ let isDragging = false;
 const handleMouseDown = (e: MouseEvent) => {
   if (e.button !== 0) return; // Only left click
   e.stopPropagation();
-  
-  store.selectElement(props.element.id);
-  
+
+  // Check for multi-select (Ctrl/Cmd key)
+  const isMultiSelect = e.ctrlKey || e.metaKey;
+  store.selectElement(props.element.id, isMultiSelect);
+
   isDragging = true;
   startX = e.clientX;
   startY = e.clientY;
   initialLeft = props.element.x;
   initialTop = props.element.y;
-  
+
   window.addEventListener('mousemove', handleMouseMove);
   window.addEventListener('mouseup', handleMouseUp);
 };
@@ -95,18 +101,18 @@ const handleResizeStart = (e: MouseEvent) => {
 </script>
 
 <template>
-  <div 
+  <div
     ref="elementRef"
-    class="absolute cursor-move select-none group hover:outline hover:outline-1 hover:outline-blue-300"
+    class="element-wrapper absolute cursor-move select-none group hover:outline hover:outline-1 hover:outline-blue-300"
     :style="style"
     @mousedown="handleMouseDown"
   >
     <!-- Slot for specific element content -->
     <slot></slot>
-    
-    <!-- Resize Handles (only visible when selected) -->
-    <div 
-      v-if="isSelected"
+
+    <!-- Resize Handles (only visible when selected and not multi-selected) -->
+    <div
+      v-if="isSelected && store.selectedElementIds.length <= 1"
       class="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 cursor-se-resize z-50"
       @mousedown="handleResizeStart"
     ></div>

@@ -8,6 +8,7 @@ export const useDesignerStore = defineStore('designer', {
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
     selectedElementId: null,
+    selectedElementIds: [],
     selectedGuideId: null,
     canvasSize: { width: 794, height: 1123 }, // A4 at 96 DPI (approx)
     zoom: 1,
@@ -47,11 +48,18 @@ export const useDesignerStore = defineStore('designer', {
       const prev = this.historyPast.pop()!;
       this.historyFuture.push(cloneDeep(this.pages));
       this.pages = cloneDeep(prev);
-      // Ensure selected element index still valid
+      // Ensure selected element indices still valid
       if (this.selectedElementId) {
         const exists = this.pages.some(p => p.elements.some(e => e.id === this.selectedElementId));
-        if (!exists) this.selectedElementId = null;
+        if (!exists) {
+          this.selectedElementId = null;
+          this.selectedElementIds = [];
+        }
       }
+      // Validate multi-selection
+      this.selectedElementIds = this.selectedElementIds.filter(id =>
+        this.pages.some(p => p.elements.some(e => e.id === id))
+      );
       if (this.currentPageIndex >= this.pages.length) {
         this.currentPageIndex = Math.max(0, this.pages.length - 1);
       }
@@ -114,12 +122,34 @@ export const useDesignerStore = defineStore('designer', {
           if (this.selectedElementId === id) {
             this.selectedElementId = null;
           }
+          // Remove from multi-selection
+          const multiIndex = this.selectedElementIds.indexOf(id);
+          if (multiIndex !== -1) {
+            this.selectedElementIds.splice(multiIndex, 1);
+          }
           return;
         }
       }
     },
-    selectElement(id: string | null) {
-      this.selectedElementId = id;
+    selectElement(id: string | null, isMultiSelect: boolean = false) {
+      if (isMultiSelect && id) {
+        // Ctrl/Cmd multi-select
+        if (this.selectedElementIds.includes(id)) {
+          // Deselect if already selected
+          const index = this.selectedElementIds.indexOf(id);
+          this.selectedElementIds.splice(index, 1);
+        } else {
+          // Add to selection
+          this.selectedElementIds.push(id);
+        }
+        // Update selectedElementId to the last selected
+        this.selectedElementId = this.selectedElementIds.length > 0 ? this.selectedElementIds[this.selectedElementIds.length - 1] : null;
+      } else {
+        // Normal selection
+        this.selectedElementId = id;
+        this.selectedElementIds = id ? [id] : [];
+      }
+
       if (id) {
         // Find page and update current index
         const pageIndex = this.pages.findIndex(p => p.elements.some(e => e.id === id));
@@ -127,6 +157,37 @@ export const useDesignerStore = defineStore('designer', {
           this.currentPageIndex = pageIndex;
         }
       }
+    },
+    clearSelection() {
+      this.selectedElementId = null;
+      this.selectedElementIds = [];
+    },
+    setSelection(ids: string[]) {
+      this.selectedElementIds = ids;
+      this.selectedElementId = ids.length > 0 ? ids[ids.length - 1] : null;
+      if (ids.length > 0) {
+        // Find page and update current index
+        const pageIndex = this.pages.findIndex(p => p.elements.some(e => e.id === this.selectedElementId));
+        if (pageIndex !== -1) {
+          this.currentPageIndex = pageIndex;
+        }
+      }
+    },
+    removeSelectedElements() {
+      if (this.selectedElementIds.length === 0) return;
+
+      this.snapshot();
+      for (const id of this.selectedElementIds) {
+        for (const page of this.pages) {
+          const index = page.elements.findIndex(e => e.id === id);
+          if (index !== -1) {
+            page.elements.splice(index, 1);
+            break;
+          }
+        }
+      }
+      this.selectedElementId = null;
+      this.selectedElementIds = [];
     },
     setZoom(zoom: number) {
       this.zoom = zoom;
