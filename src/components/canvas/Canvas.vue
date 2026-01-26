@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onUnmounted } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType } from '@/types';
 import ElementWrapper from '../elements/ElementWrapper.vue';
@@ -13,6 +13,56 @@ const store = useDesignerStore();
 const pages = computed(() => store.pages);
 const zoom = computed(() => store.zoom);
 const canvasSize = computed(() => store.canvasSize);
+
+// Header/Footer Dragging
+const isDraggingLine = ref(false);
+const draggingLineType = ref<'header' | 'footer' | null>(null);
+const draggingPageElement = ref<HTMLElement | null>(null);
+
+const handleLineMouseDown = (e: MouseEvent, type: 'header' | 'footer') => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  isDraggingLine.value = true;
+  draggingLineType.value = type;
+  
+  // Find the closest page element
+  const target = e.target as HTMLElement;
+  draggingPageElement.value = target.closest('.print-page') as HTMLElement;
+  
+  window.addEventListener('mousemove', handleLineMouseMove);
+  window.addEventListener('mouseup', handleLineMouseUp);
+};
+
+const handleLineMouseMove = (e: MouseEvent) => {
+  if (!isDraggingLine.value || !draggingPageElement.value) return;
+  
+  const rect = draggingPageElement.value.getBoundingClientRect();
+  const relativeY = (e.clientY - rect.top) / store.zoom;
+  
+  // Clamp values
+  const clampedY = Math.max(0, Math.min(store.canvasSize.height, relativeY));
+  
+  if (draggingLineType.value === 'header') {
+    store.setHeaderHeight(Math.round(clampedY));
+  } else if (draggingLineType.value === 'footer') {
+    store.setFooterHeight(Math.round(store.canvasSize.height - clampedY));
+  }
+};
+
+const handleLineMouseUp = () => {
+  isDraggingLine.value = false;
+  draggingLineType.value = null;
+  draggingPageElement.value = null;
+  
+  window.removeEventListener('mousemove', handleLineMouseMove);
+  window.removeEventListener('mouseup', handleLineMouseUp);
+};
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleLineMouseMove);
+  window.removeEventListener('mouseup', handleLineMouseUp);
+});
 
 const pageStyle = computed(() => ({
   width: `${store.canvasSize.width}px`,
@@ -259,33 +309,47 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
       <div v-if="isBoxSelecting" :style="selectionBoxStyle"></div>
 
       <!-- Header & Footer Lines -->
-      <template v-if="store.showHeaderLine && store.headerHeight > 0">
+      <template v-if="store.showHeaderLine">
         <div 
-          class="absolute left-0 w-full pointer-events-none z-10"
+          class="absolute left-0 w-full z-20 cursor-row-resize group flex flex-col justify-center items-center"
           :style="{ 
             top: `${store.headerHeight}px`, 
-            height: '1px',
-            backgroundImage: 'linear-gradient(to right, #f87171 60%, transparent 40%)',
-            backgroundSize: '20px 1px',
-            backgroundRepeat: 'repeat-x'
+            height: '12px',
+            marginTop: '-6px'
           }"
+          @mousedown="(e) => handleLineMouseDown(e, 'header')"
         >
-          <div class="absolute right-0 -top-4 text-xs text-red-400 bg-white/80 px-1">Header</div>
+          <div 
+            class="w-full h-px"
+            :style="{
+              backgroundImage: 'linear-gradient(to right, #f87171 60%, transparent 40%)',
+              backgroundSize: '20px 1px',
+              backgroundRepeat: 'repeat-x'
+            }"
+          ></div>
+          <div class="absolute right-0 -top-4 text-xs text-red-400 bg-white/80 px-1 pointer-events-none">Header</div>
         </div>
       </template>
 
-      <template v-if="store.showFooterLine && store.footerHeight > 0">
+      <template v-if="store.showFooterLine">
         <div 
-          class="absolute left-0 w-full pointer-events-none z-10"
+          class="absolute left-0 w-full z-20 cursor-row-resize group flex flex-col justify-center items-center"
           :style="{ 
             bottom: `${store.footerHeight}px`,
-            height: '1px',
-            backgroundImage: 'linear-gradient(to right, #f87171 60%, transparent 40%)',
-            backgroundSize: '20px 1px',
-            backgroundRepeat: 'repeat-x'
+            height: '12px',
+            marginBottom: '-6px'
           }"
+          @mousedown="(e) => handleLineMouseDown(e, 'footer')"
         >
-          <div class="absolute right-0 -bottom-4 text-xs text-red-400 bg-white/80 px-1">Footer</div>
+          <div 
+            class="w-full h-px"
+            :style="{
+              backgroundImage: 'linear-gradient(to right, #f87171 60%, transparent 40%)',
+              backgroundSize: '20px 1px',
+              backgroundRepeat: 'repeat-x'
+            }"
+          ></div>
+          <div class="absolute right-0 -bottom-4 text-xs text-red-400 bg-white/80 px-1 pointer-events-none">Footer</div>
         </div>
       </template>
 

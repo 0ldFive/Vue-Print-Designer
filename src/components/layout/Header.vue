@@ -56,13 +56,11 @@ watch(() => store.canvasSize, (newSize) => {
 const handleZoomIn = () => {
   store.setZoom(Math.min(store.zoom + 0.1, 3));
   zoomPercent.value = Math.round(store.zoom * 100);
-  showZoomSettings.value = true;
 };
 
 const handleZoomOut = () => {
   store.setZoom(Math.max(store.zoom - 0.1, 0.5));
   zoomPercent.value = Math.round(store.zoom * 100);
-  showZoomSettings.value = true;
 };
 
 watch(() => store.zoom, (z) => {
@@ -308,7 +306,7 @@ const handleSave = () => {
                 type="range" 
                 min="50" 
                 max="300" 
-                step="1" 
+                step="10" 
                 v-model.number="zoomPercent" 
                 @input="handleZoomSlider"
                 class="w-full"
