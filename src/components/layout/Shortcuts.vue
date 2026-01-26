@@ -80,6 +80,13 @@ const handleKeydown = (e: KeyboardEvent) => {
     store.redo();
     return;
   }
+
+  // Lock/Unlock (Ctrl/Cmd + L)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+    e.preventDefault();
+    store.toggleLock();
+    return;
+  }
 };
 
 const handleKeyup = (e: KeyboardEvent) => {
@@ -169,6 +176,13 @@ onUnmounted(() => {
         @click="() => { store.paste(); showMenu=false; }"
       >
         Paste
+      </button>
+      <button
+        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+        :disabled="store.selectedElementIds.length === 0"
+        @click="() => { store.toggleLock(); showMenu=false; }"
+      >
+        {{ store.selectedElement?.locked ? 'Unlock' : 'Lock' }}
       </button>
       <div class="border-t border-gray-200 my-1"></div>
       <button

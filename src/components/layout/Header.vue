@@ -8,7 +8,7 @@ import {
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
   X, Bold, Italic, RotateCcw,
   Copy, ClipboardPaste,
-  Group
+  Group, Lock, Unlock
 } from 'lucide-vue-next';
 import { PAPER_SIZES, type PaperSizeKey } from '@/constants/paper';
 import { usePrint } from '@/utils/print';
@@ -57,6 +57,11 @@ const isBold = computed(() => {
 
 const isItalic = computed(() => {
   return store.selectedElement?.style.fontStyle === 'italic';
+});
+
+const isLocked = computed(() => {
+  if (store.selectedElementIds.length === 0) return false;
+  return store.selectedElement?.locked || false;
 });
 
 const toggleBold = () => {
@@ -294,6 +299,10 @@ const handleSave = () => {
           <ClipboardPaste class="w-4 h-4" />
         </button>
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
+        <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="isLocked ? 'Unlock (Ctrl+L)' : 'Lock (Ctrl+L)'">
+          <Unlock v-if="isLocked" class="w-4 h-4 text-red-500" />
+          <Lock v-else class="w-4 h-4" />
+        </button>
         <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed text-red-600" title="Delete (Del)">
           <Trash2 class="w-4 h-4" />
         </button>

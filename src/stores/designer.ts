@@ -215,6 +215,7 @@ export const useDesignerStore = defineStore('designer', {
         const index = page.elements.findIndex(e => e.id === id);
         if (index !== -1) {
           const el = page.elements[index];
+          if (el.locked) return; // Prevent moving locked element
           const snapped = this.getSnapPosition(el, x, y);
           this.setHighlightedGuide(snapped.highlightedGuideId || null);
           this.setHighlightedEdge(snapped.highlightedEdge || null);
@@ -226,10 +227,21 @@ export const useDesignerStore = defineStore('designer', {
     nudgeSelectedElements(dx: number, dy: number) {
       if (this.selectedElementIds.length === 0) return;
       
+      // Filter out locked elements
+      const movableIds = this.selectedElementIds.filter(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && !el.locked) return true;
+        }
+        return false;
+      });
+
+      if (movableIds.length === 0) return;
+
       this.snapshot(); // Snapshot once for the group move
 
-      // Move each selected element
-      for (const id of this.selectedElementIds) {
+      // Move each movable element
+      for (const id of movableIds) {
         for (const page of this.pages) {
           const index = page.elements.findIndex(e => e.id === id);
           if (index !== -1) {
@@ -264,6 +276,12 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     removeElement(id: string) {
+      // Check if locked
+      for (const page of this.pages) {
+        const el = page.elements.find(e => e.id === id);
+        if (el && el.locked) return;
+      }
+
       this.snapshot();
       for (const page of this.pages) {
         const index = page.elements.findIndex(e => e.id === id);
@@ -326,8 +344,19 @@ export const useDesignerStore = defineStore('designer', {
     removeSelectedElements() {
       if (this.selectedElementIds.length === 0) return;
 
+      // Filter out locked elements
+      const removableIds = this.selectedElementIds.filter(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && !el.locked) return true;
+        }
+        return false;
+      });
+
+      if (removableIds.length === 0) return;
+
       this.snapshot();
-      for (const id of this.selectedElementIds) {
+      for (const id of removableIds) {
         for (const page of this.pages) {
           const index = page.elements.findIndex(e => e.id === id);
           if (index !== -1) {
@@ -341,14 +370,13 @@ export const useDesignerStore = defineStore('designer', {
     },
     alignSelectedElements(type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') {
       if (this.selectedElementIds.length === 0) return;
-      this.snapshot();
 
-      // Get all selected elements objects
+      // Filter out locked elements
       const elements: PrintElement[] = [];
       for (const id of this.selectedElementIds) {
         for (const page of this.pages) {
           const el = page.elements.find(e => e.id === id);
-          if (el) {
+          if (el && !el.locked) {
             elements.push(el);
             break;
           }
@@ -356,6 +384,8 @@ export const useDesignerStore = defineStore('designer', {
       }
 
       if (elements.length === 0) return;
+      
+      this.snapshot();
 
       if (elements.length === 1) {
         // Align to canvas
@@ -394,9 +424,32 @@ export const useDesignerStore = defineStore('designer', {
     },
     updateSelectedElementsStyle(style: Partial<any>) {
       if (this.selectedElementIds.length === 0) return;
+      
+      // Check if any selected element is locked
+      const hasLocked = this.selectedElementIds.some(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && el.locked) return true;
+        }
+        return false;
+      });
+
+      // If any is locked, do we allow style update? 
+      // Usually lock prevents everything. Let's prevent style update for locked elements.
+      
+      const targetIds = this.selectedElementIds.filter(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && !el.locked) return true;
+        }
+        return false;
+      });
+
+      if (targetIds.length === 0) return;
+
       this.snapshot();
       
-      for (const id of this.selectedElementIds) {
+      for (const id of targetIds) {
         for (const page of this.pages) {
           const index = page.elements.findIndex(e => e.id === id);
           if (index !== -1) {
@@ -405,6 +458,27 @@ export const useDesignerStore = defineStore('designer', {
               ...el,
               style: { ...el.style, ...style }
             };
+            break;
+          }
+        }
+      }
+    },
+    toggleLock() {
+      if (this.selectedElementIds.length === 0) return;
+      this.snapshot();
+
+      // Determine target state based on the primary selected element
+      let targetState = true;
+      const primaryEl = this.selectedElement;
+      if (primaryEl) {
+        targetState = !primaryEl.locked;
+      }
+
+      for (const id of this.selectedElementIds) {
+        for (const page of this.pages) {
+          const index = page.elements.findIndex(e => e.id === id);
+          if (index !== -1) {
+            page.elements[index].locked = targetState;
             break;
           }
         }

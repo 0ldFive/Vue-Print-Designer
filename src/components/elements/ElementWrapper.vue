@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import type { PrintElement } from '@/types';
 import { ElementType } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
+import { Lock } from 'lucide-vue-next';
  
 const props = defineProps<{
   element: PrintElement;
@@ -27,7 +28,7 @@ const style = computed(() => {
   };
 
   if (actualIsSelected) {
-    baseStyle.border = '2px solid #3b82f6';
+    baseStyle.border = props.element.locked ? '2px solid #ef4444' : '2px solid #3b82f6';
   } else {
     // Handle structured border properties
     // Skip border for Table element as it handles its own borders internally
@@ -69,6 +70,8 @@ const handleMouseDown = (e: MouseEvent) => {
   // Check for multi-select (Ctrl/Cmd key)
   const isMultiSelect = e.ctrlKey || e.metaKey;
   store.selectElement(props.element.id, isMultiSelect);
+
+  if (props.element.locked) return; // Prevent drag if locked
 
   isDragging = true;
   hasSnapshot = false;
@@ -225,15 +228,21 @@ const handleResizeStart = (e: MouseEvent) => {
 <template>
   <div
     ref="elementRef"
-    class="element-wrapper absolute cursor-move select-none group hover:outline hover:outline-1 hover:outline-blue-300"
+    class="element-wrapper absolute select-none group hover:outline hover:outline-1 hover:outline-blue-300"
+    :class="element.locked ? 'cursor-not-allowed' : 'cursor-move'"
     :style="style"
     @mousedown="handleMouseDown"
   >
     <!-- Slot for specific element content -->
     <slot></slot>
 
+    <!-- Locked Indicator -->
+    <div v-if="element.locked && isSelected" class="absolute -top-3 -right-3 bg-red-500 rounded-full p-1 shadow-md z-50">
+      <Lock class="w-3 h-3 text-white" />
+    </div>
+
     <!-- Resize Handles (only visible when selected and not multi-selected) -->
-    <template v-if="isSelected && store.selectedElementIds.length <= 1">
+    <template v-if="isSelected && store.selectedElementIds.length <= 1 && !element.locked">
        <!-- Resize Handle -->
        <div
          class="resize-handle absolute bottom-0 right-0 w-3 h-3 bg-blue-600 cursor-se-resize z-50"

@@ -51,6 +51,7 @@ export interface PrintElement {
   height: number;
   content?: string; // For text/image url
   variable?: string;
+  locked?: boolean;
   data?: any[]; // For table
   columns?: TableColumn[]; // For table
   autoPaginate?: boolean; // For table
