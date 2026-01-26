@@ -92,7 +92,7 @@ const handleDeleteSelected = () => {
 </script>
 
 <template>
-  <aside class="w-72 bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden">
+  <aside class="w-[380px] bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden">
     <!-- Header -->
     <div class="p-4 border-b border-gray-200 bg-gray-50">
       <h2 class="font-semibold text-gray-700">Properties</h2>
