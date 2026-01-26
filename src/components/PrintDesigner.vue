@@ -44,10 +44,10 @@ const canvasStyle = computed(() => {
   const pageHeight = store.canvasSize.height;
   const pageWidth = store.canvasSize.width;
   const gap = 32; // gap-8
-  const paddingBottom = 80; // pb-20
-
+  // const paddingBottom = 80; // pb-20 - Removed to prevent unnecessary scrollbars
+  
   const unscaledHeight = pagesCount > 0
-    ? (pagesCount * pageHeight) + ((pagesCount - 1) * gap) + paddingBottom
+    ? (pagesCount * pageHeight) + ((pagesCount - 1) * gap)
     : 0;
 
   const unscaledWidth = pageWidth;
@@ -73,6 +73,15 @@ const updateOffset = () => {
 
     scrollWidth.value = Math.max(containerClientWidth, wrapperW + paddingX);
     scrollHeight.value = Math.max(containerClientHeight, wrapperH + paddingY);
+    
+    // Fix: If the wrapper fits within the container, force scroll dimensions to client dimensions
+    // This prevents scrollbars from appearing when they shouldn't due to slight pixel differences
+    if (wrapperW + paddingX <= containerClientWidth) {
+      scrollWidth.value = containerClientWidth;
+    }
+    if (wrapperH + paddingY <= containerClientHeight) {
+      scrollHeight.value = containerClientHeight;
+    }
 
     const containerRect = scrollContainer.value.getBoundingClientRect();
     const wrapperRect = canvasWrapper.value.getBoundingClientRect();

@@ -235,7 +235,7 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-8 pb-20" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }">
+  <div class="flex flex-col gap-8" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }">
     <div
       v-for="(page, index) in pages"
       :key="page.id"
