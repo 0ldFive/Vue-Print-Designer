@@ -391,6 +391,24 @@ export const useDesignerStore = defineStore('designer', {
         });
       }
     },
+    updateSelectedElementsStyle(style: Partial<any>) {
+      if (this.selectedElementIds.length === 0) return;
+      this.snapshot();
+      
+      for (const id of this.selectedElementIds) {
+        for (const page of this.pages) {
+          const index = page.elements.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const el = page.elements[index];
+            page.elements[index] = {
+              ...el,
+              style: { ...el.style, ...style }
+            };
+            break;
+          }
+        }
+      }
+    },
     setZoom(zoom: number) {
       this.zoom = zoom;
     },

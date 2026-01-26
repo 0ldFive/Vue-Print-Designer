@@ -6,11 +6,12 @@ import {
   Undo2, Redo2, Trash2, HelpCircle,
   AlignLeft, AlignCenterHorizontal, AlignRight,
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  X
+  X, Bold, Italic, RotateCcw
 } from 'lucide-vue-next';
 import { PAPER_SIZES, type PaperSizeKey } from '@/constants/paper';
 import { usePrint } from '@/utils/print';
 import { pxToMm, mmToPx } from '@/utils/units';
+import { ElementType } from '@/types';
 
 const store = useDesignerStore();
 const { print, exportPdf } = usePrint();
@@ -22,6 +23,60 @@ const showPaperSettings = ref(false);
 const showZoomSettings = ref(false);
 const showHelp = ref(false);
 const zoomPercent = ref(Math.round(store.zoom * 100));
+
+// Font State
+const selectedFont = computed({
+  get: () => {
+    if (store.selectedElement) {
+      return store.selectedElement.style.fontFamily || '';
+    }
+    return '';
+  },
+  set: (val) => {
+    store.updateSelectedElementsStyle({ fontFamily: val });
+  }
+});
+
+const selectedFontSize = computed({
+  get: () => {
+    if (store.selectedElement) {
+      return store.selectedElement.style.fontSize || 12;
+    }
+    return 12;
+  },
+  set: (val) => {
+    store.updateSelectedElementsStyle({ fontSize: val });
+  }
+});
+
+const isBold = computed(() => {
+  return store.selectedElement?.style.fontWeight === '700' || store.selectedElement?.style.fontWeight === 'bold';
+});
+
+const isItalic = computed(() => {
+  return store.selectedElement?.style.fontStyle === 'italic';
+});
+
+const toggleBold = () => {
+  store.updateSelectedElementsStyle({ fontWeight: isBold.value ? '400' : '700' });
+};
+
+const toggleItalic = () => {
+  store.updateSelectedElementsStyle({ fontStyle: isItalic.value ? 'normal' : 'italic' });
+};
+
+const resetRotation = () => {
+  store.updateSelectedElementsStyle({ rotate: 0 });
+};
+
+const fontOptions = [
+  { label: 'Default', value: '' },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Times New Roman', value: '"Times New Roman", serif' },
+  { label: 'Courier New', value: '"Courier New", monospace' },
+  { label: 'SimSun (宋体)', value: 'SimSun, serif' },
+  { label: 'SimHei (黑体)', value: 'SimHei, sans-serif' }
+];
 
 const canvasBackground = computed({
   get: () => store.canvasBackground,
@@ -162,6 +217,66 @@ const handleSave = () => {
         </button>
         <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Bottom">
           <AlignEndVertical class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Font Controls -->
+      <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1 px-2" v-if="store.selectedElementId">
+        <template v-if="store.selectedElement?.type !== ElementType.IMAGE">
+          <!-- Font Family -->
+          <select 
+            v-model="selectedFont"
+            class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer"
+            title="Font Family"
+          >
+            <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          
+          <div class="w-px h-4 bg-gray-300"></div>
+
+          <!-- Font Size -->
+          <div class="flex items-center gap-1">
+            <button @click="selectedFontSize--" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium">-</button>
+            <input 
+              type="number" 
+              v-model="selectedFontSize" 
+              class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0"
+              min="1" max="200"
+            />
+            <button @click="selectedFontSize++" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium">+</button>
+          </div>
+
+          <div class="w-px h-4 bg-gray-300"></div>
+
+          <!-- Style Toggles -->
+          <button 
+            @click="toggleBold" 
+            class="p-1 hover:bg-gray-200 rounded transition-colors"
+            :class="{ 'bg-gray-300 text-blue-700': isBold }"
+            title="Bold"
+          >
+            <Bold class="w-4 h-4" />
+          </button>
+          <button 
+            @click="toggleItalic" 
+            class="p-1 hover:bg-gray-200 rounded transition-colors"
+            :class="{ 'bg-gray-300 text-blue-700': isItalic }"
+            title="Italic"
+          >
+            <Italic class="w-4 h-4" />
+          </button>
+
+          <div class="w-px h-4 bg-gray-300"></div>
+        </template>
+        
+        <button 
+          @click="resetRotation" 
+          class="p-1 hover:bg-gray-200 rounded transition-colors"
+          title="Reset Rotation"
+        >
+          <RotateCcw class="w-4 h-4" />
         </button>
       </div>
 
