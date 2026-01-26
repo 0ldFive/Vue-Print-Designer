@@ -7,6 +7,7 @@ import PropertiesPanel from './layout/PropertiesPanel.vue';
 import Canvas from './canvas/Canvas.vue';
 import Ruler from './layout/Ruler.vue';
 import Shortcuts from './layout/Shortcuts.vue';
+import Minimap from './layout/Minimap.vue';
 
 const store = useDesignerStore();
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -38,6 +39,8 @@ const handleScroll = (e: Event) => {
 
 const scrollWidth = ref(0);
 const scrollHeight = ref(0);
+const viewportWidth = ref(0);
+const viewportHeight = ref(0);
 
 const canvasStyle = computed(() => {
   const pagesCount = store.pages.length;
@@ -63,6 +66,9 @@ const updateOffset = () => {
     // Calculate expected scroll dimensions based on canvas size to avoid loop with overlay size
     const containerClientWidth = scrollContainer.value.clientWidth;
     const containerClientHeight = scrollContainer.value.clientHeight;
+    
+    viewportWidth.value = containerClientWidth;
+    viewportHeight.value = containerClientHeight;
     
     const wrapperW = parseFloat(canvasStyle.value.width);
     const wrapperH = parseFloat(canvasStyle.value.height);
@@ -171,6 +177,16 @@ const handleGuideMouseUp = (e: MouseEvent) => {
   draggingGuideId.value = null;
   window.removeEventListener('mousemove', handleGuideMouseMove);
   window.removeEventListener('mouseup', handleGuideMouseUp);
+};
+
+const handleMinimapScroll = (pos: { left: number, top: number }) => {
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTo({
+      left: pos.left,
+      top: pos.top,
+      behavior: 'auto'
+    });
+  }
 };
 </script>
 
@@ -301,6 +317,25 @@ const handleGuideMouseUp = (e: MouseEvent) => {
         <!-- <footer class="h-6 bg-white border-t border-gray-200 text-xs flex items-center px-4 text-gray-500 z-30">
            Ready
         </footer> -->
+
+        <!-- Minimap -->
+        <div class="absolute bottom-4 right-4 z-50">
+          <Minimap
+            :scroll-width="scrollWidth"
+            :scroll-height="scrollHeight"
+            :viewport-width="viewportWidth"
+            :viewport-height="viewportHeight"
+            :scroll-left="scrollX"
+            :scroll-top="scrollY"
+            :pages="store.pages"
+            :page-width="store.canvasSize.width"
+            :page-height="store.canvasSize.height"
+            :zoom="store.zoom"
+            :content-offset-x="offsetX" 
+            :content-offset-y="offsetY"
+            @update:scroll="handleMinimapScroll"
+          />
+        </div>
       </main>
       <PropertiesPanel />
     </div>
