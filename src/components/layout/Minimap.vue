@@ -177,7 +177,7 @@ const handleMouseDown = (e: MouseEvent) => {
 
     <!-- Viewport -->
     <div 
-      class="absolute border-2 border-blue-500 bg-blue-500/10 cursor-move"
+      class="absolute border-2 border-blue-500 bg-blue-500/10 cursor-move z-[1000]"
       :style="viewportStyle"
     ></div>
   </div>

@@ -90,6 +90,7 @@ export interface DesignerState {
   footerHeight: number;
   showHeaderLine: boolean;
   showFooterLine: boolean;
+  showMinimap: boolean;
   canvasBackground: string;
   guides: Guide[];
   historyPast: Page[][];

@@ -319,7 +319,7 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
         </footer> -->
 
         <!-- Minimap -->
-        <div class="absolute bottom-4 right-4 z-50">
+        <div v-if="store.showMinimap" class="absolute bottom-4 right-4 z-50">
           <Minimap
             :scroll-width="scrollWidth"
             :scroll-height="scrollHeight"
