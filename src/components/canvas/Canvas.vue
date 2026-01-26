@@ -70,7 +70,7 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     type,
     x,
     y,
-    width: type === ElementType.HEADER || type === ElementType.FOOTER ? canvasSize.value.width : 200,
+    width: type === ElementType.HEADER || type === ElementType.FOOTER ? canvasSize.value.width : (type === ElementType.PAGE_NUMBER ? 52 : 200),
     height: type === ElementType.HEADER || type === ElementType.FOOTER ? 4 : (type === ElementType.PAGE_NUMBER ? 20 : 100),
     style: {
       fontSize: 14,
