@@ -151,7 +151,7 @@ const handleMouseDown = (e: MouseEvent) => {
              lineHeight: 1
           }"
         >
-          {{ element.content }}
+          {{ element.variable || element.content }}
         </div>
         
         <!-- Image Placeholder -->
