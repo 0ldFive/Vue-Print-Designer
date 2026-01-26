@@ -54,12 +54,12 @@ watch(() => store.canvasSize, (newSize) => {
 }, { immediate: true });
 
 const handleZoomIn = () => {
-  store.setZoom(Math.min(store.zoom + 0.1, 3));
+  store.setZoom(Math.min(store.zoom + 0.1, 5));
   zoomPercent.value = Math.round(store.zoom * 100);
 };
 
 const handleZoomOut = () => {
-  store.setZoom(Math.max(store.zoom - 0.1, 0.5));
+  store.setZoom(Math.max(store.zoom - 0.1, 0.2));
   zoomPercent.value = Math.round(store.zoom * 100);
 };
 
@@ -68,7 +68,7 @@ watch(() => store.zoom, (z) => {
 });
 
 const handleZoomSlider = () => {
-  const clamped = Math.max(50, Math.min(300, zoomPercent.value));
+  const clamped = Math.max(20, Math.min(500, zoomPercent.value));
   zoomPercent.value = clamped;
   store.setZoom(clamped / 100);
 };
@@ -301,15 +301,15 @@ const handleSave = () => {
           <h3 class="text-sm font-semibold text-gray-700 mb-3">Zoom</h3>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Zoom Level (50% - 300%)</label>
+              <label class="block text-xs text-gray-500 mb-1">Zoom Level (20% - 500%)</label>
               <input 
                 type="range" 
-                min="50" 
-                max="300" 
+                min="20" 
+                max="500" 
                 step="10" 
                 v-model.number="zoomPercent" 
                 @input="handleZoomSlider"
-                class="w-full"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
               />
               <div class="text-right text-xs text-gray-600 mt-1">{{ zoomPercent }}%</div>
             </div>
