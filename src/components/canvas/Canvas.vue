@@ -268,15 +268,15 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
       </ElementWrapper>
 
       <!-- Corner Markers -->
-      <div v-if="store.showCornerMarkers" class="marker absolute inset-0 pointer-events-none z-50">
+      <div v-if="store.showCornerMarkers" class="marker absolute inset-0 pointer-events-none z-50 opacity-50">
         <!-- Top Left -->
-        <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-red-500"></div>
+        <div class="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-gray-300"></div>
         <!-- Top Right -->
-        <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-red-500"></div>
+        <div class="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-gray-300"></div>
         <!-- Bottom Left -->
-        <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-red-500"></div>
+        <div class="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-gray-300"></div>
         <!-- Bottom Right -->
-        <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-red-500"></div>
+        <div class="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-gray-300"></div>
       </div>
     </div>
   </div>

@@ -109,27 +109,39 @@ export const useDesignerStore = defineStore('designer', {
     setShowCornerMarkers(show: boolean) {
       this.showCornerMarkers = show;
     },
-    getSnapPosition(el: PrintElement, nx: number, ny: number) {
+    getSnapPosition(el: PrintElement, nx: number, ny: number, isKeyboard: boolean = false) {
       const threshold = 5;
       let x = nx;
       let y = ny;
       let highlightedGuideId: string | null = null;
       let highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null = null;
 
+      const shouldSnap = (target: number, current: number, snapPoint: number) => {
+        const dist = Math.abs(target - snapPoint);
+        if (dist > threshold) return false;
+        if (isKeyboard) {
+          const oldDist = Math.abs(current - snapPoint);
+          return dist < oldDist;
+        }
+        return true;
+      };
+
       // Canvas edges
       const maxX = Math.max(0, this.canvasSize.width - el.width);
       const maxY = Math.max(0, this.canvasSize.height - el.height);
-      if (Math.abs(x - 0) <= threshold) {
+      
+      if (shouldSnap(x, el.x, 0)) {
         x = 0;
         highlightedEdge = 'left';
-      } else if (Math.abs((x + el.width) - this.canvasSize.width) <= threshold) {
+      } else if (shouldSnap(x + el.width, el.x + el.width, this.canvasSize.width)) {
         x = maxX;
         highlightedEdge = 'right';
       }
-      if (Math.abs(y - 0) <= threshold) {
+
+      if (shouldSnap(y, el.y, 0)) {
         y = 0;
         highlightedEdge = highlightedEdge || 'top';
-      } else if (Math.abs((y + el.height) - this.canvasSize.height) <= threshold) {
+      } else if (shouldSnap(y + el.height, el.y + el.height, this.canvasSize.height)) {
         y = maxY;
         highlightedEdge = highlightedEdge || 'bottom';
       }
@@ -138,23 +150,23 @@ export const useDesignerStore = defineStore('designer', {
       for (const guide of this.guides) {
         if (guide.type === 'vertical') {
           // left edge
-          if (Math.abs(x - guide.position) <= threshold) {
+          if (shouldSnap(x, el.x, guide.position)) {
             x = guide.position;
             highlightedGuideId = guide.id;
           }
           // right edge
-          else if (Math.abs((x + el.width) - guide.position) <= threshold) {
+          else if (shouldSnap(x + el.width, el.x + el.width, guide.position)) {
             x = guide.position - el.width;
             highlightedGuideId = guide.id;
           }
         } else {
           // top edge
-          if (Math.abs(y - guide.position) <= threshold) {
+          if (shouldSnap(y, el.y, guide.position)) {
             y = guide.position;
             highlightedGuideId = guide.id;
           }
           // bottom edge
-          else if (Math.abs((y + el.height) - guide.position) <= threshold) {
+          else if (shouldSnap(y + el.height, el.y + el.height, guide.position)) {
             y = guide.position - el.height;
             highlightedGuideId = guide.id;
           }
@@ -190,7 +202,7 @@ export const useDesignerStore = defineStore('designer', {
             const el = page.elements[index];
             const targetX = el.x + dx;
             const targetY = el.y + dy;
-            const snapped = this.getSnapPosition(el, targetX, targetY);
+            const snapped = this.getSnapPosition(el, targetX, targetY, true);
             this.setHighlightedGuide(snapped.highlightedGuideId || null);
             this.setHighlightedEdge(snapped.highlightedEdge || null);
             this.updateElement(id, { x: snapped.x, y: snapped.y });
