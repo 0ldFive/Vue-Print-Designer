@@ -426,6 +426,39 @@ export const useDesignerStore = defineStore('designer', {
         });
       }
     },
+    resizeSelectedElements(dw: number, dh: number) {
+      if (this.selectedElementIds.length === 0) return;
+      
+      const targetIds = this.selectedElementIds.filter(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && !el.locked) return true;
+        }
+        return false;
+      });
+
+      if (targetIds.length === 0) return;
+
+      this.snapshot();
+
+      for (const id of targetIds) {
+        for (const page of this.pages) {
+          const index = page.elements.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const el = page.elements[index];
+            const newWidth = Math.max(10, el.width + dw);
+            const newHeight = Math.max(10, el.height + dh);
+            
+            page.elements[index] = {
+              ...el,
+              width: newWidth,
+              height: newHeight
+            };
+            break;
+          }
+        }
+      }
+    },
     updateSelectedElementsStyle(style: Partial<any>) {
       if (this.selectedElementIds.length === 0) return;
       

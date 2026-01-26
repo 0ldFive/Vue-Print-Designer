@@ -15,17 +15,36 @@ const handleKeydown = (e: KeyboardEvent) => {
   // ignore when typing in inputs
   const target = e.target as Element | null;
   if (target && (target.closest('input, textarea, select, [contenteditable="true"]'))) return;
-  // Arrow move
+  // Arrow move or resize
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
     if (store.selectedElementIds.length > 0) {
       e.preventDefault();
       const step = e.shiftKey ? 10 : 1;
-      const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
-      const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
-      store.nudgeSelectedElements(dx, dy);
+      
+      if (e.altKey) {
+        // Resize
+        const dw = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
+        const dh = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
+        store.resizeSelectedElements(dw, dh);
+      } else {
+        // Move
+        const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
+        const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
+        store.nudgeSelectedElements(dx, dy);
+      }
     }
     return;
   }
+  // Select All (Ctrl/Cmd + A)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+    e.preventDefault();
+    if (store.pages[store.currentPageIndex]) {
+      const allIds = store.pages[store.currentPageIndex].elements.map(el => el.id);
+      store.setSelection(allIds);
+    }
+    return;
+  }
+
   // Delete
   if (e.key === 'Delete') {
     if (store.selectedElementIds.length > 1) {

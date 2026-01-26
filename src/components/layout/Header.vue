@@ -561,7 +561,7 @@ const handleSave = () => {
     </div>
 
     <!-- Help Modal -->
-    <div v-if="showHelp" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+    <div v-if="showHelp" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
       <div class="bg-white rounded-lg shadow-xl w-[600px] max-w-full max-h-[80vh] flex flex-col">
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-800">Keyboard Shortcuts & Help</h3>
@@ -578,6 +578,7 @@ const handleSave = () => {
                 <li class="flex justify-between"><span>Redo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + Y</kbd></li>
                 <li class="flex justify-between"><span>Save</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + S</kbd></li>
                 <li class="flex justify-between"><span>Print</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + P</kbd></li>
+                <li class="flex justify-between"><span>Lock/Unlock</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + L</kbd></li>
               </ul>
             </div>
             <div>
@@ -589,10 +590,10 @@ const handleSave = () => {
               </ul>
             </div>
             <div class="col-span-2">
-              <h4 class="font-medium text-gray-900 mb-2">Movement</h4>
+              <h4 class="font-medium text-gray-900 mb-2">Movement & Sizing</h4>
               <ul class="space-y-2 text-gray-600">
                 <li class="flex justify-between"><span>Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Arrow Keys</kbd></li>
-                <li class="flex justify-between"><span>Fine Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Alt + Arrow Keys</kbd></li>
+                <li class="flex justify-between"><span>Resize</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Alt + Arrow Keys</kbd></li>
                 <li class="flex justify-between"><span>Fast Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Shift + Arrow Keys</kbd></li>
               </ul>
             </div>
