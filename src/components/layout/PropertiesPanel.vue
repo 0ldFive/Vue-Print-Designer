@@ -10,10 +10,12 @@ import { pxToMm, mmToPx } from '@/utils/units';
 import PropertyInput from '@/components/properties/PropertyInput.vue';
 import PropertySelect from '@/components/properties/PropertySelect.vue';
 import PropertyColor from '@/components/properties/PropertyColor.vue';
+import { Lock } from 'lucide-vue-next';
 
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
 const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
+const isLocked = computed(() => element.value?.locked || false);
 const activeTab = ref<'properties' | 'style' | 'advanced'>('properties');
 
 const handleChange = (key: string, value: any) => {
@@ -94,8 +96,12 @@ const handleDeleteSelected = () => {
 <template>
   <aside class="w-[380px] bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden">
     <!-- Header -->
-    <div class="p-4 border-b border-gray-200 bg-gray-50">
+    <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
       <h2 class="font-semibold text-gray-700">Properties</h2>
+      <div v-if="isLocked" class="flex items-center text-red-500 gap-1 text-xs font-medium bg-red-50 px-2 py-1 rounded border border-red-100">
+        <Lock class="w-3 h-3" />
+        <span>Locked</span>
+      </div>
     </div>
 
     <!-- Multi-select Mode -->
@@ -139,24 +145,28 @@ const handleDeleteSelected = () => {
             <PropertyInput 
               label="X (mm)" 
               type="number" 
+              :disabled="isLocked"
               :value="pxToMm(element.x)" 
               @update:value="(v) => handleChange('x', mmToPx(Number(v)))" 
             />
             <PropertyInput 
               label="Y (mm)" 
               type="number" 
+              :disabled="isLocked"
               :value="pxToMm(element.y)" 
               @update:value="(v) => handleChange('y', mmToPx(Number(v)))" 
             />
             <PropertyInput 
               label="Width (mm)" 
               type="number" 
+              :disabled="isLocked"
               :value="pxToMm(element.width)" 
               @update:value="(v) => handleChange('width', mmToPx(Number(v)))" 
             />
             <PropertyInput 
               label="Height (mm)" 
               type="number" 
+              :disabled="isLocked"
               :value="pxToMm(element.height)" 
               @update:value="(v) => handleChange('height', mmToPx(Number(v)))" 
             />
@@ -173,7 +183,8 @@ const handleDeleteSelected = () => {
                 <div v-if="field.type === 'action'">
                   <button
                     @click="handleFieldAction(field)"
-                    class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                    :disabled="isLocked"
+                    class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
                     {{ field.label }}
                   </button>
@@ -187,6 +198,7 @@ const handleDeleteSelected = () => {
                   :min="field.min"
                   :max="field.max"
                   :step="field.step"
+                  :disabled="isLocked"
                   :placeholder="field.placeholder"
                   :value="field.target === 'style' ? (element.style as any)[field.key!] : (element as any)[field.key!]"
                   @update:value="(v) => handleFieldChange(field, v)"
@@ -197,6 +209,7 @@ const handleDeleteSelected = () => {
                   v-else-if="field.type === 'select'"
                   :label="field.label"
                   :options="field.options || []"
+                  :disabled="isLocked"
                   :value="field.target === 'style' ? (element.style as any)[field.key!] : (element as any)[field.key!]"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -205,6 +218,7 @@ const handleDeleteSelected = () => {
                 <PropertyColor
                   v-else-if="field.type === 'color'"
                   :label="field.label"
+                  :disabled="isLocked"
                   :value="field.target === 'style' ? (element.style as any)[field.key!] : (element as any)[field.key!]"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -214,9 +228,10 @@ const handleDeleteSelected = () => {
                   <label class="block text-xs text-gray-500 mb-1 font-medium">{{ field.label }}</label>
                   <textarea
                     :placeholder="field.placeholder"
+                    :disabled="isLocked"
                     :value="field.key === 'data' ? JSON.stringify(element.data, null, 2) : (field.target === 'style' ? (element.style as any)[field.key!] : (element as any)[field.key!])"
                     @change="field.key === 'data' ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono disabled:bg-gray-100 disabled:text-gray-500"
                   ></textarea>
                 </div>
               </template>
@@ -229,6 +244,7 @@ const handleDeleteSelected = () => {
           <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Appearance</h3>
           <PropertyColor 
             label="Background Color" 
+            :disabled="isLocked"
             :value="element.style.backgroundColor || '#ffffff'" 
             @update:value="(v) => handleStyleChange('backgroundColor', v)" 
           />
@@ -246,7 +262,8 @@ const handleDeleteSelected = () => {
           
           <button
             @click="handleDeleteSelected"
-            class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium"
+            :disabled="isLocked"
+            class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
             Delete Element
           </button>

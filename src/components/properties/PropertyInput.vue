@@ -9,6 +9,7 @@ defineProps<{
   min?: number;
   max?: number;
   step?: number;
+  disabled?: boolean;
 }>();
 
 const emit = defineEmits(['update:value']);
@@ -24,8 +25,9 @@ const handleInput = (e: Event) => {
     <label class="text-sm text-gray-700 font-medium">{{ label }}</label>
     <button 
       type="button"
+      :disabled="disabled"
       @click="$emit('update:value', !value)"
-      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       :class="value ? 'bg-blue-600' : 'bg-gray-200'"
     >
       <span class="sr-only">Toggle {{ label }}</span>
@@ -43,20 +45,22 @@ const handleInput = (e: Event) => {
     <textarea
       v-if="type === 'textarea'"
       :value="value"
+      :disabled="disabled"
       :placeholder="placeholder"
       @input="handleInput"
-      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y"
+      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y disabled:bg-gray-100 disabled:text-gray-500"
     ></textarea>
     <input
       v-else
       :type="type || 'text'"
       :value="value"
+      :disabled="disabled"
       :placeholder="placeholder"
       :min="min"
       :max="max"
       :step="step"
       @input="handleInput"
-      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
     />
   </div>
 </template>

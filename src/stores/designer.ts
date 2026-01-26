@@ -270,6 +270,10 @@ export const useDesignerStore = defineStore('designer', {
       for (const page of this.pages) {
         const index = page.elements.findIndex(e => e.id === id);
         if (index !== -1) {
+          const el = page.elements[index];
+          // Prevent update if locked, unless we are updating the lock status itself
+          if (el.locked && updates.locked === undefined) return;
+          
           page.elements[index] = { ...page.elements[index], ...updates };
           return;
         }
@@ -514,7 +518,7 @@ export const useDesignerStore = defineStore('designer', {
       for (const id of this.selectedElementIds) {
         for (const page of this.pages) {
           const el = page.elements.find(e => e.id === id);
-          if (el) {
+          if (el && !el.locked) {
             elements.push(cloneDeep(el));
             break;
           }
