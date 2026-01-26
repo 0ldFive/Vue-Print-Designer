@@ -6,8 +6,6 @@ import ElementWrapper from '../elements/ElementWrapper.vue';
 import TextElement from '../elements/TextElement.vue';
 import ImageElement from '../elements/ImageElement.vue';
 import TableElement from '../elements/TableElement.vue';
-import HeaderElement from '../elements/HeaderElement.vue';
-import FooterElement from '../elements/FooterElement.vue';
 import PageNumberElement from '../elements/PageNumberElement.vue';
 
 const store = useDesignerStore();
@@ -49,8 +47,6 @@ const getComponent = (type: ElementType) => {
     case ElementType.TEXT: return TextElement;
     case ElementType.IMAGE: return ImageElement;
     case ElementType.TABLE: return TableElement;
-    case ElementType.HEADER: return HeaderElement;
-    case ElementType.FOOTER: return FooterElement;
     case ElementType.PAGE_NUMBER: return PageNumberElement;
     default: return TextElement;
   }
@@ -70,8 +66,8 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     type,
     x,
     y,
-    width: type === ElementType.HEADER || type === ElementType.FOOTER ? canvasSize.value.width : (type === ElementType.PAGE_NUMBER ? 52 : 200),
-    height: type === ElementType.HEADER || type === ElementType.FOOTER ? 4 : (type === ElementType.PAGE_NUMBER ? 20 : 100),
+    width: type === ElementType.PAGE_NUMBER ? 52 : 200,
+    height: type === ElementType.PAGE_NUMBER ? 20 : 100,
     style: {
       fontSize: 14,
       color: '#000000',
@@ -255,6 +251,25 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
 
       <!-- Selection Box -->
       <div v-if="isBoxSelecting" :style="selectionBoxStyle"></div>
+
+      <!-- Header & Footer Lines -->
+      <template v-if="store.showHeaderLine && store.headerHeight > 0">
+        <div 
+          class="absolute left-0 w-full border-b border-dashed border-gray-400 pointer-events-none z-10"
+          :style="{ top: `${store.headerHeight}px` }"
+        >
+          <div class="absolute right-0 -top-4 text-xs text-gray-400 bg-white/80 px-1">Header</div>
+        </div>
+      </template>
+
+      <template v-if="store.showFooterLine && store.footerHeight > 0">
+        <div 
+          class="absolute left-0 w-full border-t border-dashed border-gray-400 pointer-events-none z-10"
+          :style="{ bottom: `${store.footerHeight}px` }"
+        >
+          <div class="absolute right-0 -bottom-4 text-xs text-gray-400 bg-white/80 px-1">Footer</div>
+        </div>
+      </template>
 
       <!-- Elements -->
       <ElementWrapper

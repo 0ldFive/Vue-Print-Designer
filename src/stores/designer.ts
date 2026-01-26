@@ -17,6 +17,10 @@ export const useDesignerStore = defineStore('designer', {
     isDragging: false,
     showGrid: true,
     showCornerMarkers: true,
+    headerHeight: 0,
+    footerHeight: 0,
+    showHeaderLine: false,
+    showFooterLine: false,
     guides: [],
     historyPast: [],
     historyFuture: [],
@@ -32,6 +36,10 @@ export const useDesignerStore = defineStore('designer', {
           if (parsed.guides) this.guides = parsed.guides;
           if (parsed.zoom !== undefined) this.zoom = parsed.zoom;
           if (parsed.showGrid !== undefined) this.showGrid = parsed.showGrid;
+          if (parsed.headerHeight !== undefined) this.headerHeight = parsed.headerHeight;
+          if (parsed.footerHeight !== undefined) this.footerHeight = parsed.footerHeight;
+          if (parsed.showHeaderLine !== undefined) this.showHeaderLine = parsed.showHeaderLine;
+          if (parsed.showFooterLine !== undefined) this.showFooterLine = parsed.showFooterLine;
           this.selectedElementId = null;
           this.selectedGuideId = null;
           this.currentPageIndex = 0;
@@ -41,6 +49,18 @@ export const useDesignerStore = defineStore('designer', {
       } catch (error) {
         console.error('Load from localStorage failed', error);
       }
+    },
+    setHeaderHeight(height: number) {
+      this.headerHeight = height;
+    },
+    setFooterHeight(height: number) {
+      this.footerHeight = height;
+    },
+    setShowHeaderLine(show: boolean) {
+      this.showHeaderLine = show;
+    },
+    setShowFooterLine(show: boolean) {
+      this.showFooterLine = show;
     },
     snapshot() {
       this.historyPast.push(cloneDeep(this.pages));

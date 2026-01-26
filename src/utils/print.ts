@@ -12,37 +12,24 @@ export const usePrint = () => {
   const createRepeatedPages = (originalPages: Page[]): Page[] => {
     const original = cloneDeep(originalPages);
     
-    const findLineY = (type: 'header' | 'footer') => {
-      for (const p of original) {
-        const el = p.elements.find(e => 
-          (type === 'header' && e.type === ElementType.HEADER) ||
-          (type === 'footer' && e.type === ElementType.FOOTER)
-        );
-        if (el) return el.y;
-      }
-      return null;
-    };
+    // Check if header/footer regions are defined
+    const hasHeader = store.headerHeight > 0;
+    const hasFooter = store.footerHeight > 0;
 
-    const headerY = findLineY('header');
-    const footerY = findLineY('footer');
-
-    if (headerY === null && footerY === null) return original;
+    if (!hasHeader && !hasFooter) return original;
 
     const basePage = original[0];
+    const canvasHeight = store.canvasSize.height;
     
-    // Filter elements that should be repeated (exclude header/footer/pageNumber placeholders and elements outside range)
-    const repeatHeaders = headerY !== null ? basePage.elements.filter(e => 
-      e.type !== ElementType.HEADER && 
-      e.type !== ElementType.FOOTER && 
+    // Filter elements that should be repeated (exclude pageNumber placeholders and elements outside range)
+    const repeatHeaders = hasHeader ? basePage.elements.filter(e => 
       e.type !== ElementType.PAGE_NUMBER && 
-      (e.y + e.height) <= headerY
+      (e.y + e.height) <= store.headerHeight
     ) : [];
     
-    const repeatFooters = footerY !== null ? basePage.elements.filter(e => 
-      e.type !== ElementType.HEADER && 
-      e.type !== ElementType.FOOTER && 
+    const repeatFooters = hasFooter ? basePage.elements.filter(e => 
       e.type !== ElementType.PAGE_NUMBER && 
-      e.y >= footerY
+      e.y >= (canvasHeight - store.footerHeight)
     ) : [];
 
     const withRepeats = cloneDeep(original);

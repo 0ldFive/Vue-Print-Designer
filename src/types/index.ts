@@ -12,8 +12,6 @@ export enum ElementType {
   TEXT = 'text',
   IMAGE = 'image',
   TABLE = 'table',
-  HEADER = 'header',
-  FOOTER = 'footer',
   PAGE_NUMBER = 'pageNumber'
 }
 
@@ -88,6 +86,10 @@ export interface DesignerState {
   isDragging: boolean;
   showGrid: boolean;
   showCornerMarkers: boolean;
+  headerHeight: number;
+  footerHeight: number;
+  showHeaderLine: boolean;
+  showFooterLine: boolean;
   guides: Guide[];
   historyPast: Page[][];
   historyFuture: Page[][];

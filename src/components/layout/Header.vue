@@ -188,6 +188,70 @@ const handleSave = () => {
               />
             </button>
           </div>
+
+          <div class="border-t border-gray-200 my-4 pt-3">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Header & Footer</h3>
+            
+            <div class="space-y-3">
+              <!-- Header Settings -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                   <button 
+                    @click="store.setShowHeaderLine(!store.showHeaderLine)"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="store.showHeaderLine ? 'bg-blue-600' : 'bg-gray-200'"
+                  >
+                    <span class="sr-only">Toggle header line</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="store.showHeaderLine ? 'translate-x-4' : 'translate-x-0'"
+                    />
+                  </button>
+                  <label class="text-xs text-gray-600">Header Line</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input 
+                    type="number" 
+                    :value="store.headerHeight"
+                    @input="e => store.setHeaderHeight(Number((e.target as HTMLInputElement).value))"
+                    class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none text-right"
+                    min="0"
+                  />
+                  <span class="text-xs text-gray-500">px</span>
+                </div>
+              </div>
+
+              <!-- Footer Settings -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                   <button 
+                    @click="store.setShowFooterLine(!store.showFooterLine)"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="store.showFooterLine ? 'bg-blue-600' : 'bg-gray-200'"
+                  >
+                    <span class="sr-only">Toggle footer line</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="store.showFooterLine ? 'translate-x-4' : 'translate-x-0'"
+                    />
+                  </button>
+                  <label class="text-xs text-gray-600">Footer Line</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input 
+                    type="number" 
+                    :value="store.footerHeight"
+                    @input="e => store.setFooterHeight(Number((e.target as HTMLInputElement).value))"
+                    class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none text-right"
+                    min="0"
+                  />
+                  <span class="text-xs text-gray-500">px</span>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div 
             class="fixed inset-0 z-[-1]" 
