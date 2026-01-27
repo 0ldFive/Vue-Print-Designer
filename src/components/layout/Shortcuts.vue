@@ -21,17 +21,10 @@ const handleKeydown = (e: KeyboardEvent) => {
       e.preventDefault();
       const step = e.shiftKey ? 10 : 1;
       
-      if (e.altKey) {
-        // Resize
-        const dw = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
-        const dh = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
-        store.resizeSelectedElements(dw, dh);
-      } else {
-        // Move
-        const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
-        const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
-        store.nudgeSelectedElements(dx, dy);
-      }
+      // Move
+      const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
+      const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
+      store.nudgeSelectedElements(dx, dy);
     }
     return;
   }
