@@ -107,10 +107,10 @@ const handleDeleteSelected = () => {
     <!-- Multi-select Mode -->
     <div v-if="isMultiSelected" class="p-6 text-center">
       <div class="mb-4">
-        <div class="text-sm text-gray-600">Multi-select mode</div>
-        <p class="text-md mt-2">
-          <span class="font-bold font-medium text-red-600">{{ store.selectedElementIds.length }}</span> 
-          elements selected.
+        <h3 class="text-lg font-semibold text-gray-900">Multi-select mode</h3>
+        <p class="text-sm text-gray-500 mt-2">
+          <span class="font-medium">{{ store.selectedElementIds.length }}</span> 
+          elements selected
         </p>
       </div>
       <button
@@ -275,8 +275,8 @@ const handleDeleteSelected = () => {
     <!-- Empty State -->
     <div v-else class="p-6 text-center">
       <div class="mb-4">
-        <div class="text-sm text-gray-600">No Selection</div>
-        <p class="text-md mt-2 text-gray-400">
+        <h3 class="text-lg font-semibold text-gray-900">No Selection</h3>
+        <p class="text-sm text-gray-500 mt-2">
           Select an element to edit properties
         </p>
       </div>

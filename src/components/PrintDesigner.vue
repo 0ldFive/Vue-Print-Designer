@@ -17,7 +17,9 @@ const canvasWrapper = ref<HTMLElement | null>(null);
 onMounted(() => {
   // Load data from localStorage on startup
   store.loadFromLocalStorage();
-  updateOffset();
+  nextTick(() => {
+    updateOffset();
+  });
   window.addEventListener('resize', updateOffset);
   // Also watch for store changes that might affect layout
   store.$subscribe(() => {
@@ -91,6 +93,9 @@ const updateOffset = () => {
 
     const containerRect = scrollContainer.value.getBoundingClientRect();
     const wrapperRect = canvasWrapper.value.getBoundingClientRect();
+
+    scrollX.value = scrollContainer.value.scrollLeft;
+    scrollY.value = scrollContainer.value.scrollTop;
 
     offsetX.value = wrapperRect.left - containerRect.left + scrollContainer.value.scrollLeft;
     offsetY.value = wrapperRect.top - containerRect.top + scrollContainer.value.scrollTop;
