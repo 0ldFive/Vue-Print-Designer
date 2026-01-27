@@ -10,7 +10,7 @@ import { pxToMm, mmToPx } from '@/utils/units';
 import PropertyInput from '@/components/properties/PropertyInput.vue';
 import PropertySelect from '@/components/properties/PropertySelect.vue';
 import PropertyColor from '@/components/properties/PropertyColor.vue';
-import { Lock } from 'lucide-vue-next';
+import Lock from '~icons/material-symbols/lock';
 
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);

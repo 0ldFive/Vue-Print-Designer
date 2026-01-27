@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import type { PrintElement } from '@/types';
 import { ElementType } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
-import { Lock } from 'lucide-vue-next';
+import Lock from '~icons/material-symbols/lock';
  
 const props = defineProps<{
   element: PrintElement;

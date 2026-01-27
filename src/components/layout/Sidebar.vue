@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Type, Image, Table } from 'lucide-vue-next';
+import Type from '~icons/material-symbols/text-fields';
+import Image from '~icons/material-symbols/image';
+import Table from '~icons/material-symbols/table-chart';
 import { ElementType } from '@/types';
 
 const draggableItems = [

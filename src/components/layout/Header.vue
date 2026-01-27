@@ -1,16 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
-import { 
-  Printer, FileOutput, ZoomIn, ZoomOut, Settings, Save,
-  Undo2, Redo2, Trash2, HelpCircle,
-  AlignLeft, AlignCenterHorizontal, AlignRight,
-  AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  X, Bold, Italic, RotateCcw,
-  Copy, ClipboardPaste,
-  Group, Lock, Unlock,
-  ChevronDown
-} from 'lucide-vue-next';
+import Printer from '~icons/material-symbols/print';
+import FileOutput from '~icons/material-symbols/file-download';
+import ZoomIn from '~icons/material-symbols/zoom-in';
+import ZoomOut from '~icons/material-symbols/zoom-out';
+import Settings from '~icons/material-symbols/settings';
+import Save from '~icons/material-symbols/save';
+import Undo2 from '~icons/material-symbols/undo';
+import Redo2 from '~icons/material-symbols/redo';
+import Trash2 from '~icons/material-symbols/delete';
+import HelpCircle from '~icons/material-symbols/help';
+import AlignLeft from '~icons/material-symbols/format-align-left';
+import AlignCenterHorizontal from '~icons/material-symbols/format-align-center';
+import AlignRight from '~icons/material-symbols/format-align-right';
+import AlignStartVertical from '~icons/material-symbols/vertical-align-top';
+import AlignCenterVertical from '~icons/material-symbols/vertical-align-center';
+import AlignEndVertical from '~icons/material-symbols/vertical-align-bottom';
+import X from '~icons/material-symbols/close';
+import Bold from '~icons/material-symbols/format-bold';
+import Italic from '~icons/material-symbols/format-italic';
+import RotateCcw from '~icons/material-symbols/rotate-left';
+import Copy from '~icons/material-symbols/content-copy';
+import ClipboardPaste from '~icons/material-symbols/content-paste';
+import Group from '~icons/material-symbols/group-work';
+import Lock from '~icons/material-symbols/lock';
+import Unlock from '~icons/material-symbols/lock-open';
+import ChevronDown from '~icons/material-symbols/expand-more';
 import { PAPER_SIZES, type PaperSizeKey } from '@/constants/paper';
 import { usePrint } from '@/utils/print';
 import { pxToMm, mmToPx } from '@/utils/units';

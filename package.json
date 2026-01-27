@@ -12,12 +12,12 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "lodash": "^4.17.21",
-    "lucide-vue-next": "^0.469.0",
     "pinia": "^2.3.0",
     "uuid": "^11.0.3",
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@iconify-json/material-symbols": "^1.2.53",
     "@types/html2canvas": "^0.5.35",
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.10.2",
@@ -28,6 +28,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.2",
+    "unplugin-icons": "^23.0.1",
     "vite": "^6.0.1",
     "vue-tsc": "^2.1.10"
   }
