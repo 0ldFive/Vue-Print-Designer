@@ -248,7 +248,7 @@ onUnmounted(() => {
             type="number" 
             v-model="selectedFontSize" 
             :disabled="isFontControlsDisabled"
-            class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             min="1" max="200"
           />
           <button @click="selectedFontSize++" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">+</button>
