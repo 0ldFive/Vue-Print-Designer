@@ -591,6 +591,8 @@ onUnmounted(() => {
                 <ul class="space-y-2 text-gray-600">
                   <li class="flex justify-between"><span>Undo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + Z</kbd></li>
                   <li class="flex justify-between"><span>Redo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + Y</kbd></li>
+                  <li class="flex justify-between"><span>Copy</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + C</kbd></li>
+                  <li class="flex justify-between"><span>Paste</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + V</kbd></li>
                   <li class="flex justify-between"><span>Save</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + S</kbd></li>
                   <li class="flex justify-between"><span>Print</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + P</kbd></li>
                   <li class="flex justify-between"><span>Lock/Unlock</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + L</kbd></li>
@@ -600,7 +602,7 @@ onUnmounted(() => {
               <div>
                 <h4 class="font-medium text-gray-900 mb-2">Selection</h4>
                 <ul class="space-y-2 text-gray-600">
-                  <li class="flex justify-between"><span>Multi-select</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Shift + Click</kbd></li>
+                  <li class="flex justify-between"><span>Multi-select</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + Click</kbd></li>
                   <li class="flex justify-between"><span>Select All</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Ctrl + A</kbd></li>
                   <li class="flex justify-between"><span>Delete</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Delete</kbd></li>
                 </ul>
@@ -610,6 +612,7 @@ onUnmounted(() => {
                 <ul class="space-y-2 text-gray-600">
                   <li class="flex justify-between"><span>Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Arrow Keys</kbd></li>
                   <li class="flex justify-between"><span>Fast Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Shift + Arrow Keys</kbd></li>
+                  <li class="flex justify-between"><span>Snap Rotation</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border">Shift + Rotate</kbd></li>
                 </ul>
               </div>
             </div>

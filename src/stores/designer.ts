@@ -224,6 +224,97 @@ export const useDesignerStore = defineStore('designer', {
         }
       }
     },
+    moveSelectedElements(primaryId: string, x: number, y: number, createSnapshot: boolean = true) {
+      if (createSnapshot) {
+        this.snapshot();
+      }
+
+      // 1. Find the primary element to calculate delta
+      let primaryElement: PrintElement | null = null;
+      let pageWithElements: Page | null = null;
+
+      for (const page of this.pages) {
+        const found = page.elements.find(e => e.id === primaryId);
+        if (found) {
+          primaryElement = found;
+          pageWithElements = page;
+          break;
+        }
+      }
+
+      if (!primaryElement || primaryElement.locked) return;
+
+      // 2. Calculate snap for primary element
+      const snapped = this.getSnapPosition(primaryElement, x, y);
+      
+      // 3. Calculate actual delta
+      let dx = snapped.x - primaryElement.x;
+      let dy = snapped.y - primaryElement.y;
+
+      if (dx === 0 && dy === 0) return;
+
+      this.setHighlightedGuide(snapped.highlightedGuideId || null);
+      this.setHighlightedEdge(snapped.highlightedEdge || null);
+
+      // 4. Update all selected (movable) elements by delta
+      const targetIds = this.selectedElementIds.filter(id => {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el && !el.locked) return true;
+        }
+        return false;
+      });
+
+      // 4.1 Constrain delta to ensure no element leaves the canvas
+      for (const id of targetIds) {
+        for (const page of this.pages) {
+          const el = page.elements.find(e => e.id === id);
+          if (el) {
+             // Constrain X
+             if (dx > 0) {
+               const maxRight = this.canvasSize.width - el.width;
+               if (el.x + dx > maxRight) {
+                 dx = maxRight - el.x;
+               }
+             } else if (dx < 0) {
+               if (el.x + dx < 0) {
+                 dx = -el.x;
+               }
+             }
+
+             // Constrain Y
+             if (dy > 0) {
+               const maxBottom = this.canvasSize.height - el.height;
+               if (el.y + dy > maxBottom) {
+                 dy = maxBottom - el.y;
+               }
+             } else if (dy < 0) {
+               if (el.y + dy < 0) {
+                 dy = -el.y;
+               }
+             }
+          }
+        }
+      }
+
+      if (dx === 0 && dy === 0) return;
+
+      // 4.2 Apply constrained delta
+      for (const id of targetIds) {
+        for (const page of this.pages) {
+          const index = page.elements.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const el = page.elements[index];
+            page.elements[index] = {
+              ...el,
+              x: el.x + dx,
+              y: el.y + dy
+            };
+            break;
+          }
+        }
+      }
+    },
     nudgeSelectedElements(dx: number, dy: number) {
       if (this.selectedElementIds.length === 0) return;
       

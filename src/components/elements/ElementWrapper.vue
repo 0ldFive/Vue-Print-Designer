@@ -69,7 +69,22 @@ const handleMouseDown = (e: MouseEvent) => {
 
   // Check for multi-select (Ctrl/Cmd key)
   const isMultiSelect = e.ctrlKey || e.metaKey;
-  store.selectElement(props.element.id, isMultiSelect);
+  
+  // Refined Selection Logic:
+  // 1. If multi-selecting (Ctrl/Cmd), always toggle/add.
+  // 2. If single-selecting (No modifier):
+  //    a. If element is ALREADY selected, do NOT deselect others immediately (wait for mouse up).
+  //       This allows dragging a group by clicking any member.
+  //    b. If element is NOT selected, select it exclusively.
+  
+  if (isMultiSelect) {
+    store.selectElement(props.element.id, true);
+  } else {
+    if (!store.selectedElementIds.includes(props.element.id)) {
+      store.selectElement(props.element.id, false);
+    }
+    // If already selected, do nothing on mouse down to preserve group selection for dragging
+  }
 
   if (props.element.locked) return; // Prevent drag if locked
 
@@ -90,15 +105,35 @@ const handleMouseMove = (e: MouseEvent) => {
   const dx = (e.clientX - startX) / props.zoom;
   const dy = (e.clientY - startY) / props.zoom;
   
-  if (!hasSnapshot) {
-    store.snapshot();
-    hasSnapshot = true;
-  }
+  // If we moved significantly, it's a drag operation
+  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+    if (!hasSnapshot) {
+      store.snapshot();
+      hasSnapshot = true;
+    }
 
-  store.moveElementWithSnap(props.element.id, initialLeft + dx, initialTop + dy, false);
+    if (store.selectedElementIds.length > 1 && store.selectedElementIds.includes(props.element.id)) {
+      store.moveSelectedElements(props.element.id, initialLeft + dx, initialTop + dy, false);
+    } else {
+      store.moveElementWithSnap(props.element.id, initialLeft + dx, initialTop + dy, false);
+    }
+  }
 };
 
-const handleMouseUp = () => {
+const handleMouseUp = (e: MouseEvent) => {
+  // If we didn't drag (was a click), and it wasn't a multi-select action,
+  // we should now ensure this element is exclusively selected.
+  // This handles the "Click to select single item from group" case.
+  if (isDragging && !hasSnapshot) {
+    // Check if it was a simple click (no significant movement)
+    // We can infer this from !hasSnapshot because hasSnapshot is set only on move
+    // But we also need to check modifiers
+    const isMultiSelect = e.ctrlKey || e.metaKey;
+    if (!isMultiSelect) {
+       store.selectElement(props.element.id, false);
+    }
+  }
+
   isDragging = false;
   window.removeEventListener('mousemove', handleMouseMove);
   window.removeEventListener('mouseup', handleMouseUp);
