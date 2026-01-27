@@ -64,6 +64,10 @@ const isLocked = computed(() => {
   return store.selectedElement?.locked || false;
 });
 
+const isFontControlsDisabled = computed(() => {
+  return !store.selectedElementId || isLocked.value || store.selectedElement?.type === ElementType.IMAGE;
+});
+
 const toggleBold = () => {
   store.updateSelectedElementsStyle({ fontWeight: isBold.value ? '400' : '700' });
 };
@@ -205,63 +209,61 @@ onUnmounted(() => {
 
     <div class="flex items-center gap-4">
       <!-- Font Controls -->
-      <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1 px-2" v-if="store.selectedElementId">
-        <template v-if="store.selectedElement?.type !== ElementType.IMAGE">
-          <!-- Font Family -->
-          <select 
-            v-model="selectedFont"
-            :disabled="isLocked"
-            class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-            title="Font Family"
-          >
-            <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-          
-          <div class="w-px h-4 bg-gray-300"></div>
+      <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1 px-2">
+        <!-- Font Family -->
+        <select 
+          v-model="selectedFont"
+          :disabled="isFontControlsDisabled"
+          class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          title="Font Family"
+        >
+          <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        
+        <div class="w-px h-4 bg-gray-300"></div>
 
-          <!-- Font Size -->
-          <div class="flex items-center gap-1">
-            <button @click="selectedFontSize--" :disabled="isLocked" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">-</button>
-            <input 
-              type="number" 
-              v-model="selectedFontSize" 
-              :disabled="isLocked"
-              class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              min="1" max="200"
-            />
-            <button @click="selectedFontSize++" :disabled="isLocked" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">+</button>
-          </div>
+        <!-- Font Size -->
+        <div class="flex items-center gap-1">
+          <button @click="selectedFontSize--" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">-</button>
+          <input 
+            type="number" 
+            v-model="selectedFontSize" 
+            :disabled="isFontControlsDisabled"
+            class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            min="1" max="200"
+          />
+          <button @click="selectedFontSize++" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">+</button>
+        </div>
 
-          <div class="w-px h-4 bg-gray-300"></div>
+        <div class="w-px h-4 bg-gray-300"></div>
 
-          <!-- Style Toggles -->
-          <button 
-            @click="toggleBold" 
-            :disabled="isLocked"
-            class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="{ 'bg-gray-300 text-blue-700': isBold }"
-            title="Bold"
-          >
-            <Bold class="w-4 h-4" />
-          </button>
-          <button 
-            @click="toggleItalic" 
-            :disabled="isLocked"
-            class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="{ 'bg-gray-300 text-blue-700': isItalic }"
-            title="Italic"
-          >
-            <Italic class="w-4 h-4" />
-          </button>
+        <!-- Style Toggles -->
+        <button 
+          @click="toggleBold" 
+          :disabled="isFontControlsDisabled"
+          class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :class="{ 'bg-gray-300 text-blue-700': isBold }"
+          title="Bold"
+        >
+          <Bold class="w-4 h-4" />
+        </button>
+        <button 
+          @click="toggleItalic" 
+          :disabled="isFontControlsDisabled"
+          class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :class="{ 'bg-gray-300 text-blue-700': isItalic }"
+          title="Italic"
+        >
+          <Italic class="w-4 h-4" />
+        </button>
 
-          <div class="w-px h-4 bg-gray-300"></div>
-        </template>
+        <div class="w-px h-4 bg-gray-300"></div>
         
         <button 
           @click="resetRotation" 
-          :disabled="isLocked"
+          :disabled="isLocked || !store.selectedElementId"
           class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Reset Rotation"
         >
@@ -269,7 +271,7 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div class="h-6 w-px bg-gray-300" v-if="store.selectedElementId"></div>
+      <div class="h-6 w-px bg-gray-300"></div>
 
       <!-- Alignment -->
       <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
