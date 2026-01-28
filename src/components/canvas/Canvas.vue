@@ -124,6 +124,7 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     y,
     width: type === ElementType.PAGE_NUMBER ? 52 : 200,
     height: type === ElementType.PAGE_NUMBER ? 20 : 100,
+    variable: '',
     style: {
       fontSize: 14,
       color: '#000000',

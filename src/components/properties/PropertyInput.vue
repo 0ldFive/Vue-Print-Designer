@@ -44,7 +44,7 @@ const handleInput = (e: Event) => {
     
     <textarea
       v-if="type === 'textarea'"
-      :value="String(value)"
+      :value="value === undefined || value === null ? '' : String(value)"
       :disabled="disabled"
       :placeholder="placeholder"
       @input="handleInput"
@@ -53,7 +53,7 @@ const handleInput = (e: Event) => {
     <input
       v-else
       :type="type || 'text'"
-      :value="String(value)"
+      :value="value === undefined || value === null ? '' : String(value)"
       :disabled="disabled"
       :placeholder="placeholder"
       :min="min"
