@@ -4,6 +4,7 @@ import type { PrintElement } from '@/types';
 import { ElementType } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import Lock from '~icons/material-symbols/lock';
+import RotateRight from '~icons/material-symbols/rotate-right';
  
 const props = defineProps<{
   element: PrintElement;
@@ -290,11 +291,8 @@ const handleResizeStart = (e: MouseEvent) => {
          title="Rotate"
          @mousedown="handleRotateStart"
        >
-         <!-- Semi-circle arrow icon (smaller) -->
-         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-            <path d="M21 3v5h-5"/>
-         </svg>
+         <!-- Material Symbol Icon -->
+         <RotateRight class="w-3 h-3" />
          
          <!-- Angle Tooltip -->
          <div v-if="isRotating" :class="['absolute top-6 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none', isSnapped ? 'bg-green-600' : 'bg-black']">
