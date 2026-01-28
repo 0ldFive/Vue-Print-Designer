@@ -295,7 +295,7 @@ const handleResizeStart = (e: MouseEvent) => {
          <RotateRight class="w-3 h-3" />
          
          <!-- Angle Tooltip -->
-         <div v-if="isRotating" :class="['absolute top-6 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none', isSnapped ? 'bg-green-600' : 'bg-black']">
+         <div v-if="isRotating" :class="['absolute top-6 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none font-sans font-normal not-italic leading-none tracking-normal normal-case', isSnapped ? 'bg-green-600' : 'bg-black']">
             {{ currentRotationDisplay }}°
          </div>
        </div>
