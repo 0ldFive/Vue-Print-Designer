@@ -237,16 +237,18 @@ export const useDesignerStore = defineStore('designer', {
       const selectedSet = new Set(this.selectedElementIds);
 
       // Iterate once to find primary element and all movable elements
-      this.pages.forEach((page, pIndex) => {
-        page.elements.forEach((el, eIndex) => {
+      for (let pIndex = 0; pIndex < this.pages.length; pIndex++) {
+        const page = this.pages[pIndex];
+        for (let eIndex = 0; eIndex < page.elements.length; eIndex++) {
+          const el = page.elements[eIndex];
           if (el.id === primaryId) {
             primaryElement = el;
           }
           if (selectedSet.has(el.id) && !el.locked) {
             movableElements.push({ pageIndex: pIndex, elementIndex: eIndex, element: el });
           }
-        });
-      });
+        }
+      }
 
       if (!primaryElement || primaryElement.locked) return;
 
