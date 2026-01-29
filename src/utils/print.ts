@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType, type Page } from '@/types';
 
+import { pxToMm } from '@/utils/units';
+
 export const usePrint = () => {
   const store = useDesignerStore();
 
@@ -394,13 +396,13 @@ export const usePrint = () => {
     // Create hidden container
     const container = document.createElement('div');
     container.style.position = 'fixed';
-    container.style.left = '-9999px';
+    container.style.left = '0'; // Move to viewport to ensure rendering
     container.style.top = '0';
     container.style.width = `${width}px`;
     container.style.height = `${height}px`; // Start with 1 page height
     // Don't use overflow hidden, let us measure full heights
     // container.style.overflow = 'hidden'; 
-    container.style.zIndex = '-1';
+    container.style.zIndex = '-9999'; // Hide behind everything
     container.className = 'hiprint_temp_Container';
     document.body.appendChild(container);
 
@@ -471,33 +473,61 @@ export const usePrint = () => {
     return { container, tempWrapper: container, pagesCount };
   };
 
-  const exportPdf = async (content: HTMLElement | string, filename = 'print-design.pdf') => {
+  const exportPdf = async (filename = 'print-design.pdf') => {
+    const restore = await prepareEnvironment();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'design-workspace';
+    const pages = document.querySelectorAll('.print-page');
+    pages.forEach(page => {
+        wrapper.appendChild(page.cloneNode(true));
+    });
+
     const width = store.canvasSize.width;
     const height = store.canvasSize.height;
     
-    const { container, tempWrapper, pagesCount } = await processContentForImage(content, width, height);
+    // Convert to mm for jsPDF
+    const widthMm = pxToMm(width);
+    const heightMm = pxToMm(height);
+
+    const { container, tempWrapper, pagesCount } = await processContentForImage(wrapper, width, height);
 
     try {
-        const canvas = await html2canvas(container, {
-            scale: 2,
-            width: width,
-            height: height * pagesCount,
-            useCORS: true,
-            backgroundColor: store.canvasBackground
-        });
-
         const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [width, height],
+            orientation: width > height ? 'l' : 'p',
+            unit: 'mm',
+            format: [widthMm, heightMm],
             hotfixes: ['px_scaling']
         });
 
-        const imgData = canvas.toDataURL('image/png');
-        for (let p = 0; p < pagesCount; p++) {
-            if (p > 0) pdf.addPage([width, height]);
-            // Slice the image by adjusting the Y position
-            pdf.addImage(imgData, 'PNG', 0, -p * height, width, height * pagesCount);
+        const pages = Array.from(container.children) as HTMLElement[];
+        
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+            
+            // Temporarily reset top to 0 to ensure html2canvas captures the page content correctly
+            // regardless of its vertical position in the container.
+            const originalTop = page.style.top;
+            page.style.top = '0px';
+
+            // Capture each page individually
+            const canvas = await html2canvas(page, {
+                scale: 2,
+                width: width,
+                height: height,
+                useCORS: true,
+                backgroundColor: store.canvasBackground,
+            });
+
+            // Restore top
+            page.style.top = originalTop;
+            
+            const imgData = canvas.toDataURL('image/png');
+            
+            if (i > 0) pdf.addPage([widthMm, heightMm]);
+            
+            // Add image filling the PDF page
+            pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
         }
         
         pdf.save(filename);
@@ -508,6 +538,7 @@ export const usePrint = () => {
         if (tempWrapper && tempWrapper.parentNode) {
             tempWrapper.parentNode.removeChild(tempWrapper);
         }
+        restore();
     }
   };
 

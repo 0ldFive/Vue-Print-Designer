@@ -208,8 +208,7 @@ const handlePrint = async () => {
 };
 
 const handleExport = async () => {
-  const html = await getPrintHtml();
-  await exportPdf(html);
+  await exportPdf();
 };
 
 const handleSave = () => {
