@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "canvg": "^4.0.3",
+    "dom-to-image-more": "^3.7.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "lodash": "^4.17.21",

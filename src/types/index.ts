@@ -103,6 +103,7 @@ export interface DesignerState {
   historyPast: Page[][];
   historyFuture: Page[][];
   clipboard: PrintElement[];
+  isExporting?: boolean;
 }
 
 export interface Guide {

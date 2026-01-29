@@ -28,8 +28,12 @@ export const useDesignerStore = defineStore('designer', {
     historyPast: [],
     historyFuture: [],
     clipboard: [],
+    isExporting: false,
   }),
   actions: {
+    setIsExporting(isExporting: boolean) {
+      this.isExporting = isExporting;
+    },
     loadFromLocalStorage() {
       try {
         const data = localStorage.getItem('localdata');

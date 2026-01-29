@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
+import Preview from '~icons/material-symbols/preview';
 import FileOutput from '~icons/material-symbols/file-download';
 import ZoomIn from '~icons/material-symbols/zoom-in';
 import ZoomOut from '~icons/material-symbols/zoom-out';
@@ -30,13 +31,17 @@ import { PAPER_SIZES, type PaperSizeKey } from '@/constants/paper';
 import { usePrint } from '@/utils/print';
 import { pxToMm, mmToPx } from '@/utils/units';
 import { ElementType } from '@/types';
+import PreviewModal from '../PreviewModal.vue';
 
 const emit = defineEmits<{
   (e: 'toggleHelp'): void
 }>();
 
 const store = useDesignerStore();
-const { print, exportPdf } = usePrint();
+const { getPrintHtml, print, exportPdf } = usePrint();
+
+const showPreview = ref(false);
+const previewContent = ref('');
 
 const selectedPaper = ref<PaperSizeKey>('A4');
 const customWidth = ref(PAPER_SIZES.A4.width);
@@ -170,12 +175,24 @@ const handleZoomSlider = () => {
   store.setZoom(clamped / 100);
 };
 
+const handlePreview = async () => {
+  try {
+    previewContent.value = await getPrintHtml();
+    showPreview.value = true;
+  } catch (e) {
+    console.error(e);
+    alert('Preview generation failed');
+  }
+};
+
 const handlePrint = async () => {
-  await print();
+  const html = await getPrintHtml();
+  await print(html);
 };
 
 const handleExport = async () => {
-  await exportPdf();
+  const html = await getPrintHtml();
+  await exportPdf(html);
 };
 
 const handleSave = () => {
@@ -571,6 +588,11 @@ const handleSave = () => {
 
     <div class="h-6 w-px bg-gray-300"></div>
 
+    <button @click="handlePreview" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm">
+      <Preview class="w-4 h-4" />
+      <span>Preview</span>
+    </button>
+
     <button @click="handlePrint" class="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm">
       <Printer class="w-4 h-4" />
       <span>Print</span>
@@ -586,4 +608,10 @@ const handleSave = () => {
       <span>Save</span>
     </button>
   </div>
+
+  <PreviewModal 
+    v-model:visible="showPreview"
+    :html-content="previewContent"
+    :width="store.canvasSize.width"
+  />
 </template>
