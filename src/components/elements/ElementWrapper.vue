@@ -66,7 +66,7 @@ const handleMouseDown = (e: MouseEvent) => {
   // Don't start drag if clicking on resize/rotate handles
   if ((e.target as HTMLElement).closest('.resize-handle') || (e.target as HTMLElement).closest('.rotate-handle')) return;
   
-  e.stopPropagation();
+  // e.stopPropagation();
 
   // Check for multi-select (Ctrl/Cmd key)
   const isMultiSelect = e.ctrlKey || e.metaKey;

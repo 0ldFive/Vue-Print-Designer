@@ -133,9 +133,57 @@ const emitUpdate = () => {
   }
 };
 
-const toggleOpen = () => {
+const dropdownStyle = ref<Record<string, string>>({
+  top: '100%',
+  left: '0',
+  marginTop: '8px'
+});
+
+const updatePosition = () => {
+  if (!containerRef.value) return;
+  
+  const rect = containerRef.value.getBoundingClientRect();
+  const screenW = window.innerWidth;
+  const screenH = window.innerHeight;
+  const dropdownW = 240; // Fixed width defined in class
+  const dropdownH = 350; // Approximate height with safety margin
+
+  const style: Record<string, string> = {};
+
+  // Horizontal Position
+  // Check if there is enough space on the right
+  if (rect.left + dropdownW > screenW - 20) {
+    style.left = 'auto';
+    style.right = '0';
+  } else {
+    style.left = '0';
+    style.right = 'auto';
+  }
+
+  // Vertical Position
+  // Check if there is enough space on the bottom
+  if (rect.bottom + dropdownH > screenH - 10) {
+    style.top = 'auto';
+    style.bottom = '100%';
+    style.marginTop = '0';
+    style.marginBottom = '8px';
+  } else {
+    style.top = '100%';
+    style.bottom = 'auto';
+    style.marginTop = '8px';
+    style.marginBottom = '0';
+  }
+
+  dropdownStyle.value = style;
+};
+
+const toggleOpen = async () => {
   if (props.disabled) return;
   isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    await nextTick();
+    updatePosition();
+  }
 };
 
 const close = () => {
@@ -192,7 +240,8 @@ onUnmounted(() => {
     <!-- Dropdown -->
     <div 
       v-if="isOpen" 
-      class="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-[240px]"
+      class="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-[240px]"
+      :style="dropdownStyle"
       @click.stop
     >
       <!-- Saturation/Value Panel -->

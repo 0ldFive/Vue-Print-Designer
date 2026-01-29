@@ -300,22 +300,16 @@ export const usePrint = () => {
                  tableRoot.style.overflow = 'visible';
              }
 
-             // Calculate positions
-             // We can use style.top because it's absolute positioned relative to page
-             const wrapperTop = parseFloat(wrapper.style.top) || 0;
+             // Calculate positions using getBoundingClientRect for better precision
+             // This handles sub-pixel rendering and spacing correctly
+             const pageRect = page.getBoundingClientRect();
+             const limitBottom = pageRect.top + pageHeight - footerHeight;
              
-             // Now that we unlocked height, offsetHeight should be the real full height
-             // But we need to be careful: if the table was huge, it might now extend WAY past the page.
-             // That's exactly what we want to detect.
-             
-             // Current bottom of table
-             const tableBottom = wrapperTop + table.offsetHeight;
-             
-             // If tableBottom <= pageHeight, no split needed.
-             if (tableBottom <= pageHeight) return;
+             // Check if table extends beyond limit
+             const tableRect = table.getBoundingClientRect();
+             if (tableRect.bottom <= limitBottom) return;
              
              // Split needed
-             let currentHeight = wrapperTop + (table.querySelector('thead')?.offsetHeight || 0);
              let splitIndex = -1;
              
              const tbody = table.querySelector('tbody');
@@ -324,12 +318,23 @@ export const usePrint = () => {
              
              for (let r = 0; r < rows.length; r++) {
                  const row = rows[r];
-                 const rowHeight = row.offsetHeight;
-                 if (currentHeight + rowHeight > (pageHeight - footerHeight)) { // Consider footer height
+                 const rowRect = row.getBoundingClientRect();
+                 // Use a small buffer (1px) for float precision
+                 if (rowRect.bottom > limitBottom + 1) { 
                      splitIndex = r;
+                     
+                     // Prevent infinite loop: if we are at the first row (r=0) 
+                     // AND the table is already at the top of the page, we MUST accept at least one row.
+                     if (splitIndex === 0) {
+                         const wrapperTop = parseFloat(wrapper.style.top) || 0;
+                         const startY = headerHeight > 0 ? headerHeight + 10 : 20;
+                         // If we are essentially at the top already
+                         if (wrapperTop <= startY + 5) {
+                             splitIndex = 1; // Force one row to stay
+                         }
+                     }
                      break;
                  }
-                 currentHeight += rowHeight;
              }
              
              if (splitIndex !== -1) {
@@ -364,6 +369,11 @@ export const usePrint = () => {
                  const oldRows = rows;
                  for (let k = splitIndex; k < oldRows.length; k++) {
                      oldRows[k].remove();
+                 }
+                 
+                 // If split at 0 (header only left), remove the wrapper to avoid orphaned header
+                 if (splitIndex === 0) {
+                     wrapper.remove();
                  }
                  // Remove tfoot from old table (only show at very end)
                  const oldTfoot = table.querySelector('tfoot');

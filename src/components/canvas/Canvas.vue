@@ -173,7 +173,7 @@ const handlePageMouseDown = (e: MouseEvent, pageIndex: number) => {
 
   // Start box selection
   e.preventDefault();
-  e.stopPropagation();
+  // e.stopPropagation();
 
   isBoxSelecting.value = true;
   currentSelectingPageIndex.value = pageIndex;

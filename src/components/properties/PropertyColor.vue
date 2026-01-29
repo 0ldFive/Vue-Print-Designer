@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
+import ColorPicker from '@/components/common/ColorPicker.vue';
 
 defineProps<{
   label: string;
@@ -8,32 +9,31 @@ defineProps<{
 }>();
 
 const emit = defineEmits(['update:value']);
-
-const handleInput = (e: Event) => {
-  const target = e.target as HTMLInputElement;
-  emit('update:value', target.value);
-};
 </script>
 
 <template>
   <div class="flex items-center justify-between">
     <label class="text-xs text-gray-500">{{ label }}</label>
     <div class="flex items-center gap-2">
-      <input
-        type="text"
-        :value="value"
+      <ColorPicker
+        :model-value="value"
+        @update:model-value="(val) => emit('update:value', val)"
         :disabled="disabled"
-        @input="handleInput"
-        class="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-        placeholder="#000000"
-      />
-      <input
-        type="color"
-        :value="value || '#000000'"
-        :disabled="disabled"
-        @input="handleInput"
-        class="h-6 w-8 p-0 border border-gray-300 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      />
+        :allow-transparent="true"
+      >
+        <template #trigger="{ color, open }">
+          <div 
+            class="w-8 h-6 rounded border border-gray-300 cursor-pointer relative overflow-hidden hover:border-blue-500 transition-colors"
+            :class="{ 'ring-2 ring-blue-500 ring-offset-1': open, 'opacity-50 cursor-not-allowed': disabled }"
+          >
+            <div class="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] opacity-50"></div>
+            <div class="absolute inset-0" :style="{ backgroundColor: color === 'transparent' ? 'transparent' : color }"></div>
+            <div v-if="color === 'transparent'" class="absolute inset-0 flex items-center justify-center">
+                <div class="w-full h-[1px] bg-red-500 rotate-45"></div>
+            </div>
+          </div>
+        </template>
+      </ColorPicker>
     </div>
   </div>
 </template>
