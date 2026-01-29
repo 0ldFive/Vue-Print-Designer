@@ -519,20 +519,15 @@ export const usePrint = () => {
     return { container, tempWrapper: container, pagesCount };
   };
 
-  const exportPdf = async (filename = 'print-design.pdf') => {
+  const createPdfDocument = async (content: HTMLElement | string | HTMLElement[]) => {
     const restore = await prepareEnvironment();
-
-    // Use real DOM elements to ensure computed styles are captured correctly
-    const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
-
+    
     const width = store.canvasSize.width;
     const height = store.canvasSize.height;
-    
-    // Convert to mm for jsPDF
     const widthMm = pxToMm(width);
     const heightMm = pxToMm(height);
 
-    const { container, tempWrapper, pagesCount } = await processContentForImage(pages, width, height);
+    const { container, tempWrapper, pagesCount } = await processContentForImage(content, width, height);
 
     try {
         const pdf = new jsPDF({
@@ -546,13 +541,9 @@ export const usePrint = () => {
         
         for (let i = 0; i < pages.length; i++) {
             const page = pages[i];
-            
-            // Temporarily reset top to 0 to ensure html2canvas captures the page content correctly
-            // regardless of its vertical position in the container.
             const originalTop = page.style.top;
             page.style.top = '0px';
 
-            // Capture each page individually
             const canvas = await domtoimage.toCanvas(page, {
                 scale: 2,
                 width: width,
@@ -569,22 +560,14 @@ export const usePrint = () => {
                 ctx.imageSmoothingEnabled = false;
             }
 
-            // Restore top
             page.style.top = originalTop;
-            
-            // Use JPEG with 0.8 quality to reduce file size (PNG is lossless and very large)
             const imgData = canvas.toDataURL('image/jpeg', 0.8);
             
             if (i > 0) pdf.addPage([widthMm, heightMm]);
-            
-            // Add image filling the PDF page
             pdf.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
         }
         
-        pdf.save(filename);
-    } catch (error) {
-        console.error('Export PDF failed', error);
-        alert('Export PDF failed');
+        return pdf;
     } finally {
         if (tempWrapper && tempWrapper.parentNode) {
             tempWrapper.parentNode.removeChild(tempWrapper);
@@ -593,70 +576,26 @@ export const usePrint = () => {
     }
   };
 
-  const print = async (content: HTMLElement | string) => {
-    const width = store.canvasSize.width;
-    const height = store.canvasSize.height;
-    
-    const { container, tempWrapper, pagesCount } = await processContentForImage(content, width, height);
-
+  const exportPdf = async (filename = 'print-design.pdf') => {
     try {
-        const canvas = await domtoimage.toCanvas(container, {
-            scale: 2, // Higher quality for print
-            width: width,
-            height: height * pagesCount,
-            useCORS: true,
-            bgcolor: store.canvasBackground
-        });
+        const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+        const pdf = await createPdfDocument(pages);
+        pdf.save(filename);
+    } catch (error) {
+        console.error('Export PDF failed', error);
+        alert('Export PDF failed');
+    }
+  };
 
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            (ctx as any).mozImageSmoothingEnabled = false;
-            (ctx as any).webkitImageSmoothingEnabled = false;
-            (ctx as any).msImageSmoothingEnabled = false;
-            ctx.imageSmoothingEnabled = false;
-        }
-        
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Create an iframe to print the image
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        const doc = iframe.contentWindow?.document;
-        if (doc) {
-            doc.write(`
-                <html>
-                    <head>
-                        <style>
-                            @page { size: auto; margin: 0; }
-                            body { margin: 0; }
-                            img { width: 100%; height: auto; display: block; }
-                        </style>
-                    </head>
-                    <body>
-                        <img src="${imgData}" />
-                    </body>
-                </html>
-            `);
-            doc.close();
-            
-            iframe.contentWindow?.focus();
-            setTimeout(() => {
-                iframe.contentWindow?.print();
-                // Cleanup
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                }, 1000);
-            }, 500);
-        }
+  const print = async (content: HTMLElement | string | HTMLElement[]) => {
+    try {
+        const pdf = await createPdfDocument(content);
+        pdf.autoPrint();
+        const blobUrl = pdf.output('bloburl');
+        window.open(blobUrl, '_blank');
     } catch (error) {
         console.error('Print failed', error);
         alert('Print failed');
-    } finally {
-         if (tempWrapper && tempWrapper.parentNode) {
-            tempWrapper.parentNode.removeChild(tempWrapper);
-        }
     }
   };
 

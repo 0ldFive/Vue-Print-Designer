@@ -248,8 +248,9 @@ onUnmounted(() => {
 });
 
 const handlePrint = async () => {
-  const html = await getPrintHtml();
-  await print(html);
+  // Use real DOM elements to ensure computed styles are captured correctly, similar to exportPdf
+  const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+  await print(pages);
 };
 
 const handleExport = async () => {
