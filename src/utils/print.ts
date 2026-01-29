@@ -179,7 +179,7 @@ export const usePrint = () => {
             clone.style.height = `${height}px`;
             clone.style.margin = '0 0 20px 0';
             // clone.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-            clone.style.backgroundColor = 'white';
+            clone.style.backgroundColor = store.canvasBackground;
             clone.style.transform = 'none';
             // clone.style.border = '1px solid #eee';
             
@@ -427,7 +427,7 @@ export const usePrint = () => {
             clone.style.width = `${width}px`;
             clone.style.height = `${height}px`;
             clone.style.transform = 'none'; // Reset zoom
-            clone.style.background = 'white';
+            clone.style.background = store.canvasBackground;
 
             // MARK WRAPPERS for pagination logic BEFORE cleaning
             const wrappers = clone.querySelectorAll('.element-wrapper');
@@ -483,7 +483,7 @@ export const usePrint = () => {
             width: width,
             height: height * pagesCount,
             useCORS: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: store.canvasBackground
         });
 
         const pdf = new jsPDF({
@@ -523,7 +523,7 @@ export const usePrint = () => {
             width: width,
             height: height * pagesCount,
             useCORS: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: store.canvasBackground
         });
         
         const imgData = canvas.toDataURL('image/png');
