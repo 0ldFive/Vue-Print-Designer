@@ -1,6 +1,6 @@
 import { nextTick } from 'vue';
 import jsPDF from 'jspdf';
-import domtoimage from 'dom-to-image-more';
+import html2canvas from 'html2canvas';
 import { Canvg } from 'canvg';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
@@ -316,10 +316,12 @@ export const usePrint = () => {
     const { container, tempWrapper, pagesCount } = await processContentForImage(content, width, height);
 
     try {
-        const canvas = await domtoimage.toCanvas(container, {
+        const canvas = await html2canvas(container, {
             scale: 2, // Higher quality for print
             width: width,
-            height: height * pagesCount
+            height: height * pagesCount,
+            useCORS: true,
+            backgroundColor: '#ffffff'
         });
         
         const imgData = canvas.toDataURL('image/png');
