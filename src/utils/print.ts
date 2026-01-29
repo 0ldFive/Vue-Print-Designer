@@ -137,32 +137,60 @@ export const usePrint = () => {
   const getPrintHtml = async (): Promise<string> => {
     const restore = await prepareEnvironment();
     
+    // Create a temporary wrapper to simulate the workspace for processContentForImage
+    const wrapper = document.createElement('div');
+    wrapper.className = 'design-workspace';
+    const pages = document.querySelectorAll('.print-page');
+    pages.forEach(page => {
+        wrapper.appendChild(page.cloneNode(true));
+    });
+
+    const width = store.canvasSize.width;
+    const height = store.canvasSize.height;
+
+    let resultContainer: HTMLElement | null = null;
+    let tempWrapper: HTMLElement | null = null;
+    
     try {
-        const pages = document.querySelectorAll('.print-page');
-        const container = document.createElement('div');
+        // Use the shared processing logic (handles pagination, SVG, etc.)
+        const result = await processContentForImage(wrapper, width, height);
+        resultContainer = result.container;
+        tempWrapper = result.tempWrapper;
+
+        // Transform the absolute positioned pages into a vertical layout for preview
+        const previewContainer = document.createElement('div');
+        previewContainer.style.width = '100%';
+        previewContainer.style.display = 'flex';
+        previewContainer.style.flexDirection = 'column';
+        previewContainer.style.alignItems = 'center';
+        // previewContainer.style.padding = '20px';
+        // previewContainer.style.backgroundColor = '#f3f4f6';
+
+        const paginatedPages = Array.from(resultContainer.children) as HTMLElement[];
         
-        pages.forEach((page, index) => {
+        paginatedPages.forEach((page, index) => {
             const clone = page.cloneNode(true) as HTMLElement;
-            // Clean up the clone
-            cleanElement(clone);
             
-            // Adjust styles for preview flow
+            // Adjust styles for preview display
             clone.style.position = 'relative';
             clone.style.left = 'auto';
             clone.style.top = 'auto';
-            clone.style.margin = '0 auto 20px auto';
+            clone.style.width = `${width}px`;
+            clone.style.height = `${height}px`;
+            clone.style.margin = '0 0 20px 0';
+            // clone.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            clone.style.backgroundColor = 'white';
             clone.style.transform = 'none';
-            clone.style.boxShadow = 'none'; // Remove elevation shadow
-            clone.style.border = '1px solid #eee'; // Light border for preview visibility
+            // clone.style.border = '1px solid #eee';
             
-            // Fix IDs to avoid duplicates if previewing multiple times? 
-            // Actually cloning doesn't change IDs, but it's fine for string output.
-            
-            container.appendChild(clone);
+            previewContainer.appendChild(clone);
         });
         
-        return container.outerHTML;
+        return previewContainer.outerHTML;
     } finally {
+        if (tempWrapper && tempWrapper.parentNode) {
+            tempWrapper.parentNode.removeChild(tempWrapper);
+        }
         restore();
     }
   };
@@ -208,58 +236,239 @@ export const usePrint = () => {
     return container;
   };
 
-  const processContentForImage = async (content: HTMLElement | string, width: number, height: number) => {
-    let container: HTMLElement;
-    let tempWrapper: HTMLElement | null = null;
-    let pagesCount = 1;
+  const updatePageNumbers = (container: HTMLElement, totalPages: number) => {
+    const pages = Array.from(container.children) as HTMLElement[];
+    pages.forEach((page, pageIndex) => {
+      const pageNumberElements = page.querySelectorAll('[data-print-type="page-number"]');
+      pageNumberElements.forEach(el => {
+        const textSpan = el.querySelector('.page-number-text');
+        if (textSpan) {
+          textSpan.textContent = `${pageIndex + 1}/${totalPages}`;
+        }
+      });
+    });
+  };
 
-    if (typeof content === 'string') {
-        // Parse string to elements
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
-        const pages = doc.body.children;
-        pagesCount = pages.length;
+  const copyHeaderFooter = (sourcePage: HTMLElement, targetPage: HTMLElement, headerHeight: number, footerHeight: number, pageHeight: number) => {
+    const wrappers = sourcePage.querySelectorAll('[data-print-wrapper]');
+    wrappers.forEach(w => {
+      const el = w as HTMLElement;
+      // Skip if it's the table wrapper being split? 
+      // The split logic moves the table wrapper manually.
+      // We only want to copy OTHER elements that are in header/footer.
+      
+      const top = parseFloat(el.style.top) || 0;
+      const height = parseFloat(el.style.height) || el.offsetHeight;
+      const bottom = top + height;
+
+      // Check if strictly in header or footer region
+      // We allow some overlap, but generally header elements are at the top
+      const isHeader = top < headerHeight;
+      const isFooter = top >= (pageHeight - footerHeight);
+      
+      if (isHeader || isFooter) {
+        const clone = el.cloneNode(true) as HTMLElement;
+        targetPage.appendChild(clone);
+      }
+    });
+  };
+
+  const handleTablePagination = (container: HTMLElement, pageHeight: number, headerHeight: number, footerHeight: number) => {
+    let pages = Array.from(container.children) as HTMLElement[];
+    
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
         
-        container = createTempContainer(width, height, pagesCount);
-        tempWrapper = container.parentElement;
+        // Find all tables in the page
+        const tables = page.querySelectorAll('table');
+        tables.forEach(table => {
+             // Find the wrapper using the data attribute we added
+             const wrapper = table.closest('[data-print-wrapper]') as HTMLElement;
+             if (!wrapper) return;
 
-        Array.from(pages).forEach((page, idx) => {
-            const el = page as HTMLElement;
-            el.style.position = 'absolute';
-            el.style.left = '0';
-            el.style.top = `${idx * height}px`;
-            el.style.margin = '0';
-            container.appendChild(el);
+             // UNLOCK HEIGHT: Allow the wrapper to expand to fit the table
+             wrapper.style.height = 'auto';
+             
+             // UNLOCK OVERFLOW: Remove constraints from TableElement root div
+             // The table is usually inside a div with h-full overflow-hidden
+             const tableRoot = table.parentElement as HTMLElement;
+             if (tableRoot) {
+                 tableRoot.classList.remove('h-full', 'overflow-hidden');
+                 tableRoot.style.height = 'auto';
+                 tableRoot.style.overflow = 'visible';
+             }
+
+             // Calculate positions
+             // We can use style.top because it's absolute positioned relative to page
+             const wrapperTop = parseFloat(wrapper.style.top) || 0;
+             
+             // Now that we unlocked height, offsetHeight should be the real full height
+             // But we need to be careful: if the table was huge, it might now extend WAY past the page.
+             // That's exactly what we want to detect.
+             
+             // Current bottom of table
+             const tableBottom = wrapperTop + table.offsetHeight;
+             
+             // If tableBottom <= pageHeight, no split needed.
+             if (tableBottom <= pageHeight) return;
+             
+             // Split needed
+             let currentHeight = wrapperTop + (table.querySelector('thead')?.offsetHeight || 0);
+             let splitIndex = -1;
+             
+             const tbody = table.querySelector('tbody');
+             if (!tbody) return;
+             const rows = Array.from(tbody.querySelectorAll('tr'));
+             
+             for (let r = 0; r < rows.length; r++) {
+                 const row = rows[r];
+                 const rowHeight = row.offsetHeight;
+                 if (currentHeight + rowHeight > (pageHeight - footerHeight)) { // Consider footer height
+                     splitIndex = r;
+                     break;
+                 }
+                 currentHeight += rowHeight;
+             }
+             
+             if (splitIndex !== -1) {
+                 // Create new page
+                 const newPage = document.createElement('div');
+                 newPage.className = page.className;
+                 newPage.style.cssText = page.style.cssText;
+                 newPage.innerHTML = ''; // Empty
+                 
+                 // Copy header and footer to new page
+                 copyHeaderFooter(page, newPage, headerHeight, footerHeight, pageHeight);
+
+                 // Insert new page
+                 if (i === pages.length - 1) {
+                     container.appendChild(newPage);
+                 } else {
+                     container.insertBefore(newPage, pages[i+1]);
+                 }
+                 
+                 // Re-fetch pages to update array reference for next loop
+                 pages = Array.from(container.children) as HTMLElement[];
+                 
+                 // Clone wrapper for new page
+                 const newWrapper = wrapper.cloneNode(true) as HTMLElement;
+                 // Set top to headerHeight + padding or just below header
+                 // If headerHeight is 0, use 20px padding.
+                 const startY = headerHeight > 0 ? headerHeight + 10 : 20;
+                 newWrapper.style.top = `${startY}px`; 
+                 // Height is already auto from the cloned wrapper
+                 
+                 // Clean up OLD table (remove rows from splitIndex onwards)
+                 const oldRows = rows;
+                 for (let k = splitIndex; k < oldRows.length; k++) {
+                     oldRows[k].remove();
+                 }
+                 // Remove tfoot from old table (only show at very end)
+                 const oldTfoot = table.querySelector('tfoot');
+                 if (oldTfoot) oldTfoot.remove();
+                 
+                 // Clean up NEW table (remove rows before splitIndex)
+                 const newTable = newWrapper.querySelector('table') as HTMLElement;
+                 const newTbody = newTable.querySelector('tbody') as HTMLElement;
+                 const newRowsList = Array.from(newTbody.querySelectorAll('tr'));
+                 
+                 for (let k = 0; k < splitIndex; k++) {
+                     newRowsList[k].remove();
+                 }
+                 
+                 newPage.appendChild(newWrapper);
+             }
         });
+    }
+    
+    // Update all page positions
+    pages = Array.from(container.children) as HTMLElement[];
+    pages.forEach((p, idx) => {
+        p.style.top = `${idx * pageHeight}px`;
+    });
+    
+    return pages.length;
+  };
+
+  const processContentForImage = async (content: HTMLElement | string, width: number, height: number) => {
+    // Create hidden container
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = `${width}px`;
+    container.style.height = `${height}px`; // Start with 1 page height
+    // Don't use overflow hidden, let us measure full heights
+    // container.style.overflow = 'hidden'; 
+    container.style.zIndex = '-1';
+    container.className = 'hiprint_temp_Container';
+    document.body.appendChild(container);
+
+    let pages: HTMLElement[] = [];
+    if (typeof content === 'string') {
+        container.innerHTML = content;
+        pages = Array.from(container.children) as HTMLElement[];
     } else {
-        // Existing element (from preview modal)
-        // We need to clone it to flatten it into the vertical layout expected by jsPDF
-        // But the preview modal already renders them vertically!
-        // So we can just capture the preview modal content?
-        // But preview modal has margins/borders/scrollbars.
-        // Better to recreate the clean layout.
-        
-        const pages = content.querySelectorAll('.print-page');
-        pagesCount = pages.length;
-        
-        container = createTempContainer(width, height, pagesCount);
-        tempWrapper = container.parentElement;
+        // Clone the element to avoid modifying the original
+        // If content is the designer workspace, it might contain multiple pages or just one canvas
+        // We assume content is the .workspace-content or similar
+        // Let's check if content has children that are pages
+        if (content.classList.contains('design-workspace')) {
+             pages = Array.from(content.children) as HTMLElement[];
+        } else {
+             pages = [content];
+        }
         
         pages.forEach((page, idx) => {
             const clone = page.cloneNode(true) as HTMLElement;
             clone.style.position = 'absolute';
             clone.style.left = '0';
             clone.style.top = `${idx * height}px`;
-            clone.style.margin = '0';
-            clone.style.border = 'none'; // Remove preview border
+            clone.style.width = `${width}px`;
+            clone.style.height = `${height}px`;
+            clone.style.transform = 'none'; // Reset zoom
+            clone.style.background = 'white';
+
+            // MARK WRAPPERS for pagination logic BEFORE cleaning
+            const wrappers = clone.querySelectorAll('.element-wrapper');
+            wrappers.forEach(w => w.setAttribute('data-print-wrapper', 'true'));
+
+            // Clean up the clone
+            cleanElement(clone);
+            
+            // Fix SVG size if any
+            const svgs = clone.querySelectorAll('svg');
+            svgs.forEach(svg => {
+                const rect = svg.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) {
+                     // Try to get from attributes
+                     const w = svg.getAttribute('width');
+                     const h = svg.getAttribute('height');
+                     if (w) svg.style.width = w.includes('px') ? w : `${w}px`;
+                     if (h) svg.style.height = h.includes('px') ? h : `${h}px`;
+                }
+            });
+
             container.appendChild(clone);
         });
     }
 
+    // Wait for DOM updates (images, fonts, etc)
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Handle SVGs
     svgToCanvas(container);
 
-    return { container, tempWrapper, pagesCount };
+    // Handle Table Pagination
+    const pagesCount = handleTablePagination(container, height, store.headerHeight, store.footerHeight);
+    
+    // Update Page Numbers
+    updatePageNumbers(container, pagesCount);
+    
+    // Update container height based on new page count
+    container.style.height = `${height * pagesCount}px`;
+
+    return { container, tempWrapper: container, pagesCount };
   };
 
   const exportPdf = async (content: HTMLElement | string, filename = 'print-design.pdf') => {
@@ -269,14 +478,12 @@ export const usePrint = () => {
     const { container, tempWrapper, pagesCount } = await processContentForImage(content, width, height);
 
     try {
-        const canvas = await domtoimage.toCanvas(container, {
+        const canvas = await html2canvas(container, {
             scale: 2,
             width: width,
             height: height * pagesCount,
-            style: {
-                transform: 'scale(1)',
-                transformOrigin: 'top left'
-            }
+            useCORS: true,
+            backgroundColor: '#ffffff'
         });
 
         const pdf = new jsPDF({
@@ -289,12 +496,7 @@ export const usePrint = () => {
         const imgData = canvas.toDataURL('image/png');
         for (let p = 0; p < pagesCount; p++) {
             if (p > 0) pdf.addPage([width, height]);
-            // Slice the image? No, dom-to-image captured the WHOLE thing.
-            // We need to crop it or shift it?
-            // jsPDF addImage supports alias, x, y, w, h.
-            // But we have one tall image.
-            // We can add the SAME image but shifted Y.
-            
+            // Slice the image by adjusting the Y position
             pdf.addImage(imgData, 'PNG', 0, -p * height, width, height * pagesCount);
         }
         

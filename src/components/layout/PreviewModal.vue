@@ -65,7 +65,7 @@ onUnmounted(() => {
         <div class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
           <div 
             ref="previewContainer"
-            class="preview-content shadow-lg bg-white"
+            class="preview-content"
             :style="{ width: `${width}px` }"
             v-html="htmlContent"
           ></div>

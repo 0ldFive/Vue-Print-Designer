@@ -102,7 +102,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden" :style="{
+  <div class="w-full h-full overflow-hidden" 
+    data-print-type="page-number"
+    :style="{
     fontSize: `${element.style.fontSize}px`,
     fontFamily: element.style.fontFamily,
     fontWeight: element.style.fontWeight,
@@ -123,7 +125,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       marginRight: '4px',
       padding: '0 4px'
     }">{{ element.labelText }}</span>
-    <span>{{ (pageIndex + 1) }}/{{ totalPages || 1 }}</span>
+    <span class="page-number-text">{{ (pageIndex + 1) }}/{{ totalPages || 1 }}</span>
     <span v-if="element.labelText && element.labelPosition === 'after'" :style="{
       fontSize: element.labelFontSize ? `${element.labelFontSize}px` : undefined,
       fontFamily: element.labelFontFamily || undefined,
