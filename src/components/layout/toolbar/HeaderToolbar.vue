@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
 import Preview from '~icons/material-symbols/preview';
@@ -185,6 +185,22 @@ const handlePreview = async () => {
     alert('Preview generation failed');
   }
 };
+
+const handleKeydown = (e: KeyboardEvent) => {
+  // Preview (Ctrl + Shift + P)
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+    e.preventDefault();
+    handlePreview();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 
 const handlePrint = async () => {
   const html = await getPrintHtml();
