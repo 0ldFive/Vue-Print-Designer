@@ -8,7 +8,7 @@ interface Option {
 
 defineProps<{
   label: string;
-  value: string | number;
+  value?: string | number;
   options: Option[];
   disabled?: boolean;
 }>();

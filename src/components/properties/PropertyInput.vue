@@ -3,7 +3,7 @@ import { defineProps, defineEmits } from 'vue';
 
 defineProps<{
   label: string;
-  value: string | number | boolean;
+  value?: string | number | boolean;
   type?: 'text' | 'number' | 'textarea' | 'switch';
   placeholder?: string;
   min?: number;

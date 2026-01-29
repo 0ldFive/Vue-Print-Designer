@@ -4,7 +4,7 @@ import ColorPicker from '@/components/common/ColorPicker.vue';
 
 defineProps<{
   label: string;
-  value: string;
+  value?: string;
   disabled?: boolean;
 }>();
 
