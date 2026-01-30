@@ -195,6 +195,45 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
   }
 };
 
+const getRotatedBounds = (el: any) => {
+  const rotation = el.style?.rotate || 0;
+  if (rotation === 0) {
+    return {
+      minX: el.x,
+      maxX: el.x + el.width,
+      minY: el.y,
+      maxY: el.y + el.height
+    };
+  }
+
+  const cx = el.x + el.width / 2;
+  const cy = el.y + el.height / 2;
+  const rad = (rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const corners = [
+    { x: el.x, y: el.y },
+    { x: el.x + el.width, y: el.y },
+    { x: el.x, y: el.y + el.height },
+    { x: el.x + el.width, y: el.y + el.height }
+  ];
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+  for (const p of corners) {
+    const nx = cx + (p.x - cx) * cos - (p.y - cy) * sin;
+    const ny = cy + (p.x - cx) * sin + (p.y - cy) * cos;
+    
+    if (nx < minX) minX = nx;
+    if (nx > maxX) maxX = nx;
+    if (ny < minY) minY = ny;
+    if (ny > maxY) maxY = ny;
+  }
+
+  return { minX, maxX, minY, maxY };
+};
+
 const dragProjection = computed(() => {
   if (!store.isDragging || store.selectedElementIds.length === 0) return null;
 
@@ -208,14 +247,23 @@ const dragProjection = computed(() => {
 
   if (elements.length === 0) return null;
 
-  const minX = Math.min(...elements.map(e => e.x));
-  const maxX = Math.max(...elements.map(e => e.x + e.width));
-  const minY = Math.min(...elements.map(e => e.y));
-  const maxY = Math.max(...elements.map(e => e.y + e.height));
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
+  let globalMinX = Infinity;
+  let globalMaxX = -Infinity;
+  let globalMinY = Infinity;
+  let globalMaxY = -Infinity;
 
-  return { minX, maxX, minY, maxY, centerX, centerY };
+  for (const el of elements) {
+    const bounds = getRotatedBounds(el);
+    if (bounds.minX < globalMinX) globalMinX = bounds.minX;
+    if (bounds.maxX > globalMaxX) globalMaxX = bounds.maxX;
+    if (bounds.minY < globalMinY) globalMinY = bounds.minY;
+    if (bounds.maxY > globalMaxY) globalMaxY = bounds.maxY;
+  }
+
+  const centerX = (globalMinX + globalMaxX) / 2;
+  const centerY = (globalMinY + globalMaxY) / 2;
+
+  return { minX: globalMinX, maxX: globalMaxX, minY: globalMinY, maxY: globalMaxY, centerX, centerY };
 });
 
 const rulerIndicators = computed(() => {
