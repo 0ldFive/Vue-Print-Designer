@@ -250,8 +250,8 @@ const handleDeleteSelected = () => {
                   <textarea
                     :placeholder="field.placeholder"
                     :disabled="isLocked"
-                    :value="field.key === 'data' ? JSON.stringify(element.data, null, 2) : getFieldValue(field)"
-                    @change="field.key === 'data' ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"
+                    :value="['data', 'columns', 'footerData'].includes(field.key!) ? JSON.stringify((element as any)[field.key!], null, 2) : getFieldValue(field)"
+                    @change="['data', 'columns', 'footerData'].includes(field.key!) ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"
                     class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono disabled:bg-gray-100 disabled:text-gray-500"
                   ></textarea>
                 </div>

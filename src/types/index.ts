@@ -40,6 +40,12 @@ export interface ElementStyle {
   rowHeight?: number; // Table row height
   headerHeight?: number; // Table header height
   footerHeight?: number; // Table footer height
+  headerBackgroundColor?: string;
+  footerBackgroundColor?: string;
+  headerColor?: string;
+  footerColor?: string;
+  headerFontSize?: number;
+  footerFontSize?: number;
   writingMode?: 'horizontal-tb' | 'vertical-rl';
   // Barcode specific
   barcodeFormat?: string;
@@ -67,6 +73,10 @@ export interface PrintElement {
   data?: any[]; // For table
   columns?: TableColumn[]; // For table
   autoPaginate?: boolean; // For table
+  tfootRepeat?: boolean; // For table
+  showFooter?: boolean; // For table
+  footerData?: any[]; // For table
+  customScript?: string; // For table (data processing)
   style: ElementStyle;
   // Pager-specific (optional)
   labelText?: string;

@@ -295,6 +295,10 @@ export const usePrint = () => {
              // Find the wrapper using the data attribute we added
              const wrapper = table.closest('[data-print-wrapper]') as HTMLElement;
              if (!wrapper) return;
+             
+             // Respect element-level auto paginate flag
+             const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
+             if (!autoPaginate) return;
 
              // UNLOCK HEIGHT: Allow the wrapper to expand to fit the table
             wrapper.style.height = 'auto';
@@ -386,11 +390,15 @@ export const usePrint = () => {
                  if (splitIndex === 0) {
                      wrapper.remove();
                  }
-                 // Remove tfoot from old table (only show at very end)
-                 const oldTfoot = table.querySelector('tfoot');
-                 if (oldTfoot) oldTfoot.remove();
-                 
-                 // Clean up NEW table (remove rows before splitIndex)
+                 // Remove tfoot from old table (only show at very end unless repeat is requested)
+                const oldTfoot = table.querySelector('tfoot');
+                const shouldRepeatFooter = table.getAttribute('data-tfoot-repeat') === 'true';
+                
+                if (oldTfoot && !shouldRepeatFooter) {
+                    oldTfoot.remove();
+                }
+                
+                // Clean up NEW table (remove rows before splitIndex)
                 const newTable = newWrapper.querySelector('table') as HTMLElement;
                 newTable.style.height = 'auto';
                 const newTbody = newTable.querySelector('tbody') as HTMLElement;
