@@ -1,6 +1,6 @@
 <script setup lang="ts">
-
 import ColorPicker from '@/components/common/ColorPicker.vue';
+import FormatColorReset from '~icons/material-symbols/format-color-reset';
 
 defineProps<{
   label: string;
