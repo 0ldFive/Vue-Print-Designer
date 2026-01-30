@@ -157,10 +157,27 @@ const handleDeleteSelected = () => {
     store.removeElement(element.value.id);
   }
 };
+
+const handleFocusIn = () => {
+  store.setDisableGlobalShortcuts(true);
+};
+
+const handleFocusOut = (e: FocusEvent) => {
+  // If focus moves to another element within the aside, do nothing
+  if (e.relatedTarget && (e.currentTarget as Element).contains(e.relatedTarget as Node)) {
+    return;
+  }
+  // Otherwise enable shortcuts
+  store.setDisableGlobalShortcuts(false);
+};
 </script>
 
 <template>
-  <aside class="w-[380px] bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden">
+  <aside 
+    class="w-[380px] bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden"
+    @focusin="handleFocusIn"
+    @focusout="handleFocusOut"
+  >
     <!-- Header -->
     <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
       <h2 class="font-semibold text-gray-700">Properties</h2>

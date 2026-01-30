@@ -30,11 +30,18 @@ export const useDesignerStore = defineStore('designer', {
     clipboard: [],
     isExporting: false,
     disableGlobalShortcuts: false,
+    disableShortcutsCount: 0,
     tableSelection: null,
   }),
   actions: {
     setDisableGlobalShortcuts(val: boolean) {
-      this.disableGlobalShortcuts = val;
+      const current = this.disableShortcutsCount || 0;
+      if (val) {
+        this.disableShortcutsCount = current + 1;
+      } else {
+        this.disableShortcutsCount = Math.max(0, current - 1);
+      }
+      this.disableGlobalShortcuts = this.disableShortcutsCount > 0;
     },
     setIsExporting(isExporting: boolean) {
       this.isExporting = isExporting;
