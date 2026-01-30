@@ -348,7 +348,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             <!-- Resize Handle -->
             <div 
               v-if="store.selectedElementId === element.id"
-              class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity"
+              class="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity"
               :class="{ 'bg-blue-400 opacity-100': resizingColIndex === index }"
               @mousedown="(e) => handleResizeStart(e, index)"
               @click.stop
