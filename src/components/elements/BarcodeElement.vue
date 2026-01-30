@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, onMounted, watch, ref, nextTick } from 'vue';
+import { onMounted, watch, ref, nextTick } from 'vue';
 import type { PrintElement } from '@/types';
 import JsBarcode from 'jsbarcode';
 
