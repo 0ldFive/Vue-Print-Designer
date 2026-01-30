@@ -194,6 +194,46 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
     });
   }
 };
+
+const dragProjection = computed(() => {
+  if (!store.isDragging || store.selectedElementIds.length === 0) return null;
+
+  const elements: any[] = [];
+  for (const id of store.selectedElementIds) {
+    for (const page of store.pages) {
+      const el = page.elements.find(e => e.id === id);
+      if (el) elements.push(el);
+    }
+  }
+
+  if (elements.length === 0) return null;
+
+  const minX = Math.min(...elements.map(e => e.x));
+  const maxX = Math.max(...elements.map(e => e.x + e.width));
+  const minY = Math.min(...elements.map(e => e.y));
+  const maxY = Math.max(...elements.map(e => e.y + e.height));
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  return { minX, maxX, minY, maxY, centerX, centerY };
+});
+
+const rulerIndicators = computed(() => {
+  if (!dragProjection.value) return { h: [], v: [] };
+  
+  const { minX, maxX, minY, maxY } = dragProjection.value;
+  
+  return {
+    h: [
+      { position: minX, color: 'rgba(6, 182, 212, 0.5)' },
+      { position: maxX, color: 'rgba(6, 182, 212, 0.5)' }
+    ],
+    v: [
+      { position: minY, color: 'rgba(6, 182, 212, 0.5)' },
+      { position: maxY, color: 'rgba(6, 182, 212, 0.5)' }
+    ]
+  };
+});
 </script>
 
 <template>
@@ -215,6 +255,7 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
                     :scroll="scrollX" 
                     :offset="offsetX" 
                     :thick="20"
+                    :indicators="rulerIndicators.h"
                     @guide-drag-start="(e) => handleGuideDragStart(e, 'horizontal')"
                  />
               </div>
@@ -229,6 +270,7 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
                     :scroll="scrollY" 
                     :offset="offsetY" 
                     :thick="20"
+                    :indicators="rulerIndicators.v"
                     @guide-drag-start="(e) => handleGuideDragStart(e, 'vertical')"
                  />
               </div>
@@ -246,6 +288,43 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
 
                  <!-- Guides Overlay -->
                  <div class="absolute top-0 left-0 pointer-events-none z-50" :style="{ width: `${scrollWidth}px`, height: `${scrollHeight}px` }">
+                    
+                    <!-- Dragging Distance Guides -->
+                     <template v-if="dragProjection">
+                       <!-- Top Line -->
+                       <div class="absolute w-full border-t border-cyan-500 border-dashed"
+                            :style="{ top: `${offsetY + dragProjection.minY * store.zoom}px`, left: 0 }">
+                          <div class="absolute -top-6 bg-cyan-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
+                               :style="{ left: `${scrollX + 10}px` }">
+                             {{ pxToMm(dragProjection.minY).toFixed(1) }} mm
+                          </div>
+                       </div>
+                       <!-- Bottom Line -->
+                       <div class="absolute w-full border-t border-cyan-500 border-dashed"
+                            :style="{ top: `${offsetY + dragProjection.maxY * store.zoom}px`, left: 0 }">
+                          <div class="absolute -top-6 bg-cyan-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
+                               :style="{ left: `${scrollX + 10}px` }">
+                             {{ pxToMm(dragProjection.maxY).toFixed(1) }} mm
+                          </div>
+                       </div>
+                       <!-- Left Line -->
+                       <div class="absolute h-full border-l border-cyan-500 border-dashed"
+                            :style="{ left: `${offsetX + dragProjection.minX * store.zoom}px`, top: 0 }">
+                          <div class="absolute -left-2 transform -translate-x-full bg-cyan-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap"
+                               :style="{ top: `${scrollY + 10}px` }">
+                             {{ pxToMm(dragProjection.minX).toFixed(1) }} mm
+                          </div>
+                       </div>
+                       <!-- Right Line -->
+                       <div class="absolute h-full border-l border-cyan-500 border-dashed"
+                            :style="{ left: `${offsetX + dragProjection.maxX * store.zoom}px`, top: 0 }">
+                          <div class="absolute -left-2 transform -translate-x-full bg-cyan-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap"
+                               :style="{ top: `${scrollY + 10}px` }">
+                             {{ pxToMm(dragProjection.maxX).toFixed(1) }} mm
+                          </div>
+                       </div>
+                     </template>
+
                     <!-- Existing Guides -->
                     <template v-for="guide in store.guides" :key="guide.id">
                        <div 
@@ -291,6 +370,57 @@ const handleMinimapScroll = (pos: { left: number, top: number }) => {
                           {{ pxToMm(draggingGuidePos) }}mm
                        </div>
                     </div>
+                    
+                    <!-- Dragging Distance Guides -->
+                    <template v-if="dragProjection">
+                      <!-- Left Distance -->
+                      <div class="absolute border-t border-dashed border-cyan-500 flex items-center justify-center pointer-events-none"
+                        :style="{
+                          left: `${offsetX}px`,
+                          top: `${offsetY + dragProjection.centerY * store.zoom}px`,
+                          width: `${dragProjection.minX * store.zoom}px`,
+                          height: '1px'
+                        }"
+                      >
+                         <div class="bg-cyan-500 text-white text-[10px] px-1 rounded -mt-6">{{ pxToMm(dragProjection.minX) }}mm</div>
+                      </div>
+
+                      <!-- Right Distance -->
+                      <div class="absolute border-t border-dashed border-cyan-500 flex items-center justify-center pointer-events-none"
+                        :style="{
+                          left: `${offsetX + dragProjection.maxX * store.zoom}px`,
+                          top: `${offsetY + dragProjection.centerY * store.zoom}px`,
+                          width: `${(store.canvasSize.width - dragProjection.maxX) * store.zoom}px`,
+                          height: '1px'
+                        }"
+                      >
+                        <div class="bg-cyan-500 text-white text-[10px] px-1 rounded -mt-6">{{ pxToMm(store.canvasSize.width - dragProjection.maxX) }}mm</div>
+                      </div>
+
+                      <!-- Top Distance -->
+                      <div class="absolute border-l border-dashed border-cyan-500 flex items-center justify-center pointer-events-none"
+                        :style="{
+                          left: `${offsetX + dragProjection.centerX * store.zoom}px`,
+                          top: `${offsetY}px`,
+                          height: `${dragProjection.minY * store.zoom}px`,
+                          width: '1px'
+                        }"
+                      >
+                        <div class="bg-cyan-500 text-white text-[10px] px-1 rounded -ml-2">{{ pxToMm(dragProjection.minY) }}mm</div>
+                      </div>
+
+                      <!-- Bottom Distance -->
+                      <div class="absolute border-l border-dashed border-cyan-500 flex items-center justify-center pointer-events-none"
+                        :style="{
+                          left: `${offsetX + dragProjection.centerX * store.zoom}px`,
+                          top: `${offsetY + dragProjection.maxY * store.zoom}px`,
+                          height: `${(store.canvasSize.height - dragProjection.maxY) * store.zoom}px`,
+                          width: '1px'
+                        }"
+                      >
+                        <div class="bg-cyan-500 text-white text-[10px] px-1 rounded -ml-2">{{ pxToMm(store.canvasSize.height - dragProjection.maxY) }}mm</div>
+                      </div>
+                    </template>
                     
                     <!-- Edge Highlight -->
                     <div v-if="store.highlightedEdge" class="absolute pointer-events-none">

@@ -8,6 +8,7 @@ const props = defineProps<{
   scroll: number;
   offset: number; // Start position offset (where 0 is)
   thick?: number;
+  indicators?: { position: number; color: string }[];
 }>();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -22,13 +23,26 @@ const draw = () => {
 
   const width = canvas.width;
   const height = canvas.height;
-  const { zoom, scroll, offset, type } = props;
+  const { zoom, scroll, offset, type, indicators } = props;
 
   // Clear
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = '#F9FAFB'; // bg-gray-50
   ctx.fillRect(0, 0, width, height);
   
+  // Draw Indicators
+  if (indicators && indicators.length > 0) {
+    for (const indicator of indicators) {
+      const pos = offset + (indicator.position * zoom) - scroll;
+      ctx.fillStyle = indicator.color;
+      if (type === 'horizontal') {
+        ctx.fillRect(pos - 2, 0, 4, THICKNESS);
+      } else {
+        ctx.fillRect(0, pos - 2, THICKNESS, 4);
+      }
+    }
+  }
+
   ctx.strokeStyle = '#9CA3AF'; // gray-400
   ctx.fillStyle = '#6B7280'; // gray-500
   ctx.lineWidth = 1;
@@ -129,7 +143,7 @@ onMounted(() => {
   }
 });
 
-watch(() => [props.zoom, props.scroll, props.offset], draw);
+watch(() => [props.zoom, props.scroll, props.offset, props.indicators], draw, { deep: true });
 
 const emit = defineEmits<{
   (e: 'guide-drag-start', event: MouseEvent): void

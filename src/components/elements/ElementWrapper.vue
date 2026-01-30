@@ -108,6 +108,7 @@ const handleMouseDown = (e: MouseEvent) => {
   if (props.element.locked) return; // Prevent drag if locked
 
   isDragging = true;
+  store.setDragging(true);
   hasSnapshot = false;
   startX = e.clientX;
   startY = e.clientY;
@@ -154,6 +155,7 @@ const handleMouseUp = (e: MouseEvent) => {
   }
 
   isDragging = false;
+  store.setDragging(false);
   window.removeEventListener('mousemove', handleMouseMove);
   window.removeEventListener('mouseup', handleMouseUp);
   store.setHighlightedGuide(null);

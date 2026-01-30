@@ -34,6 +34,9 @@ export const useDesignerStore = defineStore('designer', {
     tableSelection: null,
   }),
   actions: {
+    setDragging(isDragging: boolean) {
+      this.isDragging = isDragging;
+    },
     setDisableGlobalShortcuts(val: boolean) {
       const current = this.disableShortcutsCount || 0;
       if (val) {
