@@ -105,8 +105,10 @@ const handleDrag = (e: MouseEvent, type: 'sv' | 'hue' | 'alpha') => {
     if (type === 'sv') {
       hsv.value.s = x;
       hsv.value.v = 1 - y;
+      if (hsv.value.a === 0) hsv.value.a = 1;
     } else if (type === 'hue') {
       hsv.value.h = x * 360;
+      if (hsv.value.a === 0) hsv.value.a = 1;
     } else if (type === 'alpha') {
       hsv.value.a = x;
     }
@@ -265,18 +267,18 @@ onUnmounted(() => {
           <!-- Hue Slider -->
           <div 
             ref="hueSliderRef"
-            class="h-3 rounded relative cursor-pointer"
+            class="h-3 rounded relative cursor-pointer border border-gray-200"
             style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)"
             @mousedown="(e) => handleDrag(e, 'hue')"
           >
             <div 
-              class="absolute top-0 bottom-0 w-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+              class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
               :style="hueCursorStyle"
             ></div>
           </div>
 
           <!-- Alpha Slider -->
-          <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')]">
+          <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] border border-gray-200">
             <div 
               ref="alphaSliderRef"
               class="absolute inset-0 cursor-pointer rounded"
@@ -284,7 +286,7 @@ onUnmounted(() => {
               @mousedown="(e) => handleDrag(e, 'alpha')"
             >
               <div 
-                class="absolute top-0 bottom-0 w-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+                class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
                 :style="alphaCursorStyle"
               ></div>
             </div>
