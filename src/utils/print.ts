@@ -606,8 +606,23 @@ export const usePrint = () => {
     try {
         const pdf = await createPdfDocument(content);
         pdf.autoPrint();
-        const blobUrl = pdf.output('bloburl');
-        window.open(blobUrl, '_blank');
+        const blob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = blobUrl;
+        document.body.appendChild(iframe);
+        
+        iframe.onload = () => {
+            if (iframe.contentWindow) {
+                iframe.contentWindow.print();
+            }
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                URL.revokeObjectURL(blobUrl);
+            }, 1000); // Give it some time to process
+        };
     } catch (error) {
         console.error('Print failed', error);
         alert('Print failed');
