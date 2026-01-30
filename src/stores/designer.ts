@@ -29,6 +29,7 @@ export const useDesignerStore = defineStore('designer', {
     historyFuture: [],
     clipboard: [],
     isExporting: false,
+    tableSelection: null,
   }),
   actions: {
     setIsExporting(isExporting: boolean) {
@@ -60,6 +61,182 @@ export const useDesignerStore = defineStore('designer', {
       } catch (error) {
         console.error('Load from localStorage failed', error);
       }
+    },
+    setTableSelection(elementId: string, cell: { rowIndex: number; colField: string }, multi: boolean) {
+      // If switching elements, clear previous
+      if (this.tableSelection && this.tableSelection.elementId !== elementId) {
+        this.tableSelection = { elementId, cells: [cell] };
+        return;
+      }
+
+      if (!this.tableSelection) {
+        this.tableSelection = { elementId, cells: [cell] };
+        return;
+      }
+
+      if (multi) {
+        // Toggle if exists
+        const idx = this.tableSelection.cells.findIndex(c => c.rowIndex === cell.rowIndex && c.colField === cell.colField);
+        if (idx >= 0) {
+          this.tableSelection.cells.splice(idx, 1);
+          if (this.tableSelection.cells.length === 0) {
+            this.tableSelection = null;
+          }
+        } else {
+          this.tableSelection.cells.push(cell);
+        }
+      } else {
+        this.tableSelection = { elementId, cells: [cell] };
+      }
+    },
+    setTableSelectionCells(elementId: string, cells: { rowIndex: number; colField: string }[]) {
+      this.tableSelection = { elementId, cells };
+    },
+    clearTableSelection() {
+      this.tableSelection = null;
+    },
+    mergeSelectedCells() {
+      if (!this.tableSelection || this.tableSelection.cells.length < 2) return;
+
+      const { elementId, cells } = this.tableSelection;
+      
+      // Find element
+      let element: PrintElement | null = null;
+      let pageIndex = -1;
+      let elementIndex = -1;
+      
+      for (let i = 0; i < this.pages.length; i++) {
+        const idx = this.pages[i].elements.findIndex(e => e.id === elementId);
+        if (idx !== -1) {
+          element = this.pages[i].elements[idx];
+          pageIndex = i;
+          elementIndex = idx;
+          break;
+        }
+      }
+
+      if (!element || !element.data || !element.columns) return;
+
+      // Find bounds
+      const rowIndices = cells.map(c => c.rowIndex);
+      const minRow = Math.min(...rowIndices);
+      const maxRow = Math.max(...rowIndices);
+      
+      // Map columns to indices to find min/max col
+      const colFields = element.columns.map(c => c.field);
+      const colIndices = cells.map(c => colFields.indexOf(c.colField)).filter(i => i !== -1);
+      
+      if (colIndices.length !== cells.length) return; // Invalid columns
+
+      const minColIdx = Math.min(...colIndices);
+      const maxColIdx = Math.max(...colIndices);
+
+      const rowSpan = maxRow - minRow + 1;
+      const colSpan = maxColIdx - minColIdx + 1;
+
+      // Snapshot for undo
+      this.snapshot();
+
+      // Update data
+      const newData = cloneDeep(element.data);
+      
+      // Iterate through the bounding box
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minColIdx; c <= maxColIdx; c++) {
+          const field = colFields[c];
+          const row = newData[r];
+          
+          if (!row) continue;
+
+          // Initialize cell object if it's just a value
+          if (typeof row[field] !== 'object' || row[field] === null) {
+            row[field] = { value: row[field] };
+          } else if (!('value' in row[field])) {
+             // If it is object but maybe custom, ensure it has structure we expect or treat as value container?
+             // Actually existing logic checks 'value' in val. If not, it returns val.
+             // So we should normalize to { value: ..., rowSpan: 1, colSpan: 1 }
+             // But let's respect existing structure.
+          }
+
+          if (r === minRow && c === minColIdx) {
+            // Top-left cell: set span
+            row[field].rowSpan = rowSpan;
+            row[field].colSpan = colSpan;
+          } else {
+            // Other cells: hide
+            row[field].rowSpan = 0;
+            row[field].colSpan = 0;
+          }
+        }
+      }
+
+      this.pages[pageIndex].elements[elementIndex] = {
+        ...element,
+        data: newData
+      };
+      
+      this.tableSelection = null;
+    },
+    splitSelectedCells() {
+        if (!this.tableSelection || this.tableSelection.cells.length !== 1) return;
+        
+        const { elementId, cells } = this.tableSelection;
+        const cell = cells[0];
+        
+        // Find element
+        let element: PrintElement | null = null;
+        let pageIndex = -1;
+        let elementIndex = -1;
+        
+        for (let i = 0; i < this.pages.length; i++) {
+          const idx = this.pages[i].elements.findIndex(e => e.id === elementId);
+          if (idx !== -1) {
+            element = this.pages[i].elements[idx];
+            pageIndex = i;
+            elementIndex = idx;
+            break;
+          }
+        }
+  
+        if (!element || !element.data || !element.columns) return;
+        
+        const row = element.data[cell.rowIndex];
+        if (!row) return;
+        
+        const val = row[cell.colField];
+        if (!val || typeof val !== 'object' || (!val.rowSpan && !val.colSpan)) return;
+        
+        // Check if actually merged
+        const rowSpan = val.rowSpan || 1;
+        const colSpan = val.colSpan || 1;
+        
+        if (rowSpan <= 1 && colSpan <= 1) return;
+        
+        // Snapshot
+        this.snapshot();
+        
+        const newData = cloneDeep(element.data);
+        const colFields = element.columns.map(c => c.field);
+        const startColIdx = colFields.indexOf(cell.colField);
+        
+        // Reset all cells in the range
+        for (let r = cell.rowIndex; r < cell.rowIndex + rowSpan; r++) {
+            for (let c = startColIdx; c < startColIdx + colSpan; c++) {
+                const field = colFields[c];
+                const rData = newData[r];
+                if (rData && rData[field] && typeof rData[field] === 'object') {
+                    rData[field].rowSpan = 1;
+                    rData[field].colSpan = 1;
+                }
+            }
+        }
+        
+        this.pages[pageIndex].elements[elementIndex] = {
+          ...element,
+          data: newData
+        };
+        
+        this.tableSelection = null;
     },
     setHeaderHeight(height: number) {
       this.headerHeight = height;

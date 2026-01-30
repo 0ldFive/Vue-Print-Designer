@@ -25,6 +25,29 @@ const isSelfStyled = computed(() => {
   if (!element.value) return false;
   return [ElementType.LINE, ElementType.RECT, ElementType.CIRCLE].includes(element.value.type);
 });
+
+const canMergeCells = computed(() => {
+  if (!store.tableSelection) return false;
+  return store.tableSelection.cells.length > 1;
+});
+
+const canSplitCells = computed(() => {
+  if (!store.tableSelection) return false;
+  if (store.tableSelection.cells.length !== 1) return false;
+  
+  const cell = store.tableSelection.cells[0];
+  const el = store.selectedElement;
+  if (!el || el.type !== ElementType.TABLE || !el.data) return false;
+  
+  const row = el.data[cell.rowIndex];
+  if (!row) return false;
+  const val = row[cell.colField];
+  if (val && typeof val === 'object') {
+     return (val.rowSpan || 1) > 1 || (val.colSpan || 1) > 1;
+  }
+  return false;
+});
+
 const activeTab = ref<'properties' | 'style' | 'advanced'>('properties');
 
 const handleChange = (key: string, value: any) => {
@@ -191,6 +214,27 @@ const handleDeleteSelected = () => {
               :value="pxToMm(element.height)" 
               @update:value="(v) => handleChange('height', mmToPx(Number(v)))" 
             />
+          </div>
+        </div>
+
+        <!-- Table Cell Operations -->
+        <div v-if="activeTab === 'properties' && element.type === 'table' && store.tableSelection" class="space-y-3 pt-2 border-t border-gray-100">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cell Operations</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              @click="store.mergeSelectedCells()"
+              :disabled="!canMergeCells || isLocked"
+              class="w-full py-2 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+            >
+              Merge Cells
+            </button>
+            <button
+              @click="store.splitSelectedCells()"
+              :disabled="!canSplitCells || isLocked"
+              class="w-full py-2 bg-white text-gray-600 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Split Cells
+            </button>
           </div>
         </div>
 

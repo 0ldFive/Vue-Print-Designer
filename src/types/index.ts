@@ -126,6 +126,10 @@ export interface DesignerState {
   historyFuture: Page[][];
   clipboard: PrintElement[];
   isExporting?: boolean;
+  tableSelection?: {
+    elementId: string;
+    cells: { rowIndex: number; colField: string }[];
+  } | null;
 }
 
 export interface Guide {

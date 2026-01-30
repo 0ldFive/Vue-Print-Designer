@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import type { PrintElement } from '@/types';
+import { useDesignerStore } from '@/stores/designer';
 
 const props = defineProps<{
   element: PrintElement;
 }>();
+
+const store = useDesignerStore();
+
+function isCellSelected(rowIndex: number, colField: string) {
+  if (!store.tableSelection || store.tableSelection.elementId !== props.element.id) return false;
+  return store.tableSelection.cells.some(c => c.rowIndex === rowIndex && c.colField === colField);
+}
+
+const isSelecting = ref(false);
+const startCell = ref<{ rowIndex: number; colField: string } | null>(null);
 
 const cellStyle = computed(() => ({
   borderStyle: props.element.style.borderStyle || 'solid',
@@ -76,6 +87,55 @@ const shouldRenderCell = (row: any, field: string) => {
   }
   return true;
 };
+
+const handleMouseDown = (e: MouseEvent, rowIndex: number, colField: string) => {
+  if (store.selectedElementId !== props.element.id) return;
+  e.stopPropagation();
+  isSelecting.value = true;
+  startCell.value = { rowIndex, colField };
+  store.setTableSelection(props.element.id, { rowIndex, colField }, false);
+};
+
+const handleMouseOver = (rowIndex: number, colField: string) => {
+  if (!isSelecting.value || !startCell.value) return;
+  
+  const startRow = startCell.value.rowIndex;
+  const endRow = rowIndex;
+  const startColIdx = processedData.value.columns.findIndex(c => c.field === startCell.value!.colField);
+  const endColIdx = processedData.value.columns.findIndex(c => c.field === colField);
+  
+  if (startColIdx === -1 || endColIdx === -1) return;
+  
+  const minRow = Math.min(startRow, endRow);
+  const maxRow = Math.max(startRow, endRow);
+  const minCol = Math.min(startColIdx, endColIdx);
+  const maxCol = Math.max(startColIdx, endColIdx);
+  
+  const cells = [];
+  for (let r = minRow; r <= maxRow; r++) {
+    for (let c = minCol; c <= maxCol; c++) {
+      cells.push({
+        rowIndex: r,
+        colField: processedData.value.columns[c].field
+      });
+    }
+  }
+  
+  store.setTableSelectionCells(props.element.id, cells);
+};
+
+const handleMouseUp = () => {
+  isSelecting.value = false;
+  startCell.value = null;
+};
+
+onMounted(() => {
+  window.addEventListener('mouseup', handleMouseUp);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('mouseup', handleMouseUp);
+});
 </script>
 
 <script lang="ts">
@@ -169,13 +229,16 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           <template v-for="col in processedData.columns" :key="col.field">
              <td 
                v-if="shouldRenderCell(row, col.field)"
-               class="p-1 text-sm"
+               class="p-1 text-sm select-none"
+               :class="{ 'bg-blue-100 ring-1 ring-blue-400': isCellSelected(i, col.field) }"
                :style="{
                  ...getCellStyle(row, col.field),
                  height: element.style.rowHeight ? `${element.style.rowHeight}px` : undefined
                }"
                :rowspan="getRowSpan(row, col.field)"
                :colspan="getColSpan(row, col.field)"
+               @mousedown="(e) => handleMouseDown(e, i, col.field)"
+               @mouseover="handleMouseOver(i, col.field)"
              >
                {{ getCellValue(row, col.field) }}
              </td>
