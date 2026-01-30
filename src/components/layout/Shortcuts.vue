@@ -12,6 +12,9 @@ const menuY = ref(0);
 const canPasteHere = ref(false);
 
 const handleKeydown = (e: KeyboardEvent) => {
+  // If global shortcuts are disabled (e.g. code editor is open), ignore
+  if (store.disableGlobalShortcuts) return;
+
   // ignore when typing in inputs
   const target = e.target as Element | null;
   if (target && (target.closest('input, textarea, select, [contenteditable="true"]'))) return;

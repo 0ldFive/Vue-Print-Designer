@@ -126,6 +126,7 @@ export interface DesignerState {
   historyFuture: Page[][];
   clipboard: PrintElement[];
   isExporting?: boolean;
+  disableGlobalShortcuts?: boolean;
   tableSelection?: {
     elementId: string;
     cells: { rowIndex: number; colField: string }[];

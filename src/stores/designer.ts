@@ -29,9 +29,13 @@ export const useDesignerStore = defineStore('designer', {
     historyFuture: [],
     clipboard: [],
     isExporting: false,
+    disableGlobalShortcuts: false,
     tableSelection: null,
   }),
   actions: {
+    setDisableGlobalShortcuts(val: boolean) {
+      this.disableGlobalShortcuts = val;
+    },
     setIsExporting(isExporting: boolean) {
       this.isExporting = isExporting;
     },

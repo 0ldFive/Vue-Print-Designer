@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { Editor } from '@guolao/vue-monaco-editor';
+import { useDesignerStore } from '@/stores/designer';
 import OpenInFull from '~icons/material-symbols/open-in-full';
 import Close from '~icons/material-symbols/close';
 
@@ -13,6 +14,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update:value']);
+const store = useDesignerStore();
 
 const isExpanded = ref(false);
 
@@ -46,6 +48,7 @@ const handleChange = (val: string | undefined) => {
 
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value;
+  store.setDisableGlobalShortcuts(isExpanded.value);
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
@@ -60,6 +63,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  // Ensure we re-enable shortcuts if component is unmounted while modal is open
+  if (isExpanded.value) {
+    store.setDisableGlobalShortcuts(false);
+  }
 });
 </script>
 
