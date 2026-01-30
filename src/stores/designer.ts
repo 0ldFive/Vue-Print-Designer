@@ -904,19 +904,44 @@ export const useDesignerStore = defineStore('designer', {
       }
       this.clipboard = elements;
     },
-    paste() {
+    cut() {
+      if (this.selectedElementIds.length === 0) return;
+      this.copy();
+      this.removeSelectedElements();
+    },
+    paste(position?: { x: number, y: number, pageIndex: number }) {
       if (this.clipboard.length === 0) return;
       
       this.snapshot();
       
       const newIds: string[] = [];
-      const offset = 20;
+      const targetPageIndex = position?.pageIndex ?? this.currentPageIndex;
+
+      // Calculate bounding box if position is provided
+      let minX = Infinity;
+      let minY = Infinity;
+      if (position) {
+        for (const item of this.clipboard) {
+          minX = Math.min(minX, item.x);
+          minY = Math.min(minY, item.y);
+        }
+      }
 
       for (const item of this.clipboard) {
         const newEl = cloneDeep(item);
         newEl.id = uuidv4();
-        newEl.x += offset;
-        newEl.y += offset;
+        
+        if (position) {
+          // Place relative to the new position
+          const dx = item.x - minX;
+          const dy = item.y - minY;
+          newEl.x = position.x + dx;
+          newEl.y = position.y + dy;
+        } else {
+          // Default offset
+          newEl.x += 20;
+          newEl.y += 20;
+        }
         
         // Ensure it fits in canvas (optional, but good UX)
         if (newEl.x + newEl.width > this.canvasSize.width) {
@@ -926,10 +951,23 @@ export const useDesignerStore = defineStore('designer', {
           newEl.y = Math.max(0, this.canvasSize.height - newEl.height);
         }
 
-        this.pages[this.currentPageIndex].elements.push(newEl);
+        // Clamp negative values
+        newEl.x = Math.max(0, newEl.x);
+        newEl.y = Math.max(0, newEl.y);
+
+        if (this.pages[targetPageIndex]) {
+          this.pages[targetPageIndex].elements.push(newEl);
+        } else {
+          this.pages[this.currentPageIndex].elements.push(newEl);
+        }
         newIds.push(newEl.id);
       }
       
+      // Switch to the target page if different
+      if (targetPageIndex !== this.currentPageIndex && this.pages[targetPageIndex]) {
+        this.currentPageIndex = targetPageIndex;
+      }
+
       this.setSelection(newIds);
     },
     paginateTable(elementId: string) {

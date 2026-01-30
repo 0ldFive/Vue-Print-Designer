@@ -1,15 +1,70 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
-import cloneDeep from 'lodash/cloneDeep';
 import type { PrintElement } from '@/types';
 
 const store = useDesignerStore();
-const clipboard = ref<PrintElement | null>(null);
 const showMenu = ref(false);
 const menuX = ref(0);
 const menuY = ref(0);
 const canPasteHere = ref(false);
+const currentMouseX = ref(0);
+const currentMouseY = ref(0);
+
+const handleMouseMove = (e: MouseEvent) => {
+  currentMouseX.value = e.clientX;
+  currentMouseY.value = e.clientY;
+};
+
+const getPasteTarget = (clientX: number, clientY: number) => {
+  const pages = document.querySelectorAll('.print-page');
+  if (pages.length === 0) return undefined;
+
+  let closestPage: HTMLElement | null = null;
+  let minDistance = Infinity;
+  let targetPageIndex = 0;
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i] as HTMLElement;
+    const rect = page.getBoundingClientRect();
+    
+    // Check if inside
+    if (clientX >= rect.left && clientX <= rect.right && 
+        clientY >= rect.top && clientY <= rect.bottom) {
+        return {
+            pageIndex: i,
+            x: (clientX - rect.left) / store.zoom,
+            y: (clientY - rect.top) / store.zoom
+        };
+    }
+
+    // Calculate distance to rectangle
+    const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
+    const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    
+    if (dist < minDistance) {
+        minDistance = dist;
+        closestPage = page;
+        targetPageIndex = i;
+    }
+  }
+
+  // Project onto closest page
+  if (closestPage) {
+      const rect = closestPage.getBoundingClientRect();
+      let x = (clientX - rect.left) / store.zoom;
+      let y = (clientY - rect.top) / store.zoom;
+      
+      // Clamp to page bounds
+      x = Math.max(0, Math.min(store.canvasSize.width, x));
+      y = Math.max(0, Math.min(store.canvasSize.height, y));
+      
+      return { pageIndex: targetPageIndex, x, y };
+  }
+
+  return undefined;
+};
 
 const handleKeydown = (e: KeyboardEvent) => {
   // If global shortcuts are disabled (e.g. code editor is open), ignore
@@ -79,24 +134,25 @@ const handleKeydown = (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
     if (store.selectedElementId) {
       e.preventDefault();
-      const el = store.selectedElement;
-      if (el) clipboard.value = cloneDeep(el);
+      store.copy();
+    }
+    return;
+  }
+
+  // Cut (Ctrl/Cmd + X)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+    if (store.selectedElementId) {
+      e.preventDefault();
+      store.cut();
     }
     return;
   }
 
   // Paste (Ctrl/Cmd + V)
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-    if (clipboard.value) {
+    if (store.clipboard.length > 0) {
       e.preventDefault();
-      const pasted = cloneDeep(clipboard.value);
-      // Slight offset
-      pasted.x += 10;
-      pasted.y += 10;
-      // Remove id, will be recreated by store
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (pasted as any).id = undefined;
-      store.addElement(pasted as Omit<PrintElement, 'id'>);
+      store.paste(getPasteTarget(currentMouseX.value, currentMouseY.value));
     }
     return;
   }
@@ -182,6 +238,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
   window.addEventListener('contextmenu', handleContextMenu);
   window.addEventListener('keyup', handleKeyup);
+  window.addEventListener('mousemove', handleMouseMove);
 });
 
 onUnmounted(() => {
@@ -189,6 +246,7 @@ onUnmounted(() => {
   window.removeEventListener('contextmenu', handleContextMenu);
   window.removeEventListener('click', closeMenuOnce);
   window.removeEventListener('keyup', handleKeyup);
+  window.removeEventListener('mousemove', handleMouseMove);
 });
 </script>
 
@@ -214,6 +272,13 @@ onUnmounted(() => {
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
         :disabled="!store.selectedElementId || store.selectedElement?.locked"
+        @click="() => { store.cut(); showMenu=false; }"
+      >
+        Cut
+      </button>
+      <button
+        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+        :disabled="!store.selectedElementId || store.selectedElement?.locked"
         @click="() => { store.copy(); showMenu=false; }"
       >
         Copy
@@ -221,7 +286,7 @@ onUnmounted(() => {
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
         :disabled="store.clipboard.length === 0"
-        @click="() => { store.paste(); showMenu=false; }"
+        @click="() => { store.paste(getPasteTarget(menuX, menuY)); showMenu=false; }"
       >
         Paste
       </button>

@@ -45,6 +45,7 @@ const close = () => {
               <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">Editing</h4>
               <ul class="space-y-2 text-gray-600">
                 <li class="flex justify-between items-center"><span>Copy</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + C</kbd></li>
+                <li class="flex justify-between items-center"><span>Cut</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + X</kbd></li>
                 <li class="flex justify-between items-center"><span>Paste</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + V</kbd></li>
                 <li class="flex justify-between items-center"><span>Delete</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Delete</kbd></li>
                 <li class="flex justify-between items-center"><span>Select All</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + A</kbd></li>
