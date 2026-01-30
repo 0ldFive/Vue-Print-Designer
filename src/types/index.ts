@@ -12,7 +12,9 @@ export enum ElementType {
   TEXT = 'text',
   IMAGE = 'image',
   TABLE = 'table',
-  PAGE_NUMBER = 'pageNumber'
+  PAGE_NUMBER = 'pageNumber',
+  BARCODE = 'barcode',
+  QRCODE = 'qrcode'
 }
 
 export interface ElementStyle {
@@ -36,6 +38,11 @@ export interface ElementStyle {
   headerHeight?: number; // Table header height
   footerHeight?: number; // Table footer height
   writingMode?: 'horizontal-tb' | 'vertical-rl';
+  // Barcode specific
+  barcodeFormat?: string;
+  showText?: boolean;
+  // QRCode specific
+  qrErrorCorrection?: 'L' | 'M' | 'Q' | 'H';
 }
 
 export interface TableColumn {

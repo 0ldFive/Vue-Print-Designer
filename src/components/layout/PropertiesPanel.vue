@@ -6,6 +6,8 @@ import { elementPropertiesSchema as TextSchema } from '@/components/elements/Tex
 import { elementPropertiesSchema as ImageSchema } from '@/components/elements/ImageElement.vue';
 import { elementPropertiesSchema as TableSchema } from '@/components/elements/TableElement.vue';
 import { elementPropertiesSchema as PagerSchema } from '@/components/elements/PageNumberElement.vue';
+import { elementPropertiesSchema as BarcodeSchema } from '@/components/elements/BarcodeElement.vue';
+import { elementPropertiesSchema as QrCodeSchema } from '@/components/elements/QRCodeElement.vue';
 import { pxToMm, mmToPx } from '@/utils/units';
 import PropertyInput from '@/components/properties/PropertyInput.vue';
 import PropertySelect from '@/components/properties/PropertySelect.vue';
@@ -47,6 +49,8 @@ const getSchema = (type: ElementType): ElementPropertiesSchema | null => {
     case ElementType.IMAGE: return ImageSchema;
     case ElementType.TABLE: return TableSchema;
     case ElementType.PAGE_NUMBER: return PagerSchema;
+    case ElementType.BARCODE: return BarcodeSchema;
+    case ElementType.QRCODE: return QrCodeSchema;
     default: return null;
   }
 };

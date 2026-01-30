@@ -206,10 +206,23 @@ export const usePrint = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       const serializer = new XMLSerializer();
+      // Explicitly set width/height on SVG before serialization to ensure Canvg renders it at full size
+      svg.setAttribute('width', `${w}px`);
+      svg.setAttribute('height', `${h}px`);
+      
       const str = serializer.serializeToString(svg);
       const instance = Canvg.fromString(ctx, str);
       instance.render();
-      svg.before(canvas);
+
+      // Convert canvas to image so it persists in outerHTML (for preview)
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      img.style.width = `${w}px`;
+      img.style.height = `${h}px`;
+      // Copy classes/styles if needed, or at least display block
+      img.style.display = 'block';
+      
+      svg.before(img);
       parent.removeChild(svg);
     });
   };
@@ -430,7 +443,7 @@ export const usePrint = () => {
     return clone;
   };
 
-  const processContentForImage = async (content: HTMLElement | string | HTMLElement[], width: number, height: number) => {
+  const processContentForImage = async (content: HTMLElement | string | HTMLElement[], width: number, height: number, convertSvg = true) => {
     // Create hidden container
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -505,7 +518,9 @@ export const usePrint = () => {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Handle SVGs
-    svgToCanvas(container);
+    if (convertSvg) {
+        svgToCanvas(container);
+    }
 
     // Handle Table Pagination
     const pagesCount = handleTablePagination(container, height, store.headerHeight, store.footerHeight);

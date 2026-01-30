@@ -2,12 +2,16 @@
 import Type from '~icons/material-symbols/text-fields';
 import Image from '~icons/material-symbols/image';
 import Table from '~icons/material-symbols/table-chart';
+import Barcode from '~icons/material-symbols/barcode';
+import QrCode from '~icons/material-symbols/qr-code';
 import { ElementType } from '@/types';
 
 const draggableItems = [
   { type: ElementType.TEXT, label: 'Text', icon: Type },
   { type: ElementType.IMAGE, label: 'Image', icon: Image },
   { type: ElementType.TABLE, label: 'Table', icon: Table },
+  { type: ElementType.BARCODE, label: 'Barcode', icon: Barcode },
+  { type: ElementType.QRCODE, label: 'QR Code', icon: QrCode },
   { type: ElementType.PAGE_NUMBER, label: 'Pager', icon: Type },
 ];
 

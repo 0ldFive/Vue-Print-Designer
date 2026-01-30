@@ -7,6 +7,8 @@ import TextElement from '../elements/TextElement.vue';
 import ImageElement from '../elements/ImageElement.vue';
 import TableElement from '../elements/TableElement.vue';
 import PageNumberElement from '../elements/PageNumberElement.vue';
+import BarcodeElement from '../elements/BarcodeElement.vue';
+import QRCodeElement from '../elements/QRCodeElement.vue';
 
 const store = useDesignerStore();
 
@@ -104,6 +106,8 @@ const getComponent = (type: ElementType) => {
     case ElementType.IMAGE: return ImageElement;
     case ElementType.TABLE: return TableElement;
     case ElementType.PAGE_NUMBER: return PageNumberElement;
+    case ElementType.BARCODE: return BarcodeElement;
+    case ElementType.QRCODE: return QRCodeElement;
     default: return TextElement;
   }
 };
@@ -118,18 +122,34 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
   const x = (event.clientX - rect.left) / store.zoom;
   const y = (event.clientY - rect.top) / store.zoom;
 
+  const widthMap: Partial<Record<ElementType, number>> = {
+    [ElementType.PAGE_NUMBER]: 52,
+    [ElementType.BARCODE]: 200,
+    [ElementType.QRCODE]: 100,
+  };
+
+  const heightMap: Partial<Record<ElementType, number>> = {
+    [ElementType.PAGE_NUMBER]: 20,
+    [ElementType.BARCODE]: 80,
+    [ElementType.QRCODE]: 100,
+    [ElementType.TABLE]: 150,
+  };
+
   const newElement = {
     type,
     x,
     y,
-    width: type === ElementType.PAGE_NUMBER ? 52 : 200,
-    height: type === ElementType.PAGE_NUMBER ? 20 : 100,
+    width: widthMap[type as ElementType] || 200,
+    height: heightMap[type as ElementType] || 100,
     variable: '',
     style: {
       fontSize: 14,
       color: '#000000',
     },
-    content: type === ElementType.TEXT ? 'New Text' : '',
+    content: type === ElementType.TEXT ? 'New Text' 
+      : type === ElementType.BARCODE ? '12345678'
+      : type === ElementType.QRCODE ? 'https://example.com'
+      : '',
     // Dummy data for table
     columns: type === ElementType.TABLE ? [
       { field: 'id', header: 'ID', width: 50 },
@@ -141,11 +161,6 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
       { id: 3, name: 'Item 3' },
     ] : undefined
   };
-
-  // If table, give it more height
-  if (type === ElementType.TABLE) {
-    newElement.height = 150;
-  }
 
   store.addElement(newElement);
 };
