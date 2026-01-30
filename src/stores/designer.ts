@@ -623,6 +623,10 @@ export const useDesignerStore = defineStore('designer', {
           if (this.selectedElementId === id) {
             this.selectedElementId = null;
           }
+          // Clear table selection if this element was selected
+          if (this.tableSelection && this.tableSelection.elementId === id) {
+            this.tableSelection = null;
+          }
           // Remove from multi-selection
           const multiIndex = this.selectedElementIds.indexOf(id);
           if (multiIndex !== -1) {
@@ -633,6 +637,11 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     selectElement(id: string | null, isMultiSelect: boolean = false) {
+      // Always clear table selection when changing element selection
+      if (this.tableSelection) {
+        this.tableSelection = null;
+      }
+
       if (isMultiSelect && id) {
         // Ctrl/Cmd multi-select
         if (this.selectedElementIds.includes(id)) {
@@ -662,8 +671,10 @@ export const useDesignerStore = defineStore('designer', {
     clearSelection() {
       this.selectedElementId = null;
       this.selectedElementIds = [];
+      this.tableSelection = null;
     },
     setSelection(ids: string[]) {
+      this.tableSelection = null;
       this.selectedElementIds = ids;
       this.selectedElementId = ids.length > 0 ? ids[ids.length - 1] : null;
       if (ids.length > 0) {
@@ -700,6 +711,7 @@ export const useDesignerStore = defineStore('designer', {
       }
       this.selectedElementId = null;
       this.selectedElementIds = [];
+      this.tableSelection = null;
     },
     alignSelectedElements(type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') {
       if (this.selectedElementIds.length === 0) return;
