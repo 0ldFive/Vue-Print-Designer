@@ -262,9 +262,22 @@ const handleResizeStart = (e: MouseEvent) => {
       hasSnapshot = true;
     }
 
+    let newWidth = initialWidth + dx;
+    let newHeight = initialHeight + dy;
+
+    if (moveEvent.shiftKey) {
+      const ratio = initialWidth / initialHeight;
+      // Use the larger relative change to drive the size
+      if (Math.abs(newWidth / initialWidth - 1) > Math.abs(newHeight / initialHeight - 1)) {
+        newHeight = newWidth / ratio;
+      } else {
+        newWidth = newHeight * ratio;
+      }
+    }
+
     store.updateElement(props.element.id, {
-      width: Math.max(10, initialWidth + dx),
-      height: Math.max(10, initialHeight + dy)
+      width: Math.max(10, newWidth),
+      height: Math.max(10, newHeight)
     }, false);
   };
   

@@ -63,6 +63,7 @@ const close = () => {
                 </ul>
                 <ul class="space-y-2 text-gray-600">
                   <li class="flex justify-between items-center"><span>Snap Rotate</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + Drag</kbd></li>
+                  <li class="flex justify-between items-center"><span>Proportional Resize</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + Resize</kbd></li>
                 </ul>
               </div>
             </div>
