@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@guolao/vue-monaco-editor": "^1.6.0",
     "canvg": "^4.0.3",
     "dom-to-image-more": "^3.7.2",
     "jsbarcode": "^3.12.3",

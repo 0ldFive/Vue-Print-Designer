@@ -15,6 +15,7 @@ import { pxToMm, mmToPx } from '@/utils/units';
 import PropertyInput from '@/components/properties/PropertyInput.vue';
 import PropertySelect from '@/components/properties/PropertySelect.vue';
 import PropertyColor from '@/components/properties/PropertyColor.vue';
+import PropertyCode from '@/components/properties/PropertyCode.vue';
 import Lock from '~icons/material-symbols/lock';
 
 const store = useDesignerStore();
@@ -70,6 +71,27 @@ const handleDataJsonChange = (fieldKey: string, e: Event) => {
     handleChange(fieldKey, JSON.parse(value));
   } catch (err) {
     window.alert('Invalid JSON');
+  }
+};
+
+const getCodeValue = (field: PropertyField) => {
+  const val = getFieldValue(field);
+  if (field.language === 'json' && typeof val === 'object') {
+    return JSON.stringify(val, null, 2);
+  }
+  return val || '';
+};
+
+const handleCodeChange = (field: PropertyField, value: string) => {
+  if (field.language === 'json') {
+    try {
+      const parsed = JSON.parse(value);
+      handleChange(field.key!, parsed);
+    } catch (e) {
+      // ignore invalid json
+    }
+  } else {
+    handleChange(field.key!, value);
   }
 };
 
@@ -286,6 +308,16 @@ const handleDeleteSelected = () => {
                   :disabled="isLocked"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
+                />
+
+                <!-- Code Editor -->
+                <PropertyCode
+                  v-else-if="field.type === 'code'"
+                  :label="field.label"
+                  :language="field.language || 'javascript'"
+                  :disabled="isLocked"
+                  :value="getCodeValue(field)"
+                  @update:value="(v) => handleCodeChange(field, v)"
                 />
 
                 <!-- Textarea -->

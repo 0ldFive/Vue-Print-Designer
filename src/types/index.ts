@@ -146,7 +146,7 @@ export interface PropertyFieldOption {
 
 export interface PropertyField {
   label: string;
-  type: 'number' | 'text' | 'textarea' | 'color' | 'action' | 'select' | 'switch';
+  type: 'number' | 'text' | 'textarea' | 'color' | 'action' | 'select' | 'switch' | 'code';
   target: 'element' | 'style' | 'data';
   key?: string;
   placeholder?: string;
@@ -156,6 +156,7 @@ export interface PropertyField {
   actionName?: string;
   options?: PropertyFieldOption[];
   defaultValue?: any;
+  language?: string; // for code editor
 }
 
 export interface PropertySection {

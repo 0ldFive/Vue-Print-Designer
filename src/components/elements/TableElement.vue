@@ -271,10 +271,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'Repeat Footer', type: 'switch', target: 'element', key: 'tfootRepeat' },
         { label: 'Show Footer', type: 'switch', target: 'element', key: 'showFooter' },
         { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' },
-        { label: 'Columns (JSON)', type: 'textarea', target: 'element', key: 'columns', placeholder: '[{ field: "name", header: "Name", width: 100 }]' },
-        { label: 'Data (JSON)', type: 'textarea', target: 'element', key: 'data', placeholder: '[{...}]' },
-        { label: 'Footer Data (JSON)', type: 'textarea', target: 'element', key: 'footerData', placeholder: '[{...}]' },
-        { label: 'Custom Script', type: 'textarea', target: 'element', key: 'customScript', placeholder: 'return { data: ... };' }
+        { label: 'Columns (JSON)', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: '[{ field: "name", header: "Name", width: 100 }]' },
+        { label: 'Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: '[{...}]' },
+        { label: 'Footer Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: '[{...}]' },
+        { label: 'Custom Script', type: 'code', language: 'javascript', target: 'element', key: 'customScript', placeholder: 'return { data: ... };' }
       ]
     },
     {
