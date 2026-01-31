@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
+import cloneDeep from 'lodash/cloneDeep';
 
 const props = defineProps<{
   element: PrintElement;
@@ -35,7 +36,7 @@ const handleHeaderDblClick = async (e: MouseEvent, index: number) => {
 
   editingColIndex.value = index;
   editingFooterCell.value = null; // Clear footer edit
-  editForm.value = { header: col.header, field: col.field, value: '' };
+  editForm.value = { header: col.header, field: col.field, value: '', variable: '' };
   
   editFormPosition.value = {
     top: e.clientY + 10,
@@ -172,8 +173,6 @@ const saveHeaderEdit = () => {
 
 const isSelecting = ref(false);
 const startCell = ref<{ rowIndex: number; colField: string; section: 'body' | 'footer' } | null>(null);
-
-import cloneDeep from 'lodash/cloneDeep';
 
 const processedData = computed(() => {
   const cols = props.element.columns || [];
@@ -340,8 +339,8 @@ const handleMouseOver = (rowIndex: number, colField: string, section: 'body' | '
   
   const startRow = startCell.value.rowIndex;
   const endRow = rowIndex;
-  const startColIdx = processedData.value.columns.findIndex(c => c.field === startCell.value!.colField);
-  const endColIdx = processedData.value.columns.findIndex(c => c.field === colField);
+  const startColIdx = processedData.value.columns.findIndex((c: any) => c.field === startCell.value!.colField);
+  const endColIdx = processedData.value.columns.findIndex((c: any) => c.field === colField);
   
   if (startColIdx === -1 || endColIdx === -1) return;
   

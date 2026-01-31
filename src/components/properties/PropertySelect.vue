@@ -3,12 +3,12 @@
 
 interface Option {
   label: string;
-  value: string | number;
+  value: string | number | boolean;
 }
 
-defineProps<{
+const props = defineProps<{
   label: string;
-  value?: string | number;
+  value?: string | number | boolean;
   options: Option[];
   disabled?: boolean;
 }>();
@@ -17,7 +17,10 @@ const emit = defineEmits(['update:value']);
 
 const handleChange = (e: Event) => {
   const target = e.target as HTMLSelectElement;
-  emit('update:value', target.value);
+  const val = target.value;
+  // Find the option to get the correct type (number/boolean)
+  const option = props.options.find(opt => String(opt.value) === val);
+  emit('update:value', option ? option.value : val);
 };
 </script>
 

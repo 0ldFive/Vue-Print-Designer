@@ -52,6 +52,8 @@ export interface ElementStyle {
   showText?: boolean;
   // QRCode specific
   qrErrorCorrection?: 'L' | 'M' | 'Q' | 'H';
+  // Shape specific
+  borderRadius?: number;
 }
 
 export interface TableColumn {
@@ -143,7 +145,7 @@ export interface Guide {
 // Dynamic properties schema for element-specific fields
 export interface PropertyFieldOption {
   label: string;
-  value: string | number;
+  value: string | number | boolean;
 }
 
 export interface PropertyField {

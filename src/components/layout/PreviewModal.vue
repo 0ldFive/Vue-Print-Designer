@@ -4,6 +4,8 @@ import { usePrint } from '@/utils/print';
 import Printer from '~icons/material-symbols/print';
 import FilePdf from '~icons/material-symbols/picture-as-pdf';
 import Close from '~icons/material-symbols/close';
+import ZoomIn from '~icons/material-symbols/zoom-in';
+import ZoomOut from '~icons/material-symbols/zoom-out';
 
 const props = defineProps<{
   visible: boolean;
@@ -33,6 +35,14 @@ const handlePdf = () => {
   exportPdfHtml();
 };
 
+const handleZoomIn = () => {
+  zoomPercent.value = Math.min(500, zoomPercent.value + 10);
+};
+
+const handleZoomOut = () => {
+  zoomPercent.value = Math.max(20, zoomPercent.value - 10);
+};
+
 const handleKeydown = (e: KeyboardEvent) => {
   if (props.visible && e.key === 'Escape') {
     handleClose();
@@ -53,12 +63,14 @@ onUnmounted(() => {
     <div v-if="visible" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50" @click.self="handleClose">
       <div class="bg-white rounded-lg shadow-xl w-[90vw] h-[90vh] flex flex-col overflow-hidden">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <div class="relative flex items-center justify-between p-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-800">Print Preview</h3>
           
           <!-- Zoom Control -->
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-500">Zoom</span>
+          <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <button @click="handleZoomOut" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom Out">
+              <ZoomOut class="w-4 h-4" />
+            </button>
             <input 
               type="range" 
               min="20" 
@@ -67,7 +79,10 @@ onUnmounted(() => {
               v-model.number="zoomPercent" 
               class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
             />
-            <span class="text-xs text-gray-600 w-9 text-right">{{ zoomPercent }}%</span>
+            <button @click="handleZoomIn" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom In">
+              <ZoomIn class="w-4 h-4" />
+            </button>
+            <span class="text-xs text-gray-600 w-9 text-right select-none">{{ zoomPercent }}%</span>
           </div>
 
           <button @click="handleClose" class="text-gray-500 hover:text-gray-700">

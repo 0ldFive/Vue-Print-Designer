@@ -34,7 +34,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       class="w-full"
       :style="{
         borderTopWidth: `${element.style.borderWidth || 1}px`,
-        borderTopStyle: element.style.borderStyle || 'solid',
+        borderTopStyle: (element.style.borderStyle as any) || 'solid',
         borderTopColor: element.style.borderColor || '#000000'
       }"
     ></div>
