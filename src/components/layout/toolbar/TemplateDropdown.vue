@@ -30,6 +30,10 @@ const targetTemplateId = ref<string | null>(null);
 
 onMounted(() => {
   store.loadTemplates();
+  // Auto-select first template if available and none selected
+  if (!store.currentTemplateId && store.templates.length > 0) {
+    store.loadTemplate(store.templates[0].id);
+  }
   document.addEventListener('click', handleClickOutside);
 });
 
