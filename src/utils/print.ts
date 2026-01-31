@@ -320,7 +320,7 @@ export const usePrint = () => {
           cells.forEach(cell => {
             const field = cell.getAttribute('data-field');
             if (field) {
-              rowData[field] = cell.textContent || '';
+              rowData[field] = cell.getAttribute('data-value') || cell.textContent || '';
             }
           });
           footerData.push(rowData);

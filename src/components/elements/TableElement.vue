@@ -460,6 +460,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                :rowspan="getRowSpan(row, col.field)"
                :colspan="getColSpan(row, col.field)"
                :data-field="col.field"
+               :data-value="getCellValue(row, col.field)"
                @mousedown="(e) => handleMouseDown(e, i, col.field, 'footer')"
                @mouseover="handleMouseOver(i, col.field, 'footer')"
                @dblclick="(e) => handleFooterDblClick(e, i, col.field)"
