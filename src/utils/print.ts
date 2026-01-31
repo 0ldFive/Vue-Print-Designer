@@ -229,7 +229,7 @@ export const usePrint = () => {
 
   const createTempContainer = (width: number, height: number, pagesCount: number): HTMLElement => {
     const temp = document.createElement('div');
-    temp.className = 'hiprint_temp_Container';
+    temp.className = 'print_temp_container';
     // Hidden but rendered
     temp.style.cssText = 'position:fixed;left:0;top:0;z-index:-9999;overflow:hidden;height:0;box-sizing:border-box;';
     
@@ -520,7 +520,7 @@ export const usePrint = () => {
     while (queue.length > 0) {
         const [source, target] = queue.shift()!;
         
-        if (source instanceof HTMLElement || source instanceof SVGElement) {
+        if ((source as any) instanceof HTMLElement || (source as any) instanceof SVGElement) {
             const computed = window.getComputedStyle(source);
             const style = target.style;
             
@@ -552,7 +552,7 @@ export const usePrint = () => {
     // Don't use overflow hidden, let us measure full heights
     // container.style.overflow = 'hidden'; 
     container.style.zIndex = '-9999'; // Hide behind everything
-    container.className = 'hiprint_temp_Container';
+    container.className = 'print_temp_container';
     document.body.appendChild(container);
 
     // Copy all styles from head to the container to ensure proper rendering
@@ -713,7 +713,8 @@ export const usePrint = () => {
         iframe.style.top = '0';
         iframe.style.width = '0px';
         iframe.style.height = '0px';
-        iframe.style.border = 'none';
+        iframe.style.border = 'fixed';
+        iframe.style.visibility = 'hidden';
         iframe.src = blobUrl;
         document.body.appendChild(iframe);
         
