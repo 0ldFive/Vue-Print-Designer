@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 
@@ -27,7 +27,7 @@ const editForm = ref({ header: '', field: '', value: '', variable: '' });
 const editFormPosition = ref({ top: 0, left: 0 });
 const editFormRef = ref<HTMLElement | null>(null);
 
-const handleHeaderDblClick = (e: MouseEvent, index: number) => {
+const handleHeaderDblClick = async (e: MouseEvent, index: number) => {
   if (store.selectedElementId !== props.element.id) return;
 
   const col = processedData.value.columns[index];
@@ -42,12 +42,27 @@ const handleHeaderDblClick = (e: MouseEvent, index: number) => {
     left: e.clientX + 10
   };
 
+  // Adjust position if overflowing
+  await nextTick();
+  if (editFormRef.value) {
+    const rect = editFormRef.value.getBoundingClientRect();
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+
+    if (editFormPosition.value.left + rect.width > winWidth) {
+        editFormPosition.value.left = winWidth - rect.width - 20;
+    }
+    if (editFormPosition.value.top + rect.height > winHeight) {
+        editFormPosition.value.top = winHeight - rect.height - 20;
+    }
+  }
+
   setTimeout(() => {
     window.addEventListener('click', handleClickOutside);
   }, 100);
 };
 
-const handleFooterDblClick = (e: MouseEvent, rowIndex: number, colField: string) => {
+const handleFooterDblClick = async (e: MouseEvent, rowIndex: number, colField: string) => {
   if (store.selectedElementId !== props.element.id) return;
   
   const row = processedData.value.footerData[rowIndex];
@@ -70,6 +85,21 @@ const handleFooterDblClick = (e: MouseEvent, rowIndex: number, colField: string)
     top: e.clientY + 10,
     left: e.clientX + 10
   };
+  
+  // Adjust position if overflowing
+  await nextTick();
+  if (editFormRef.value) {
+    const rect = editFormRef.value.getBoundingClientRect();
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+
+    if (editFormPosition.value.left + rect.width > winWidth) {
+        editFormPosition.value.left = winWidth - rect.width - 20;
+    }
+    if (editFormPosition.value.top + rect.height > winHeight) {
+        editFormPosition.value.top = winHeight - rect.height - 20;
+    }
+  }
   
   setTimeout(() => {
     window.addEventListener('click', handleClickOutside);
