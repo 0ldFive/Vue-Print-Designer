@@ -129,8 +129,8 @@ const processedData = computed(() => {
   
   if (props.element.customScript) {
     try {
-      const func = new Function('data', 'footerData', 'columns', props.element.customScript);
-      const result = func(cloneDeep(data), cloneDeep(footerData), cloneDeep(cols));
+      const func = new Function('data', 'footerData', 'columns', 'type', props.element.customScript);
+      const result = func(cloneDeep(data), cloneDeep(footerData), cloneDeep(cols), 'global');
       if (result) {
         if (result.data) data = result.data;
         if (result.footerData) footerData = result.footerData;
@@ -356,7 +356,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 
 <template>
   <div class="w-full h-full overflow-hidden bg-white">
-    <table class="w-full border-collapse" :class="{ 'h-full': !store.isExporting }" :data-tfoot-repeat="element.tfootRepeat" :data-auto-paginate="element.autoPaginate">
+    <table class="w-full border-collapse" :class="{ 'h-full': !store.isExporting }" :data-tfoot-repeat="element.tfootRepeat" :data-auto-paginate="element.autoPaginate" :data-custom-script="element.customScript">
       <thead>
         <tr>
           <th 
@@ -401,6 +401,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                }"
                :rowspan="getRowSpan(row, col.field)"
                :colspan="getColSpan(row, col.field)"
+               :data-field="col.field"
                @mousedown="(e) => handleMouseDown(e, i, col.field)"
                @mouseover="handleMouseOver(i, col.field)"
              >

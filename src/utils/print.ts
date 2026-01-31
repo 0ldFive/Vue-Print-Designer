@@ -287,35 +287,73 @@ export const usePrint = () => {
     const tfoot = table.querySelector('tfoot');
     if (!tfoot) return;
 
-    // Find all cells in tfoot that contain the placeholder
-    const cells = Array.from(tfoot.querySelectorAll('td'));
-    cells.forEach(cell => {
-      if (cell.textContent && cell.textContent.includes('{#pageSum}')) {
-        const field = cell.getAttribute('data-field');
-        if (!field) return;
-
-        // Find all data rows in this specific table
+    const customScript = table.getAttribute('data-custom-script');
+    
+    if (customScript) {
+      try {
+        // 1. Extract Page Data
         const tbody = table.querySelector('tbody');
-        if (!tbody) return;
-
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        let sum = 0;
-
-        rows.forEach(row => {
-          // Find the cell corresponding to the field
-          const dataCell = row.querySelector(`td[data-field="${field}"]`);
-          if (dataCell && dataCell.textContent) {
-            const val = parseFloat(dataCell.textContent);
-            if (!isNaN(val)) {
-              sum += val;
+        const data: any[] = [];
+        if (tbody) {
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+          rows.forEach(row => {
+            const rowData: any = {};
+            const cells = Array.from(row.querySelectorAll('td'));
+            cells.forEach(cell => {
+              const field = cell.getAttribute('data-field');
+              if (field) {
+                rowData[field] = cell.textContent || '';
+              }
+            });
+            if (Object.keys(rowData).length > 0) {
+              data.push(rowData);
             }
-          }
+          });
+        }
+
+        // 2. Extract Footer Data
+        const footerData: any[] = [];
+        const rows = Array.from(tfoot.querySelectorAll('tr'));
+        rows.forEach(row => {
+          const rowData: any = {};
+          const cells = Array.from(row.querySelectorAll('td'));
+          cells.forEach(cell => {
+            const field = cell.getAttribute('data-field');
+            if (field) {
+              rowData[field] = cell.textContent || '';
+            }
+          });
+          footerData.push(rowData);
         });
 
-        // Replace placeholder
-        cell.textContent = cell.textContent.replace('{#pageSum}', sum.toString());
+        // 3. Execute Script
+        const func = new Function('data', 'footerData', 'columns', 'type', customScript);
+        func(data, footerData, [], 'page');
+
+        // 4. Update Footer DOM
+        if (footerData.length > 0) {
+          const rows = Array.from(tfoot.querySelectorAll('tr'));
+          rows.forEach((row, i) => {
+            if (footerData[i]) {
+              const cells = Array.from(row.querySelectorAll('td'));
+              cells.forEach(cell => {
+                const field = cell.getAttribute('data-field');
+                if (field && footerData[i][field] !== undefined) {
+                  let val = footerData[i][field];
+                  if (val && typeof val === 'object' && val.value) {
+                    val = val.value;
+                  }
+                  cell.textContent = String(val);
+                }
+              });
+            }
+          });
+        }
+        return;
+      } catch (e) {
+        console.error('Page sum script error:', e);
       }
-    });
+    }
   };
 
   const handleTablePagination = (container: HTMLElement, pageHeight: number, headerHeight: number, footerHeight: number) => {
@@ -357,7 +395,10 @@ export const usePrint = () => {
              
              // Check if table extends beyond limit
              const tableRect = table.getBoundingClientRect();
-             if (tableRect.bottom <= limitBottom) return;
+             if (tableRect.bottom <= limitBottom) {
+                 updatePageSums(table);
+                 return;
+             }
              
              // Split needed
              let splitIndex = -1;
@@ -457,6 +498,8 @@ export const usePrint = () => {
                  }
                  
                  newPage.appendChild(newWrapper);
+             } else {
+                 updatePageSums(table);
              }
         });
     }

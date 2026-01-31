@@ -180,8 +180,92 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     tfootRepeat: type === ElementType.TABLE ? true : undefined,
     footerData: type === ElementType.TABLE ? [
       { id: 'Page Sum', total: '{#pageSum}' },
-      { id: 'Total', total: '{#totalSum}' }
-    ] : undefined
+      { id: 'Total', qty: '{#totalQty}', total: '{#totalSum}' },
+      { id: 'In Words', total: '{#totalCap}' }
+    ] : undefined,
+    customScript: type === ElementType.TABLE ? `// RMB Uppercase Conversion
+function digitUppercase(n) {
+    var fraction = ['角', '分'];
+    var digit = [
+        '零', '壹', '贰', '叁', '肆',
+        '伍', '陆', '柒', '捌', '玖'
+    ];
+    var unit = [
+        ['元', '万', '亿'],
+        ['', '拾', '佰', '仟']
+    ];
+    var head = n < 0 ? '欠' : '';
+    n = Math.abs(n);
+    var s = '';
+    for (var i = 0; i < fraction.length; i++) {
+        s += (digit[Math.floor(n * 10 * Math.pow(10, i)) % 10] + fraction[i]).replace(/零./, '');
+    }
+    s = s || '整';
+    n = Math.floor(n);
+    for (var i = 0; i < unit[0].length && n > 0; i++) {
+        var p = '';
+        for (var j = 0; j < unit[1].length && n > 0; j++) {
+            p = digit[n % 10] + unit[1][j] + p;
+            n = Math.floor(n / 10);
+        }
+        s = p.replace(/(零.)*零$/, '').replace(/^$/, '零') + unit[0][i] + s;
+    }
+    return head + s.replace(/(零.)*零元/, '元')
+        .replace(/(零.)+/g, '零')
+        .replace(/^整$/, '零元整');
+}
+
+// 1. Calculate Total (works for both Global and Page data)
+let totalAmount = 0;
+let totalQty = 0;
+if (data && Array.isArray(data)) {
+  data.forEach(row => {
+    // Ensure numeric values
+    const val = Number(row.total) || 0;
+    const qty = Number(row.qty) || 0;
+    totalAmount += val;
+    totalQty += qty;
+  });
+}
+
+// 2. Update Footer Data
+if (footerData && Array.isArray(footerData)) {
+  footerData.forEach(row => {
+    Object.keys(row).forEach(key => {
+      const val = row[key];
+      const processValue = (v) => {
+         if (typeof v !== 'string') return v;
+         
+         // Global replacements (Grand Total)
+         if (typeof type === 'undefined' || type !== 'page') {
+             if (v.includes('{#totalSum}')) return v.replace('{#totalSum}', totalAmount.toFixed(2));
+             if (v.includes('{#totalQty}')) return v.replace('{#totalQty}', totalQty);
+             if (v.includes('{#totalCap}')) return v.replace('{#totalCap}', digitUppercase(totalAmount));
+             if (v.includes('{#pageSum}')) return v.replace('{#pageSum}', totalAmount.toFixed(2));
+         }
+         
+         // Page replacements (Page Sum)
+         if (typeof type !== 'undefined' && type === 'page') {
+             if (v.includes('{#pageSum}')) return v.replace('{#pageSum}', totalAmount.toFixed(2));
+         }
+         return v;
+      };
+
+      // Handle string values
+      if (typeof val === 'string') {
+        row[key] = processValue(val);
+      } 
+      // Handle object values (merged cells)
+      else if (val && typeof val === 'object' && val.value) {
+        if (typeof val.value === 'string') {
+          val.value = processValue(val.value);
+        }
+      }
+    });
+  });
+}
+
+return { data, footerData };` : undefined
   };
 
   store.addElement(newElement);
