@@ -201,6 +201,7 @@ const getPrintValue = (row: any, field: string) => {
   const val = row[field];
   if (val && typeof val === 'object') {
     const text = val.value || '';
+    // Use printValue (print token) if available, otherwise result, or fallback to empty
     const result = (val.printValue !== undefined) ? val.printValue : (val.result !== undefined ? val.result : '');
     return text + result;
   }
@@ -212,9 +213,8 @@ const getCellValue = (row: any, field: string) => {
   const val = row[field];
   if (val && typeof val === 'object') {
     const text = val.value || '';
-    // Use result if available (auto-calc), or printValue (custom script), or fallback to empty
-    // If result is 0, it should be displayed, so check for undefined/null
-    const result = (val.printValue !== undefined) ? val.printValue : (val.result !== undefined ? val.result : '');
+    // Use result (calculated display value) if available, otherwise printValue, or fallback to empty
+    const result = (val.result !== undefined) ? val.result : ((val.printValue !== undefined) ? val.printValue : '');
     return text + result;
   }
   return val;
@@ -569,7 +569,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
              <input 
               v-model="editForm.variable"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="Data Field (e.g. amount)"
+              placeholder="Data Field (e.g. {#amount})"
               @keydown.enter="saveHeaderEdit"
             />
           </div>

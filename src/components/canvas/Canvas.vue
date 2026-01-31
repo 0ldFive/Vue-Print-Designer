@@ -268,7 +268,19 @@ try {
 
         // Handle string values
         if (typeof val === 'string') {
-          row[key] = processValue(val);
+          const processed = processValue(val);
+          if (typeof processed === 'object') {
+             // Convert to cell object structure if processValue returns an object
+             // This handles the case where existing string data needs to be upgraded to object
+             row[key] = {
+                 value: '', // Static text
+                 result: processed.value, // Display value
+                 printValue: processed.printValue, // Print token
+                 field: val // Store original string as field
+             };
+          } else {
+             row[key] = processed;
+          }
         } 
         // Handle object values
         else if (val && typeof val === 'object') {
