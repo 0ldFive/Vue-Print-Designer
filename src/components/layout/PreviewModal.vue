@@ -17,6 +17,7 @@ const emit = defineEmits<{
 
 const { print: printHtml, exportPdf: exportPdfHtml } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
+const zoomPercent = ref(100);
 
 const handleClose = () => {
   emit('update:visible', false);
@@ -54,6 +55,21 @@ onUnmounted(() => {
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-800">Print Preview</h3>
+          
+          <!-- Zoom Control -->
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500">Zoom</span>
+            <input 
+              type="range" 
+              min="20" 
+              max="500" 
+              step="10" 
+              v-model.number="zoomPercent" 
+              class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
+            />
+            <span class="text-xs text-gray-600 w-9 text-right">{{ zoomPercent }}%</span>
+          </div>
+
           <button @click="handleClose" class="text-gray-500 hover:text-gray-700">
             <Close class="w-5 h-5" />
           </button>
@@ -64,7 +80,7 @@ onUnmounted(() => {
           <div 
             ref="previewContainer"
             class="preview-content"
-            :style="{ width: `${width}px` }"
+            :style="`width: ${width}px; zoom: ${zoomPercent / 100}`"
             v-html="htmlContent"
           ></div>
         </div>
@@ -111,5 +127,10 @@ onUnmounted(() => {
 /* Hide the last margin */
 :deep(.print-page:last-child) {
   margin-bottom: 0;
+}
+
+/* Force default cursor for all elements in preview */
+.preview-content :deep(*) {
+  cursor: default !important;
 }
 </style>
