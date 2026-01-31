@@ -320,7 +320,7 @@ export const usePrint = () => {
           cells.forEach(cell => {
             const field = cell.getAttribute('data-field');
             if (field) {
-              rowData[field] = cell.getAttribute('data-value') || cell.textContent || '';
+              rowData[field] = { value: cell.getAttribute('data-value') || cell.textContent || '' };
             }
           });
           footerData.push(rowData);
@@ -340,8 +340,9 @@ export const usePrint = () => {
                 const field = cell.getAttribute('data-field');
                 if (field && footerData[i][field] !== undefined) {
                   let val = footerData[i][field];
-                  if (val && typeof val === 'object' && val.value) {
-                    val = val.value;
+                  if (val && typeof val === 'object') {
+                    if (val.result !== undefined) val = val.result;
+                    else if (val.value !== undefined) val = val.value;
                   }
                   cell.textContent = String(val);
                 }
