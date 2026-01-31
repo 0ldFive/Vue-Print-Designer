@@ -76,7 +76,7 @@ export const useDesignerStore = defineStore('designer', {
         console.error('Load from localStorage failed', error);
       }
     },
-    setTableSelection(elementId: string, cell: { rowIndex: number; colField: string }, multi: boolean) {
+    setTableSelection(elementId: string, cell: { rowIndex: number; colField: string; section?: 'body' | 'footer' }, multi: boolean) {
       // If switching elements, clear previous
       if (this.tableSelection && this.tableSelection.elementId !== elementId) {
         this.tableSelection = { elementId, cells: [cell] };
@@ -90,20 +90,26 @@ export const useDesignerStore = defineStore('designer', {
 
       if (multi) {
         // Toggle if exists
-        const idx = this.tableSelection.cells.findIndex(c => c.rowIndex === cell.rowIndex && c.colField === cell.colField);
+        const idx = this.tableSelection.cells.findIndex(c => c.rowIndex === cell.rowIndex && c.colField === cell.colField && c.section === cell.section);
         if (idx >= 0) {
           this.tableSelection.cells.splice(idx, 1);
           if (this.tableSelection.cells.length === 0) {
             this.tableSelection = null;
           }
         } else {
-          this.tableSelection.cells.push(cell);
+          // Ensure we don't mix sections
+          if (this.tableSelection.cells.length > 0 && this.tableSelection.cells[0].section !== cell.section) {
+             // If mixed, reset to new selection
+             this.tableSelection = { elementId, cells: [cell] };
+          } else {
+             this.tableSelection.cells.push(cell);
+          }
         }
       } else {
         this.tableSelection = { elementId, cells: [cell] };
       }
     },
-    setTableSelectionCells(elementId: string, cells: { rowIndex: number; colField: string }[]) {
+    setTableSelectionCells(elementId: string, cells: { rowIndex: number; colField: string; section?: 'body' | 'footer' }[]) {
       this.tableSelection = { elementId, cells };
     },
     clearTableSelection() {
@@ -113,6 +119,7 @@ export const useDesignerStore = defineStore('designer', {
       if (!this.tableSelection || this.tableSelection.cells.length < 2) return;
 
       const { elementId, cells } = this.tableSelection;
+      const section = cells[0].section || 'body';
       
       // Find element
       let element: PrintElement | null = null;
@@ -129,7 +136,10 @@ export const useDesignerStore = defineStore('designer', {
         }
       }
 
-      if (!element || !element.data || !element.columns) return;
+      if (!element || !element.columns) return;
+      
+      const targetDataKey = section === 'footer' ? 'footerData' : 'data';
+      if (!element[targetDataKey]) return;
 
       // Find bounds
       const rowIndices = cells.map(c => c.rowIndex);
@@ -152,7 +162,7 @@ export const useDesignerStore = defineStore('designer', {
       this.snapshot();
 
       // Update data
-      const newData = cloneDeep(element.data);
+      const newData = cloneDeep(element[targetDataKey]);
       
       // Iterate through the bounding box
       for (let r = minRow; r <= maxRow; r++) {
@@ -186,7 +196,7 @@ export const useDesignerStore = defineStore('designer', {
 
       this.pages[pageIndex].elements[elementIndex] = {
         ...element,
-        data: newData
+        [targetDataKey]: newData
       };
       
       this.tableSelection = null;
@@ -196,6 +206,7 @@ export const useDesignerStore = defineStore('designer', {
         
         const { elementId, cells } = this.tableSelection;
         const cell = cells[0];
+        const section = cell.section || 'body';
         
         // Find element
         let element: PrintElement | null = null;
@@ -212,9 +223,12 @@ export const useDesignerStore = defineStore('designer', {
           }
         }
   
-        if (!element || !element.data || !element.columns) return;
+        if (!element || !element.columns) return;
         
-        const row = element.data[cell.rowIndex];
+        const targetDataKey = section === 'footer' ? 'footerData' : 'data';
+        if (!element[targetDataKey]) return;
+
+        const row = element[targetDataKey][cell.rowIndex];
         if (!row) return;
         
         const val = row[cell.colField];
@@ -229,7 +243,7 @@ export const useDesignerStore = defineStore('designer', {
         // Snapshot
         this.snapshot();
         
-        const newData = cloneDeep(element.data);
+        const newData = cloneDeep(element[targetDataKey]);
         const colFields = element.columns.map(c => c.field);
         const startColIdx = colFields.indexOf(cell.colField);
         
@@ -247,7 +261,7 @@ export const useDesignerStore = defineStore('designer', {
         
         this.pages[pageIndex].elements[elementIndex] = {
           ...element,
-          data: newData
+          [targetDataKey]: newData
         };
         
         this.tableSelection = null;

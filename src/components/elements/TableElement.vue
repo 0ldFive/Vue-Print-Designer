@@ -9,106 +9,49 @@ const props = defineProps<{
 
 const store = useDesignerStore();
 
-function isCellSelected(rowIndex: number, colField: string) {
+function isCellSelected(rowIndex: number, colField: string, section: 'body' | 'footer' = 'body') {
   if (store.tableSelection && store.tableSelection.elementId !== props.element.id) return false;
-  return store.tableSelection?.cells.some(c => c.rowIndex === rowIndex && c.colField === colField) ?? false;
+  return store.tableSelection?.cells.some(c => 
+    c.rowIndex === rowIndex && 
+    c.colField === colField && 
+    (c.section || 'body') === section
+  ) ?? false;
 }
 
-// Column Resizing Logic
-const resizingColIndex = ref<number | null>(null);
-const startResizeX = ref(0);
-const startResizeWidth = ref(0);
-const startResizeWidthNext = ref(0);
-const tempColumnWidths = ref<Record<string, number>>({});
 
-const handleResizeStart = (e: MouseEvent, index: number) => {
-  if (store.selectedElementId !== props.element.id) return;
-  
-  const columns = processedData.value.columns;
-  if (index >= columns.length - 1) return; // Prevent last column resize as it has no right neighbor
-
-  e.preventDefault();
-  e.stopPropagation();
-  
-  const col = columns[index];
-  const nextCol = columns[index + 1];
-
-  resizingColIndex.value = index;
-  startResizeX.value = e.clientX;
-  startResizeWidth.value = col.width || 100;
-  startResizeWidthNext.value = nextCol.width || 100;
-  
-  window.addEventListener('mousemove', handleResizeMove);
-  window.addEventListener('mouseup', handleResizeEnd);
-};
-
-const handleResizeMove = (e: MouseEvent) => {
-  if (resizingColIndex.value === null) return;
-  
-  const columns = processedData.value.columns;
-  const col = columns[resizingColIndex.value];
-  const nextCol = columns[resizingColIndex.value + 1];
-  
-  if (!col || !nextCol) return;
-
-  const rawDx = e.clientX - startResizeX.value;
-  const MIN_WIDTH = 20;
-  
-  // Constrain dx
-  const minDx = MIN_WIDTH - startResizeWidth.value;
-  const maxDx = startResizeWidthNext.value - MIN_WIDTH;
-  
-  const dx = Math.max(minDx, Math.min(maxDx, rawDx));
-  
-  tempColumnWidths.value[col.field] = startResizeWidth.value + dx;
-  tempColumnWidths.value[nextCol.field] = startResizeWidthNext.value - dx;
-};
-
-const handleResizeEnd = () => {
-  if (resizingColIndex.value === null) return;
-  
-  // Commit changes to store
-  const newColumns = processedData.value.columns.map(col => {
-    if (tempColumnWidths.value[col.field] !== undefined) {
-      return { ...col, width: tempColumnWidths.value[col.field] };
-    }
-    return col;
-  });
-  
-  store.updateElement(props.element.id, { columns: newColumns });
-  
-  // Cleanup
-  resizingColIndex.value = null;
-  tempColumnWidths.value = {};
-  window.removeEventListener('mousemove', handleResizeMove);
-  window.removeEventListener('mouseup', handleResizeEnd);
-};
 
 // Column Header Editing Logic
 const editingColIndex = ref<number | null>(null);
-const editForm = ref({ header: '', field: '' });
+const editingFooterCell = ref<{ rowIndex: number; colField: string } | null>(null);
+const editForm = ref({ header: '', field: '', value: '' });
 const editFormPosition = ref({ top: 0, left: 0 });
 const editFormRef = ref<HTMLElement | null>(null);
 
 const handleHeaderDblClick = (e: MouseEvent, index: number) => {
-  console.log('Double click on header', index, store.selectedElementId, props.element.id);
-  if (store.selectedElementId !== props.element.id) {
-    console.warn('Element not selected, ignoring double click');
-    return;
-  }
-  
-  const col = processedData.value.columns[index];
-  console.log('Editing column:', col);
+  // ...
   editingColIndex.value = index;
-  editForm.value = { header: col.header, field: col.field };
+  editingFooterCell.value = null; // Clear footer edit
+  editForm.value = { header: col.header, field: col.field, value: '' };
+  // ...
+};
+
+const handleFooterDblClick = (e: MouseEvent, rowIndex: number, colField: string) => {
+  if (store.selectedElementId !== props.element.id) return;
   
-  // Position the form near the mouse cursor
+  const row = processedData.value.footerData[rowIndex];
+  if (!row) return;
+  
+  const cellValue = getCellValue(row, colField);
+  
+  editingFooterCell.value = { rowIndex, colField };
+  editingColIndex.value = null; // Clear header edit
+  editForm.value = { header: '', field: colField, value: String(cellValue || '') };
+  
   editFormPosition.value = {
     top: e.clientY + 10,
     left: e.clientX + 10
   };
   
-  // Add click outside listener
   setTimeout(() => {
     window.addEventListener('click', handleClickOutside);
   }, 100);
@@ -122,74 +65,94 @@ const handleClickOutside = (e: MouseEvent) => {
 
 const closeEditForm = () => {
   editingColIndex.value = null;
+  editingFooterCell.value = null;
   window.removeEventListener('click', handleClickOutside);
 };
 
 const saveHeaderEdit = () => {
-  if (editingColIndex.value === null) return;
-  
-  // Ensure we are updating the source of truth
-  const currentColumns = props.element.columns ? [...props.element.columns] : [];
-  
-  // If we have no columns stored but processedData has them (e.g. from script or defaults),
-  // we should initialize the stored columns with the processed ones so we can save edits.
-  if (currentColumns.length === 0 && processedData.value.columns.length > 0) {
-      const newCols = JSON.parse(JSON.stringify(processedData.value.columns));
-      if (newCols[editingColIndex.value]) {
-        newCols[editingColIndex.value].header = editForm.value.header;
-        newCols[editingColIndex.value].field = editForm.value.field;
-        store.updateElement(props.element.id, { columns: newCols });
+  if (editingColIndex.value !== null) {
+      // ... existing header save logic ...
+      const currentColumns = props.element.columns ? [...props.element.columns] : [];
+       if (currentColumns.length === 0 && processedData.value.columns.length > 0) {
+          const newCols = JSON.parse(JSON.stringify(processedData.value.columns));
+          if (newCols[editingColIndex.value]) {
+            newCols[editingColIndex.value].header = editForm.value.header;
+            newCols[editingColIndex.value].field = editForm.value.field;
+            store.updateElement(props.element.id, { columns: newCols });
+          }
+          closeEditForm();
+          return;
       }
-      closeEditForm();
-      return;
-  }
-
-  if (editingColIndex.value < currentColumns.length) {
-    currentColumns[editingColIndex.value] = {
-      ...currentColumns[editingColIndex.value],
-      header: editForm.value.header,
-      field: editForm.value.field
-    };
-    
-    store.updateElement(props.element.id, { columns: currentColumns });
+      if (editingColIndex.value < currentColumns.length) {
+        currentColumns[editingColIndex.value] = {
+          ...currentColumns[editingColIndex.value],
+          header: editForm.value.header,
+          field: editForm.value.field
+        };
+        store.updateElement(props.element.id, { columns: currentColumns });
+      }
+  } else if (editingFooterCell.value) {
+      // Save Footer Edit
+      const { rowIndex, colField } = editingFooterCell.value;
+      const currentFooterData = props.element.footerData ? JSON.parse(JSON.stringify(props.element.footerData)) : [];
+      
+      // Ensure row exists
+      if (!currentFooterData[rowIndex]) {
+         // Should not happen if clicking existing row, but good to be safe
+         return;
+      }
+      
+      const row = currentFooterData[rowIndex];
+      const val = row[colField];
+      
+      if (val && typeof val === 'object' && 'value' in val) {
+          val.value = editForm.value.value;
+      } else {
+          row[colField] = editForm.value.value;
+      }
+      
+      store.updateElement(props.element.id, { footerData: currentFooterData });
   }
   
   closeEditForm();
 };
 
 const isSelecting = ref(false);
-const startCell = ref<{ rowIndex: number; colField: string } | null>(null);
+const startCell = ref<{ rowIndex: number; colField: string; section: 'body' | 'footer' } | null>(null);
 
-const cellStyle = computed(() => ({
-  borderStyle: props.element.style.borderStyle || 'solid',
-  borderWidth: props.element.style.borderWidth !== undefined ? `${props.element.style.borderWidth}px` : '1px',
-  borderColor: props.element.style.borderColor || '#e5e7eb'
-}));
+import cloneDeep from 'lodash/cloneDeep';
 
 const processedData = computed(() => {
+  const cols = props.element.columns || [];
   let data = props.element.data || [];
-  let columns = props.element.columns || [];
   let footerData = props.element.footerData || [];
-
+  
   if (props.element.customScript) {
     try {
-      // Safe-ish execution
-      const fn = new Function('data', 'columns', 'footerData', props.element.customScript);
-      const result = fn(data, columns, footerData);
+      const func = new Function('data', 'footerData', 'columns', props.element.customScript);
+      const result = func(cloneDeep(data), cloneDeep(footerData), cloneDeep(cols));
       if (result) {
         if (result.data) data = result.data;
-        // We generally don't expect columns to change, but why not
-        if (result.columns) columns = result.columns;
         if (result.footerData) footerData = result.footerData;
+        if (result.columns) return { ...result, columns: result.columns };
       }
     } catch (e) {
-      console.error('Custom Script Error:', e);
+      console.error('Custom script error', e);
     }
   }
-  return { data, columns, footerData };
+  
+  return { columns: cols, data, footerData };
 });
 
+const cellStyle = computed(() => ({
+  fontFamily: props.element.style.fontFamily,
+  borderColor: props.element.style.borderColor || '#000',
+  borderWidth: (props.element.style.borderWidth || 1) + 'px',
+  borderStyle: props.element.style.borderStyle || 'solid',
+}));
+
 const getCellValue = (row: any, field: string) => {
+  if (!row) return '';
   const val = row[field];
   if (val && typeof val === 'object' && 'value' in val) {
     return val.value;
@@ -213,16 +176,6 @@ const getColSpan = (row: any, field: string) => {
   return 1;
 };
 
-const getCellStyle = (row: any, field: string) => {
-  const val = row[field];
-  const style = { ...cellStyle.value };
-  
-  if (val && typeof val === 'object' && 'style' in val) {
-    Object.assign(style, val.style);
-  }
-  return style;
-};
-
 const shouldRenderCell = (row: any, field: string) => {
   const val = row[field];
   if (val && typeof val === 'object') {
@@ -231,16 +184,71 @@ const shouldRenderCell = (row: any, field: string) => {
   return true;
 };
 
-const handleMouseDown = (e: MouseEvent, rowIndex: number, colField: string) => {
+const getCellStyle = (row: any, field: string) => {
+  const val = row[field];
+  if (val && typeof val === 'object' && val.style) {
+      return val.style;
+  }
+  return {};
+};
+
+// Resizing Logic
+const tempColumnWidths = ref<Record<string, number>>({});
+const resizingColIndex = ref<number | null>(null);
+const startResizeX = ref(0);
+const startResizeWidth = ref(0);
+
+const handleResizeStart = (e: MouseEvent, index: number) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resizingColIndex.value = index;
+  startResizeX.value = e.clientX;
+  const col = processedData.value.columns[index];
+  startResizeWidth.value = col.width || 100;
+  
+  window.addEventListener('mousemove', handleResizeMove);
+  window.addEventListener('mouseup', handleResizeEnd);
+};
+
+const handleResizeMove = (e: MouseEvent) => {
+  if (resizingColIndex.value === null) return;
+  const dx = e.clientX - startResizeX.value;
+  const newWidth = Math.max(20, startResizeWidth.value + dx);
+  const col = processedData.value.columns[resizingColIndex.value];
+  tempColumnWidths.value[col.field] = newWidth;
+};
+
+const handleResizeEnd = () => {
+  if (resizingColIndex.value !== null) {
+      const col = processedData.value.columns[resizingColIndex.value];
+      const finalWidth = tempColumnWidths.value[col.field];
+      if (finalWidth) {
+          const newCols = [...(props.element.columns || [])];
+          if (newCols[resizingColIndex.value]) {
+              newCols[resizingColIndex.value] = { ...newCols[resizingColIndex.value], width: finalWidth };
+              store.updateElement(props.element.id, { columns: newCols });
+          }
+      }
+  }
+  resizingColIndex.value = null;
+  tempColumnWidths.value = {};
+  window.removeEventListener('mousemove', handleResizeMove);
+  window.removeEventListener('mouseup', handleResizeEnd);
+};
+
+const handleMouseDown = (e: MouseEvent, rowIndex: number, colField: string, section: 'body' | 'footer' = 'body') => {
   if (store.selectedElementId !== props.element.id) return;
   e.stopPropagation();
   isSelecting.value = true;
-  startCell.value = { rowIndex, colField };
-  store.setTableSelection(props.element.id, { rowIndex, colField }, false);
+  startCell.value = { rowIndex, colField, section };
+  store.setTableSelection(props.element.id, { rowIndex, colField, section }, false);
 };
 
-const handleMouseOver = (rowIndex: number, colField: string) => {
+const handleMouseOver = (rowIndex: number, colField: string, section: 'body' | 'footer' = 'body') => {
   if (!isSelecting.value || !startCell.value) return;
+  
+  // Prevent cross-section selection
+  if (startCell.value.section !== section) return;
   
   const startRow = startCell.value.rowIndex;
   const endRow = rowIndex;
@@ -259,7 +267,8 @@ const handleMouseOver = (rowIndex: number, colField: string) => {
     for (let c = minCol; c <= maxCol; c++) {
       cells.push({
         rowIndex: r,
-        colField: processedData.value.columns[c].field
+        colField: processedData.value.columns[c].field,
+        section
       });
     }
   }
@@ -416,8 +425,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           <template v-for="col in processedData.columns" :key="col.field">
              <td 
                v-if="shouldRenderCell(row, col.field)"
-               class="p-1 text-sm font-bold"
+               class="p-1 text-sm font-bold select-none"
+               :class="{ 'bg-blue-100 ring-1 ring-blue-400': isCellSelected(i, col.field, 'footer') }"
                 :style="{ 
+                  ...cellStyle,
                   ...getCellStyle(row, col.field), 
                   height: element.style.footerHeight ? `${element.style.footerHeight}px` : undefined,
                   backgroundColor: element.style.footerBackgroundColor || '#f9fafb',
@@ -427,6 +438,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                :rowspan="getRowSpan(row, col.field)"
                :colspan="getColSpan(row, col.field)"
                :data-field="col.field"
+               @mousedown="(e) => handleMouseDown(e, i, col.field, 'footer')"
+               @mouseover="handleMouseOver(i, col.field, 'footer')"
+               @dblclick="(e) => handleFooterDblClick(e, i, col.field)"
              >
                {{ getCellValue(row, col.field) }}
              </td>
@@ -438,32 +452,50 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     <!-- Header Edit Form -->
     <Teleport to="body">
       <div 
-        v-if="editingColIndex !== null" 
+        v-if="editingColIndex !== null || editingFooterCell" 
         ref="editFormRef"
         class="fixed z-[9999] bg-white shadow-xl border border-gray-200 rounded-lg p-4 w-64 flex flex-col gap-3"
         :style="{ top: `${editFormPosition.top}px`, left: `${editFormPosition.left}px` }"
         @click.stop
       >
-        <h4 class="text-sm font-semibold text-gray-700">Edit Column</h4>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-500">Header Text</label>
-          <input 
-            v-model="editForm.header"
-            class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="Header Name"
-            @keydown.enter="saveHeaderEdit"
-            autoFocus
-          />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-500">Field Key</label>
-          <input 
-            v-model="editForm.field"
-            class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="Field Key"
-            @keydown.enter="saveHeaderEdit"
-          />
-        </div>
+        <h4 class="text-sm font-semibold text-gray-700">{{ editingFooterCell ? 'Edit Cell' : 'Edit Column' }}</h4>
+        
+        <template v-if="editingColIndex !== null">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-gray-500">Header Text</label>
+            <input 
+              v-model="editForm.header"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              placeholder="Header Name"
+              @keydown.enter="saveHeaderEdit"
+              autoFocus
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-gray-500">Field Key</label>
+            <input 
+              v-model="editForm.field"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              placeholder="Field Key"
+              @keydown.enter="saveHeaderEdit"
+            />
+          </div>
+        </template>
+
+        <template v-if="editingFooterCell">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-gray-500">Cell Value</label>
+            <textarea 
+              v-model="editForm.value"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none min-h-[60px]"
+              placeholder="Value or {{variable}}"
+              @keydown.ctrl.enter="saveHeaderEdit"
+              autoFocus
+            ></textarea>
+            <span class="text-[10px] text-gray-400">Ctrl+Enter to save</span>
+          </div>
+        </template>
+
         <div class="flex justify-end gap-2 mt-1">
           <button 
             @click="closeEditForm"

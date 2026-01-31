@@ -130,7 +130,7 @@ export interface DesignerState {
   disableShortcutsCount?: number;
   tableSelection?: {
     elementId: string;
-    cells: { rowIndex: number; colField: string }[];
+    cells: { rowIndex: number; colField: string; section?: 'body' | 'footer' }[];
   } | null;
 }
 
