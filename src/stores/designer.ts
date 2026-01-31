@@ -49,33 +49,6 @@ export const useDesignerStore = defineStore('designer', {
     setIsExporting(isExporting: boolean) {
       this.isExporting = isExporting;
     },
-    loadFromLocalStorage() {
-      try {
-        const data = localStorage.getItem('localdata');
-        if (data) {
-          const parsed = JSON.parse(data);
-          if (parsed.pages) this.pages = parsed.pages;
-          if (parsed.canvasSize) this.canvasSize = parsed.canvasSize;
-          if (parsed.guides) this.guides = parsed.guides;
-          if (parsed.zoom !== undefined) this.zoom = parsed.zoom;
-          if (parsed.showGrid !== undefined) this.showGrid = parsed.showGrid;
-          if (parsed.headerHeight !== undefined) this.headerHeight = parsed.headerHeight;
-          if (parsed.footerHeight !== undefined) this.footerHeight = parsed.footerHeight;
-          if (parsed.showHeaderLine !== undefined) this.showHeaderLine = parsed.showHeaderLine;
-          if (parsed.showFooterLine !== undefined) this.showFooterLine = parsed.showFooterLine;
-          if (parsed.showMinimap !== undefined) this.showMinimap = parsed.showMinimap;
-          if (parsed.showHelp !== undefined) this.showHelp = parsed.showHelp;
-          if (parsed.canvasBackground !== undefined) this.canvasBackground = parsed.canvasBackground;
-          this.selectedElementId = null;
-          this.selectedGuideId = null;
-          this.currentPageIndex = 0;
-          this.historyPast = [];
-          this.historyFuture = [];
-        }
-      } catch (error) {
-        console.error('Load from localStorage failed', error);
-      }
-    },
     resetCanvas() {
       this.pages = [{ id: uuidv4(), elements: [] }];
       this.currentPageIndex = 0;

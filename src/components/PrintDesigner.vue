@@ -16,8 +16,6 @@ const canvasContainer = ref<HTMLElement | null>(null);
 const canvasWrapper = ref<HTMLElement | null>(null);
 
 onMounted(() => {
-  // Load data from localStorage on startup
-  store.loadFromLocalStorage();
   nextTick(() => {
     updateOffset();
   });
