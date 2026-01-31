@@ -23,7 +23,7 @@ function isCellSelected(rowIndex: number, colField: string, section: 'body' | 'f
 // Column Header Editing Logic
 const editingColIndex = ref<number | null>(null);
 const editingFooterCell = ref<{ rowIndex: number; colField: string } | null>(null);
-const editForm = ref({ header: '', field: '', value: '' });
+const editForm = ref({ header: '', field: '', value: '', variable: '' });
 const editFormPosition = ref({ top: 0, left: 0 });
 const editFormRef = ref<HTMLElement | null>(null);
 
@@ -53,11 +53,20 @@ const handleFooterDblClick = (e: MouseEvent, rowIndex: number, colField: string)
   const row = processedData.value.footerData[rowIndex];
   if (!row) return;
   
-  const cellValue = getCellValue(row, colField);
+  const cell = row[colField];
+  let value = '';
+  let variable = '';
+
+  if (cell && typeof cell === 'object') {
+    value = cell.value || '';
+    variable = cell.field || '';
+  } else if (cell !== undefined && cell !== null) {
+     value = String(cell);
+  }
   
   editingFooterCell.value = { rowIndex, colField };
   editingColIndex.value = null; // Clear header edit
-  editForm.value = { header: '', field: colField, value: String(cellValue || '') };
+  editForm.value = { header: '', field: colField, value, variable };
   
   editFormPosition.value = {
     top: e.clientY + 10,
@@ -119,8 +128,12 @@ const saveHeaderEdit = () => {
       
       if (val && typeof val === 'object') {
           val.value = editForm.value.value;
+          val.field = editForm.value.variable;
       } else {
-          row[colField] = editForm.value.value;
+          row[colField] = {
+              value: editForm.value.value,
+              field: editForm.value.variable
+          };
       }
       
       store.updateElement(props.element.id, { footerData: currentFooterData });
@@ -152,8 +165,28 @@ const processedData = computed(() => {
       console.error('Custom script error', e);
     }
   }
+
+  // Calculate footer values based on field variable
+  const computedFooterData = cloneDeep(footerData);
+  const columnFields = cols.map((c: any) => c.field);
   
-  return { columns: cols, data, footerData };
+  computedFooterData.forEach((row: any) => {
+      Object.keys(row).forEach(key => {
+          const cell = row[key];
+          if (cell && typeof cell === 'object' && cell.field && columnFields.includes(cell.field)) {
+              const fieldKey = cell.field;
+              // Simple SUM aggregation by default
+              const sum = data.reduce((acc: number, curr: any) => {
+                  const val = parseFloat(curr[fieldKey]);
+                  return acc + (isNaN(val) ? 0 : val);
+              }, 0);
+              // Store result in 'result' property, not overwriting value (which is static text)
+              cell.result = sum;
+          }
+      });
+  });
+  
+  return { columns: cols, data, footerData: computedFooterData };
 });
 
 const cellStyle = computed(() => ({
@@ -167,7 +200,9 @@ const getPrintValue = (row: any, field: string) => {
   if (!row) return '';
   const val = row[field];
   if (val && typeof val === 'object') {
-    return val.printValue || val.value;
+    const text = val.value || '';
+    const result = (val.printValue !== undefined) ? val.printValue : (val.result !== undefined ? val.result : '');
+    return text + result;
   }
   return val;
 };
@@ -176,7 +211,11 @@ const getCellValue = (row: any, field: string) => {
   if (!row) return '';
   const val = row[field];
   if (val && typeof val === 'object') {
-    return val.value;
+    const text = val.value || '';
+    // Use result if available (auto-calc), or printValue (custom script), or fallback to empty
+    // If result is 0, it should be displayed, so check for undefined/null
+    const result = (val.printValue !== undefined) ? val.printValue : (val.result !== undefined ? val.result : '');
+    return text + result;
   }
   return val;
 };
@@ -516,14 +555,23 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 
         <template v-if="editingFooterCell">
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500">Cell Value</label>
-            <textarea 
+            <label class="text-xs text-gray-500">Text</label>
+            <input 
               v-model="editForm.value"
-              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none min-h-[60px]"
-              placeholder="Value or {#variable}"
-              @keydown.ctrl.enter="saveHeaderEdit"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              placeholder="Display Text (e.g. Total:)"
+              @keydown.enter="saveHeaderEdit"
               autoFocus
-            ></textarea>
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-gray-500">Variable Field</label>
+             <input 
+              v-model="editForm.variable"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+              placeholder="Data Field (e.g. amount)"
+              @keydown.enter="saveHeaderEdit"
+            />
           </div>
         </template>
 

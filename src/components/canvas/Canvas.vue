@@ -182,9 +182,9 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     tfootRepeat: type === ElementType.TABLE ? true : undefined,
     autoPaginate: type === ElementType.TABLE ? true : undefined,
     footerData: type === ElementType.TABLE ? [
-      { id: 'Page Sum', total: '{#pageSum}' },
-      { id: 'Total', qty: '{#totalQty}', total: '{#totalSum}' },
-      { id: 'In Words', total: '{#totalCap}' }
+      { id: 'Page Sum', total: { value: '', field: '{#pageSum}' } },
+      { id: 'Total', qty: { value: '', field: '{#totalQty}' }, total: { value: '', field: '{#totalSum}' } },
+      { id: 'In Words', total: { value: '', field: '{#totalCap}' } }
     ] : undefined,
     customScript: type === ElementType.TABLE ? `// RMB Uppercase Conversion
 try {
@@ -270,17 +270,35 @@ try {
         if (typeof val === 'string') {
           row[key] = processValue(val);
         } 
-        // Handle object values (merged cells)
-        else if (val && typeof val === 'object' && val.value) {
-          if (typeof val.value === 'string') {
-            const processed = processValue(val.value);
-            if (typeof processed === 'object') {
-                val.value = processed.value;
-                val.printValue = processed.printValue;
-            } else {
-                val.value = processed;
-            }
-          }
+        // Handle object values
+        else if (val && typeof val === 'object') {
+           // If it has a 'field' property, check if it contains a variable
+           if (val.field && typeof val.field === 'string') {
+               const processed = processValue(val.field);
+               // If processed is different from field (meaning a replacement happened)
+               // OR if processValue returned an object (for {#pageSum})
+               if (processed !== val.field || typeof processed === 'object') {
+                   if (typeof processed === 'object') {
+                       val.result = processed.value; // Store in result, keep val.value as text
+                       val.printValue = processed.printValue;
+                   } else {
+                       val.result = processed;
+                   }
+               }
+           }
+           // Also check 'value' if it was set manually and looks like a variable
+           else if (val.value && typeof val.value === 'string') {
+               // Only process if value looks like a variable, otherwise it's just text
+               if (val.value.includes('{#')) {
+                  const processed = processValue(val.value);
+                  if (typeof processed === 'object') {
+                       val.result = processed.value;
+                       val.printValue = processed.printValue;
+                   } else {
+                       val.result = processed;
+                   }
+               }
+           }
         }
       });
     });
