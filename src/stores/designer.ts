@@ -63,6 +63,12 @@ export const useDesignerStore = defineStore('designer', {
       this.showHeaderLine = false;
       this.showFooterLine = false;
       this.canvasBackground = '#ffffff';
+      this.canvasSize = { width: 794, height: 1123 };
+      this.zoom = 1;
+      this.showGrid = true;
+      this.showCornerMarkers = true;
+      this.showMinimap = false;
+      this.showHelp = false;
     },
     setTableSelection(elementId: string, cell: { rowIndex: number; colField: string; section?: 'body' | 'footer' }, multi: boolean) {
       // If switching elements, clear previous
