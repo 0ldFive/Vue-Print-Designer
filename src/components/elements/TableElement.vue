@@ -492,7 +492,6 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               @keydown.ctrl.enter="saveHeaderEdit"
               autoFocus
             ></textarea>
-            <span class="text-[10px] text-gray-400">Ctrl+Enter to save</span>
           </div>
         </template>
 
