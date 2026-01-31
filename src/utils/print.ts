@@ -366,11 +366,19 @@ export const usePrint = () => {
              if (!tbody) return;
              const rows = Array.from(tbody.querySelectorAll('tr'));
              
+             // Check for footer height requirement
+             const tfoot = table.querySelector('tfoot');
+             const isFooterRepeated = table.getAttribute('data-tfoot-repeat') === 'true';
+             let requiredFooterHeight = 0;
+             if (tfoot && isFooterRepeated) {
+                 requiredFooterHeight = tfoot.getBoundingClientRect().height;
+             }
+             
              for (let r = 0; r < rows.length; r++) {
                  const row = rows[r];
                  const rowRect = row.getBoundingClientRect();
                  // Use a small buffer (1px) for float precision
-                 if (rowRect.bottom > limitBottom + 1) { 
+                 if (rowRect.bottom + requiredFooterHeight > limitBottom + 1) { 
                      splitIndex = r;
                      
                      // Prevent infinite loop: if we are at the first row (r=0) 
