@@ -161,8 +161,10 @@ const handleModalSave = (name: string) => {
           class="relative group flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer"
           @click="selectTemplate(t)"
         >
-          <div class="flex items-center gap-2 overflow-hidden">
-             <div class="w-1 h-1 rounded-full bg-blue-500" v-if="store.currentTemplateId === t.id"></div>
+          <div class="flex items-center gap-2 overflow-hidden flex-1">
+             <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
+               <div class="w-1.5 h-1.5 rounded-full bg-blue-500" v-if="store.currentTemplateId === t.id"></div>
+             </div>
              <span class="text-sm text-gray-700 truncate" :class="{'font-medium text-blue-600': store.currentTemplateId === t.id}">{{ t.name }}</span>
           </div>
           

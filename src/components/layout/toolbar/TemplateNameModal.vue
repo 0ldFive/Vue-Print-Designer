@@ -43,7 +43,6 @@ const handleSave = () => {
       </div>
       
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
         <input 
           ref="inputRef"
           v-model="name"
