@@ -60,8 +60,6 @@ const handleFooterDblClick = (e: MouseEvent, rowIndex: number, colField: string)
   if (cell && typeof cell === 'object') {
     value = cell.value || '';
     variable = cell.field || '';
-  } else if (cell !== undefined && cell !== null) {
-     value = String(cell);
   }
   
   editingFooterCell.value = { rowIndex, colField };
@@ -364,7 +362,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' },
         { label: 'Columns (JSON)', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: '[{ field: "name", header: "Name", width: 100 }]' },
         { label: 'Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: '[{...}]' },
-        { label: 'Footer Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: '[{...}]' },
+        { label: 'Footer Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: '[{ "id": { "value": "Total" }, "amount": { "value": "Total:", "field": "{#sum}" } }]' },
         { label: 'Custom Script', type: 'code', language: 'javascript', target: 'element', key: 'customScript', placeholder: 'return { data: ... };' }
       ]
     },

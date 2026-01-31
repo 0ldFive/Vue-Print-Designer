@@ -182,9 +182,9 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     tfootRepeat: type === ElementType.TABLE ? true : undefined,
     autoPaginate: type === ElementType.TABLE ? true : undefined,
     footerData: type === ElementType.TABLE ? [
-      { id: 'Page Sum', total: { value: '', field: '{#pageSum}' } },
-      { id: 'Total', qty: { value: '', field: '{#totalQty}' }, total: { value: '', field: '{#totalSum}' } },
-      { id: 'In Words', total: { value: '', field: '{#totalCap}' } }
+      { id: { value: 'Page Sum' }, total: { value: '', field: '{#pageSum}' } },
+      { id: { value: 'Total' }, qty: { value: '', field: '{#totalQty}' }, total: { value: '', field: '{#totalSum}' } },
+      { id: { value: 'In Words' }, total: { value: '', field: '{#totalCap}' } }
     ] : undefined,
     customScript: type === ElementType.TABLE ? `// RMB Uppercase Conversion
 try {
@@ -266,24 +266,8 @@ try {
            return v;
         };
 
-        // Handle string values
-        if (typeof val === 'string') {
-          const processed = processValue(val);
-          if (typeof processed === 'object') {
-             // Convert to cell object structure if processValue returns an object
-             // This handles the case where existing string data needs to be upgraded to object
-             row[key] = {
-                 value: '', // Static text
-                 result: processed.value, // Display value
-                 printValue: processed.printValue, // Print token
-                 field: val // Store original string as field
-             };
-          } else {
-             row[key] = processed;
-          }
-        } 
         // Handle object values
-        else if (val && typeof val === 'object') {
+        if (val && typeof val === 'object') {
            // If it has a 'field' property, check if it contains a variable
            if (val.field && typeof val.field === 'string') {
                const processed = processValue(val.field);
