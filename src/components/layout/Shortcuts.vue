@@ -202,6 +202,27 @@ const handleKeydown = (e: KeyboardEvent) => {
     store.toggleLock();
     return;
   }
+
+  // Preview (Ctrl + Shift + P)
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('designer:preview'));
+    return;
+  }
+
+  // Save (Ctrl + S)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('designer:save'));
+    return;
+  }
+
+  // Print (Ctrl + P)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('designer:print'));
+    return;
+  }
 };
 
 const handleKeyup = (e: KeyboardEvent) => {

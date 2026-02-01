@@ -263,35 +263,16 @@ const handleSaveConfirm = (name: string) => {
   showSaveNameModal.value = false;
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-  // Preview (Ctrl + Shift + P)
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
-    e.preventDefault();
-    handlePreview();
-    return;
-  }
-  
-  // Save (Ctrl + S)
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-    e.preventDefault();
-    handleSave();
-    return;
-  }
-
-  // Print (Ctrl + P)
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
-    e.preventDefault();
-    handlePrint();
-    return;
-  }
-};
-
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('designer:preview', handlePreview);
+  window.addEventListener('designer:save', handleSave);
+  window.addEventListener('designer:print', handlePrint);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('designer:preview', handlePreview);
+  window.removeEventListener('designer:save', handleSave);
+  window.removeEventListener('designer:print', handlePrint);
 });
 </script>
 
