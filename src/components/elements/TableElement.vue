@@ -29,7 +29,7 @@ const editFormPosition = ref({ top: 0, left: 0 });
 const editFormRef = ref<HTMLElement | null>(null);
 
 const handleHeaderDblClick = async (e: MouseEvent, index: number) => {
-  if (store.selectedElementId !== props.element.id) return;
+  if (store.selectedElementId !== props.element.id || props.element.locked) return;
 
   const col = processedData.value.columns[index];
   if (!col) return;
@@ -64,7 +64,7 @@ const handleHeaderDblClick = async (e: MouseEvent, index: number) => {
 };
 
 const handleFooterDblClick = async (e: MouseEvent, rowIndex: number, colField: string) => {
-  if (store.selectedElementId !== props.element.id) return;
+  if (store.selectedElementId !== props.element.id || props.element.locked) return;
   
   const row = processedData.value.footerData[rowIndex];
   if (!row) return;
@@ -286,6 +286,7 @@ const startResizeX = ref(0);
 const startResizeWidth = ref(0);
 
 const handleResizeStart = (e: MouseEvent, index: number) => {
+  if (props.element.locked) return;
   e.preventDefault();
   e.stopPropagation();
   resizingColIndex.value = index;
@@ -465,7 +466,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             
             <!-- Resize Handle -->
             <div 
-              v-if="store.selectedElementId === element.id && index < processedData.columns.length - 1"
+              v-if="store.selectedElementId === element.id && index < processedData.columns.length - 1 && !element.locked"
               class="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity"
               :class="{ 'bg-blue-400 opacity-100': resizingColIndex === index }"
               @mousedown="(e) => handleResizeStart(e, index)"
