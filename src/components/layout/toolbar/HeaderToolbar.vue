@@ -41,6 +41,9 @@ import ColorPicker from '@/components/common/ColorPicker.vue';
 import TemplateDropdown from './TemplateDropdown.vue';
 import TemplateNameModal from './TemplateNameModal.vue';
 import { useTemplateStore } from '@/stores/templates';
+import DataObject from '~icons/material-symbols/data-object';
+import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
+import cloneDeep from 'lodash/cloneDeep';
 
 const emit = defineEmits<{
   (e: 'toggleHelp'): void
@@ -48,6 +51,27 @@ const emit = defineEmits<{
 
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
+
+const showJsonModal = ref(false);
+const jsonContent = ref('');
+
+const handleViewJson = () => {
+  const data = {
+    pages: cloneDeep(store.pages),
+    canvasSize: cloneDeep(store.canvasSize),
+    guides: cloneDeep(store.guides),
+    zoom: store.zoom,
+    showGrid: store.showGrid,
+    headerHeight: store.headerHeight,
+    footerHeight: store.footerHeight,
+    showHeaderLine: store.showHeaderLine,
+    showFooterLine: store.showFooterLine,
+    showMinimap: store.showMinimap,
+    canvasBackground: store.canvasBackground,
+  };
+  jsonContent.value = JSON.stringify(data, null, 2);
+  showJsonModal.value = true;
+};
 const showSaveNameModal = ref(false);
 const { getPrintHtml, print, exportPdf } = usePrint();
 
@@ -756,6 +780,10 @@ onUnmounted(() => {
           <FileOutput class="w-4 h-4 text-gray-500" />
           <span>Export PDF</span>
         </button>
+        <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
+          <DataObject class="w-4 h-4 text-gray-500" />
+          <span>View JSON</span>
+        </button>
       </div>
       
       <div v-if="showExportMenu" class="fixed inset-0 z-[999]" @click="showExportMenu = false"></div>
@@ -772,5 +800,13 @@ onUnmounted(() => {
     v-model:visible="showPreview"
     :html-content="previewContent"
     :width="store.canvasSize.width"
+  />
+
+  <CodeEditorModal
+    v-model:visible="showJsonModal"
+    title="Template JSON"
+    :value="jsonContent"
+    language="json"
+    read-only
   />
 </template>
