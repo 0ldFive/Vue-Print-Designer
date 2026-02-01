@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { usePrint } from '@/utils/print';
 import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
@@ -27,6 +27,12 @@ const previewContainer = ref<HTMLElement | null>(null);
 const zoomPercent = ref(100);
 const showJsonModal = ref(false);
 const jsonContent = ref('');
+
+watch(() => props.visible, (val) => {
+  if (!val) {
+    zoomPercent.value = 100;
+  }
+});
 
 const handleClose = () => {
   emit('update:visible', false);
