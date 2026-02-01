@@ -74,6 +74,14 @@ const handleZoomOut = () => {
   zoomPercent.value = Math.max(20, zoomPercent.value - 10);
 };
 
+const handleWheel = (e: WheelEvent) => {
+  if (e.deltaY < 0) {
+    handleZoomIn();
+  } else {
+    handleZoomOut();
+  }
+};
+
 const handleKeydown = (e: KeyboardEvent) => {
   if (props.visible && e.key === 'Escape') {
     handleClose();
@@ -122,7 +130,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Content -->
-        <div class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
+        <div class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center" @wheel.ctrl.prevent="handleWheel">
           <div 
             ref="previewContainer"
             class="preview-content"

@@ -85,6 +85,7 @@ const projectName = startCase(pkg.name);
                     <li class="flex justify-between items-center"><span>Undo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Z</kbd></li>
                     <li class="flex justify-between items-center"><span>Redo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Y</kbd></li>
                     <li class="flex justify-between items-center"><span>Open Help</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + H</kbd></li>
+                    <li class="flex justify-between items-center"><span>Zoom In/Out</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Wheel</kbd></li>
                     <li class="flex justify-between items-center"><span>Close Modal</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Esc</kbd></li>
                   </ul>
                 </div>

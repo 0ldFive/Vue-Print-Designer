@@ -183,6 +183,16 @@ const handleGuideMouseUp = (e: MouseEvent) => {
   window.removeEventListener('mouseup', handleGuideMouseUp);
 };
 
+const handleZoomWheel = (e: WheelEvent) => {
+  if (e.deltaY < 0) {
+    // Zoom In
+    store.setZoom(Math.min(5, store.zoom + 0.1));
+  } else {
+    // Zoom Out
+    store.setZoom(Math.max(0.2, store.zoom - 0.1));
+  }
+};
+
 const handleMinimapScroll = (pos: { left: number, top: number }) => {
   if (scrollContainer.value) {
     scrollContainer.value.scrollTo({
@@ -326,6 +336,7 @@ const rulerIndicators = computed(() => {
                 ref="scrollContainer"
                 class="flex-1 overflow-auto bg-gray-100 p-8 flex relative"
                 @scroll="handleScroll"
+                @wheel.ctrl.prevent="handleZoomWheel"
                   @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
               >
                  <div ref="canvasWrapper" :style="canvasStyle" class="mx-auto relative">
