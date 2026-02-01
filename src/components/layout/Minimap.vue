@@ -22,7 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const WIDTH = 180;
-const MIN_WIDTH = 60;
+const MIN_WIDTH = 90;
 const MAX_HEIGHT = 300;
 const GAP = 32; // match the gap in PrintDesigner (gap-8)
 
