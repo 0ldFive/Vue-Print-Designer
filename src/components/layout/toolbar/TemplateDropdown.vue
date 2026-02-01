@@ -20,7 +20,7 @@ const containerRef = ref<HTMLElement | null>(null);
 
 // Row Menu State
 const activeMenuId = ref<string | null>(null);
-const menuPosition = ref({ top: 0, left: 0 });
+const menuPosition = ref<Record<string, string>>({});
 
 // Modal State
 const showModal = ref(false);
@@ -94,13 +94,30 @@ const toggleRowMenu = (e: MouseEvent, id: string) => {
     
     // Check if we have enough space on the right
     const menuWidth = 128; // w-32 = 8rem = 128px
-    // If not enough space, align to left of button?
-    // Let's align top-left of menu to bottom-right of button
     
-    menuPosition.value = {
-      top: rect.bottom + 5,
-      left: rect.right - menuWidth
-    };
+    // Horizontal edge detection
+    let left = rect.right - menuWidth;
+    if (left < 5) {
+      left = rect.left;
+    }
+
+    // Vertical edge detection
+    const MENU_HEIGHT_ESTIMATE = 110; // 3 items (Rename, Copy, Delete)
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
+      // Position above
+      menuPosition.value = {
+        bottom: `${window.innerHeight - rect.top + 5}px`,
+        left: `${left}px`
+      };
+    } else {
+      // Position below
+      menuPosition.value = {
+        top: `${rect.bottom + 5}px`,
+        left: `${left}px`
+      };
+    }
 
     activeMenuId.value = id;
   }
@@ -220,10 +237,7 @@ const handleModalSave = (name: string) => {
       <div 
         v-if="activeMenuId"
         class="row-menu-content fixed w-32 bg-white rounded shadow-lg border border-gray-100 z-[2001] py-1"
-        :style="{
-          top: `${menuPosition.top}px`,
-          left: `${menuPosition.left}px`
-        }"
+        :style="menuPosition"
         @click.stop
       >
         <template v-if="getActiveTemplate()">

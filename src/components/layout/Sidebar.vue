@@ -23,7 +23,7 @@ const customElements = computed(() => store.customElements);
 
 // Menu state
 const activeMenuId = ref<string | null>(null);
-const menuPosition = ref({ top: 0, left: 0 });
+const menuPosition = ref<Record<string, string>>({});
 
 // Modal state
 const showRenameModal = ref(false);
@@ -96,10 +96,33 @@ const toggleMenu = (event: MouseEvent, id: string) => {
   } else {
     const button = event.currentTarget as HTMLElement;
     const rect = button.getBoundingClientRect();
-    menuPosition.value = {
-      top: rect.bottom + 5,
-      left: rect.right - 128 // Align right edge
-    };
+    
+    // Horizontal edge detection
+    // Default: Align right edge of menu with right edge of button (menu width ~128px)
+    let left = rect.right - 128;
+    // If aligning right causes overflow to left (e.g. left column), align to left edge instead
+    if (left < 5) {
+      left = rect.left;
+    }
+
+    // Vertical edge detection
+    const MENU_HEIGHT_ESTIMATE = 130; // Estimate menu height (3 items + padding)
+    const spaceBelow = window.innerHeight - rect.bottom;
+    
+    if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
+      // Position above the button
+      menuPosition.value = {
+        bottom: `${window.innerHeight - rect.top + 5}px`,
+        left: `${left}px`
+      };
+    } else {
+      // Position below the button
+      menuPosition.value = {
+        top: `${rect.bottom + 5}px`,
+        left: `${left}px`
+      };
+    }
+    
     activeMenuId.value = id;
   }
 };
@@ -223,10 +246,7 @@ onUnmounted(() => {
       <div 
         v-if="activeMenuId"
         class="fixed w-32 bg-white rounded shadow-lg border border-gray-100 z-[2001] py-1"
-        :style="{
-          top: `${menuPosition.top}px`,
-          left: `${menuPosition.left}px`
-        }"
+        :style="menuPosition"
         @click.stop
       >
         <template v-for="item in customElements" :key="item.id">
