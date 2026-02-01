@@ -32,6 +32,7 @@ import Group from '~icons/material-symbols/group-work';
 import Lock from '~icons/material-symbols/lock';
 import Unlock from '~icons/material-symbols/lock-open';
 import ChevronDown from '~icons/material-symbols/expand-more';
+import Plus from '~icons/material-symbols/add';
 import { PAPER_SIZES, type PaperSizeKey } from '@/constants/paper';
 import { usePrint } from '@/utils/print';
 import { pxToMm, mmToPx } from '@/utils/units';
@@ -699,6 +700,16 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-3 mt-3">
+          <button 
+            @click="store.addPage(); showPaperSettings = false" 
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors text-sm font-medium"
+          >
+            <Plus class="w-4 h-4" />
+            <span>Add New Page</span>
+          </button>
         </div>
         
         <div 

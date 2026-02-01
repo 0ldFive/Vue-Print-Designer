@@ -70,6 +70,11 @@ export const useDesignerStore = defineStore('designer', {
       this.showMinimap = false;
       this.showHelp = false;
     },
+    addPage() {
+      this.snapshot();
+      this.pages.push({ id: uuidv4(), elements: [] });
+      this.currentPageIndex = this.pages.length - 1;
+    },
     setTableSelection(elementId: string, cell: { rowIndex: number; colField: string; section?: 'body' | 'footer' }, multi: boolean) {
       // If switching elements, clear previous
       if (this.tableSelection && this.tableSelection.elementId !== elementId) {
