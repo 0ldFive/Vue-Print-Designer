@@ -73,7 +73,7 @@ onUnmounted(() => {
     <div v-if="visible" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50" @click.self="handleClose">
       <div class="bg-white rounded-lg shadow-xl w-[60vw] h-[80vh] flex flex-col overflow-hidden animate-fade-in">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200 shrink-0">
           <div class="flex items-center gap-2">
             <h3 class="text-lg font-semibold text-gray-800">{{ title }}</h3>
             <span class="px-2 py-0.5 rounded bg-gray-200 text-gray-600 text-xs font-mono">{{ language }}</span>
