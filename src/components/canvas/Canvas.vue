@@ -454,12 +454,21 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
     store.selectElement(targetId, false);
   }
 };
+
+const getGlobalElements = () => {
+  if (pages.value.length === 0) return [];
+  const firstPage = pages.value[0];
+  return firstPage.elements.filter(el => 
+    el.y < store.headerHeight || 
+    el.y >= store.canvasSize.height - store.footerHeight
+  );
+};
 </script>
 
 <template>
   <div class="flex flex-col gap-8" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }">
     <div v-for="(page, index) in pages" :key="page.id" class="relative group">
-      <div class="absolute top-0 -right-12 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="absolute top-0 -right-12 flex flex-col gap-2 z-10">
         <button 
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
           title="Add Page"
@@ -569,6 +578,20 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
       >
         <component :is="getComponent(element.type)" :element="element" :page-index="index" :total-pages="pages.length" />
       </ElementWrapper>
+
+      <!-- Global Header/Footer Elements (from Page 1) -->
+      <template v-if="index > 0 && pages.length > 0">
+        <ElementWrapper
+          v-for="element in getGlobalElements()"
+          :key="`global-${element.id}`"
+          :element="element"
+          :is-selected="store.selectedElementId === element.id || store.selectedElementIds.includes(element.id)"
+          :zoom="zoom"
+          :page-index="0"
+        >
+          <component :is="getComponent(element.type)" :element="element" :page-index="index" :total-pages="pages.length" />
+        </ElementWrapper>
+      </template>
 
       <!-- Corner Markers -->
       <div v-if="store.showCornerMarkers" class="marker absolute inset-0 pointer-events-none z-50 opacity-50">
