@@ -21,11 +21,15 @@ import Lock from '~icons/material-symbols/lock';
 import ContentCopy from '~icons/material-symbols/content-copy';
 import Check from '~icons/material-symbols/check';
 import Save from '~icons/material-symbols/save';
+import TemplateNameModal from '@/components/layout/toolbar/TemplateNameModal.vue';
 
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
 const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
 const isLocked = computed(() => element.value?.locked || false);
+const showCustomElementModal = ref(false);
+const customElementInitialName = ref('');
+
 const isSelfStyled = computed(() => {
   if (!element.value) return false;
   return [ElementType.LINE, ElementType.RECT, ElementType.CIRCLE].includes(element.value.type);
@@ -73,8 +77,12 @@ const copyId = () => {
 
 const handleSaveCustom = () => {
   if (!element.value) return;
-  const name = prompt('Enter a name for this custom element:', element.value.type);
-  if (name) {
+  customElementInitialName.value = element.value.type;
+  showCustomElementModal.value = true;
+};
+
+const onSaveCustomElement = (name: string) => {
+  if (element.value && name) {
     store.addCustomElement(name, element.value);
   }
 };
@@ -437,7 +445,6 @@ const handleFocusOut = (e: FocusEvent) => {
           
           <button
             @click="handleSaveCustom"
-            :disabled="isLocked"
             class="w-full py-2 bg-white text-blue-600 rounded border border-blue-200 hover:bg-blue-50 transition-colors text-sm font-medium flex items-center justify-center gap-2 mb-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
             <Save class="w-4 h-4" />
@@ -466,6 +473,14 @@ const handleFocusOut = (e: FocusEvent) => {
       </div>
     </div>
   </aside>
+
+  <TemplateNameModal
+    :show="showCustomElementModal"
+    :initial-name="customElementInitialName"
+    title="Save Custom Element"
+    @close="showCustomElementModal = false"
+    @save="onSaveCustomElement"
+  />
 </template>
 
 <style scoped>
