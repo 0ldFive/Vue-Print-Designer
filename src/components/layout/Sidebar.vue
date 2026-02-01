@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import Type from '~icons/material-symbols/text-fields';
+import Numbers from '~icons/material-symbols/numbers';
 import Image from '~icons/material-symbols/image';
 import Table from '~icons/material-symbols/table-chart';
 import Barcode from '~icons/material-symbols/barcode';
@@ -38,7 +39,7 @@ const categories = [
     items: [
       { type: ElementType.TEXT, label: 'sidebar.text', icon: Type },
       { type: ElementType.IMAGE, label: 'sidebar.image', icon: Image },
-      { type: ElementType.PAGE_NUMBER, label: 'sidebar.pager', icon: Type },
+      { type: ElementType.PAGE_NUMBER, label: 'sidebar.pager', icon: Numbers },
     ]
   },
   {
@@ -81,7 +82,7 @@ const getIcon = (type: ElementType) => {
     case ElementType.TEXT: return Type;
     case ElementType.IMAGE: return Image;
     case ElementType.TABLE: return Table;
-    case ElementType.PAGE_NUMBER: return Type;
+    case ElementType.PAGE_NUMBER: return Numbers;
     case ElementType.BARCODE: return Barcode;
     case ElementType.QRCODE: return QrCode;
     case ElementType.LINE: return HorizontalRule;
