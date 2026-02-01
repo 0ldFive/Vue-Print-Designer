@@ -391,7 +391,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'properties.label.autoPaginate', type: 'switch', target: 'element', key: 'autoPaginate' },
         { label: 'properties.label.repeatFooter', type: 'switch', target: 'element', key: 'tfootRepeat' },
         { label: 'properties.label.showFooter', type: 'switch', target: 'element', key: 'showFooter' },
-        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' },
         { label: 'properties.label.columns', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: 'properties.label.columnsPlaceholder' },
         { label: 'properties.label.data', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: 'properties.label.dataPlaceholder' },
         { label: 'properties.label.footerData', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: 'properties.label.footerDataPlaceholder' },
