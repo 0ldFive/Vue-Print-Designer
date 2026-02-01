@@ -1070,10 +1070,6 @@ export const useDesignerStore = defineStore('designer', {
     setShowGrid(show: boolean) {
       this.showGrid = show;
     },
-    addPage() {
-      this.snapshot();
-      this.pages.push({ id: uuidv4(), elements: [] });
-    },
     deletePage(index: number) {
       if (this.pages.length > 1) {
         this.snapshot();
