@@ -236,22 +236,6 @@ const handlePreview = async () => {
   }
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-  // Preview (Ctrl + Shift + P)
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
-    e.preventDefault();
-    handlePreview();
-  }
-};
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-});
-
 const handlePrint = async () => {
   // Use real DOM elements to ensure computed styles are captured correctly, similar to exportPdf
   const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
@@ -278,6 +262,37 @@ const handleSaveConfirm = (name: string) => {
   templateStore.saveCurrentTemplate(name);
   showSaveNameModal.value = false;
 };
+
+const handleKeydown = (e: KeyboardEvent) => {
+  // Preview (Ctrl + Shift + P)
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+    e.preventDefault();
+    handlePreview();
+    return;
+  }
+  
+  // Save (Ctrl + S)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    handleSave();
+    return;
+  }
+
+  // Print (Ctrl + P)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
+    e.preventDefault();
+    handlePrint();
+    return;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>
 
 <template>

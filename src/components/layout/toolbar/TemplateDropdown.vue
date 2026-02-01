@@ -135,6 +135,14 @@ const handleDelete = (t: Template) => {
 
 const handleModalSave = (name: string) => {
   if (modalMode.value === 'create') {
+    // Auto-save current template before creating new one
+    if (store.currentTemplateId) {
+      const currentTemplate = store.templates.find(tpl => tpl.id === store.currentTemplateId);
+      if (currentTemplate) {
+        store.saveCurrentTemplate(currentTemplate.name);
+      }
+    }
+
     // Reset canvas before creating new template
     const designerStore = useDesignerStore(); // Ensure we have access to designer store
     designerStore.resetCanvas();
