@@ -379,6 +379,11 @@ export const useDesignerStore = defineStore('designer', {
     },
     selectGuide(id: string | null) {
       this.selectedGuideId = id;
+      if (id) {
+        this.selectedElementId = null;
+        this.selectedElementIds = [];
+        this.tableSelection = null;
+      }
     },
     setHighlightedGuide(id: string | null) {
       this.highlightedGuideId = id;
@@ -822,6 +827,11 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     selectElement(id: string | null, isMultiSelect: boolean = false) {
+      // Clear guide selection when selecting elements
+      if (id) {
+        this.selectedGuideId = null;
+      }
+
       // Always clear table selection when changing element selection
       if (this.tableSelection) {
         this.tableSelection = null;
@@ -860,6 +870,9 @@ export const useDesignerStore = defineStore('designer', {
     },
     setSelection(ids: string[]) {
       this.tableSelection = null;
+      if (ids.length > 0) {
+        this.selectedGuideId = null;
+      }
       this.selectedElementIds = ids;
       this.selectedElementId = ids.length > 0 ? ids[ids.length - 1] : null;
       if (ids.length > 0) {
