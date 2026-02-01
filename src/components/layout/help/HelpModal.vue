@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { startCase } from 'lodash';
 import X from '~icons/material-symbols/close';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import InfoIcon from '~icons/material-symbols/info';
+import pkg from '../../../../package.json';
 
 defineProps<{
   show: boolean
@@ -18,20 +20,13 @@ const close = () => {
   emit('update:show', false);
 };
 
-const dependencies = [
-  { name: '@guolao/vue-monaco-editor', version: '^1.6.0' },
-  { name: 'canvg', version: '^4.0.3' },
-  { name: 'dom-to-image-more', version: '^3.7.2' },
-  { name: 'jsbarcode', version: '^3.12.3' },
-  { name: 'jspdf', version: '^2.5.2' },
-  { name: 'lodash', version: '^4.17.21' },
-  { name: 'pinia', version: '^2.3.0' },
-  { name: 'qrcode', version: '^1.5.4' },
-  { name: 'uuid', version: '^11.0.3' },
-  { name: 'vue', version: '^3.5.13' }
-];
+const dependencies = Object.entries(pkg.dependencies).map(([name, version]) => ({
+  name,
+  version
+}));
 
-const version = '0.0.0';
+const version = pkg.version;
+const projectName = startCase(pkg.name);
 </script>
 
 <template>
@@ -67,7 +62,7 @@ const version = '0.0.0';
         <div class="flex-1 flex flex-col min-w-0">
           <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-800">
-              {{ activeTab === 'shortcuts' ? 'Keyboard Shortcuts' : 'About Vue Print Designer' }}
+              {{ activeTab === 'shortcuts' ? 'Keyboard Shortcuts' : `About ${projectName}` }}
             </h3>
             <button @click="close" class="text-gray-500 hover:text-gray-700">
               <X class="w-5 h-5" />
@@ -125,7 +120,7 @@ const version = '0.0.0';
             <div v-if="activeTab === 'about'" class="space-y-6">
               <div class="text-center mb-8">
                 <div class="text-4xl mb-2">🖨️</div>
-                <h2 class="text-xl font-bold text-gray-800">Vue Print Designer</h2>
+                <h2 class="text-xl font-bold text-gray-800">{{ projectName }}</h2>
                 <p class="text-gray-500 mt-1">Version {{ version }}</p>
               </div>
 
