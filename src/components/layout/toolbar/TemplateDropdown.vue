@@ -35,10 +35,12 @@ onMounted(() => {
     store.loadTemplate(store.templates[0].id);
   }
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('designer:new-template', handleCreate);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('designer:new-template', handleCreate);
 });
 
 const handleClickOutside = (e: MouseEvent) => {

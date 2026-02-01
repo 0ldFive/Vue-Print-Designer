@@ -78,6 +78,14 @@ const getPasteTarget = (clientX: number, clientY: number) => {
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
+  // New Template (Ctrl + Alt + N) - Trigger UI flow via event
+  if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    e.stopPropagation();
+    window.dispatchEvent(new CustomEvent('designer:new-template'));
+    return;
+  }
+
   // If global shortcuts are disabled (e.g. code editor is open), ignore
   if (store.disableGlobalShortcuts) return;
 
@@ -299,14 +307,14 @@ const closeMenuOnce = () => {
 };
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('keydown', handleKeydown, { capture: true });
   window.addEventListener('contextmenu', handleContextMenu);
   window.addEventListener('keyup', handleKeyup);
   window.addEventListener('mousemove', handleMouseMove);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('keydown', handleKeydown, { capture: true });
   window.removeEventListener('contextmenu', handleContextMenu);
   window.removeEventListener('click', closeMenuOnce);
   window.removeEventListener('keyup', handleKeyup);

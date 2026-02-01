@@ -82,6 +82,7 @@ const projectName = startCase(pkg.name);
                     <li class="flex justify-between items-center"><span>Export PDF</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + E</kbd></li>
                     <li class="flex justify-between items-center"><span>Preview</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + P</kbd></li>
                     <li class="flex justify-between items-center"><span>View JSON</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + J</kbd></li>
+                    <li class="flex justify-between items-center"><span>New Template</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Alt + N</kbd></li>
                     <li class="flex justify-between items-center"><span>Undo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Z</kbd></li>
                     <li class="flex justify-between items-center"><span>Redo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Y</kbd></li>
                     <li class="flex justify-between items-center"><span>Open Help</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + H</kbd></li>
