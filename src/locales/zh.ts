@@ -152,6 +152,10 @@ export default {
     },
     section: {
       positionSize: '位置 & 尺寸',
+      dataBehavior: '数据 & 行为',
+      layoutDimensions: '布局 & 尺寸',
+      headerStyle: '表头样式',
+      footerStyle: '表脚样式',
       cellOperations: '单元格操作',
       appearance: '外观',
       elementInfo: '组件信息',
@@ -173,6 +177,7 @@ export default {
       selectInstruction: '选择一个组件以编辑属性'
     },
     label: {
+      type: '类型',
       x: 'X (mm)',
       y: 'Y (mm)',
       width: '宽度 (mm)',

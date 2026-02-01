@@ -139,6 +139,10 @@ export default {
     },
     section: {
       positionSize: 'Position & Size',
+      dataBehavior: 'Data & Behavior',
+      layoutDimensions: 'Layout & Dimensions',
+      headerStyle: 'Header Style',
+      footerStyle: 'Footer Style',
       cellOperations: 'Cell Operations',
       appearance: 'Appearance',
       elementInfo: 'Element Info',
@@ -168,6 +172,7 @@ export default {
       selectInstruction: 'Select an element to edit properties'
     },
     label: {
+      type: 'Type',
       x: 'X (mm)',
       y: 'Y (mm)',
       width: 'Width (mm)',
@@ -185,10 +190,6 @@ export default {
       borderColor: 'Border Color',
       backgroundColor: 'Background Color',
       imageSource: 'Image Source',
-      dataBehavior: 'Data & Behavior',
-      layoutDimensions: 'Layout & Dimensions',
-      headerStyle: 'Header Style',
-      footerStyle: 'Footer Style',
       format: 'Format',
       showText: 'Show Text',
       lineWidth: 'Line Width (px)',
