@@ -7,6 +7,7 @@ export default {
     delete: 'Delete',
     edit: 'Edit',
     copy: 'Copy',
+    cut: 'Cut',
     paste: 'Paste',
     undo: 'Undo',
     redo: 'Redo',
@@ -19,6 +20,8 @@ export default {
     height: 'Height',
     mm: 'mm',
     rotate: 'Rotate',
+    lock: 'Lock',
+    unlock: 'Unlock',
     appTitle: 'Print Designer',
   },
   template: {

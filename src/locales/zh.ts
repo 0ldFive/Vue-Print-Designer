@@ -7,6 +7,7 @@ export default {
     delete: '删除',
     edit: '编辑',
     copy: '复制',
+    cut: '剪切',
     paste: '粘贴',
     undo: '撤销',
     redo: '重做',
@@ -19,6 +20,8 @@ export default {
     height: '高度',
     mm: '毫米',
     rotate: '旋转',
+    lock: '锁定',
+    unlock: '解锁',
     appTitle: '打印设计器',
   },
   template: {
