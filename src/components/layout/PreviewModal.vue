@@ -26,6 +26,7 @@ const { t } = useI18n();
 const store = useDesignerStore();
 const { print: printHtml, exportPdf: exportPdfHtml } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
+const wrapperRef = ref<HTMLElement | null>(null);
 const zoomPercent = ref(100);
 const showJsonModal = ref(false);
 const jsonContent = ref('');
@@ -77,25 +78,48 @@ const handleZoomOut = () => {
 };
 
 const handleWheel = (e: WheelEvent) => {
-  if (e.deltaY < 0) {
-    handleZoomIn();
-  } else {
-    handleZoomOut();
+  if (e.ctrlKey) {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
   }
+};
+
+const handleCtrlKey = (e: KeyboardEvent) => {
+  if (e.key === 'Control' || e.key === 'Meta') {
+    if (e.type === 'keydown' && !e.repeat) {
+      wrapperRef.value?.addEventListener('wheel', handleWheel, { passive: false });
+    } else if (e.type === 'keyup') {
+      wrapperRef.value?.removeEventListener('wheel', handleWheel);
+    }
+  }
+};
+
+const handleBlur = () => {
+  wrapperRef.value?.removeEventListener('wheel', handleWheel);
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (props.visible && e.key === 'Escape') {
     handleClose();
   }
+  handleCtrlKey(e);
 };
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('keyup', handleCtrlKey);
+  window.addEventListener('blur', handleBlur);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('keyup', handleCtrlKey);
+  window.removeEventListener('blur', handleBlur);
+  wrapperRef.value?.removeEventListener('wheel', handleWheel);
 });
 </script>
 
@@ -132,7 +156,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Content -->
-        <div class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center" @wheel.ctrl.prevent="handleWheel">
+        <div class="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center" ref="wrapperRef">
           <div 
             ref="previewContainer"
             class="preview-content"

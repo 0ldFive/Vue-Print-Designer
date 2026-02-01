@@ -20,6 +20,9 @@ onMounted(() => {
     updateOffset();
   });
   window.addEventListener('resize', updateOffset);
+  window.addEventListener('keydown', handleCtrlKey);
+  window.addEventListener('keyup', handleCtrlKey);
+  window.addEventListener('blur', handleBlur);
   // Also watch for store changes that might affect layout
   store.$subscribe(() => {
     nextTick(updateOffset);
@@ -105,6 +108,10 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateOffset);
   window.removeEventListener('mousemove', handleGuideMouseMove);
   window.removeEventListener('mouseup', handleGuideMouseUp);
+  window.removeEventListener('keydown', handleCtrlKey);
+  window.removeEventListener('keyup', handleCtrlKey);
+  window.removeEventListener('blur', handleBlur);
+  scrollContainer.value?.removeEventListener('wheel', handleZoomWheel);
 });
 
 // Guides Logic
@@ -184,13 +191,30 @@ const handleGuideMouseUp = (e: MouseEvent) => {
 };
 
 const handleZoomWheel = (e: WheelEvent) => {
-  if (e.deltaY < 0) {
-    // Zoom In
-    store.setZoom(Math.min(5, store.zoom + 0.1));
-  } else {
-    // Zoom Out
-    store.setZoom(Math.max(0.2, store.zoom - 0.1));
+  if (e.ctrlKey) {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      // Zoom In
+      store.setZoom(Math.min(5, store.zoom + 0.1));
+    } else {
+      // Zoom Out
+      store.setZoom(Math.max(0.2, store.zoom - 0.1));
+    }
   }
+};
+
+const handleCtrlKey = (e: KeyboardEvent) => {
+  if (e.key === 'Control' || e.key === 'Meta') {
+    if (e.type === 'keydown' && !e.repeat) {
+      scrollContainer.value?.addEventListener('wheel', handleZoomWheel, { passive: false });
+    } else if (e.type === 'keyup') {
+      scrollContainer.value?.removeEventListener('wheel', handleZoomWheel);
+    }
+  }
+};
+
+const handleBlur = () => {
+  scrollContainer.value?.removeEventListener('wheel', handleZoomWheel);
 };
 
 const handleMinimapScroll = (pos: { left: number, top: number }) => {
@@ -336,7 +360,6 @@ const rulerIndicators = computed(() => {
                 ref="scrollContainer"
                 class="flex-1 overflow-auto bg-gray-100 p-8 flex relative"
                 @scroll="handleScroll"
-                @wheel.ctrl.prevent="handleZoomWheel"
                   @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
               >
                  <div ref="canvasWrapper" :style="canvasStyle" class="mx-auto relative">
