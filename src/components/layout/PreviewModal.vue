@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { usePrint } from '@/utils/print';
+import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
 import FilePdf from '~icons/material-symbols/picture-as-pdf';
 import Close from '~icons/material-symbols/close';
 import ZoomIn from '~icons/material-symbols/zoom-in';
 import ZoomOut from '~icons/material-symbols/zoom-out';
+import DataObject from '~icons/material-symbols/data-object';
+import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
+import cloneDeep from 'lodash/cloneDeep';
 
 const props = defineProps<{
   visible: boolean;
@@ -17,12 +21,33 @@ const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
 }>();
 
+const store = useDesignerStore();
 const { print: printHtml, exportPdf: exportPdfHtml } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
 const zoomPercent = ref(100);
+const showJsonModal = ref(false);
+const jsonContent = ref('');
 
 const handleClose = () => {
   emit('update:visible', false);
+};
+
+const handleViewJson = () => {
+  const data = {
+    pages: cloneDeep(store.pages),
+    canvasSize: cloneDeep(store.canvasSize),
+    guides: cloneDeep(store.guides),
+    zoom: store.zoom,
+    showGrid: store.showGrid,
+    headerHeight: store.headerHeight,
+    footerHeight: store.footerHeight,
+    showHeaderLine: store.showHeaderLine,
+    showFooterLine: store.showFooterLine,
+    showMinimap: store.showMinimap,
+    canvasBackground: store.canvasBackground,
+  };
+  jsonContent.value = JSON.stringify(data, null, 2);
+  showJsonModal.value = true;
 };
 
 const handlePrint = () => {
@@ -117,6 +142,13 @@ onUnmounted(() => {
             Export PDF
           </button>
           <button 
+            @click="handleViewJson"
+            class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 text-sm text-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <DataObject class="text-lg" />
+            View JSON
+          </button>
+          <button 
             @click="handleClose"
             class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 text-sm text-gray-700 flex items-center gap-2 transition-colors"
           >
@@ -126,6 +158,14 @@ onUnmounted(() => {
       </div>
     </div>
   </Teleport>
+
+  <CodeEditorModal
+    v-model:visible="showJsonModal"
+    title="Template JSON"
+    :value="jsonContent"
+    language="json"
+    read-only
+  />
 </template>
 
 <style scoped>
