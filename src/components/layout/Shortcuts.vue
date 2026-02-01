@@ -223,6 +223,20 @@ const handleKeydown = (e: KeyboardEvent) => {
     window.dispatchEvent(new CustomEvent('designer:print'));
     return;
   }
+
+  // Export PDF (Ctrl + Shift + E)
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('designer:export-pdf'));
+    return;
+  }
+
+  // View JSON (Ctrl + Shift + J)
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('designer:view-json'));
+    return;
+  }
 };
 
 const handleKeyup = (e: KeyboardEvent) => {

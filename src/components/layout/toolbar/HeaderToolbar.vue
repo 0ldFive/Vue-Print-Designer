@@ -292,12 +292,16 @@ onMounted(() => {
   window.addEventListener('designer:preview', handlePreview);
   window.addEventListener('designer:save', handleSave);
   window.addEventListener('designer:print', handlePrint);
+  window.addEventListener('designer:export-pdf', handleExport);
+  window.addEventListener('designer:view-json', handleViewJson);
 });
 
 onUnmounted(() => {
   window.removeEventListener('designer:preview', handlePreview);
   window.removeEventListener('designer:save', handleSave);
   window.removeEventListener('designer:print', handlePrint);
+  window.removeEventListener('designer:export-pdf', handleExport);
+  window.removeEventListener('designer:view-json', handleViewJson);
 });
 </script>
 
