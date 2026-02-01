@@ -52,7 +52,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       title: 'properties.section.content',
       tab: 'properties',
       fields: [
-        { label: 'properties.label.content', type: 'text', target: 'element', key: 'content', placeholder: 'Barcode value' },
+        { label: 'properties.label.content', type: 'text', target: 'element', key: 'content', placeholder: 'properties.label.barcodeContentPlaceholder' },
         { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
       ]
     },

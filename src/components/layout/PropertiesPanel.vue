@@ -348,7 +348,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   :max="field.max"
                   :step="field.step"
                   :disabled="isLocked"
-                  :placeholder="field.placeholder"
+                  :placeholder="field.placeholder ? t(field.placeholder) : ''"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -377,7 +377,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   v-else-if="field.type === 'image'"
                   :label="t(field.label)"
                   :disabled="isLocked"
-                  :placeholder="field.placeholder"
+                  :placeholder="field.placeholder ? t(field.placeholder) : undefined"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -396,7 +396,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <div v-else-if="field.type === 'textarea'">
                   <label class="block text-xs text-gray-500 mb-1 font-medium">{{ t(field.label) }}</label>
                   <textarea
-                    :placeholder="field.placeholder"
+                    :placeholder="field.placeholder ? t(field.placeholder) : ''"
                     :disabled="isLocked"
                     :value="['data', 'columns', 'footerData'].includes(field.key!) ? JSON.stringify((element as any)[field.key!], null, 2) : getFieldValue(field)"
                     @change="['data', 'columns', 'footerData'].includes(field.key!) ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"

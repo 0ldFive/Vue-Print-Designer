@@ -21,7 +21,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           { label: 'properties.option.after', value: 'after' }
         ] },
         { label: 'properties.label.pageFormat', type: 'select', target: 'element', key: 'format', options: [
-          { label: '1', value: '1' },
+          { label: 'properties.option.numberOnly', value: '1' },
           { label: 'properties.option.page1', value: 'Page 1' },
           { label: 'properties.option.oneTotal', value: '1/Total' }
         ] }
@@ -41,11 +41,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         ] },
         { label: 'properties.label.fontFamily', type: 'select', target: 'style', key: 'fontFamily', options: [
           { label: 'properties.option.default', value: '' },
-          { label: 'Arial', value: 'Arial, sans-serif' },
-          { label: 'Times New Roman', value: '"Times New Roman", serif' },
-          { label: 'Courier New', value: '"Courier New", monospace' },
-          { label: 'SimSun (宋体)', value: 'SimSun, serif' },
-          { label: 'SimHei (黑体)', value: 'SimHei, sans-serif' }
+          { label: 'properties.option.arial', value: 'Arial, sans-serif' },
+          { label: 'properties.option.timesNewRoman', value: '"Times New Roman", serif' },
+          { label: 'properties.option.courierNew', value: '"Courier New", monospace' },
+          { label: 'properties.option.simSun', value: 'SimSun, serif' },
+          { label: 'properties.option.simHei', value: 'SimHei, sans-serif' }
         ] },
         { label: 'properties.label.fontWeight', type: 'select', target: 'style', key: 'fontWeight', options: [
           { label: 'properties.option.default', value: '' },
@@ -63,11 +63,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'properties.label.labelColor', type: 'color', target: 'element', key: 'labelColor' },
         { label: 'properties.label.labelFontFamily', type: 'select', target: 'element', key: 'labelFontFamily', options: [
           { label: 'properties.option.default', value: '' },
-          { label: 'Arial', value: 'Arial, sans-serif' },
-          { label: 'Times New Roman', value: '"Times New Roman", serif' },
-          { label: 'Courier New', value: '"Courier New", monospace' },
-          { label: 'SimSun (宋体)', value: 'SimSun, serif' },
-          { label: 'SimHei (黑体)', value: 'SimHei, sans-serif' }
+          { label: 'properties.option.arial', value: 'Arial, sans-serif' },
+          { label: 'properties.option.timesNewRoman', value: '"Times New Roman", serif' },
+          { label: 'properties.option.courierNew', value: '"Courier New", monospace' },
+          { label: 'properties.option.simSun', value: 'SimSun, serif' },
+          { label: 'properties.option.simHei', value: 'SimHei, sans-serif' }
         ] },
         { label: 'properties.label.labelFontWeight', type: 'select', target: 'element', key: 'labelFontWeight', options: [
           { label: 'properties.option.default', value: '' },

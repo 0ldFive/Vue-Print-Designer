@@ -221,6 +221,10 @@ export default {
       dataFieldPlaceholder: 'Data Field (e.g. {#amount})',
       id: 'ID',
       labelBorderColor: 'Label Border Color',
+      barcodeContentPlaceholder: 'Barcode Value',
+    qrContentPlaceholder: 'QR Code Value',
+    textContentPlaceholder: 'Enter text content',
+    variablePlaceholder: 'Variable Name (e.g. @name)',
       labelText: 'Label Text',
       labelPosition: 'Label Position',
       labelFontSize: 'Label Font Size (px)',
@@ -276,7 +280,8 @@ export default {
       code39: 'CODE39',
       itf14: 'ITF-14',
       msi: 'MSI',
-      pharmacode: 'Pharmacode'
+      pharmacode: 'Pharmacode',
+      numberOnly: 'Number (1)'
     },
     image: {
       urlPlaceholder: 'https://... or data:image/...',

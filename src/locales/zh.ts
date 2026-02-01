@@ -234,6 +234,10 @@ export default {
       dataFieldPlaceholder: '数据字段 (如: {#amount})',
       id: 'ID',
       labelBorderColor: '标签边框颜色',
+      barcodeContentPlaceholder: '条码内容',
+    qrContentPlaceholder: '二维码内容',
+    textContentPlaceholder: '请输入文本内容',
+    variablePlaceholder: '变量名 (例如 @name)',
       labelText: '标签文本',
       labelPosition: '标签位置',
       labelFontSize: '标签字号 (px)',
@@ -289,7 +293,8 @@ export default {
       code39: 'CODE39',
       itf14: 'ITF-14',
       msi: 'MSI',
-      pharmacode: 'Pharmacode'
+      pharmacode: 'Pharmacode',
+      numberOnly: '数字 (1)'
     },
     image: {
       urlPlaceholder: '请输入图片地址或 Base64...',

@@ -14,7 +14,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       title: 'properties.section.content',
       tab: 'properties',
       fields: [
-        { label: 'properties.label.content', type: 'textarea', target: 'element', key: 'content', placeholder: 'Enter text' },
+        { label: 'properties.label.content', type: 'textarea', target: 'element', key: 'content', placeholder: 'properties.label.textContentPlaceholder' },
         { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
       ]
     },
