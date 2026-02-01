@@ -35,30 +35,30 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Content',
+      title: 'properties.section.content',
       tab: 'properties',
       fields: [
-        { label: 'Value', type: 'text', target: 'element', key: 'content', placeholder: 'QR value' },
-        { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
+        { label: 'properties.label.content', type: 'text', target: 'element', key: 'content', placeholder: 'QR value' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
       ]
     },
     {
-      title: 'QR Settings',
+      title: 'properties.section.qrSettings',
       tab: 'style',
       fields: [
         { 
-          label: 'Error Correction', 
+          label: 'properties.label.errorCorrection', 
           type: 'select', 
           target: 'style', 
           key: 'qrErrorCorrection', 
           options: [
-            { label: 'Low (7%)', value: 'L' },
-            { label: 'Medium (15%)', value: 'M' },
-            { label: 'Quartile (25%)', value: 'Q' },
-            { label: 'High (30%)', value: 'H' }
+            { label: 'properties.option.eccLow', value: 'L' },
+            { label: 'properties.option.eccMedium', value: 'M' },
+            { label: 'properties.option.eccQuartile', value: 'Q' },
+            { label: 'properties.option.eccHigh', value: 'H' }
           ] 
         },
-        { label: 'Color', type: 'color', target: 'style', key: 'color' }
+        { label: 'properties.label.color', type: 'color', target: 'style', key: 'color' }
       ]
     }
   ]

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
 import { ElementType } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import Lock from '~icons/material-symbols/lock';
 import RotateRight from '~icons/material-symbols/rotate-right';
- 
+
 const props = defineProps<{
   element: PrintElement;
   isSelected: boolean;
@@ -13,6 +14,7 @@ const props = defineProps<{
   pageIndex: number;
 }>();
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const elementRef = ref<HTMLElement | null>(null);
 
@@ -363,7 +365,7 @@ const handleResizeStart = (e: MouseEvent) => {
        <!-- Rotation Handle (top right, no background) -->
        <div
          class="rotate-handle absolute -top-4 -right-5 w-5 h-5 flex items-center justify-center cursor-grab z-50 text-blue-500 hover:text-blue-700"
-         title="Rotate"
+         :title="t('common.rotate')"
          @mousedown="handleRotateStart"
        >
          <!-- Material Symbol Icon -->

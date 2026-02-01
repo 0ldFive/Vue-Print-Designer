@@ -11,15 +11,15 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Line Style',
+      title: 'properties.section.lineStyle',
       tab: 'style',
       fields: [
-        { label: 'Color', type: 'color', target: 'style', key: 'borderColor', defaultValue: '#000000' },
-        { label: 'Thickness (px)', type: 'number', target: 'style', key: 'borderWidth', min: 1, max: 100, step: 1, defaultValue: 1 },
-        { label: 'Style', type: 'select', target: 'style', key: 'borderStyle', defaultValue: 'solid', options: [
-            { label: 'Solid', value: 'solid' },
-            { label: 'Dashed', value: 'dashed' },
-            { label: 'Dotted', value: 'dotted' }
+        { label: 'properties.label.color', type: 'color', target: 'style', key: 'borderColor', defaultValue: '#000000' },
+        { label: 'properties.label.thickness', type: 'number', target: 'style', key: 'borderWidth', min: 1, max: 100, step: 1, defaultValue: 1 },
+        { label: 'properties.label.borderStyle', type: 'select', target: 'style', key: 'borderStyle', defaultValue: 'solid', options: [
+            { label: 'properties.option.solid', value: 'solid' },
+            { label: 'properties.option.dashed', value: 'dashed' },
+            { label: 'properties.option.dotted', value: 'dotted' }
           ]
         }
       ]

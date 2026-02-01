@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
 
@@ -14,6 +15,7 @@ import Description from '~icons/material-symbols/description';
 
 import InputModal from '@/components/common/InputModal.vue';
 
+const { t } = useI18n();
 const store = useTemplateStore();
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
@@ -56,8 +58,8 @@ const handleClickOutside = (e: MouseEvent) => {
 };
 
 const currentTemplateName = computed(() => {
-  const t = store.templates.find(t => t.id === store.currentTemplateId);
-  return t ? t.name : 'Select Template';
+  const tpl = store.templates.find(t => t.id === store.currentTemplateId);
+  return tpl ? tpl.name : t('template.select');
 });
 
 const toggleDropdown = () => {
@@ -65,7 +67,7 @@ const toggleDropdown = () => {
   if (!isOpen.value) activeMenuId.value = null;
 };
 
-const selectTemplate = (t: Template) => {
+const selectTemplate = (template: Template) => {
   // Auto-save current template if it exists
   if (store.currentTemplateId) {
     const currentTemplate = store.templates.find(tpl => tpl.id === store.currentTemplateId);
@@ -74,7 +76,7 @@ const selectTemplate = (t: Template) => {
     }
   }
   
-  store.loadTemplate(t.id);
+  store.loadTemplate(template.id);
   isOpen.value = false;
 };
 
@@ -135,23 +137,23 @@ const handleCreate = () => {
   isOpen.value = false;
 };
 
-const handleEdit = (t: Template) => {
+const handleEdit = (template: Template) => {
   activeMenuId.value = null;
   modalMode.value = 'rename';
-  targetTemplateId.value = t.id;
-  modalInitialName.value = t.name;
+  targetTemplateId.value = template.id;
+  modalInitialName.value = template.name;
   showModal.value = true;
   isOpen.value = false; // Close dropdown? Or keep open? Close is better.
 };
 
-const handleCopy = (t: Template) => {
-  store.copyTemplate(t.id);
+const handleCopy = (template: Template) => {
+  store.copyTemplate(template.id);
   activeMenuId.value = null;
 };
 
-const handleDelete = (t: Template) => {
-  if (confirm(`Are you sure you want to delete "${t.name}"?`)) {
-    store.deleteTemplate(t.id);
+const handleDelete = (template: Template) => {
+  if (confirm(t('template.confirmDelete', { name: template.name }))) {
+    store.deleteTemplate(template.id);
     // Auto-select first template if current one was deleted
     if (!store.currentTemplateId && store.templates.length > 0) {
       store.loadTemplate(store.templates[0].id);
@@ -195,7 +197,7 @@ const handleModalSave = (name: string) => {
     <div v-if="isOpen" class="absolute top-full left-0 mt-2 w-[220px] bg-white rounded-lg shadow-xl border border-gray-200 z-[100] flex flex-col max-h-[500px]">
       <div class="flex-1 overflow-y-auto py-1">
         <div v-if="store.templates.length === 0" class="px-4 py-3 text-sm text-gray-500 text-center">
-          No templates yet
+          {{ t('template.noTemplates') }}
         </div>
         
         <div 
@@ -227,7 +229,7 @@ const handleModalSave = (name: string) => {
           class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
         >
           <Add class="w-4 h-4" />
-          New Template
+          {{ t('template.new') }}
         </button>
       </div>
     </div>
@@ -242,13 +244,13 @@ const handleModalSave = (name: string) => {
       >
         <template v-if="getActiveTemplate()">
           <button @click="handleEdit(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-            <Edit class="w-3.5 h-3.5" /> Rename
+            <Edit class="w-3.5 h-3.5" /> {{ t('common.rename') }}
           </button>
           <button @click="handleCopy(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-            <Copy class="w-3.5 h-3.5" /> Copy
+            <Copy class="w-3.5 h-3.5" /> {{ t('common.copy') }}
           </button>
           <button @click="handleDelete(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
-            <Trash2 class="w-3.5 h-3.5" /> Delete
+            <Trash2 class="w-3.5 h-3.5" /> {{ t('common.delete') }}
           </button>
         </template>
       </div>
@@ -257,7 +259,7 @@ const handleModalSave = (name: string) => {
     <InputModal 
       :show="showModal"
       :initial-value="modalInitialName"
-      :title="modalMode === 'create' ? 'New Template' : 'Rename Template'"
+      :title="modalMode === 'create' ? t('template.new') : t('template.rename')"
       @close="showModal = false"
       @save="handleModalSave"
     />

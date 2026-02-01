@@ -45,11 +45,13 @@ import { useTemplateStore } from '@/stores/templates';
 import DataObject from '~icons/material-symbols/data-object';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import cloneDeep from 'lodash/cloneDeep';
+import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits<{
   (e: 'toggleHelp'): void
 }>();
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
 
@@ -181,14 +183,14 @@ const resetRotation = () => {
   store.updateSelectedElementsStyle({ rotate: 0 });
 };
 
-const fontOptions = [
-  { label: 'Default', value: '' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Times New Roman', value: '"Times New Roman", serif' },
-  { label: 'Courier New', value: '"Courier New", monospace' },
-  { label: 'SimSun (宋体)', value: 'SimSun, serif' },
-  { label: 'SimHei (黑体)', value: 'SimHei, sans-serif' }
-];
+const fontOptions = computed(() => [
+  { label: t('editor.fonts.default'), value: '' },
+  { label: t('editor.fonts.arial'), value: 'Arial, sans-serif' },
+  { label: t('editor.fonts.timesNewRoman'), value: '"Times New Roman", serif' },
+  { label: t('editor.fonts.courierNew'), value: '"Courier New", monospace' },
+  { label: t('editor.fonts.simSun'), value: 'SimSun, serif' },
+  { label: t('editor.fonts.simHei'), value: 'SimHei, sans-serif' }
+]);
 
 const canvasBackground = computed({
   get: () => store.canvasBackground,
@@ -311,7 +313,7 @@ onUnmounted(() => {
     <TemplateDropdown />
     <InputModal 
       :show="showSaveNameModal" 
-      title="Save Template"
+      :title="t('editor.saveTemplate')"
       @close="showSaveNameModal = false"
       @save="handleSaveConfirm"
     />
@@ -323,7 +325,7 @@ onUnmounted(() => {
         v-model="selectedFont"
         :disabled="isFontControlsDisabled"
         class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-        title="Font Family"
+        :title="t('editor.fontFamily')"
       >
         <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -353,7 +355,7 @@ onUnmounted(() => {
         :disabled="isFontControlsDisabled"
         class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :class="{ 'bg-gray-300 text-blue-700': isBold }"
-        title="Bold"
+        :title="t('editor.bold')"
       >
         <Bold class="w-4 h-4" />
       </button>
@@ -362,7 +364,7 @@ onUnmounted(() => {
         :disabled="isFontControlsDisabled"
         class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :class="{ 'bg-gray-300 text-blue-700': isItalic }"
-        title="Italic"
+        :title="t('editor.italic')"
       >
         <Italic class="w-4 h-4" />
       </button>
@@ -371,7 +373,7 @@ onUnmounted(() => {
         :disabled="isFontControlsDisabled"
         class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :class="{ 'bg-gray-300 text-blue-700': isUnderline }"
-        title="Underline"
+        :title="t('editor.underline')"
       >
         <FormatUnderlined class="w-4 h-4" />
       </button>
@@ -381,7 +383,7 @@ onUnmounted(() => {
         :disabled="isFontControlsDisabled"
         class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :class="{ 'bg-gray-300 text-blue-700': isVertical }"
-        title="Vertical Text"
+        :title="t('editor.verticalText')"
       >
         <TextRotateVertical class="w-4 h-4" />
       </button>
@@ -396,7 +398,7 @@ onUnmounted(() => {
             type="button"
             class="flex items-center gap-1 p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
             :disabled="isFontControlsDisabled"
-            title="Text Color"
+            :title="t('editor.textColor')"
           >
             <FontDownload class="w-4 h-4" />
             <div class="w-1 h-3.5 rounded-[1px] border border-gray-300" :style="{ backgroundColor: color }"></div>
@@ -415,7 +417,7 @@ onUnmounted(() => {
             type="button"
             class="flex items-center gap-1 p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isFontControlsDisabled"
-            title="Background Color"
+            :title="t('editor.backgroundColor')"
           >
             <FormatColorFill class="w-4 h-4" />
             <div class="w-1 h-3.5 rounded-[1px] border border-gray-300 relative overflow-hidden bg-white">
@@ -435,7 +437,7 @@ onUnmounted(() => {
         @click="resetRotation" 
         :disabled="isLocked || !store.selectedElementId"
         class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        title="Reset Rotation"
+        :title="t('editor.resetRotation')"
       >
         <RotateCcw class="w-4 h-4" />
       </button>
@@ -445,28 +447,28 @@ onUnmounted(() => {
 
     <!-- Alignment -->
     <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Left">
+      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignLeft')">
         <AlignLeft class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Center">
+      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignCenter')">
         <AlignCenterHorizontal class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Right">
+      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignRight')">
         <AlignRight class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Top">
+      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignTop')">
         <AlignStartVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Middle">
+      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignMiddle')">
         <AlignCenterVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Align Bottom">
+      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignBottom')">
         <AlignEndVertical class="w-4 h-4" />
       </button>
       <template v-if="store.selectedElementIds.length > 1">
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
-        <button @click="store.groupSelectedElements()" :disabled="isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Group">
+        <button @click="store.groupSelectedElements()" :disabled="isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.group')">
           <Group class="w-4 h-4" />
         </button>
       </template>
@@ -476,25 +478,25 @@ onUnmounted(() => {
 
     <!-- History & Edit -->
     <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button @click="store.undo()" :disabled="store.historyPast.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Undo (Ctrl+Z)">
+      <button @click="store.undo()" :disabled="store.historyPast.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.undo') + ' (Ctrl+Z)'">
         <Undo2 class="w-4 h-4" />
       </button>
-      <button @click="store.redo()" :disabled="store.historyFuture.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Redo (Ctrl+Y)">
+      <button @click="store.redo()" :disabled="store.historyFuture.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.redo') + ' (Ctrl+Y)'">
         <Redo2 class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Copy (Ctrl+C)">
+      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.copy') + ' (Ctrl+C)'">
         <Copy class="w-4 h-4" />
       </button>
-      <button @click="store.paste()" :disabled="store.clipboard.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="Paste (Ctrl+V)">
+      <button @click="store.paste()" :disabled="store.clipboard.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.paste') + ' (Ctrl+V)'">
         <ClipboardPaste class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="isLocked ? 'Unlock (Ctrl+L)' : 'Lock (Ctrl+L)'">
+      <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="(isLocked ? t('editor.unlock') : t('editor.lock')) + ' (Ctrl+L)'">
         <Unlock v-if="isLocked" class="w-4 h-4 text-red-500" />
         <Lock v-else class="w-4 h-4" />
       </button>
-      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed text-red-600" title="Delete (Del)">
+      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed text-red-600" :title="t('common.delete') + ' (Del)'">
         <Trash2 class="w-4 h-4" />
       </button>
     </div>
@@ -507,32 +509,32 @@ onUnmounted(() => {
         <button 
           @click="showPaperSettings = !showPaperSettings"
           class="p-1 hover:bg-gray-200 rounded transition-colors"
-          title="Paper Settings"
+          :title="t('editor.paperSettings')"
         >
           <Settings class="w-4 h-4" />
         </button>
         <button 
           @click="showPaperSettings = !showPaperSettings"
           class="flex items-center justify-center text-xs text-gray-700 hover:bg-gray-200 rounded px-1 py-0.5 transition-colors w-16 text-center"
-          title="Paper Settings"
+          :title="t('editor.paperSettings')"
         >
-          <span class="truncate">{{ selectedPaper === 'CUSTOM' ? 'Custom' : selectedPaper }}</span>
+          <span class="truncate">{{ selectedPaper === 'CUSTOM' ? t('editor.custom') : selectedPaper }}</span>
         </button>
         <button 
           @click="showPaperSettings = !showPaperSettings"
           class="p-1 hover:bg-gray-200 rounded transition-colors"
-          title="Paper Settings"
+          :title="t('editor.paperSettings')"
         >
           <ChevronDown class="w-4 h-4" />
         </button>
       </div>
 
       <div v-if="showPaperSettings" class="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-4 z-[1000]">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">Paper Settings</h3>
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ t('editor.paperSettings') }}</h3>
         
         <div class="space-y-3">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Size Preset</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('editor.sizePreset') }}</label>
             <select 
               v-model="selectedPaper" 
               @change="handlePaperChange"
@@ -541,13 +543,13 @@ onUnmounted(() => {
               <option v-for="(size, key) in PAPER_SIZES" :key="key" :value="key">
                 {{ key }} ({{ pxToMm(size.width) }}mm x {{ pxToMm(size.height) }}mm)
               </option>
-              <option value="CUSTOM">Custom</option>
+              <option value="CUSTOM">{{ t('editor.custom') }}</option>
             </select>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Width (mm)</label>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('common.width') }} ({{ t('common.mm') }})</label>
               <input 
                 type="number" 
                 :value="pxToMm(customWidth)"
@@ -556,7 +558,7 @@ onUnmounted(() => {
               />
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Height (mm)</label>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('common.height') }} ({{ t('common.mm') }})</label>
               <input 
                 type="number" 
                 :value="pxToMm(customHeight)"
@@ -568,7 +570,7 @@ onUnmounted(() => {
         </div>
         
         <div class="mt-4 flex items-center justify-between">
-          <span class="text-sm text-gray-700 font-medium">Show Corner Markers</span>
+          <span class="text-sm text-gray-700 font-medium">{{ t('editor.showCornerMarkers') }}</span>
           <button 
             @click="store.setShowCornerMarkers(!store.showCornerMarkers)"
             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
@@ -584,7 +586,7 @@ onUnmounted(() => {
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 font-medium">Show Grid</span>
+          <span class="text-sm text-gray-700 font-medium">{{ t('editor.showGrid') }}</span>
           <button 
             @click="store.setShowGrid(!store.showGrid)"
             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
@@ -600,7 +602,7 @@ onUnmounted(() => {
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 font-medium">Show Minimap</span>
+          <span class="text-sm text-gray-700 font-medium">{{ t('editor.showMinimap') }}</span>
           <button 
             @click="store.setShowMinimap(!store.showMinimap)"
             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
@@ -616,7 +618,7 @@ onUnmounted(() => {
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 font-medium">Background Color</span>
+          <span class="text-sm text-gray-700 font-medium">{{ t('editor.backgroundColor') }}</span>
           <ColorPicker 
             v-model="canvasBackground" 
             :allow-transparent="true"
@@ -639,7 +641,7 @@ onUnmounted(() => {
         </div>
 
         <div class="border-t border-gray-200 my-4 pt-3">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Header & Footer</h3>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ t('editor.headerFooter') }}</h3>
           
           <div class="space-y-3">
             <!-- Header Settings -->
@@ -657,7 +659,7 @@ onUnmounted(() => {
                     :class="store.showHeaderLine ? 'translate-x-4' : 'translate-x-0'"
                   />
                 </button>
-                <label class="text-xs text-gray-600">Header Line</label>
+                <label class="text-xs text-gray-600">{{ t('editor.headerLine') }}</label>
               </div>
               <div class="flex items-center gap-1">
                 <input 
@@ -667,7 +669,7 @@ onUnmounted(() => {
                   class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none text-right"
                   min="0"
                 />
-                <span class="text-xs text-gray-500">mm</span>
+                <span class="text-xs text-gray-500">{{ t('common.mm') }}</span>
               </div>
             </div>
 
@@ -686,7 +688,7 @@ onUnmounted(() => {
                     :class="store.showFooterLine ? 'translate-x-4' : 'translate-x-0'"
                   />
                 </button>
-                <label class="text-xs text-gray-600">Footer Line</label>
+                <label class="text-xs text-gray-600">{{ t('editor.footerLine') }}</label>
               </div>
               <div class="flex items-center gap-1">
                 <input 
@@ -696,7 +698,7 @@ onUnmounted(() => {
                   class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none text-right"
                   min="0"
                 />
-                <span class="text-xs text-gray-500">mm</span>
+                <span class="text-xs text-gray-500">{{ t('common.mm') }}</span>
               </div>
             </div>
           </div>
@@ -708,7 +710,7 @@ onUnmounted(() => {
             class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors text-sm font-medium"
           >
             <Plus class="w-4 h-4" />
-            <span>Add New Page</span>
+            <span>{{ t('editor.addNewPage') }}</span>
           </button>
         </div>
         
@@ -722,26 +724,26 @@ onUnmounted(() => {
     <!-- Zoom Settings -->
     <div class="relative">
       <div class="flex items-center bg-gray-100 rounded-lg p-1">
-        <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 rounded" title="Zoom Out">
+        <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 rounded" :title="t('editor.zoomOut')">
           <ZoomOut class="w-4 h-4" />
         </button>
         <button 
           @click="showZoomSettings = !showZoomSettings" 
           class="text-xs w-12 text-center hover:bg-gray-200 rounded px-1 py-0.5"
-          title="Zoom Settings"
+          :title="t('editor.zoomSettings')"
         >
           {{ Math.round(store.zoom * 100) }}%
         </button>
-        <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 rounded" title="Zoom In">
+        <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 rounded" :title="t('editor.zoomIn')">
           <ZoomIn class="w-4 h-4" />
         </button>
       </div>
 
       <div v-if="showZoomSettings" class="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-4 z-[1000]">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">Zoom</h3>
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ t('editor.zoomLevel') }}</h3>
         <div class="space-y-3">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Zoom Level (20% - 500%)</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('editor.zoomLevel') }} (20% - 500%)</label>
             <input 
               type="range" 
               min="20" 
@@ -762,7 +764,7 @@ onUnmounted(() => {
     <div class="h-6 w-px bg-gray-300"></div>
 
     <!-- Help -->
-    <button @click="emit('toggleHelp')" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Help">
+    <button @click="emit('toggleHelp')" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" :title="t('editor.help')">
       <HelpCircle class="w-5 h-5" />
     </button>
 
@@ -776,7 +778,7 @@ onUnmounted(() => {
           class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-l-md hover:bg-indigo-700 transition-colors text-sm border-r border-indigo-500"
         >
           <Preview class="w-4 h-4" />
-          <span>Preview</span>
+          <span>{{ t('editor.preview') }}</span>
         </button>
         <button 
           @click="showExportMenu = !showExportMenu"
@@ -789,15 +791,15 @@ onUnmounted(() => {
       <div v-if="showExportMenu" class="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 shadow-xl rounded-lg p-1 z-[1000] flex flex-col gap-1">
         <button @click="handlePrint(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
           <Printer class="w-4 h-4 text-gray-500" />
-          <span>Print</span>
+          <span>{{ t('editor.print') }}</span>
         </button>
         <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
           <FileOutput class="w-4 h-4 text-gray-500" />
-          <span>Export PDF</span>
+          <span>{{ t('editor.exportPdf') }}</span>
         </button>
         <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
           <DataObject class="w-4 h-4 text-gray-500" />
-          <span>View JSON</span>
+          <span>{{ t('editor.viewJson') }}</span>
         </button>
       </div>
       
@@ -807,7 +809,7 @@ onUnmounted(() => {
     <button @click="handleSave" :disabled="templateStore.isSaving" class="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
       <Loading v-if="templateStore.isSaving" class="w-4 h-4 animate-spin" />
       <Save v-else class="w-4 h-4" />
-      <span>Save</span>
+      <span>{{ t('common.save') }}</span>
     </button>
   </div>
 
@@ -819,7 +821,7 @@ onUnmounted(() => {
 
   <CodeEditorModal
     v-model:visible="showJsonModal"
-    title="Template JSON"
+    :title="t('preview.templateJson')"
     :value="jsonContent"
     language="json"
     read-only

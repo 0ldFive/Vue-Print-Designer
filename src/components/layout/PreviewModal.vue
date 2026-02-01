@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { usePrint } from '@/utils/print';
 import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
 }>();
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const { print: printHtml, exportPdf: exportPdfHtml } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
@@ -103,11 +105,11 @@ onUnmounted(() => {
       <div class="bg-white rounded-lg shadow-xl w-[90vw] h-[90vh] flex flex-col overflow-hidden">
         <!-- Header -->
         <div class="relative flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-800">Print Preview</h3>
+          <h3 class="text-lg font-semibold text-gray-800">{{ t('preview.title') }}</h3>
           
           <!-- Zoom Control -->
           <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-            <button @click="handleZoomOut" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom Out">
+            <button @click="handleZoomOut" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" :title="t('preview.zoomOut')">
               <ZoomOut class="w-4 h-4" />
             </button>
             <input 
@@ -118,7 +120,7 @@ onUnmounted(() => {
               v-model.number="zoomPercent" 
               class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
             />
-            <button @click="handleZoomIn" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom In">
+            <button @click="handleZoomIn" class="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors" :title="t('preview.zoomIn')">
               <ZoomIn class="w-4 h-4" />
             </button>
             <span class="text-xs text-gray-600 w-9 text-right select-none">{{ zoomPercent }}%</span>
@@ -146,27 +148,27 @@ onUnmounted(() => {
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 text-sm transition-colors"
           >
             <Printer class="text-lg" />
-            Print
+            {{ t('editor.print') }}
           </button>
           <button 
             @click="handlePdf"
             class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2 text-sm transition-colors"
           >
             <FilePdf class="text-lg" />
-            Export PDF
+            {{ t('editor.exportPdf') }}
           </button>
           <button 
             @click="handleViewJson"
             class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 text-sm text-gray-700 flex items-center gap-2 transition-colors"
           >
             <DataObject class="text-lg" />
-            View JSON
+            {{ t('editor.viewJson') }}
           </button>
           <button 
             @click="handleClose"
             class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 text-sm text-gray-700 flex items-center gap-2 transition-colors"
           >
-            Close
+            {{ t('common.close') }}
           </button>
         </div>
       </div>
@@ -175,7 +177,7 @@ onUnmounted(() => {
 
   <CodeEditorModal
     v-model:visible="showJsonModal"
-    title="Template JSON"
+    :title="t('preview.templateJson')"
     :value="jsonContent"
     language="json"
     read-only

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import type { PrintElement } from '@/types';
 import DeleteIcon from '~icons/material-symbols/delete';
@@ -11,6 +12,7 @@ import UnlockIcon from '~icons/material-symbols/lock-open';
 import UndoIcon from '~icons/material-symbols/undo';
 import RedoIcon from '~icons/material-symbols/redo';
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const showMenu = ref(false);
 const menuX = ref(0);
@@ -340,7 +342,7 @@ onUnmounted(() => {
         }"
       >
         <DeleteIcon class="w-4 h-4" />
-        <span>Delete{{ store.selectedElementIds.length > 1 ? ` (${store.selectedElementIds.length})` : '' }}</span>
+        <span>{{ t('common.delete') }}{{ store.selectedElementIds.length > 1 ? ` (${store.selectedElementIds.length})` : '' }}</span>
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
@@ -348,7 +350,7 @@ onUnmounted(() => {
         @click="() => { store.cut(); showMenu=false; }"
       >
         <CutIcon class="w-4 h-4" />
-        <span>Cut</span>
+        <span>{{ t('common.cut') }}</span>
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
@@ -356,7 +358,7 @@ onUnmounted(() => {
         @click="() => { store.copy(); showMenu=false; }"
       >
         <CopyIcon class="w-4 h-4" />
-        <span>Copy</span>
+        <span>{{ t('common.copy') }}</span>
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
@@ -364,7 +366,7 @@ onUnmounted(() => {
         @click="() => { store.paste(getPasteTarget(clickX, clickY)); showMenu=false; }"
       >
         <PasteIcon class="w-4 h-4" />
-        <span>Paste</span>
+        <span>{{ t('common.paste') }}</span>
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
@@ -372,7 +374,7 @@ onUnmounted(() => {
         @click="() => { store.toggleLock(); showMenu=false; }"
       >
         <component :is="store.selectedElement?.locked ? UnlockIcon : LockIcon" class="w-4 h-4" />
-        <span>{{ store.selectedElement?.locked ? 'Unlock' : 'Lock' }}</span>
+        <span>{{ store.selectedElement?.locked ? t('common.unlock') : t('common.lock') }}</span>
       </button>
       <div class="border-t border-gray-200 my-1"></div>
       <button
@@ -380,14 +382,14 @@ onUnmounted(() => {
         @click="store.undo(); showMenu=false;"
       >
         <UndoIcon class="w-4 h-4" />
-        <span>Undo</span>
+        <span>{{ t('common.undo') }}</span>
       </button>
       <button
         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
         @click="store.redo(); showMenu=false;"
       >
         <RedoIcon class="w-4 h-4" />
-        <span>Redo</span>
+        <span>{{ t('common.redo') }}</span>
       </button>
     </div>
   </div>

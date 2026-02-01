@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import cloneDeep from 'lodash/cloneDeep';
@@ -8,6 +9,7 @@ const props = defineProps<{
   element: PrintElement;
 }>();
 
+const { t } = useI18n();
 const store = useDesignerStore();
 
 function isCellSelected(rowIndex: number, colField: string, section: 'body' | 'footer' = 'body') {
@@ -383,59 +385,59 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Data & Behavior',
+      title: 'properties.section.dataBehavior',
       tab: 'properties',
       fields: [
-        { label: 'Auto Paginate', type: 'switch', target: 'element', key: 'autoPaginate' },
-        { label: 'Repeat Footer', type: 'switch', target: 'element', key: 'tfootRepeat' },
-        { label: 'Show Footer', type: 'switch', target: 'element', key: 'showFooter' },
-        { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' },
-        { label: 'Columns (JSON)', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: '[{ field: "name", header: "Name", width: 100 }]' },
-        { label: 'Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: '[{...}]' },
-        { label: 'Footer Data (JSON)', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: '[{ "id": { "value": "Total" }, "amount": { "value": "Total:", "field": "{#sum}" } }]' },
-        { label: 'Custom Script', type: 'code', language: 'javascript', target: 'element', key: 'customScript', placeholder: 'return { data: ... };' }
+        { label: 'properties.label.autoPaginate', type: 'switch', target: 'element', key: 'autoPaginate' },
+        { label: 'properties.label.repeatFooter', type: 'switch', target: 'element', key: 'tfootRepeat' },
+        { label: 'properties.label.showFooter', type: 'switch', target: 'element', key: 'showFooter' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: 'properties.label.variablePlaceholder' },
+        { label: 'properties.label.columns', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: 'properties.label.columnsPlaceholder' },
+        { label: 'properties.label.data', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: 'properties.label.dataPlaceholder' },
+        { label: 'properties.label.footerData', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: 'properties.label.footerDataPlaceholder' },
+        { label: 'properties.label.customScript', type: 'code', language: 'javascript', target: 'element', key: 'customScript', placeholder: 'properties.label.customScriptPlaceholder' }
       ]
     },
     {
-      title: 'Layout & Dimensions',
+      title: 'properties.section.layoutDimensions',
       tab: 'style',
       fields: [
-        { label: 'Header Height (px)', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
-        { label: 'Row Height (px)', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
-        { label: 'Footer Height (px)', type: 'number', target: 'style', key: 'footerHeight', min: 20, max: 200, step: 1 },
+        { label: 'properties.label.headerHeight', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
+        { label: 'properties.label.rowHeight', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
+        { label: 'properties.label.footerHeight', type: 'number', target: 'style', key: 'footerHeight', min: 20, max: 200, step: 1 },
       ]
     },
     {
-      title: 'Header Style',
+      title: 'properties.section.headerStyle',
       tab: 'style',
       fields: [
-        { label: 'Background', type: 'color', target: 'style', key: 'headerBackgroundColor' },
-        { label: 'Text Color', type: 'color', target: 'style', key: 'headerColor' },
-        { label: 'Font Size (px)', type: 'number', target: 'style', key: 'headerFontSize', min: 8, max: 72, step: 1 }
+        { label: 'properties.label.background', type: 'color', target: 'style', key: 'headerBackgroundColor' },
+        { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'headerColor' },
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'headerFontSize', min: 8, max: 72, step: 1 }
       ]
     },
     {
-      title: 'Footer Style',
+      title: 'properties.section.footerStyle',
       tab: 'style',
       fields: [
-        { label: 'Background', type: 'color', target: 'style', key: 'footerBackgroundColor' },
-        { label: 'Text Color', type: 'color', target: 'style', key: 'footerColor' },
-        { label: 'Font Size (px)', type: 'number', target: 'style', key: 'footerFontSize', min: 8, max: 72, step: 1 }
+        { label: 'properties.label.background', type: 'color', target: 'style', key: 'footerBackgroundColor' },
+        { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'footerColor' },
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'footerFontSize', min: 8, max: 72, step: 1 }
       ]
     },
     {
-      title: 'Border',
+      title: 'properties.section.border',
       tab: 'style',
       fields: [
-        { label: 'Border Style', type: 'select', target: 'style', key: 'borderStyle', options: [
-            { label: 'None', value: 'none' },
-            { label: 'Solid', value: 'solid' },
-            { label: 'Dashed', value: 'dashed' },
-            { label: 'Dotted', value: 'dotted' }
+        { label: 'properties.label.borderStyle', type: 'select', target: 'style', key: 'borderStyle', options: [
+            { label: 'properties.option.none', value: 'none' },
+            { label: 'properties.option.solid', value: 'solid' },
+            { label: 'properties.option.dashed', value: 'dashed' },
+            { label: 'properties.option.dotted', value: 'dotted' }
           ]
         },
-        { label: 'Border Width (px)', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
-        { label: 'Border Color', type: 'color', target: 'style', key: 'borderColor' }
+        { label: 'properties.label.borderWidth', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
+        { label: 'properties.label.borderColor', type: 'color', target: 'style', key: 'borderColor' }
       ]
     }
   ]
@@ -557,25 +559,25 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         :style="{ top: `${editFormPosition.top}px`, left: `${editFormPosition.left}px` }"
         @click.stop
       >
-        <h4 class="text-sm font-semibold text-gray-700">{{ editingFooterCell ? 'Edit Cell' : 'Edit Column' }}</h4>
+        <h4 class="text-sm font-semibold text-gray-700">{{ editingFooterCell ? t('properties.label.editCell') : t('properties.label.editColumn') }}</h4>
         
         <template v-if="editingColIndex !== null">
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500">Header Text</label>
+            <label class="text-xs text-gray-500">{{ t('properties.label.headerText') }}</label>
             <input 
               v-model="editForm.header"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="Header Name"
+              :placeholder="t('properties.label.headerNamePlaceholder')"
               @keydown.enter="saveHeaderEdit"
               autoFocus
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500">Field Key</label>
+            <label class="text-xs text-gray-500">{{ t('properties.label.fieldKey') }}</label>
             <input 
               v-model="editForm.field"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="Field Key"
+              :placeholder="t('properties.label.fieldKey')"
               @keydown.enter="saveHeaderEdit"
             />
           </div>
@@ -583,21 +585,21 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 
         <template v-if="editingFooterCell">
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500">Text</label>
+            <label class="text-xs text-gray-500">{{ t('properties.label.content') }}</label>
             <input 
               v-model="editForm.value"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="Display Text (e.g. Total:)"
+              :placeholder="t('properties.label.displayTextPlaceholder')"
               @keydown.enter="saveHeaderEdit"
               autoFocus
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500">Variable Field</label>
+            <label class="text-xs text-gray-500">{{ t('properties.label.variableField') }}</label>
              <input 
               v-model="editForm.variable"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="Data Field (e.g. {#amount})"
+              :placeholder="t('properties.label.dataFieldPlaceholder')"
               @keydown.enter="saveHeaderEdit"
             />
           </div>
@@ -608,13 +610,13 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             @click="closeEditForm"
             class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </button>
           <button 
             @click="saveHeaderEdit"
             class="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded"
           >
-            Save
+            {{ t('common.save') }}
           </button>
         </div>
       </div>

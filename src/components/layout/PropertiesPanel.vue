@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType, type ElementPropertiesSchema, type PropertyField } from '@/types';
 import { elementPropertiesSchema as TextSchema } from '@/components/elements/TextElement.vue';
@@ -23,6 +24,7 @@ import Check from '~icons/material-symbols/check';
 import Save from '~icons/material-symbols/save';
 import InputModal from '@/components/common/InputModal.vue';
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
 const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
@@ -221,29 +223,29 @@ const handleFocusOut = (e: FocusEvent) => {
     <!-- Header -->
     <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
       <div>
-        <h2 class="font-semibold text-gray-700">Properties</h2>
-        <p class="text-xs text-gray-500 mt-1">Edit element properties</p>
+        <h2 class="font-semibold text-gray-700">{{ t('properties.title') }}</h2>
+        <p class="text-xs text-gray-500 mt-1">{{ t('properties.subtitle') }}</p>
       </div>
       <div v-if="isLocked" class="flex items-center text-red-500 gap-1 text-xs font-medium bg-red-50 px-2 py-1 rounded border border-red-100">
         <Lock class="w-3 h-3" />
-        <span>Locked</span>
+        <span>{{ t('properties.locked') }}</span>
       </div>
     </div>
 
     <!-- Multi-select Mode -->
     <div v-if="isMultiSelected" class="p-6 text-center">
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Multi-select mode</h3>
+        <h3 class="text-lg font-semibold text-gray-900">{{ t('properties.multiSelectMode') }}</h3>
         <p class="text-sm text-gray-500 mt-2">
           <span class="font-medium">{{ store.selectedElementIds.length }}</span> 
-          elements selected
+          {{ t('properties.selectedElements', { n: '' }).replace('{n}', '') }}
         </p>
       </div>
       <button
         @click="handleDeleteSelected"
         class="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-sm font-medium"
       >
-        Delete Selected Elements
+        {{ t('properties.deleteSelected') }}
       </button>
     </div>
 
@@ -257,7 +259,7 @@ const handleFocusOut = (e: FocusEvent) => {
           @click="activeTab = tab as any"
           :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === tab ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
         >
-          {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+          {{ t(`properties.tab.${tab}`) }}
           <div v-if="activeTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
         </button>
       </div>
@@ -266,31 +268,31 @@ const handleFocusOut = (e: FocusEvent) => {
         
         <!-- Properties Tab: Position & Size -->
         <div v-if="activeTab === 'properties'" class="space-y-3">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Position & Size</h3>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.positionSize') }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <PropertyInput 
-              label="X (mm)" 
+              :label="t('properties.label.x')" 
               type="number" 
               :disabled="isLocked"
               :value="pxToMm(element.x)" 
               @update:value="(v) => handleChange('x', mmToPx(Number(v)))" 
             />
             <PropertyInput 
-              label="Y (mm)" 
+              :label="t('properties.label.y')" 
               type="number" 
               :disabled="isLocked"
               :value="pxToMm(element.y)" 
               @update:value="(v) => handleChange('y', mmToPx(Number(v)))" 
             />
             <PropertyInput 
-              label="Width (mm)" 
+              :label="t('properties.label.width')" 
               type="number" 
               :disabled="isLocked"
               :value="pxToMm(element.width)" 
               @update:value="(v) => handleChange('width', mmToPx(Number(v)))" 
             />
             <PropertyInput 
-              label="Height (mm)" 
+              :label="t('properties.label.height')" 
               type="number" 
               :disabled="isLocked"
               :value="pxToMm(element.height)" 
@@ -301,21 +303,21 @@ const handleFocusOut = (e: FocusEvent) => {
 
         <!-- Table Cell Operations -->
         <div v-if="activeTab === 'properties' && element.type === 'table' && store.tableSelection" class="space-y-3 pt-2 border-t border-gray-100">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cell Operations</h3>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.cellOperations') }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <button
               @click="store.mergeSelectedCells()"
               :disabled="!canMergeCells || isLocked"
               class="w-full py-2 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
             >
-              Merge Cells
+              {{ t('properties.action.mergeCells') }}
             </button>
             <button
               @click="store.splitSelectedCells()"
               :disabled="!canSplitCells || isLocked"
               class="w-full py-2 bg-white text-gray-600 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Split Cells
+              {{ t('properties.action.splitCells') }}
             </button>
           </div>
         </div>
@@ -323,7 +325,7 @@ const handleFocusOut = (e: FocusEvent) => {
         <!-- Dynamic Sections -->
         <template v-for="(section, si) in visibleSections" :key="si">
           <div class="space-y-3 pt-2 first:pt-0 border-t first:border-0 border-gray-100">
-            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ section.title }}</h3>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t(section.title) }}</h3>
             <div class="space-y-3">
               <template v-for="(field, fi) in section.fields" :key="fi">
                 <!-- Action Button -->
@@ -333,14 +335,14 @@ const handleFocusOut = (e: FocusEvent) => {
                     :disabled="isLocked"
                     class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
-                    {{ field.label }}
+                    {{ t(field.label) }}
                   </button>
                 </div>
                 
                 <!-- Text/Number/Switch Input -->
                 <PropertyInput
                   v-else-if="field.type === 'text' || field.type === 'number' || field.type === 'switch'"
-                  :label="field.label"
+                  :label="t(field.label)"
                   :type="field.type"
                   :min="field.min"
                   :max="field.max"
@@ -354,8 +356,8 @@ const handleFocusOut = (e: FocusEvent) => {
                 <!-- Select -->
                 <PropertySelect
                   v-else-if="field.type === 'select'"
-                  :label="field.label"
-                  :options="field.options || []"
+                  :label="t(field.label)"
+                  :options="(field.options || []).map(o => ({ ...o, label: t(o.label) }))"
                   :disabled="isLocked"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
@@ -364,7 +366,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <!-- Color -->
                 <PropertyColor
                   v-else-if="field.type === 'color'"
-                  :label="field.label"
+                  :label="t(field.label)"
                   :disabled="isLocked"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
@@ -373,7 +375,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <!-- Image Upload -->
                 <PropertyImage
                   v-else-if="field.type === 'image'"
-                  :label="field.label"
+                  :label="t(field.label)"
                   :disabled="isLocked"
                   :placeholder="field.placeholder"
                   :value="getFieldValue(field)"
@@ -383,7 +385,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <!-- Code Editor -->
                 <PropertyCode
                   v-else-if="field.type === 'code'"
-                  :label="field.label"
+                  :label="t(field.label)"
                   :language="field.language || 'javascript'"
                   :disabled="isLocked"
                   :value="getCodeValue(field)"
@@ -392,7 +394,7 @@ const handleFocusOut = (e: FocusEvent) => {
 
                 <!-- Textarea -->
                 <div v-else-if="field.type === 'textarea'">
-                  <label class="block text-xs text-gray-500 mb-1 font-medium">{{ field.label }}</label>
+                  <label class="block text-xs text-gray-500 mb-1 font-medium">{{ t(field.label) }}</label>
                   <textarea
                     :placeholder="field.placeholder"
                     :disabled="isLocked"
@@ -408,9 +410,9 @@ const handleFocusOut = (e: FocusEvent) => {
 
         <!-- Style Tab: Generic Appearance -->
         <div v-if="activeTab === 'style' && !isSelfStyled" class="space-y-3 pt-2 border-t border-gray-100">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Appearance</h3>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.appearance') }}</h3>
           <PropertyColor 
-            label="Background Color" 
+            :label="t('properties.label.backgroundColor')" 
             :disabled="isLocked"
             :value="element.style.backgroundColor || '#ffffff'" 
             @update:value="(v) => handleStyleChange('backgroundColor', v)" 
@@ -420,16 +422,16 @@ const handleFocusOut = (e: FocusEvent) => {
         <!-- Advanced Tab Content -->
         <div v-if="activeTab === 'advanced'" class="space-y-4">
           <div class="p-4 bg-gray-50 rounded border border-gray-200">
-             <h4 class="text-sm font-medium text-gray-700 mb-3">Element Info</h4>
+             <h4 class="text-sm font-medium text-gray-700 mb-3">{{ t('properties.section.elementInfo') }}</h4>
              <div class="space-y-3">
                <div>
-                 <p class="text-xs text-gray-500 mb-1.5 font-medium">ID</p>
+                 <p class="text-xs text-gray-500 mb-1.5 font-medium">{{ t('properties.label.id') }}</p>
                  <div class="flex items-center gap-2 bg-white border border-gray-200 rounded px-2 py-1.5 hover:border-blue-400 transition-colors">
                    <span class="font-mono text-xs text-gray-600 flex-1 truncate select-all" :title="element.id">{{ element.id }}</span>
                    <button 
                      @click="copyId"
                      class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-gray-100 flex-shrink-0"
-                     :title="copied ? 'Copied!' : 'Copy ID'"
+                     :title="copied ? t('properties.action.copied') : t('properties.action.copyId')"
                    >
                      <Check v-if="copied" class="w-3.5 h-3.5 text-green-500" />
                      <ContentCopy v-else class="w-3.5 h-3.5" />
@@ -437,7 +439,7 @@ const handleFocusOut = (e: FocusEvent) => {
                  </div>
                </div>
                <div class="text-xs text-gray-500 flex items-center justify-between border-t border-gray-100 pt-2">
-                 <span class="font-medium">Type</span> 
+                 <span class="font-medium">{{ t('properties.label.type') }}</span> 
                  <span class="px-2 py-0.5 bg-gray-100 rounded text-gray-600">{{ element.type }}</span>
                </div>
              </div>
@@ -448,7 +450,7 @@ const handleFocusOut = (e: FocusEvent) => {
             class="w-full py-2 bg-white text-blue-600 rounded border border-blue-200 hover:bg-blue-50 transition-colors text-sm font-medium flex items-center justify-center gap-2 mb-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
             <Save class="w-4 h-4" />
-            Save as Custom Element
+            {{ t('properties.action.saveCustom') }}
           </button>
 
           <button
@@ -456,7 +458,7 @@ const handleFocusOut = (e: FocusEvent) => {
             :disabled="isLocked"
             class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
-            Delete Element
+            {{ t('properties.action.deleteElement') }}
           </button>
         </div>
 
@@ -466,9 +468,9 @@ const handleFocusOut = (e: FocusEvent) => {
     <!-- Empty State -->
     <div v-else class="p-6 text-center">
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">No Selection</h3>
+        <h3 class="text-lg font-semibold text-gray-900">{{ t('properties.empty.noSelection') }}</h3>
         <p class="text-sm text-gray-500 mt-2">
-          Select an element to edit properties
+          {{ t('properties.empty.selectInstruction') }}
         </p>
       </div>
     </div>
@@ -477,8 +479,8 @@ const handleFocusOut = (e: FocusEvent) => {
   <InputModal
     :show="showCustomElementModal"
     :initial-value="customElementInitialName"
-    title="Save Custom Element"
-    placeholder="Enter element name..."
+    :title="t('properties.action.saveCustomModal')"
+    :placeholder="t('sidebar.enterNamePlaceholder')"
     @close="showCustomElementModal = false"
     @save="onSaveCustomElement"
   />

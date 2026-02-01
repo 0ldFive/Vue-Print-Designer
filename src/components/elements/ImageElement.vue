@@ -11,25 +11,25 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Image Source',
+      title: 'properties.section.imageSource',
       tab: 'properties',
       fields: [
-        { label: 'Image Source', type: 'image', target: 'element', key: 'content', placeholder: 'https://... or upload image' }
+        { label: 'properties.label.imageSource', type: 'image', target: 'element', key: 'content', placeholder: 'https://... or upload image' }
       ]
     },
     {
-      title: 'Border',
+      title: 'properties.section.border',
       tab: 'style',
       fields: [
-        { label: 'Border Style', type: 'select', target: 'style', key: 'borderStyle', options: [
-            { label: 'None', value: 'none' },
-            { label: 'Solid', value: 'solid' },
-            { label: 'Dashed', value: 'dashed' },
-            { label: 'Dotted', value: 'dotted' }
+        { label: 'properties.label.borderStyle', type: 'select', target: 'style', key: 'borderStyle', options: [
+            { label: 'properties.option.none', value: 'none' },
+            { label: 'properties.option.solid', value: 'solid' },
+            { label: 'properties.option.dashed', value: 'dashed' },
+            { label: 'properties.option.dotted', value: 'dotted' }
           ]
         },
-        { label: 'Border Width (px)', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
-        { label: 'Border Color', type: 'color', target: 'style', key: 'borderColor' }
+        { label: 'properties.label.borderWidth', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
+        { label: 'properties.label.borderColor', type: 'color', target: 'style', key: 'borderColor' }
       ]
     }
   ]

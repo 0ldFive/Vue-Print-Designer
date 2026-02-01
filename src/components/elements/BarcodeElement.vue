@@ -49,19 +49,19 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Content',
+      title: 'properties.section.content',
       tab: 'properties',
       fields: [
-        { label: 'Value', type: 'text', target: 'element', key: 'content', placeholder: 'Barcode value' },
-        { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
+        { label: 'properties.label.content', type: 'text', target: 'element', key: 'content', placeholder: 'Barcode value' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
       ]
     },
     {
-      title: 'Barcode Settings',
+      title: 'properties.section.barcodeSettings',
       tab: 'style',
       fields: [
         { 
-          label: 'Format', 
+          label: 'properties.label.format', 
           type: 'select', 
           target: 'style', 
           key: 'barcodeFormat', 
@@ -75,31 +75,31 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             { label: 'Pharmacode', value: 'pharmacode' }
           ] 
         },
-        { label: 'Show Text', type: 'select', target: 'style', key: 'showText', options: [{label: 'Yes', value: true}, {label: 'No', value: false}] },
-        { label: 'Color', type: 'color', target: 'style', key: 'color' },
-        { label: 'Line Width (px)', type: 'number', target: 'style', key: 'barcodeWidth', placeholder: '2' },
-        { label: 'Height (px)', type: 'number', target: 'style', key: 'barcodeHeight', placeholder: '40' },
-        { label: 'Margin (px)', type: 'number', target: 'style', key: 'margin', placeholder: '0' },
-        { label: 'Font Size (px)', type: 'number', target: 'style', key: 'fontSize', placeholder: '20' },
+        { label: 'properties.label.showText', type: 'select', target: 'style', key: 'showText', options: [{label: 'properties.option.yes', value: true}, {label: 'properties.option.no', value: false}] },
+        { label: 'properties.label.color', type: 'color', target: 'style', key: 'color' },
+        { label: 'properties.label.lineWidth', type: 'number', target: 'style', key: 'barcodeWidth', placeholder: '2' },
+        { label: 'properties.label.barcodeHeight', type: 'number', target: 'style', key: 'barcodeHeight', placeholder: '40' },
+        { label: 'properties.label.margin', type: 'number', target: 'style', key: 'margin', placeholder: '0' },
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'fontSize', placeholder: '20' },
         { 
-          label: 'Text Position', 
+          label: 'properties.label.textPosition', 
           type: 'select', 
           target: 'style', 
           key: 'textPosition', 
           options: [
-            { label: 'Bottom', value: 'bottom' },
-            { label: 'Top', value: 'top' }
+            { label: 'properties.option.bottom', value: 'bottom' },
+            { label: 'properties.option.top', value: 'top' }
           ] 
         },
         { 
-          label: 'Text Align', 
+          label: 'properties.label.textAlign', 
           type: 'select', 
           target: 'style', 
           key: 'textAlign', 
           options: [
-            { label: 'Left', value: 'left' },
-            { label: 'Center', value: 'center' },
-            { label: 'Right', value: 'right' }
+            { label: 'properties.option.left', value: 'left' },
+            { label: 'properties.option.center', value: 'center' },
+            { label: 'properties.option.right', value: 'right' }
           ] 
         }
       ]

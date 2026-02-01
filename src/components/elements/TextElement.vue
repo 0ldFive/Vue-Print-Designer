@@ -11,77 +11,77 @@ import type { ElementPropertiesSchema } from '@/types';
 export const elementPropertiesSchema: ElementPropertiesSchema = {
   sections: [
     {
-      title: 'Content',
+      title: 'properties.section.content',
       tab: 'properties',
       fields: [
-        { label: 'Content', type: 'textarea', target: 'element', key: 'content', placeholder: 'Enter text' },
-        { label: 'Variable (@foobar)', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' }
+        { label: 'properties.label.content', type: 'textarea', target: 'element', key: 'content', placeholder: 'Enter text' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@foobar' }
       ]
     },
     {
-      title: 'Typography',
+      title: 'properties.section.typography',
       tab: 'style',
       fields: [
-        { label: 'Writing Mode', type: 'select', target: 'style', key: 'writingMode', options: [
-            { label: 'Horizontal', value: 'horizontal-tb' },
-            { label: 'Vertical', value: 'vertical-rl' }
+        { label: 'properties.label.writingMode', type: 'select', target: 'style', key: 'writingMode', options: [
+            { label: 'properties.option.horizontal', value: 'horizontal-tb' },
+            { label: 'properties.option.vertical', value: 'vertical-rl' }
           ] 
         },
-        { label: 'Font Size (px)', type: 'number', target: 'style', key: 'fontSize', min: 8, max: 96, step: 1 },
-        { label: 'Color', type: 'color', target: 'style', key: 'color' },
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'fontSize', min: 8, max: 96, step: 1 },
+        { label: 'properties.label.color', type: 'color', target: 'style', key: 'color' },
         {
-          label: 'Text Align',
+          label: 'properties.label.textAlign',
           type: 'select',
           target: 'style',
           key: 'textAlign',
           options: [
-            { label: 'Default', value: '' },
-            { label: 'Left', value: 'left' },
-            { label: 'Center', value: 'center' },
-            { label: 'Right', value: 'right' }
+            { label: 'properties.option.default', value: '' },
+            { label: 'properties.option.left', value: 'left' },
+            { label: 'properties.option.center', value: 'center' },
+            { label: 'properties.option.right', value: 'right' }
           ]
         },
         {
-          label: 'Font Family',
+          label: 'properties.label.fontFamily',
           type: 'select',
           target: 'style',
           key: 'fontFamily',
           options: [
-            { label: 'Default', value: '' },
-            { label: 'Arial', value: 'Arial, sans-serif' },
-            { label: 'Times New Roman', value: '"Times New Roman", serif' },
-            { label: 'Courier New', value: '"Courier New", monospace' },
-            { label: 'SimSun (宋体)', value: 'SimSun, serif' },
-            { label: 'SimHei (黑体)', value: 'SimHei, sans-serif' }
+            { label: 'properties.option.default', value: '' },
+            { label: 'properties.option.arial', value: 'Arial, sans-serif' },
+            { label: 'properties.option.timesNewRoman', value: '"Times New Roman", serif' },
+            { label: 'properties.option.courierNew', value: '"Courier New", monospace' },
+            { label: 'properties.option.simSun', value: 'SimSun, serif' },
+            { label: 'properties.option.simHei', value: 'SimHei, sans-serif' }
           ]
         },
         {
-          label: 'Font Weight',
+          label: 'properties.label.fontWeight',
           type: 'select',
           target: 'style',
           key: 'fontWeight',
           options: [
-            { label: 'Default', value: '' },
-            { label: 'Normal', value: '400' },
-            { label: 'Medium', value: '500' },
-            { label: 'Bold', value: '700' }
+            { label: 'properties.option.default', value: '' },
+            { label: 'properties.option.normal', value: '400' },
+            { label: 'properties.option.medium', value: '500' },
+            { label: 'properties.option.bold', value: '700' }
           ]
         }
       ]
     },
     {
-      title: 'Border',
+      title: 'properties.section.border',
       tab: 'style',
       fields: [
-        { label: 'Border Style', type: 'select', target: 'style', key: 'borderStyle', options: [
-            { label: 'None', value: 'none' },
-            { label: 'Solid', value: 'solid' },
-            { label: 'Dashed', value: 'dashed' },
-            { label: 'Dotted', value: 'dotted' }
+        { label: 'properties.label.borderStyle', type: 'select', target: 'style', key: 'borderStyle', options: [
+            { label: 'properties.option.none', value: 'none' },
+            { label: 'properties.option.solid', value: 'solid' },
+            { label: 'properties.option.dashed', value: 'dashed' },
+            { label: 'properties.option.dotted', value: 'dotted' }
           ]
         },
-        { label: 'Border Width (px)', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
-        { label: 'Border Color', type: 'color', target: 'style', key: 'borderColor' }
+        { label: 'properties.label.borderWidth', type: 'number', target: 'style', key: 'borderWidth', min: 0, max: 20, step: 1 },
+        { label: 'properties.label.borderColor', type: 'color', target: 'style', key: 'borderColor' }
       ]
     }
   ]

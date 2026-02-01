@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType } from '@/types';
 import ElementWrapper from '../elements/ElementWrapper.vue';
@@ -18,6 +19,7 @@ import CopyIcon from '~icons/material-symbols/content-copy';
 import PasteIcon from '~icons/material-symbols/content-paste';
 
 const store = useDesignerStore();
+const { t } = useI18n();
 
 const pages = computed(() => store.pages);
 const zoom = computed(() => store.zoom);
@@ -178,21 +180,21 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
       color: '#000000',
       ...(type === ElementType.RECT || type === ElementType.CIRCLE ? { backgroundColor: 'transparent' } : {}),
     },
-    content: type === ElementType.TEXT ? 'New Text' 
+    content: type === ElementType.TEXT ? t('canvas.newText') 
       : type === ElementType.BARCODE ? '12345678'
       : type === ElementType.QRCODE ? 'https://example.com'
       : '',
     // Dummy data for table
     columns: type === ElementType.TABLE ? [
-      { field: 'id', header: 'ID', width: 50 },
-      { field: 'name', header: 'Name', width: 100 },
-      { field: 'qty', header: 'Qty', width: 60 },
-      { field: 'price', header: 'Price', width: 80 },
-      { field: 'total', header: 'Total', width: 80 },
+      { field: 'id', header: t('canvas.defaultTableHeaders.id'), width: 50 },
+      { field: 'name', header: t('canvas.defaultTableHeaders.name'), width: 100 },
+      { field: 'qty', header: t('canvas.defaultTableHeaders.qty'), width: 60 },
+      { field: 'price', header: t('canvas.defaultTableHeaders.price'), width: 80 },
+      { field: 'total', header: t('canvas.defaultTableHeaders.total'), width: 80 },
     ] : undefined,
     data: type === ElementType.TABLE ? Array.from({ length: 30 }, (_, i) => ({
       id: i + 1,
-      name: `Item ${i + 1}`,
+      name: `${t('canvas.defaultTableData.item')} ${i + 1}`,
       qty: (i % 5) + 1,
       price: 100 + (i * 10),
       total: ((i % 5) + 1) * (100 + (i * 10))
@@ -201,9 +203,9 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     tfootRepeat: type === ElementType.TABLE ? true : undefined,
     autoPaginate: type === ElementType.TABLE ? true : undefined,
     footerData: type === ElementType.TABLE ? [
-      { id: { value: 'Page Sum' }, qty: { value: '', field: '{#pageQty}' }, total: { value: '', field: '{#pageSum}' } },
-      { id: { value: 'Total' }, qty: { value: '', field: '{#totalQty}' }, total: { value: '', field: '{#totalSum}' } },
-      { id: { value: 'In Words' }, total: { value: '', field: '{#totalCap}' } }
+      { id: { value: t('canvas.defaultTableData.pageSum') }, qty: { value: '', field: '{#pageQty}' }, total: { value: '', field: '{#pageSum}' } },
+      { id: { value: t('canvas.defaultTableData.total') }, qty: { value: '', field: '{#totalQty}' }, total: { value: '', field: '{#totalSum}' } },
+      { id: { value: t('canvas.defaultTableData.inWords') }, total: { value: '', field: '{#totalCap}' } }
     ] : undefined,
     customScript: type === ElementType.TABLE ? `// RMB Uppercase Conversion
 try {
@@ -493,14 +495,14 @@ const getGlobalElements = () => {
       <div class="absolute top-0 -right-12 flex flex-col gap-2 z-10">
         <button 
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
-          title="Add Page"
+          :title="t('canvas.addPage')"
           @click="store.addPage()"
         >
           <AddIcon />
         </button>
         <button 
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
-          title="Copy Page"
+          :title="t('canvas.copyPage')"
           @click="store.copyPage(index)"
         >
           <CopyIcon />
@@ -508,7 +510,7 @@ const getGlobalElements = () => {
         <button 
           v-if="store.copiedPage"
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
-          title="Paste Page"
+          :title="t('canvas.pastePage')"
           @click="store.pastePage(index)"
         >
           <PasteIcon />
@@ -516,7 +518,7 @@ const getGlobalElements = () => {
         <button 
           v-if="index > 0"
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors"
-          title="Delete Page"
+          :title="t('canvas.deletePage')"
           @click="store.removePage(index)"
         >
           <DeleteIcon />

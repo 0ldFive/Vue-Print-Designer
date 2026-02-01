@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Editor } from '@guolao/vue-monaco-editor';
 import { useDesignerStore } from '@/stores/designer';
 import Close from '~icons/material-symbols/close';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   visible: boolean;
@@ -100,7 +103,7 @@ onUnmounted(() => {
             @click="handleClose"
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
           >
-            Done
+            {{ t('common.close') }}
           </button>
         </div>
       </div>

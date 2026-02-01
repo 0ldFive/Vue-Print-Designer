@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { startCase } from 'lodash';
 import X from '~icons/material-symbols/close';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
@@ -13,6 +14,8 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void
 }>();
+
+const { t } = useI18n();
 
 const activeTab = ref<'shortcuts' | 'about'>('shortcuts');
 
@@ -36,7 +39,7 @@ const projectName = startCase(pkg.name);
         <!-- Sidebar Tabs -->
         <div class="w-48 bg-gray-50 border-r border-gray-200 flex flex-col">
           <div class="h-[60px] flex items-center px-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Help Center</h3>
+            <h3 class="text-lg font-semibold text-gray-800">{{ t('help.title') }}</h3>
           </div>
           <div class="flex-1 py-2">
             <button
@@ -45,7 +48,7 @@ const projectName = startCase(pkg.name);
               :class="activeTab === 'shortcuts' ? 'bg-white text-blue-600 border-l-4 border-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100 border-l-4 border-transparent'"
             >
               <KeyboardIcon class="w-5 h-5" />
-              Shortcuts
+              {{ t('shortcuts.title') }}
             </button>
             <button
               @click="activeTab = 'about'"
@@ -53,7 +56,7 @@ const projectName = startCase(pkg.name);
               :class="activeTab === 'about' ? 'bg-white text-blue-600 border-l-4 border-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100 border-l-4 border-transparent'"
             >
               <InfoIcon class="w-5 h-5" />
-              About
+              {{ t('help.about') }}
             </button>
           </div>
         </div>
@@ -62,7 +65,7 @@ const projectName = startCase(pkg.name);
         <div class="flex-1 flex flex-col min-w-0">
           <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-800">
-              {{ activeTab === 'shortcuts' ? 'Keyboard Shortcuts' : `About ${projectName}` }}
+              {{ activeTab === 'shortcuts' ? t('shortcuts.keyboardShortcuts') : t('help.aboutProject', { name: projectName }) }}
             </h3>
             <button @click="close" class="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
               <X class="w-4 h-4" />
@@ -75,44 +78,44 @@ const projectName = startCase(pkg.name);
               <div class="grid grid-cols-1 gap-6 text-sm">
                 <!-- General Section -->
                 <div>
-                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">General</h4>
+                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">{{ t('shortcuts.general') }}</h4>
                   <ul class="space-y-2 text-gray-600">
-                    <li class="flex justify-between items-center"><span>Save</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + S</kbd></li>
-                    <li class="flex justify-between items-center"><span>Print</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + P</kbd></li>
-                    <li class="flex justify-between items-center"><span>Export PDF</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + E</kbd></li>
-                    <li class="flex justify-between items-center"><span>Preview</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + P</kbd></li>
-                    <li class="flex justify-between items-center"><span>View JSON</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + J</kbd></li>
-                    <li class="flex justify-between items-center"><span>New Template</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Alt + N</kbd></li>
-                    <li class="flex justify-between items-center"><span>Undo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Z</kbd></li>
-                    <li class="flex justify-between items-center"><span>Redo</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Y</kbd></li>
-                    <li class="flex justify-between items-center"><span>Open Help</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + H</kbd></li>
-                    <li class="flex justify-between items-center"><span>Zoom In/Out</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Wheel</kbd></li>
-                    <li class="flex justify-between items-center"><span>Close Modal</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Esc</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.save') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + S</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('editor.print') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + P</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('editor.exportPdf') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + E</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('editor.preview') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + P</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('editor.viewJson') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Shift + J</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.newTemplate') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Alt + N</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.undo') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Z</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.redo') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Y</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.openHelp') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + H</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.zoom') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Wheel</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.closeModal') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Esc</kbd></li>
                   </ul>
                 </div>
                 
                 <!-- Editing Section -->
                 <div>
-                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">Editing</h4>
+                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">{{ t('shortcuts.editing') }}</h4>
                   <ul class="space-y-2 text-gray-600">
-                    <li class="flex justify-between items-center"><span>Copy</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + C</kbd></li>
-                    <li class="flex justify-between items-center"><span>Cut</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + X</kbd></li>
-                    <li class="flex justify-between items-center"><span>Paste</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + V</kbd></li>
-                    <li class="flex justify-between items-center"><span>Delete</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Delete</kbd></li>
-                    <li class="flex justify-between items-center"><span>Select All</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + A</kbd></li>
-                    <li class="flex justify-between items-center"><span>Multi-select</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Click</kbd></li>
-                    <li class="flex justify-between items-center"><span>Lock/Unlock</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + L</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.copy') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + C</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.cut') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + X</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.paste') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + V</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.delete') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Delete</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.selectAll') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + A</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.multiSelect') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + Click</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('common.lock') }}/{{ t('common.unlock') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Ctrl + L</kbd></li>
                   </ul>
                 </div>
 
                 <!-- Manipulation Section -->
                 <div>
-                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">Manipulation</h4>
+                  <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">{{ t('shortcuts.manipulation') }}</h4>
                   <ul class="space-y-2 text-gray-600">
-                    <li class="flex justify-between items-center"><span>Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Arrow Keys</kbd></li>
-                    <li class="flex justify-between items-center"><span>Fast Move</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + Arrow</kbd></li>
-                    <li class="flex justify-between items-center"><span>Snap Rotate</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + Drag</kbd></li>
-                    <li class="flex justify-between items-center"><span>Proportional Resize</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + Resize</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.move') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">{{ t('shortcuts.arrow') }}</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.fastMove') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + {{ t('shortcuts.arrow') }}</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.snapRotate') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + {{ t('shortcuts.drag') }}</kbd></li>
+                    <li class="flex justify-between items-center"><span>{{ t('shortcuts.resize') }}</span> <kbd class="bg-gray-100 px-2 py-0.5 rounded border text-xs">Shift + {{ t('shortcuts.resize') }}</kbd></li>
                   </ul>
                 </div>
               </div>
@@ -123,17 +126,17 @@ const projectName = startCase(pkg.name);
               <div class="text-center mb-8">
                 <div class="text-4xl mb-2">🖨️</div>
                 <h2 class="text-xl font-bold text-gray-800">{{ projectName }}</h2>
-                <p class="text-gray-500 mt-1">Version {{ version }}</p>
+                <p class="text-gray-500 mt-1">{{ t('help.version') }} {{ version }}</p>
               </div>
 
               <div>
-                <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">Open Source Dependencies</h4>
+                <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">{{ t('help.dependencies') }}</h4>
                 <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
                   <table class="w-full text-sm text-left">
                     <thead class="bg-gray-100 text-gray-700 font-medium">
                       <tr>
-                        <th class="px-4 py-2 border-b">Package</th>
-                        <th class="px-4 py-2 border-b">Version</th>
+                        <th class="px-4 py-2 border-b">{{ t('help.package') }}</th>
+                        <th class="px-4 py-2 border-b">{{ t('help.version') }}</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -150,7 +153,7 @@ const projectName = startCase(pkg.name);
           
           <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-br-lg">
             <button @click="close" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm">
-              Close
+              {{ t('common.close') }}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import Type from '~icons/material-symbols/text-fields';
 import Image from '~icons/material-symbols/image';
@@ -17,6 +18,7 @@ import Copy from '~icons/material-symbols/content-copy';
 import { ElementType, type CustomElementTemplate } from '@/types';
 import InputModal from '@/components/common/InputModal.vue';
 
+const { t } = useI18n();
 const store = useDesignerStore();
 const activeTab = ref<'standard' | 'custom'>('standard');
 const customElements = computed(() => store.customElements);
@@ -32,27 +34,27 @@ const renameInitialName = ref('');
 
 const categories = [
   {
-    title: 'General',
+    title: 'sidebar.general',
     items: [
-      { type: ElementType.TEXT, label: 'Text', icon: Type },
-      { type: ElementType.IMAGE, label: 'Image', icon: Image },
-      { type: ElementType.PAGE_NUMBER, label: 'Pager', icon: Type },
+      { type: ElementType.TEXT, label: 'sidebar.text', icon: Type },
+      { type: ElementType.IMAGE, label: 'sidebar.image', icon: Image },
+      { type: ElementType.PAGE_NUMBER, label: 'sidebar.pager', icon: Type },
     ]
   },
   {
-    title: 'Data & Codes',
+    title: 'sidebar.dataCodes',
     items: [
-      { type: ElementType.TABLE, label: 'Table', icon: Table },
-      { type: ElementType.BARCODE, label: 'Barcode', icon: Barcode },
-      { type: ElementType.QRCODE, label: 'QR Code', icon: QrCode },
+      { type: ElementType.TABLE, label: 'sidebar.table', icon: Table },
+      { type: ElementType.BARCODE, label: 'sidebar.barcode', icon: Barcode },
+      { type: ElementType.QRCODE, label: 'sidebar.qrcode', icon: QrCode },
     ]
   },
   {
-    title: 'Shapes',
+    title: 'sidebar.shapes',
     items: [
-      { type: ElementType.LINE, label: 'Line', icon: HorizontalRule },
-      { type: ElementType.RECT, label: 'Rect', icon: CheckBoxOutlineBlank },
-      { type: ElementType.CIRCLE, label: 'Circle', icon: RadioButtonUnchecked },
+      { type: ElementType.LINE, label: 'sidebar.line', icon: HorizontalRule },
+      { type: ElementType.RECT, label: 'sidebar.rect', icon: CheckBoxOutlineBlank },
+      { type: ElementType.CIRCLE, label: 'sidebar.circle', icon: RadioButtonUnchecked },
     ]
   }
 ];
@@ -152,7 +154,7 @@ const handleCopy = (item: CustomElementTemplate) => {
 
 const handleDelete = (item: CustomElementTemplate) => {
   activeMenuId.value = null;
-  if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
+  if (confirm(t('sidebar.confirmDelete', { name: item.name }))) {
     store.removeCustomElement(item.id);
   }
 };
@@ -170,8 +172,8 @@ onUnmounted(() => {
 <template>
   <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full z-40">
     <div class="p-4 border-b border-gray-200 bg-gray-50">
-      <h2 class="font-semibold text-gray-700">Elements</h2>
-      <p class="text-xs text-gray-500 mt-1">Drag elements to the canvas</p>
+      <h2 class="font-semibold text-gray-700">{{ t('sidebar.elements') }}</h2>
+      <p class="text-xs text-gray-500 mt-1">{{ t('sidebar.dragToCanvas') }}</p>
     </div>
     
     <!-- Tabs -->
@@ -180,14 +182,14 @@ onUnmounted(() => {
         @click="activeTab = 'standard'"
         :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'standard' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
       >
-        Standard
+        {{ t('sidebar.standard') }}
         <div v-if="activeTab === 'standard'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
       </button>
       <button 
         @click="activeTab = 'custom'"
         :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'custom' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
       >
-        Custom
+        {{ t('sidebar.custom') }}
         <div v-if="activeTab === 'custom'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
       </button>
     </div>
@@ -196,7 +198,7 @@ onUnmounted(() => {
       <!-- Standard Elements Tab -->
       <template v-if="activeTab === 'standard'">
         <div v-for="category in categories" :key="category.title" class="p-4 border-b border-gray-100 last:border-0">
-          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">{{ category.title }}</h3>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">{{ t(category.title) }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <div 
               v-for="item in category.items" 
@@ -206,7 +208,7 @@ onUnmounted(() => {
               @dragstart="(e) => handleDragStart(e, item.type)"
             >
               <component :is="item.icon" class="w-8 h-8 text-gray-600 mb-2" />
-              <span class="text-sm font-medium text-gray-700">{{ item.label }}</span>
+              <span class="text-sm font-medium text-gray-700">{{ t(item.label) }}</span>
             </div>
           </div>
         </div>
@@ -215,7 +217,7 @@ onUnmounted(() => {
       <!-- Custom Elements Tab -->
       <template v-if="activeTab === 'custom'">
         <div v-if="customElements.length === 0" class="p-6 text-center">
-          <p class="text-sm text-gray-500">No custom elements saved yet.</p>
+          <p class="text-sm text-gray-500">{{ t('sidebar.noCustomElements') }}</p>
         </div>
         <div v-else class="p-4 grid grid-cols-2 gap-3">
           <div 
@@ -232,7 +234,7 @@ onUnmounted(() => {
               @click="toggleMenu($event, item.id)"
               class="absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
               :class="{'opacity-100 bg-gray-100 text-gray-600': activeMenuId === item.id}"
-              title="More options"
+              :title="t('sidebar.moreOptions')"
             >
               <MoreVert class="w-4 h-4" />
             </button>
@@ -252,13 +254,13 @@ onUnmounted(() => {
         <template v-for="item in customElements" :key="item.id">
           <template v-if="item.id === activeMenuId">
             <button @click="handleRename(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-              <Edit class="w-3.5 h-3.5" /> Rename
+              <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.rename') }}
             </button>
             <button @click="handleCopy(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-              <Copy class="w-3.5 h-3.5" /> Copy
+              <Copy class="w-3.5 h-3.5" /> {{ t('sidebar.copy') }}
             </button>
             <button @click="handleDelete(item)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
-              <Delete class="w-3.5 h-3.5" /> Delete
+              <Delete class="w-3.5 h-3.5" /> {{ t('sidebar.delete') }}
             </button>
           </template>
         </template>
@@ -268,8 +270,8 @@ onUnmounted(() => {
     <InputModal
       :show="showRenameModal"
       :initial-value="renameInitialName"
-      title="Rename Custom Element"
-      placeholder="Enter element name..."
+      :title="t('sidebar.renameModalTitle')"
+      :placeholder="t('sidebar.enterNamePlaceholder')"
       @close="showRenameModal = false"
       @save="onRenameSave"
     />
