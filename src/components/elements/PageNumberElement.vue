@@ -28,7 +28,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       ]
     },
     {
-      title: 'properties.section.pagerTypography',
+      title: 'properties.section.paginationTypography',
       tab: 'style',
       fields: [
         { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'fontSize', min: 8, max: 96, step: 1 },

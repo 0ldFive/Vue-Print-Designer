@@ -80,7 +80,7 @@ export interface PrintElement {
   footerData?: any[]; // For table
   customScript?: string; // For table (data processing)
   style: ElementStyle;
-  // Pager-specific (optional)
+  // Pagination-specific (optional)
   labelText?: string;
   labelPosition?: 'before' | 'after';
   labelFontSize?: number;
@@ -92,7 +92,7 @@ export interface PrintElement {
   labelBorderWidth?: number;
   labelBorderStyle?: string;
   labelBorderColor?: string;
-  // Pager frame border composed controls
+  // pagination frame border composed controls
   frameBorderStyle?: 'solid' | 'dashed' | 'dotted';
   frameBorderWidth?: number;
   frameBorderColor?: string;

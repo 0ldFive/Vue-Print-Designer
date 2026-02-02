@@ -440,7 +440,7 @@ const handleFocusOut = (e: FocusEvent) => {
                </div>
                <div class="text-xs text-gray-500 flex items-center justify-between border-t border-gray-100 pt-2">
                  <span class="font-medium">{{ t('properties.label.type') }}</span> 
-                 <span class="px-2 py-0.5 bg-gray-100 rounded text-gray-600">{{ element.type }}</span>
+                 <span class="px-2 py-0.5 bg-gray-100 rounded text-gray-600">{{ t('elements.' + element.type) }}</span>
                </div>
              </div>
           </div>
