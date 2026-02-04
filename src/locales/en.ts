@@ -36,6 +36,7 @@ export default {
     exportPdf: 'Export PDF',
     print: 'Print',
     viewJson: 'View JSON',
+    viewBlob: 'View Blob',
     zoomIn: 'Zoom In',
     zoomOut: 'Zoom Out',
     zoomLevel: 'Zoom Level',

@@ -734,9 +734,20 @@ export const usePrint = () => {
     }
   };
 
+  const getPdfBlob = async (content: HTMLElement | string | HTMLElement[]) => {
+    try {
+        const pdf = await createPdfDocument(content);
+        return pdf.output('blob');
+    } catch (error) {
+        console.error('Get PDF Blob failed', error);
+        throw error;
+    }
+  };
+
   return {
     getPrintHtml,
     print,
-    exportPdf
+    exportPdf,
+    getPdfBlob
   };
 };

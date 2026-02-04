@@ -36,6 +36,7 @@ export default {
     exportPdf: '导出 PDF',
     print: '打印',
     viewJson: '查看 JSON',
+    viewBlob: '查看 Blob',
     zoomIn: '放大',
     zoomOut: '缩小',
     zoomLevel: '缩放级别',

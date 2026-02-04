@@ -56,6 +56,8 @@ const templateStore = useTemplateStore();
 
 const showJsonModal = ref(false);
 const jsonContent = ref('');
+const modalTitle = ref('');
+const modalLanguage = ref('json');
 
 const handleViewJson = () => {
   const data = {
@@ -72,10 +74,32 @@ const handleViewJson = () => {
     canvasBackground: store.canvasBackground,
   };
   jsonContent.value = JSON.stringify(data, null, 2);
+  modalTitle.value = t('preview.templateJson');
+  modalLanguage.value = 'json';
   showJsonModal.value = true;
 };
 const showSaveNameModal = ref(false);
-const { getPrintHtml, print, exportPdf } = usePrint();
+const { getPrintHtml, print, exportPdf, getPdfBlob } = usePrint();
+
+const handleViewBlob = async () => {
+  try {
+      // Use real DOM elements to ensure computed styles are captured correctly
+      const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+      const blob = await getPdfBlob(pages);
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+          jsonContent.value = reader.result as string;
+          modalTitle.value = t('editor.viewBlob');
+          modalLanguage.value = 'text';
+          showJsonModal.value = true;
+      }
+  } catch (e) {
+      console.error(e);
+      alert('Failed to generate blob');
+  }
+};
 
 const showPreview = ref(false);
 const previewContent = ref('');
@@ -256,6 +280,7 @@ onMounted(() => {
   window.addEventListener('designer:print', handlePrint);
   window.addEventListener('designer:export-pdf', handleExport);
   window.addEventListener('designer:view-json', handleViewJson);
+  window.addEventListener('designer:view-blob', handleViewBlob);
 });
 
 onUnmounted(() => {
@@ -264,6 +289,7 @@ onUnmounted(() => {
   window.removeEventListener('designer:print', handlePrint);
   window.removeEventListener('designer:export-pdf', handleExport);
   window.removeEventListener('designer:view-json', handleViewJson);
+  window.removeEventListener('designer:view-blob', handleViewBlob);
 });
 </script>
 
@@ -545,6 +571,10 @@ onUnmounted(() => {
           <DataObject class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.viewJson') }}</span>
         </button>
+        <button @click="handleViewBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
+          <DataObject class="w-4 h-4 text-gray-500" />
+          <span>{{ t('editor.viewBlob') }}</span>
+        </button>
       </div>
       
       <div v-if="showExportMenu" class="fixed inset-0 z-[999]" @click="showExportMenu = false"></div>
@@ -565,9 +595,9 @@ onUnmounted(() => {
 
   <CodeEditorModal
     v-model:visible="showJsonModal"
-    :title="t('preview.templateJson')"
+    :title="modalTitle"
     :value="jsonContent"
-    language="json"
+    :language="modalLanguage"
     read-only
   />
 </template>
