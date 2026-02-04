@@ -78,6 +78,8 @@ export const usePrint = () => {
     document.body.classList.add('exporting');
     
     await nextTick();
+    // Wait for async rendering (like QR Codes) which might take a moment to generate data URLs
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     return () => {
       document.body.classList.remove('exporting');
