@@ -386,10 +386,10 @@ const handlePageMouseDown = (e: MouseEvent, pageIndex: number) => {
 };
 
 const handleMouseMove = (e: MouseEvent) => {
-  if (!isBoxSelecting.value) return;
+  if (!isBoxSelecting.value || currentSelectingPageIndex.value === null) return;
 
   // Find the page element that started the selection
-  const pageElement = document.querySelector('.print-page') as HTMLElement;
+  const pageElement = document.getElementById(`page-${currentSelectingPageIndex.value}`);
   if (!pageElement) return;
 
   const rect = pageElement.getBoundingClientRect();
@@ -544,7 +544,7 @@ const getGlobalElements = () => {
       </div>
 
       <!-- Selection Box -->
-      <div v-if="isBoxSelecting" :style="selectionBoxStyle"></div>
+      <div v-if="isBoxSelecting && currentSelectingPageIndex === index" :style="selectionBoxStyle"></div>
 
       <!-- Header & Footer Lines -->
       <template v-if="store.showHeaderLine">
