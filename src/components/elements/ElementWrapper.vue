@@ -12,6 +12,7 @@ const props = defineProps<{
   isSelected: boolean;
   zoom: number;
   pageIndex: number;
+  readOnly?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -20,7 +21,7 @@ const elementRef = ref<HTMLElement | null>(null);
 
 const style = computed(() => {
   const isMultiSelected = !props.isSelected && store.selectedElementIds.includes(props.element.id);
-  const actualIsSelected = props.isSelected || isMultiSelected;
+  const actualIsSelected = !props.readOnly && (props.isSelected || isMultiSelected);
   const baseStyle: Record<string, any> = {
     left: `${props.element.x}px`,
     top: `${props.element.y}px`,
@@ -83,6 +84,7 @@ let isDragging = false;
 let hasSnapshot = false;
 
 const handleMouseDown = (e: MouseEvent) => {
+  if (props.readOnly) return;
   if (e.button !== 0) return; // Only left click
   // Don't start drag if clicking on resize/rotate handles
   if ((e.target as HTMLElement).closest('.resize-handle') || (e.target as HTMLElement).closest('.rotate-handle')) return;
@@ -341,8 +343,12 @@ const handleResizeStart = (e: MouseEvent) => {
 <template>
   <div
     ref="elementRef"
-    class="element-wrapper absolute select-none group hover:outline hover:outline-1 hover:outline-blue-300"
-    :class="element.locked ? 'cursor-not-allowed' : 'cursor-move'"
+    class="element-wrapper absolute select-none"
+    :class="[
+      readOnly ? 'cursor-not-allowed' : 'group hover:outline hover:outline-1 hover:outline-blue-300',
+      !readOnly && element.locked ? 'cursor-not-allowed' : '',
+      !readOnly && !element.locked ? 'cursor-move' : ''
+    ]"
     :style="style"
     @mousedown="handleMouseDown"
   >
@@ -350,12 +356,12 @@ const handleResizeStart = (e: MouseEvent) => {
     <slot></slot>
 
     <!-- Locked Indicator -->
-    <div v-if="element.locked && isSelected" class="absolute -top-3 -right-3 bg-red-500 rounded-full p-1 shadow-md z-50">
+    <div v-if="!readOnly && element.locked && isSelected" class="absolute -top-3 -right-3 bg-red-500 rounded-full p-1 shadow-md z-50">
       <Lock class="w-3 h-3 text-white" />
     </div>
 
     <!-- Resize Handles (only visible when selected and not multi-selected) -->
-    <template v-if="isSelected && store.selectedElementIds.length <= 1 && !element.locked">
+    <template v-if="!readOnly && isSelected && store.selectedElementIds.length <= 1 && !element.locked">
        <!-- Resize Handle -->
        <div
          class="resize-handle absolute bottom-0 right-0 w-3 h-3 bg-blue-600 cursor-se-resize z-50"

@@ -612,6 +612,7 @@ const getGlobalElements = () => {
           :is-selected="store.selectedElementId === element.id || store.selectedElementIds.includes(element.id)"
           :zoom="zoom"
           :page-index="0"
+          :read-only="true"
         >
           <component :is="getComponent(element.type)" :element="element" :page-index="index" :total-pages="pages.length" />
         </ElementWrapper>
