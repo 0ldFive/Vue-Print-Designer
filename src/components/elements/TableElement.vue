@@ -409,9 +409,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       ]
     },
     {
-      title: 'properties.section.bodyStyle',
+      title: 'properties.section.appearance',
       tab: 'style',
       fields: [
+        { label: 'properties.label.backgroundColor', type: 'color', target: 'style', key: 'backgroundColor' },
         { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'color' }
       ]
     },
@@ -453,7 +454,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden" :style="{ backgroundColor: element.style.backgroundColor || '#ffffff' }">
+  <div class="w-full h-full overflow-hidden" :style="{ backgroundColor: element.style.backgroundColor || 'transparent' }">
     <table class="w-full border-collapse" :class="{ 'h-full': !store.isExporting }" :data-tfoot-repeat="element.tfootRepeat" :data-auto-paginate="element.autoPaginate" :data-custom-script="element.customScript">
       <thead>
         <tr>

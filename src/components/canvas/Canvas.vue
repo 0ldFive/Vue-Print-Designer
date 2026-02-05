@@ -183,8 +183,7 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
         headerBackgroundColor: '#f3f4f6',
         headerColor: '#000000',
         footerBackgroundColor: '#f9fafb',
-        footerColor: '#000000',
-        backgroundColor: '#ffffff'
+        footerColor: '#000000'
       } : {})
     },
     content: type === ElementType.TEXT ? t('canvas.newText') 

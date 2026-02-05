@@ -161,7 +161,6 @@ export default {
       positionSize: '位置 & 尺寸',
       dataBehavior: '数据 & 行为',
       layoutDimensions: '布局 & 尺寸',
-      bodyStyle: '主体样式',
       headerStyle: '表头样式',
       footerStyle: '表脚样式',
       cellOperations: '单元格操作',
