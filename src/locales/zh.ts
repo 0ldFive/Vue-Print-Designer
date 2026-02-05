@@ -184,7 +184,7 @@ export default {
       copyId: '复制 ID',
       copied: '已复制!',
       saveCustom: '保存为自定义组件',
-      deleteElement: '删除组件',
+      deleteElement: '删除当前组件',
       saveCustomModal: '保存自定义组件'
     },
     empty: {

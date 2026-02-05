@@ -184,7 +184,7 @@ export default {
       copyId: 'Copy ID',
       copied: 'Copied!',
       saveCustom: 'Save as Custom Element',
-      deleteElement: 'Delete Element',
+      deleteElement: 'Delete Current Element',
       saveCustomModal: 'Save Custom Element'
     },
     empty: {

@@ -22,6 +22,7 @@ import Lock from '~icons/material-symbols/lock';
 import ContentCopy from '~icons/material-symbols/content-copy';
 import Check from '~icons/material-symbols/check';
 import Save from '~icons/material-symbols/save';
+import Delete from '~icons/material-symbols/delete';
 import InputModal from '@/components/common/InputModal.vue';
 
 const { t } = useI18n();
@@ -456,8 +457,9 @@ const handleFocusOut = (e: FocusEvent) => {
           <button
             @click="handleDeleteSelected"
             :disabled="isLocked"
-            class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+            class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
+            <Delete class="w-4 h-4" />
             {{ t('properties.action.deleteElement') }}
           </button>
         </div>
