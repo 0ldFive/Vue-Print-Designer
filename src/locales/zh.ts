@@ -34,6 +34,7 @@ export default {
   editor: {
     preview: '打印预览',
     exportPdf: '导出 PDF',
+    exportImage: '导出图片',
     print: '打印',
     viewJson: '查看 JSON',
     viewBlob: '查看 Blob',

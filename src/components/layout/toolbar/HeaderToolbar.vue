@@ -4,6 +4,7 @@ import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
 import Preview from '~icons/material-symbols/preview';
 import FileOutput from '~icons/material-symbols/file-download';
+import Image from '~icons/material-symbols/image';
 import ZoomIn from '~icons/material-symbols/zoom-in';
 import ZoomOut from '~icons/material-symbols/zoom-out';
 import Settings from '~icons/material-symbols/settings';
@@ -79,7 +80,7 @@ const handleViewJson = () => {
   showJsonModal.value = true;
 };
 const showSaveNameModal = ref(false);
-const { getPrintHtml, print, exportPdf, getPdfBlob } = usePrint();
+const { getPrintHtml, print, exportPdf, getPdfBlob, exportImages } = usePrint();
 
 const handleViewBlob = async () => {
   try {
@@ -255,6 +256,10 @@ const handlePrint = async () => {
 
 const handleExport = async () => {
   await exportPdf();
+};
+
+const handleExportImages = async () => {
+  await exportImages();
 };
 
 const handleSave = () => {
@@ -566,6 +571,10 @@ onUnmounted(() => {
         <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
           <FileOutput class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.exportPdf') }}</span>
+        </button>
+        <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
+          <Image class="w-4 h-4 text-gray-500" />
+          <span>{{ t('editor.exportImage') }}</span>
         </button>
         <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors">
           <DataObject class="w-4 h-4 text-gray-500" />

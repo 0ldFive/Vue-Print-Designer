@@ -14,6 +14,7 @@
     "dom-to-image-more": "^3.7.2",
     "jsbarcode": "^3.12.3",
     "jspdf": "^2.5.2",
+    "jszip": "^3.10.1",
     "lodash": "^4.17.21",
     "pinia": "^2.3.0",
     "qrcode": "^1.5.4",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.2.53",
     "@types/jsbarcode": "^3.11.4",
+    "@types/jszip": "^3.4.0",
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.10.2",
     "@types/qrcode": "^1.5.6",

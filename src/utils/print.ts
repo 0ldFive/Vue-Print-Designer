@@ -1,5 +1,6 @@
 import { nextTick } from 'vue';
 import jsPDF from 'jspdf';
+import JSZip from 'jszip';
 import domtoimage from 'dom-to-image-more';
 import { Canvg } from 'canvg';
 import cloneDeep from 'lodash/cloneDeep';
@@ -95,9 +96,8 @@ export const usePrint = () => {
   };
 
   const cleanElement = (element: HTMLElement) => {
-    // Remove interactive and wrapper classes
+    // Remove interactive classes
     element.classList.remove(
-      'element-wrapper', 
       'group', 
       'cursor-move', 
       'select-none', 
@@ -633,6 +633,47 @@ export const usePrint = () => {
     return { container, tempWrapper: container, pagesCount };
   };
 
+  const generatePageImages = async (container: HTMLElement, width: number, height: number): Promise<string[]> => {
+    const pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+    
+    // Optimize: Set all pages to top 0 at once to avoid layout thrashing during capture
+    pages.forEach(page => {
+        page.style.top = '0px';
+    });
+
+    const generatePageImage = async (page: HTMLElement) => {
+        const canvas = await domtoimage.toCanvas(page, {
+            scale: 1.5, // Reduce scale slightly for performance (2 -> 1.5)
+            width: width,
+            height: height,
+            useCORS: true,
+            bgcolor: store.canvasBackground,
+        });
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            (ctx as any).mozImageSmoothingEnabled = false;
+            (ctx as any).webkitImageSmoothingEnabled = false;
+            (ctx as any).msImageSmoothingEnabled = false;
+            ctx.imageSmoothingEnabled = false;
+        }
+
+        return canvas.toDataURL('image/jpeg', 0.8);
+    };
+
+    // Process pages in batches to avoid freezing the browser
+    const batchSize = 3;
+    const pageImages: string[] = [];
+    
+    for (let i = 0; i < pages.length; i += batchSize) {
+        const batch = pages.slice(i, i + batchSize);
+        const results = await Promise.all(batch.map(page => generatePageImage(page)));
+        pageImages.push(...results);
+    }
+    
+    return pageImages;
+  };
+
   const createPdfDocument = async (content: HTMLElement | string | HTMLElement[]) => {
     const restore = await prepareEnvironment();
     
@@ -651,35 +692,12 @@ export const usePrint = () => {
             hotfixes: ['px_scaling']
         });
 
-        const pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+        const pageImages = await generatePageImages(container, width, height);
         
-        for (let i = 0; i < pages.length; i++) {
-            const page = pages[i];
-            const originalTop = page.style.top;
-            page.style.top = '0px';
-
-            const canvas = await domtoimage.toCanvas(page, {
-                scale: 2,
-                width: width,
-                height: height,
-                useCORS: true,
-                bgcolor: store.canvasBackground,
-            });
-
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                (ctx as any).mozImageSmoothingEnabled = false;
-                (ctx as any).webkitImageSmoothingEnabled = false;
-                (ctx as any).msImageSmoothingEnabled = false;
-                ctx.imageSmoothingEnabled = false;
-            }
-
-            page.style.top = originalTop;
-            const imgData = canvas.toDataURL('image/jpeg', 0.8);
-            
+        pageImages.forEach((imgData, i) => {
             if (i > 0) pdf.addPage([widthMm, heightMm]);
             pdf.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
-        }
+        });
         
         return pdf;
     } finally {
@@ -734,6 +752,57 @@ export const usePrint = () => {
     }
   };
 
+  const exportImages = async (filenamePrefix = 'print-design') => {
+    try {
+        const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+        const restore = await prepareEnvironment();
+        
+        const width = store.canvasSize.width;
+        const height = store.canvasSize.height;
+
+        const { container, tempWrapper } = await processContentForImage(pages, width, height);
+
+        try {
+            const pageImages = await generatePageImages(container, width, height);
+            
+            if (pageImages.length === 1) {
+                // Download single image
+                const link = document.createElement('a');
+                link.href = pageImages[0];
+                link.download = `${filenamePrefix}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                // Download zip
+                const zip = new JSZip();
+                pageImages.forEach((imgData, i) => {
+                    // Remove data:image/jpeg;base64, prefix
+                    const base64Data = imgData.replace(/^data:image\/jpeg;base64,/, "");
+                    zip.file(`${filenamePrefix}-${i + 1}.jpg`, base64Data, { base64: true });
+                });
+                
+                const content = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${filenamePrefix}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+        } finally {
+            if (tempWrapper && tempWrapper.parentNode) {
+                tempWrapper.parentNode.removeChild(tempWrapper);
+            }
+            restore();
+        }
+    } catch (error) {
+        console.error('Export Images failed', error);
+        alert('Export Images failed');
+    }
+  };
+
   const getPdfBlob = async (content: HTMLElement | string | HTMLElement[]) => {
     try {
         const pdf = await createPdfDocument(content);
@@ -748,6 +817,7 @@ export const usePrint = () => {
     getPrintHtml,
     print,
     exportPdf,
+    exportImages,
     getPdfBlob
   };
 };

@@ -34,6 +34,7 @@ export default {
   editor: {
     preview: 'Print Preview',
     exportPdf: 'Export PDF',
+    exportImage: 'Export Image',
     print: 'Print',
     viewJson: 'View JSON',
     viewBlob: 'View Blob',
