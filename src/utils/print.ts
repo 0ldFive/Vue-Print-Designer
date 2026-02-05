@@ -708,10 +708,10 @@ export const usePrint = () => {
     }
   };
 
-  const exportPdf = async (filename = 'print-design.pdf') => {
+  const exportPdf = async (content?: HTMLElement | string | HTMLElement[], filename = 'print-design.pdf') => {
     try {
-        const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
-        const pdf = await createPdfDocument(pages);
+        const targetContent = content || Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+        const pdf = await createPdfDocument(targetContent);
         pdf.save(filename);
     } catch (error) {
         console.error('Export PDF failed', error);
@@ -752,15 +752,15 @@ export const usePrint = () => {
     }
   };
 
-  const exportImages = async (filenamePrefix = 'print-design') => {
+  const exportImages = async (content?: HTMLElement | string | HTMLElement[], filenamePrefix = 'print-design') => {
     try {
-        const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+        const targetContent = content || Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
         const restore = await prepareEnvironment();
         
         const width = store.canvasSize.width;
         const height = store.canvasSize.height;
 
-        const { container, tempWrapper } = await processContentForImage(pages, width, height);
+        const { container, tempWrapper } = await processContentForImage(targetContent, width, height);
 
         try {
             const pageImages = await generatePageImages(container, width, height);

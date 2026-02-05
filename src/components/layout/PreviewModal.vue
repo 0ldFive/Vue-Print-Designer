@@ -5,6 +5,7 @@ import { usePrint } from '@/utils/print';
 import { useDesignerStore } from '@/stores/designer';
 import Printer from '~icons/material-symbols/print';
 import FilePdf from '~icons/material-symbols/picture-as-pdf';
+import Image from '~icons/material-symbols/image';
 import Close from '~icons/material-symbols/close';
 import ZoomIn from '~icons/material-symbols/zoom-in';
 import ZoomOut from '~icons/material-symbols/zoom-out';
@@ -24,7 +25,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const store = useDesignerStore();
-const { print: printHtml, exportPdf: exportPdfHtml, getPdfBlob } = usePrint();
+const { print: printHtml, exportPdf: exportPdfHtml, getPdfBlob, exportImages } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
 const wrapperRef = ref<HTMLElement | null>(null);
 const zoomPercent = ref(100);
@@ -91,7 +92,17 @@ const handlePrint = () => {
 };
 
 const handlePdf = () => {
-  exportPdfHtml();
+  if (previewContainer.value) {
+    const pages = Array.from(previewContainer.value.querySelectorAll('.print-page')) as HTMLElement[];
+    exportPdfHtml(pages);
+  }
+};
+
+const handleExportImages = async () => {
+  if (previewContainer.value) {
+    const pages = Array.from(previewContainer.value.querySelectorAll('.print-page')) as HTMLElement[];
+    await exportImages(pages);
+  }
 };
 
 const handleZoomIn = () => {
@@ -205,6 +216,13 @@ onUnmounted(() => {
           >
             <FilePdf class="text-lg" />
             {{ t('editor.exportPdf') }}
+          </button>
+          <button 
+            @click="handleExportImages"
+            class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2 text-sm transition-colors"
+          >
+            <Image class="text-lg" />
+            {{ t('editor.exportImage') }}
           </button>
           <button 
             @click="handleViewJson"
