@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { Editor } from '@guolao/vue-monaco-editor';
 import { useDesignerStore } from '@/stores/designer';
+import { useTheme } from '@/composables/useTheme';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import OpenInFull from '~icons/material-symbols/open-in-full';
 import Close from '~icons/material-symbols/close';
@@ -16,10 +17,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:value']);
 const store = useDesignerStore();
+const { isDark } = useTheme();
 
 const isExpanded = ref(false);
 
-const editorOptions = {
+const editorOptions = computed(() => ({
   minimap: { enabled: false },
   lineNumbers: 'on',
   glyphMargin: false,
@@ -27,14 +29,14 @@ const editorOptions = {
   wordWrap: 'on',
   automaticLayout: true,
   scrollBeyondLastLine: false,
-  theme: 'vs',
+  theme: isDark.value ? 'vs-dark' : 'vs',
   fontSize: 12,
   fontFamily: 'Consolas, "Courier New", monospace',
   renderLineHighlight: 'none',
   overviewRulerLanes: 0,
   hideCursorInOverviewRuler: true,
   contextmenu: false,
-};
+}));
 
 const handleChange = (val: string | undefined) => {
   emit('update:value', val || '');

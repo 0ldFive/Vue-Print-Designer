@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useTheme } from '@/composables/useTheme';
 import X from '~icons/material-symbols/close';
 import SettingsIcon from '~icons/material-symbols/settings';
 import TranslateIcon from '~icons/material-symbols/translate';
@@ -15,26 +16,18 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+const { theme: selectedTheme, setTheme } = useTheme();
 
 const activeTab = ref<'basic' | 'language' | 'connection'>('basic');
 const selectedLang = ref<string>(locale.value as string);
-const selectedTheme = ref<string>(localStorage.getItem('print-designer-theme') || 'system');
 
 watch(selectedLang, (val) => {
   locale.value = val;
   localStorage.setItem('print-designer-language', val);
 });
 
-const applyTheme = (theme: string) => {
-  const root = document.documentElement;
-  const mq = window.matchMedia('(prefers-color-scheme: dark)');
-  const isDark = theme === 'dark' ? true : theme === 'light' ? false : mq.matches;
-  root.classList.toggle('dark', isDark);
-  localStorage.setItem('print-designer-theme', theme);
-};
-
 watch(selectedTheme, (val) => {
-  applyTheme(val);
+  setTheme(val);
 });
 
 const close = () => {
