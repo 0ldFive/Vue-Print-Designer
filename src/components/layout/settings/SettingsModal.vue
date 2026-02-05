@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
+import { useAutoSave } from '@/composables/useAutoSave';
 import X from '~icons/material-symbols/close';
 import SettingsIcon from '~icons/material-symbols/settings';
 import TranslateIcon from '~icons/material-symbols/translate';
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 const { theme: selectedTheme, setTheme } = useTheme();
+const { autoSave } = useAutoSave();
 
 const activeTab = ref<'basic' | 'language' | 'connection'>('basic');
 const selectedLang = ref<string>(locale.value as string);
@@ -108,6 +110,25 @@ const close = () => {
                 </div>
                 <p class="text-xs text-gray-500 mt-2">{{ t('settings.themeDesc') }}</p>
               </div>
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between">
+                  <div class="font-medium text-gray-900">{{ t('settings.autoSave') }}</div>
+                  <button 
+                    @click="autoSave = !autoSave"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="autoSave ? 'bg-blue-600' : 'bg-gray-200'"
+                  >
+                    <span class="sr-only">{{ t('settings.autoSave') }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="autoSave ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ t('settings.autoSaveDesc') }}</p>
+              </div>
             </div>
 
             <!-- Language Tab -->
@@ -123,6 +144,7 @@ const close = () => {
                   <span>{{ t('settings.enLabel') }}</span>
                 </label>
               </div>
+              <p class="text-xs text-gray-500 mt-2">{{ t('settings.languageDesc') }}</p>
             </div>
 
             <!-- Connection Tab -->

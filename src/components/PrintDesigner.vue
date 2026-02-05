@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
+import { useTemplateStore } from '@/stores/templates';
+import { useAutoSave } from '@/composables/useAutoSave';
+import debounce from 'lodash/debounce';
 import { pxToMm } from '@/utils/units';
 import Header from './layout/Header.vue';
 import Sidebar from './layout/Sidebar.vue';
@@ -11,6 +14,8 @@ import Shortcuts from './layout/Shortcuts.vue';
 import Minimap from './layout/Minimap.vue';
 
 const store = useDesignerStore();
+const templateStore = useTemplateStore();
+const { autoSave } = useAutoSave();
 const scrollContainer = ref<HTMLElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
 const canvasWrapper = ref<HTMLElement | null>(null);
@@ -37,7 +42,35 @@ onMounted(() => {
       nextTick(updateOffset);
     }
   );
+
+  // Auto-save watcher
+  watch(
+    [
+      () => store.pages,
+      () => store.canvasSize,
+      () => store.guides,
+      () => store.headerHeight,
+      () => store.footerHeight,
+      () => store.showHeaderLine,
+      () => store.showFooterLine,
+      () => store.canvasBackground,
+      () => store.showMinimap
+    ],
+    () => {
+      debouncedAutoSave();
+    },
+    { deep: true }
+  );
 });
+
+const debouncedAutoSave = debounce(() => {
+  if (autoSave.value && templateStore.currentTemplateId && !templateStore.isSaving) {
+    const currentTemplate = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
+    if (currentTemplate) {
+      templateStore.saveCurrentTemplate(currentTemplate.name);
+    }
+  }
+}, 1000);
 
 const scrollX = ref(0);
 const scrollY = ref(0);
@@ -115,6 +148,7 @@ const updateOffset = () => {
 };
 
 onUnmounted(() => {
+  debouncedAutoSave.cancel();
   window.removeEventListener('resize', updateOffset);
   window.removeEventListener('mousemove', handleGuideMouseMove);
   window.removeEventListener('mouseup', handleGuideMouseUp);
