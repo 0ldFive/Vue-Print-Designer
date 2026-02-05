@@ -9,6 +9,45 @@
   .exporting {
     overflow: hidden !important;
   }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  html.dark body {
+    background-color: #0f172a; /* slate-900 */
+    color: #e5e7eb; /* gray-200 */
+  }
+  /* Pragmatic dark overrides to improve readability without touching templates */
+  html.dark .bg-white { background-color: #1f2937 !important; } /* gray-800 */
+  html.dark .bg-gray-50 { background-color: #111827 !important; } /* gray-900 */
+  html.dark :not(.canvas-scroll).bg-gray-100 { background-color: #1f2937 !important; }
+  html.dark .hover\\:bg-gray-50:hover { background-color: #1f2937 !important; }
+  html.dark .hover\\:bg-gray-100:hover { background-color: #374151 !important; } /* gray-700 */
+  html.dark .text-gray-800 { color: #f3f4f6 !important; }
+  html.dark .text-gray-700 { color: #e5e7eb !important; }
+  html.dark .text-gray-600 { color: #d1d5db !important; }
+  html.dark .text-gray-500 { color: #cbd5e1 !important; } /* slate-300 */
+  html.dark .text-gray-400 { color: #9ca3af !important; } /* gray-400 */
+  html.dark .text-gray-900 { color: #f9fafb !important; } /* near-white for subheadings */
+  html.dark .border-gray-100 { border-color: #1f2937 !important; }
+  html.dark .border-gray-200 { border-color: #374151 !important; }
+  html.dark .shadow-sm, 
+  html.dark .shadow, 
+  html.dark .shadow-xl { box-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 1px 1px rgba(0,0,0,0.4) !important; }
+  
+  /* Keep canvas page (print-page) visuals in light scheme */
+  html.dark .print-page { background-color: #ffffff !important; color-scheme: light; }
+  html.dark .print-page .bg-white { background-color: #ffffff !important; }
+  html.dark .print-page .border-gray-100 { border-color: #f3f4f6 !important; }
+  html.dark .print-page .border-gray-200 { border-color: #e5e7eb !important; }
+  html.dark .print-page .border-gray-300 { border-color: #d1d5db !important; }
+  html.dark .print-page .text-gray-500 { color: #6b7280 !important; }
+  html.dark .print-page .text-gray-600 { color: #4b5563 !important; }
+  html.dark .print-page .text-gray-700 { color: #374151 !important; }
+  html.dark .print-page .text-gray-800 { color: #1f2937 !important; }
+  html.dark .print-page .text-gray-900 { color: #111827 !important; }
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 12px;

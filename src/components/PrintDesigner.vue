@@ -368,7 +368,7 @@ const rulerIndicators = computed(() => {
               <!-- Canvas Area -->
               <div
                 ref="scrollContainer"
-                class="flex-1 overflow-auto bg-gray-100 p-8 flex relative"
+                class="flex-1 overflow-auto bg-gray-100 p-8 flex relative canvas-scroll"
                 @scroll="handleScroll"
                   @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
               >

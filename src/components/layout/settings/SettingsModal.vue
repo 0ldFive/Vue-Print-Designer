@@ -18,10 +18,23 @@ const { t, locale } = useI18n();
 
 const activeTab = ref<'basic' | 'language' | 'connection'>('basic');
 const selectedLang = ref<string>(locale.value as string);
+const selectedTheme = ref<string>(localStorage.getItem('print-designer-theme') || 'system');
 
 watch(selectedLang, (val) => {
   locale.value = val;
   localStorage.setItem('print-designer-language', val);
+});
+
+const applyTheme = (theme: string) => {
+  const root = document.documentElement;
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = theme === 'dark' ? true : theme === 'light' ? false : mq.matches;
+  root.classList.toggle('dark', isDark);
+  localStorage.setItem('print-designer-theme', theme);
+};
+
+watch(selectedTheme, (val) => {
+  applyTheme(val);
 });
 
 const close = () => {
@@ -85,6 +98,24 @@ const close = () => {
             <!-- Basic Tab -->
             <div v-if="activeTab === 'basic'" class="space-y-4 text-sm text-gray-700">
               <p class="text-gray-600">{{ t('settings.basicDesc') }}</p>
+              <div>
+                <div class="mb-2 font-medium text-gray-900">{{ t('settings.theme') }}</div>
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="selectedTheme === 'system' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="system" v-model="selectedTheme" />
+                    <span>{{ t('settings.themeSystem') }}</span>
+                  </label>
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="selectedTheme === 'light' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="light" v-model="selectedTheme" />
+                    <span>{{ t('settings.themeLight') }}</span>
+                  </label>
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="selectedTheme === 'dark' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="dark" v-model="selectedTheme" />
+                    <span>{{ t('settings.themeDark') }}</span>
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ t('settings.themeDesc') }}</p>
+              </div>
             </div>
 
             <!-- Language Tab -->
