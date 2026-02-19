@@ -27,150 +27,56 @@ const {
   remoteSettings,
   localStatus,
   remoteStatus,
-  localStatusMessage,
-  remoteStatusMessage,
   localWsUrl,
   remoteWsUrl,
-  remoteAuthToken
+  connectLocal,
+  disconnectLocal,
+  connectRemote,
+  disconnectRemote
 } = usePrintSettings();
 
 const activeTab = ref<'basic' | 'language' | 'connection'>('basic');
 const activeConnectionTab = ref<'local' | 'remote'>('local');
 const selectedLang = ref<string>(locale.value as string);
-const localTesting = ref(false);
-const remoteTesting = ref(false);
-
 const localConnected = computed(() => localStatus.value === 'connected');
 const remoteConnected = computed(() => remoteStatus.value === 'connected');
+const localConnecting = computed(() => localStatus.value === 'connecting');
+const remoteConnecting = computed(() => remoteStatus.value === 'connecting');
+const localHasConfig = computed(() => Boolean(localSettings.host && localSettings.port));
+const remoteHasConfig = computed(() => Boolean(remoteSettings.apiBaseUrl && remoteSettings.username && remoteSettings.password));
 
-const statusClass = (status: string) => {
-  if (status === 'connected') return 'text-green-600';
-  if (status === 'error') return 'text-red-600';
-  if (status === 'connecting') return 'text-blue-600';
-  return 'text-gray-500';
+const localButtonLabel = computed(() => {
+  if (localConnecting.value) return t('settings.connecting');
+  return localConnected.value ? t('settings.disconnect') : t('settings.connect');
+});
+
+const remoteButtonLabel = computed(() => {
+  if (remoteConnecting.value) return t('settings.connecting');
+  return remoteConnected.value ? t('settings.disconnect') : t('settings.connect');
+});
+
+const connectionButtonClass = (status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
+  if (status === 'connecting') return 'bg-gray-400 hover:bg-gray-400';
+  if (status === 'connected') return 'bg-red-600 hover:bg-red-700';
+  return 'bg-blue-600 hover:bg-blue-700';
 };
 
-const normalizeBaseUrl = (url: string) => url.replace(/\/+$/, '');
-
-const testLocalConnection = async () => {
-  if (localTesting.value) return;
-  localTesting.value = true;
-  localStatus.value = 'connecting';
-  localStatusMessage.value = t('settings.connectionTesting');
-
-  let socket: WebSocket | null = null;
-  let resolved = false;
-
-  const cleanup = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) socket.close();
-    socket = null;
-    localTesting.value = false;
-  };
-
-  const timeoutId = window.setTimeout(() => {
-    if (resolved) return;
-    localStatus.value = 'error';
-    localStatusMessage.value = t('settings.connectionTimeout');
-    cleanup();
-  }, 5000);
-
-  try {
-    socket = new WebSocket(localWsUrl.value);
-    socket.onopen = () => {
-      socket?.send(JSON.stringify({ type: 'get_printers' }));
-    };
-    socket.onmessage = (event) => {
-      if (resolved) return;
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'printer_list') {
-          resolved = true;
-          localStatus.value = 'connected';
-          localStatusMessage.value = t('settings.connectionOk');
-        }
-      } catch {
-        resolved = true;
-        localStatus.value = 'connected';
-        localStatusMessage.value = t('settings.connectionOk');
-      }
-      window.clearTimeout(timeoutId);
-      cleanup();
-    };
-    socket.onerror = () => {
-      if (resolved) return;
-      resolved = true;
-      localStatus.value = 'error';
-      localStatusMessage.value = t('settings.connectionFailed');
-      window.clearTimeout(timeoutId);
-      cleanup();
-    };
-  } catch (error) {
-    resolved = true;
-    localStatus.value = 'error';
-    localStatusMessage.value = (error as Error).message || t('settings.connectionFailed');
-    window.clearTimeout(timeoutId);
-    cleanup();
+const handleLocalConnection = async () => {
+  if (localConnecting.value) return;
+  if (localConnected.value) {
+    disconnectLocal();
+    return;
   }
+  await connectLocal();
 };
 
-const testRemoteConnection = async () => {
-  if (remoteTesting.value) return;
-  remoteTesting.value = true;
-  remoteStatus.value = 'connecting';
-  remoteStatusMessage.value = t('settings.connectionTesting');
-
-  try {
-    if (!remoteSettings.apiBaseUrl || !remoteSettings.username || !remoteSettings.password) {
-      remoteStatus.value = 'error';
-      remoteStatusMessage.value = t('settings.connectionMissingFields');
-      remoteTesting.value = false;
-      return;
-    }
-
-    const baseUrl = normalizeBaseUrl(remoteSettings.apiBaseUrl);
-    const loginResponse = await fetch(`${baseUrl}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: remoteSettings.username,
-        password: remoteSettings.password
-      })
-    });
-
-    if (!loginResponse.ok) {
-      const msg = await loginResponse.text();
-      throw new Error(msg || `HTTP ${loginResponse.status}`);
-    }
-
-    const loginData = await loginResponse.json();
-    if (!loginData?.token) {
-      throw new Error(t('settings.connectionMissingToken'));
-    }
-
-    remoteAuthToken.value = loginData.token;
-
-    const meResponse = await fetch(`${baseUrl}/api/users/me`, {
-      headers: { Authorization: `Bearer ${loginData.token}` }
-    });
-
-    if (meResponse.ok) {
-      const meData = await meResponse.json();
-      if (meData?.user_id) {
-        remoteStatusMessage.value = t('settings.connectionOkWithUser', { userId: meData.user_id });
-      } else {
-        remoteStatusMessage.value = t('settings.connectionOk');
-      }
-    } else {
-      remoteStatusMessage.value = t('settings.connectionOk');
-    }
-
-    remoteStatus.value = 'connected';
-  } catch (error) {
-    remoteStatus.value = 'error';
-    remoteStatusMessage.value = (error as Error).message || t('settings.connectionFailed');
-  } finally {
-    remoteTesting.value = false;
+const handleRemoteConnection = async () => {
+  if (remoteConnecting.value) return;
+  if (remoteConnected.value) {
+    disconnectRemote();
+    return;
   }
+  await connectRemote();
 };
 
 watch(selectedLang, (val) => {
@@ -343,17 +249,17 @@ const close = () => {
 
             <!-- Connection Tab -->
             <div v-if="activeTab === 'connection'" class="space-y-4 text-sm text-gray-700">
-              <div class="flex items-center gap-2 border-b border-gray-200">
+              <div class="flex items-center border-b border-gray-200">
                 <button
-                  class="px-4 py-2 text-sm border-b-2"
-                  :class="activeConnectionTab === 'local' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'"
+                  class="flex-1 px-4 py-2 text-sm border-b-2 text-center"
+                  :class="activeConnectionTab === 'local' ? 'border-blue-600 text-blue-600 font-medium' : 'border-transparent text-gray-500'"
                   @click="activeConnectionTab = 'local'"
                 >
                   {{ t('settings.localConnection') }}
                 </button>
                 <button
-                  class="px-4 py-2 text-sm border-b-2"
-                  :class="activeConnectionTab === 'remote' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'"
+                  class="flex-1 px-4 py-2 text-sm border-b-2 text-center"
+                  :class="activeConnectionTab === 'remote' ? 'border-blue-600 text-blue-600 font-medium' : 'border-transparent text-gray-500'"
                   @click="activeConnectionTab = 'remote'"
                 >
                   {{ t('settings.remoteConnection') }}
@@ -392,15 +298,13 @@ const close = () => {
                     <span>{{ localWsUrl }}</span>
                   </div>
                   <button
-                    @click="testLocalConnection"
-                    :disabled="localTesting"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50"
+                    @click="handleLocalConnection"
+                    :disabled="localConnecting || (!localConnected && !localHasConfig)"
+                    class="px-4 py-2 text-white rounded transition-colors text-sm disabled:opacity-50"
+                    :class="connectionButtonClass(localStatus)"
                   >
-                    {{ localTesting ? t('settings.testing') : t('settings.testConnection') }}
+                    {{ localButtonLabel }}
                   </button>
-                </div>
-                <div class="text-xs" :class="statusClass(localStatus)">
-                  {{ t(`settings.status.${localStatus}`) }}<span v-if="localStatusMessage"> - {{ localStatusMessage }}</span>
                 </div>
               </div>
 
@@ -452,15 +356,13 @@ const close = () => {
                     <span>{{ remoteWsUrl }}</span>
                   </div>
                   <button
-                    @click="testRemoteConnection"
-                    :disabled="remoteTesting"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50"
+                    @click="handleRemoteConnection"
+                    :disabled="remoteConnecting || (!remoteConnected && !remoteHasConfig)"
+                    class="px-4 py-2 text-white rounded transition-colors text-sm disabled:opacity-50"
+                    :class="connectionButtonClass(remoteStatus)"
                   >
-                    {{ remoteTesting ? t('settings.testing') : t('settings.testConnection') }}
+                    {{ remoteButtonLabel }}
                   </button>
-                </div>
-                <div class="text-xs" :class="statusClass(remoteStatus)">
-                  {{ t(`settings.status.${remoteStatus}`) }}<span v-if="remoteStatusMessage"> - {{ remoteStatusMessage }}</span>
                 </div>
                 <p class="text-xs text-gray-500">{{ t('settings.remoteAuthHint') }}</p>
               </div>

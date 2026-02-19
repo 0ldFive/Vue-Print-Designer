@@ -79,10 +79,15 @@ interface PrintSettingsState {
   fetchLocalPrinters: () => Promise<LocalPrinterInfo[]>;
   fetchRemotePrinters: () => Promise<RemotePrinterInfo[]>;
   fetchLocalPrinterCaps: (printer: string) => Promise<LocalPrinterCaps | undefined>;
+  connectLocal: () => Promise<void>;
+  disconnectLocal: () => void;
+  connectRemote: () => Promise<void>;
+  disconnectRemote: () => void;
 }
 
 const storageKeys = {
   printMode: 'print-designer-print-mode',
+  preferredPrintMode: 'print-designer-preferred-print-mode',
   silentPrint: 'print-designer-silent-print',
   localSettings: 'print-designer-local-settings',
   remoteSettings: 'print-designer-remote-settings',
@@ -159,6 +164,8 @@ const appendQueryParam = (url: string, key: string, value: string) => {
   }
 };
 
+const normalizeBaseUrl = (url: string) => url.replace(/\/+$/, '');
+
 const waitForWsMessage = <T>(
   url: string,
   initMessage: Record<string, any> | null,
@@ -210,7 +217,8 @@ const waitForWsMessage = <T>(
 let state: PrintSettingsState | null = null;
 
 const createState = (): PrintSettingsState => {
-  const printMode = ref<PrintMode>((localStorage.getItem(storageKeys.printMode) as PrintMode) || 'browser');
+  const storedPreferred = localStorage.getItem(storageKeys.preferredPrintMode) as PrintMode | null;
+  const printMode = ref<PrintMode>(storedPreferred || (localStorage.getItem(storageKeys.printMode) as PrintMode) || 'browser');
   const silentPrint = ref(localStorage.getItem(storageKeys.silentPrint) === 'true');
 
   const localSettings = reactive(loadJson(storageKeys.localSettings, defaultLocalSettings));
@@ -242,6 +250,9 @@ const createState = (): PrintSettingsState => {
 
   watch(printMode, (value) => {
     localStorage.setItem(storageKeys.printMode, value);
+    if (value !== 'browser') {
+      localStorage.setItem(storageKeys.preferredPrintMode, value);
+    }
   });
 
   watch(silentPrint, (value) => {
@@ -272,6 +283,19 @@ const createState = (): PrintSettingsState => {
     localStorage.setItem(storageKeys.remoteAuthToken, value);
   });
 
+  const applyPreferredIfConnected = () => {
+    const preferred = localStorage.getItem(storageKeys.preferredPrintMode) as PrintMode | null;
+    if (!preferred || preferred === 'browser') return;
+    if (printMode.value !== 'browser') return;
+
+    if (preferred === 'local' && localStatus.value === 'connected') {
+      printMode.value = 'local';
+    }
+    if (preferred === 'remote' && remoteStatus.value === 'connected') {
+      printMode.value = 'remote';
+    }
+  };
+
   const ensureValidPrintMode = () => {
     const localOk = localStatus.value === 'connected';
     const remoteOk = remoteStatus.value === 'connected';
@@ -291,7 +315,78 @@ const createState = (): PrintSettingsState => {
     }
   };
 
-  watch([localStatus, remoteStatus], ensureValidPrintMode, { immediate: true });
+  watch([localStatus, remoteStatus], () => {
+    ensureValidPrintMode();
+    applyPreferredIfConnected();
+  }, { immediate: true });
+
+  const connectLocal = async () => {
+    if (localStatus.value === 'connecting') return;
+    localStatus.value = 'connecting';
+    localStatusMessage.value = '';
+
+    try {
+      await waitForWsMessage<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
+        localWsUrl.value,
+        { type: 'get_printers' },
+        (msg): msg is { type: 'printer_list'; data: LocalPrinterInfo[] } => msg?.type === 'printer_list'
+      );
+      localStatus.value = 'connected';
+    } catch (error) {
+      localStatus.value = 'error';
+      localStatusMessage.value = (error as Error).message || 'Local connection failed';
+    }
+  };
+
+  const disconnectLocal = () => {
+    localStatus.value = 'disconnected';
+    localStatusMessage.value = '';
+  };
+
+  const connectRemote = async () => {
+    if (remoteStatus.value === 'connecting') return;
+    remoteStatus.value = 'connecting';
+    remoteStatusMessage.value = '';
+
+    try {
+      if (!remoteSettings.apiBaseUrl || !remoteSettings.username || !remoteSettings.password) {
+        remoteStatus.value = 'error';
+        remoteStatusMessage.value = 'Missing remote connection fields';
+        return;
+      }
+
+      const baseUrl = normalizeBaseUrl(remoteSettings.apiBaseUrl);
+      const loginResponse = await fetch(`${baseUrl}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: remoteSettings.username,
+          password: remoteSettings.password
+        })
+      });
+
+      if (!loginResponse.ok) {
+        const msg = await loginResponse.text();
+        throw new Error(msg || `HTTP ${loginResponse.status}`);
+      }
+
+      const loginData = await loginResponse.json();
+      if (!loginData?.token) {
+        throw new Error('Missing auth token');
+      }
+
+      remoteAuthToken.value = loginData.token;
+      remoteStatus.value = 'connected';
+    } catch (error) {
+      remoteStatus.value = 'error';
+      remoteStatusMessage.value = (error as Error).message || 'Remote connection failed';
+    }
+  };
+
+  const disconnectRemote = () => {
+    remoteStatus.value = 'disconnected';
+    remoteStatusMessage.value = '';
+  };
 
   const fetchLocalPrinters = async () => {
     const data = await waitForWsMessage<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
@@ -329,6 +424,20 @@ const createState = (): PrintSettingsState => {
     return remotePrinters.value;
   };
 
+  const autoConnectIfReady = () => {
+    const hasLocalConfig = Boolean(localSettings.host && localSettings.port);
+    const hasRemoteConfig = Boolean(remoteSettings.apiBaseUrl && remoteSettings.username && remoteSettings.password);
+
+    if (hasLocalConfig) {
+      connectLocal();
+    }
+    if (hasRemoteConfig) {
+      connectRemote();
+    }
+  };
+
+  autoConnectIfReady();
+
   return {
     printMode,
     silentPrint,
@@ -348,7 +457,11 @@ const createState = (): PrintSettingsState => {
     localPrinterCaps,
     fetchLocalPrinters,
     fetchRemotePrinters,
-    fetchLocalPrinterCaps
+    fetchLocalPrinterCaps,
+    connectLocal,
+    disconnectLocal,
+    connectRemote,
+    disconnectRemote
   };
 };
 
