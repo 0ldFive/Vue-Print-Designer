@@ -166,6 +166,13 @@ const appendQueryParam = (url: string, key: string, value: string) => {
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/+$/, '');
 
+type MessageWaiter = {
+  match: (data: any) => boolean;
+  resolve: (data: any) => void;
+  reject: (error: Error) => void;
+  timeoutId: number;
+};
+
 const waitForWsMessage = <T>(
   url: string,
   initMessage: Record<string, any> | null,
@@ -237,6 +244,21 @@ const createState = (): PrintSettingsState => {
   const localPrinters = ref<LocalPrinterInfo[]>([]);
   const remotePrinters = ref<RemotePrinterInfo[]>([]);
   const localPrinterCaps = reactive<Record<string, LocalPrinterCaps | undefined>>({});
+
+  const localSocket = ref<WebSocket | null>(null);
+  const remoteSocket = ref<WebSocket | null>(null);
+  const localWaiters: MessageWaiter[] = [];
+  const remoteWaiters: MessageWaiter[] = [];
+  let localConnectPromise: Promise<void> | null = null;
+  let remoteConnectPromise: Promise<void> | null = null;
+  const localRetryCount = ref(0);
+  const remoteRetryCount = ref(0);
+  const localRetryTimer = ref<number | null>(null);
+  const remoteRetryTimer = ref<number | null>(null);
+  const localManualDisconnect = ref(false);
+  const remoteManualDisconnect = ref(false);
+  const retryIntervalMs = 3000;
+  const maxRetries = 10;
 
   const localWsUrl = computed(() => {
     const base = buildWsUrl(localSettings.protocol, localSettings.host, localSettings.port, localSettings.path);
@@ -320,77 +342,293 @@ const createState = (): PrintSettingsState => {
     applyPreferredIfConnected();
   }, { immediate: true });
 
+  const resolveWaiters = (waiters: MessageWaiter[], data: any) => {
+    waiters.slice().forEach((waiter) => {
+      if (waiter.match(data)) {
+        window.clearTimeout(waiter.timeoutId);
+        waiters.splice(waiters.indexOf(waiter), 1);
+        waiter.resolve(data);
+      }
+    });
+  };
+
+  const rejectAllWaiters = (waiters: MessageWaiter[], error: Error) => {
+    waiters.slice().forEach((waiter) => {
+      window.clearTimeout(waiter.timeoutId);
+      waiters.splice(waiters.indexOf(waiter), 1);
+      waiter.reject(error);
+    });
+  };
+
+  const clearLocalRetry = () => {
+    if (localRetryTimer.value) {
+      window.clearTimeout(localRetryTimer.value);
+      localRetryTimer.value = null;
+    }
+    localRetryCount.value = 0;
+  };
+
+  const clearRemoteRetry = () => {
+    if (remoteRetryTimer.value) {
+      window.clearTimeout(remoteRetryTimer.value);
+      remoteRetryTimer.value = null;
+    }
+    remoteRetryCount.value = 0;
+  };
+
+  const scheduleLocalReconnect = () => {
+    if (localManualDisconnect.value) return;
+    if (localRetryTimer.value) return;
+    if (localRetryCount.value >= maxRetries) {
+      localStatus.value = 'error';
+      localStatusMessage.value = 'Local connection failed';
+      return;
+    }
+    localRetryCount.value += 1;
+    localStatus.value = 'connecting';
+    localRetryTimer.value = window.setTimeout(() => {
+      localRetryTimer.value = null;
+      connectLocal();
+    }, retryIntervalMs);
+  };
+
+  const scheduleRemoteReconnect = () => {
+    if (remoteManualDisconnect.value) return;
+    if (remoteRetryTimer.value) return;
+    if (remoteRetryCount.value >= maxRetries) {
+      remoteStatus.value = 'error';
+      remoteStatusMessage.value = 'Remote connection failed';
+      return;
+    }
+    remoteRetryCount.value += 1;
+    remoteStatus.value = 'connecting';
+    remoteRetryTimer.value = window.setTimeout(() => {
+      remoteRetryTimer.value = null;
+      connectRemote();
+    }, retryIntervalMs);
+  };
+
+  const sendWithWait = <T>(
+    socketRef: typeof localSocket,
+    waiters: MessageWaiter[],
+    payload: Record<string, any>,
+    match: (data: any) => data is T,
+    timeoutMs = 5000
+  ) => new Promise<T>((resolve, reject) => {
+    const socket = socketRef.value;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      reject(new Error('WebSocket not connected'));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const idx = waiters.findIndex(w => w.resolve === resolve);
+      if (idx >= 0) waiters.splice(idx, 1);
+      reject(new Error('WebSocket timeout'));
+    }, timeoutMs);
+
+    waiters.push({ match, resolve, reject, timeoutId });
+    socket.send(JSON.stringify(payload));
+  });
+
+  const attachLocalHandlers = (socket: WebSocket) => {
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === 'printer_list') {
+          localPrinters.value = Array.isArray(data.data) ? data.data : [];
+        }
+        if (data?.type === 'printer_caps' && data.printer) {
+          localPrinterCaps[data.printer] = data?.data || {};
+        }
+        resolveWaiters(localWaiters, data);
+      } catch (error) {
+        rejectAllWaiters(localWaiters, error as Error);
+      }
+    };
+
+    socket.onclose = () => {
+      localSocket.value = null;
+      if (localStatus.value !== 'error') {
+        localStatus.value = 'disconnected';
+      }
+      rejectAllWaiters(localWaiters, new Error('WebSocket closed'));
+      scheduleLocalReconnect();
+    };
+
+    socket.onerror = () => {
+      localStatus.value = 'error';
+      localStatusMessage.value = 'Local connection failed';
+      rejectAllWaiters(localWaiters, new Error('WebSocket error'));
+      scheduleLocalReconnect();
+    };
+  };
+
+  const attachRemoteHandlers = (socket: WebSocket) => {
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.cmd === 'printers_list') {
+          remotePrinters.value = Array.isArray(data.printers) ? data.printers : [];
+        }
+        resolveWaiters(remoteWaiters, data);
+      } catch (error) {
+        rejectAllWaiters(remoteWaiters, error as Error);
+      }
+    };
+
+    socket.onclose = () => {
+      remoteSocket.value = null;
+      if (remoteStatus.value !== 'error') {
+        remoteStatus.value = 'disconnected';
+      }
+      rejectAllWaiters(remoteWaiters, new Error('WebSocket closed'));
+      scheduleRemoteReconnect();
+    };
+
+    socket.onerror = () => {
+      remoteStatus.value = 'error';
+      remoteStatusMessage.value = 'Remote connection failed';
+      rejectAllWaiters(remoteWaiters, new Error('WebSocket error'));
+      scheduleRemoteReconnect();
+    };
+  };
+
   const connectLocal = async () => {
-    if (localStatus.value === 'connecting') return;
+    if (localConnectPromise) return localConnectPromise;
+    if (localSocket.value && localSocket.value.readyState === WebSocket.OPEN) {
+      localStatus.value = 'connected';
+      return Promise.resolve();
+    }
+
+    localManualDisconnect.value = false;
     localStatus.value = 'connecting';
     localStatusMessage.value = '';
 
-    try {
-      await waitForWsMessage<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
-        localWsUrl.value,
-        { type: 'get_printers' },
-        (msg): msg is { type: 'printer_list'; data: LocalPrinterInfo[] } => msg?.type === 'printer_list'
-      );
-      localStatus.value = 'connected';
-    } catch (error) {
-      localStatus.value = 'error';
-      localStatusMessage.value = (error as Error).message || 'Local connection failed';
-    }
+    const socket = new WebSocket(localWsUrl.value);
+    localSocket.value = socket;
+    attachLocalHandlers(socket);
+
+    localConnectPromise = new Promise<void>((resolve, reject) => {
+      socket.addEventListener('open', () => {
+        localStatus.value = 'connected';
+        clearLocalRetry();
+        localConnectPromise = null;
+        socket.send(JSON.stringify({ type: 'get_printers' }));
+        resolve();
+      });
+      socket.addEventListener('error', () => {
+        localStatus.value = 'error';
+        localStatusMessage.value = 'Local connection failed';
+        localConnectPromise = null;
+        scheduleLocalReconnect();
+        reject(new Error('WebSocket error'));
+      });
+    });
+
+    return localConnectPromise;
   };
 
   const disconnectLocal = () => {
+    localManualDisconnect.value = true;
+    clearLocalRetry();
+    if (localSocket.value) {
+      localSocket.value.close();
+    }
+    localSocket.value = null;
     localStatus.value = 'disconnected';
     localStatusMessage.value = '';
   };
 
   const connectRemote = async () => {
-    if (remoteStatus.value === 'connecting') return;
+    if (remoteConnectPromise) return remoteConnectPromise;
+    if (remoteSocket.value && remoteSocket.value.readyState === WebSocket.OPEN) {
+      remoteStatus.value = 'connected';
+      return Promise.resolve();
+    }
+
+    remoteManualDisconnect.value = false;
     remoteStatus.value = 'connecting';
     remoteStatusMessage.value = '';
 
-    try {
-      if (!remoteSettings.apiBaseUrl || !remoteSettings.username || !remoteSettings.password) {
+    remoteConnectPromise = (async () => {
+      try {
+        if (!remoteSettings.apiBaseUrl || !remoteSettings.username || !remoteSettings.password) {
+          remoteStatus.value = 'error';
+          remoteStatusMessage.value = 'Missing remote connection fields';
+          return;
+        }
+
+        const baseUrl = normalizeBaseUrl(remoteSettings.apiBaseUrl);
+        const loginResponse = await fetch(`${baseUrl}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: remoteSettings.username,
+            password: remoteSettings.password
+          })
+        });
+
+        if (!loginResponse.ok) {
+          const msg = await loginResponse.text();
+          throw new Error(msg || `HTTP ${loginResponse.status}`);
+        }
+
+        const loginData = await loginResponse.json();
+        if (!loginData?.token) {
+          throw new Error('Missing auth token');
+        }
+
+        remoteAuthToken.value = loginData.token;
+
+        const socket = new WebSocket(remoteWsUrl.value);
+        remoteSocket.value = socket;
+        attachRemoteHandlers(socket);
+
+        await new Promise<void>((resolve, reject) => {
+          socket.addEventListener('open', () => {
+            remoteStatus.value = 'connected';
+            clearRemoteRetry();
+            if (remoteSettings.clientId) {
+              socket.send(JSON.stringify({ cmd: 'get_printers', client_id: remoteSettings.clientId }));
+            }
+            resolve();
+          });
+          socket.addEventListener('error', () => {
+            remoteStatus.value = 'error';
+            remoteStatusMessage.value = 'Remote connection failed';
+            scheduleRemoteReconnect();
+            reject(new Error('WebSocket error'));
+          });
+        });
+      } catch (error) {
         remoteStatus.value = 'error';
-        remoteStatusMessage.value = 'Missing remote connection fields';
-        return;
+        remoteStatusMessage.value = (error as Error).message || 'Remote connection failed';
+        scheduleRemoteReconnect();
+      } finally {
+        remoteConnectPromise = null;
       }
+    })();
 
-      const baseUrl = normalizeBaseUrl(remoteSettings.apiBaseUrl);
-      const loginResponse = await fetch(`${baseUrl}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: remoteSettings.username,
-          password: remoteSettings.password
-        })
-      });
-
-      if (!loginResponse.ok) {
-        const msg = await loginResponse.text();
-        throw new Error(msg || `HTTP ${loginResponse.status}`);
-      }
-
-      const loginData = await loginResponse.json();
-      if (!loginData?.token) {
-        throw new Error('Missing auth token');
-      }
-
-      remoteAuthToken.value = loginData.token;
-      remoteStatus.value = 'connected';
-    } catch (error) {
-      remoteStatus.value = 'error';
-      remoteStatusMessage.value = (error as Error).message || 'Remote connection failed';
-    }
+    return remoteConnectPromise;
   };
 
   const disconnectRemote = () => {
+    remoteManualDisconnect.value = true;
+    clearRemoteRetry();
+    if (remoteSocket.value) {
+      remoteSocket.value.close();
+    }
+    remoteSocket.value = null;
     remoteStatus.value = 'disconnected';
     remoteStatusMessage.value = '';
   };
 
   const fetchLocalPrinters = async () => {
-    const data = await waitForWsMessage<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
-      localWsUrl.value,
+    await connectLocal();
+    const data = await sendWithWait<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
+      localSocket,
+      localWaiters,
       { type: 'get_printers' },
       (msg): msg is { type: 'printer_list'; data: LocalPrinterInfo[] } => msg?.type === 'printer_list'
     );
@@ -402,8 +640,10 @@ const createState = (): PrintSettingsState => {
     if (!printer) return undefined;
     if (localPrinterCaps[printer]) return localPrinterCaps[printer];
 
-    const data = await waitForWsMessage<{ type: 'printer_caps'; printer: string; data: LocalPrinterCaps }>(
-      localWsUrl.value,
+    await connectLocal();
+    const data = await sendWithWait<{ type: 'printer_caps'; printer: string; data: LocalPrinterCaps }>(
+      localSocket,
+      localWaiters,
       { type: 'get_printer_caps', printer },
       (msg): msg is { type: 'printer_caps'; printer: string; data: LocalPrinterCaps } => msg?.type === 'printer_caps'
     );
@@ -414,8 +654,10 @@ const createState = (): PrintSettingsState => {
 
   const fetchRemotePrinters = async () => {
     if (!remoteSettings.clientId) return [];
-    const data = await waitForWsMessage<{ cmd: 'printers_list'; printers: RemotePrinterInfo[] }>(
-      remoteWsUrl.value,
+    await connectRemote();
+    const data = await sendWithWait<{ cmd: 'printers_list'; printers: RemotePrinterInfo[] }>(
+      remoteSocket,
+      remoteWaiters,
       { cmd: 'get_printers', client_id: remoteSettings.clientId },
       (msg): msg is { cmd: 'printers_list'; printers: RemotePrinterInfo[] } => msg?.cmd === 'printers_list'
     );
