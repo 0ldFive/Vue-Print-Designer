@@ -88,12 +88,20 @@ export const usePrint = () => {
 
     store.setIsExporting(true);
     document.body.classList.add('exporting');
+
+    const shield = document.createElement('div');
+    shield.setAttribute('data-print-shield', 'true');
+    shield.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent;pointer-events:auto;';
+    document.body.appendChild(shield);
     
     await nextTick();
     // Wait for async rendering (like QR Codes) which might take a moment to generate data URLs
     await new Promise(resolve => setTimeout(resolve, 500));
 
     return () => {
+      if (shield.parentNode) {
+        shield.parentNode.removeChild(shield);
+      }
       document.body.classList.remove('exporting');
       store.setIsExporting(false);
       store.setShowGrid(previousShowGrid);
