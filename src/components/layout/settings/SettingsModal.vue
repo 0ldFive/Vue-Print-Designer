@@ -27,12 +27,15 @@ const {
   remoteSettings,
   localStatus,
   remoteStatus,
+  remoteClients,
+  remoteSelectedClientId,
   localWsUrl,
   remoteWsUrl,
   connectLocal,
   disconnectLocal,
   connectRemote,
-  disconnectRemote
+  disconnectRemote,
+  fetchRemoteClients
 } = usePrintSettings();
 
 const activeTab = ref<'basic' | 'language' | 'connection'>('basic');
@@ -86,6 +89,11 @@ watch(selectedLang, (val) => {
 
 watch(selectedTheme, (val) => {
   setTheme(val);
+});
+
+watch([activeConnectionTab, remoteStatus], ([tab, status]) => {
+  if (tab !== 'remote' || status !== 'connected') return;
+  fetchRemoteClients();
 });
 
 const close = () => {
@@ -338,6 +346,24 @@ const close = () => {
                   <label class="flex flex-col gap-1">
                     <span class="text-xs text-gray-500">{{ t('settings.password') }}</span>
                     <input v-model="remoteSettings.password" type="password" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
+                  </label>
+                  <label class="flex flex-col gap-1 col-span-2">
+                    <span class="text-xs text-gray-500">{{ t('settings.remoteClient') }}</span>
+                    <select
+                      v-model="remoteSelectedClientId"
+                      class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                      :disabled="remoteStatus !== 'connected' || remoteClients.length === 0"
+                    >
+                      <option value="">{{ t('settings.remoteClientPlaceholder') }}</option>
+                      <option
+                        v-for="client in remoteClients"
+                        :key="client.client_id"
+                        :value="client.client_id"
+                        :disabled="client.online === false"
+                      >
+                        {{ client.client_name || client.client_id }}{{ client.online === false ? ' (offline)' : '' }}
+                      </option>
+                    </select>
                   </label>
                 </div>
                 <div class="rounded bg-gray-100 px-3 py-2 text-xs text-gray-600 break-all">

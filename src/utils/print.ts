@@ -21,7 +21,8 @@ export const usePrint = () => {
     localPrintOptions,
     remotePrintOptions,
     localWsUrl,
-    remoteWsUrl
+    remoteWsUrl,
+    remoteSelectedClientId
   } = usePrintSettings();
 
   const createRepeatedPages = (originalPages: Page[]): Page[] => {
@@ -904,8 +905,13 @@ export const usePrint = () => {
         return;
       }
 
+      if (!remoteSelectedClientId.value) {
+        alert('Client is required');
+        return;
+      }
       const payload = buildPrintPayload(options, dataUrl);
       payload.cmd = 'submit_task';
+      payload.client_id = remoteSelectedClientId.value;
       await sendWsPrint(remoteWsUrl.value, payload, 'task_result');
     } catch (error) {
       console.error('Print failed', error);

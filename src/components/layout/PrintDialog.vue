@@ -20,8 +20,11 @@ const { t } = useI18n();
 const {
   localPrinters,
   remotePrinters,
+  remoteClients,
+  remoteSelectedClientId,
   localPrinterCaps,
   fetchLocalPrinters,
+  fetchRemoteClients,
   fetchRemotePrinters,
   fetchLocalPrinterCaps
 } = usePrintSettings();
@@ -29,6 +32,7 @@ const {
 const isLoadingPrinters = ref(false);
 const isLoadingCaps = ref(false);
 const printerLoadError = ref('');
+const selectedClientId = ref('');
 
 const form = reactive<PrintOptions>({
   printer: '',
@@ -49,6 +53,7 @@ const form = reactive<PrintOptions>({
 watch(() => props.show, (val) => {
   if (!val) return;
   Object.assign(form, JSON.parse(JSON.stringify(props.options)) as PrintOptions);
+  selectedClientId.value = remoteSelectedClientId.value;
   loadPrinters();
 });
 
@@ -93,7 +98,16 @@ const loadPrinters = async () => {
   printerLoadError.value = '';
   try {
     if (props.mode === 'remote') {
-      await fetchRemotePrinters();
+      await fetchRemoteClients();
+      if (!selectedClientId.value || !remoteClients.value.some(c => c.client_id === selectedClientId.value)) {
+        selectedClientId.value = remoteSelectedClientId.value;
+      }
+
+      if (selectedClientId.value) {
+        await fetchRemotePrinters(selectedClientId.value);
+      } else {
+        remotePrinters.value = [];
+      }
     } else if (props.mode === 'local') {
       await fetchLocalPrinters();
     }
@@ -124,6 +138,25 @@ const loadCaps = async (printer: string) => {
     isLoadingCaps.value = false;
   }
 };
+
+watch(selectedClientId, async (next, prev) => {
+  if (!props.show || props.mode !== 'remote' || next === prev) return;
+  remoteSelectedClientId.value = next;
+  form.printer = '';
+  isLoadingPrinters.value = true;
+  printerLoadError.value = '';
+  try {
+    if (next) {
+      await fetchRemotePrinters(next);
+    } else {
+      remotePrinters.value = [];
+    }
+  } catch (error) {
+    printerLoadError.value = (error as Error).message || t('printDialog.printerLoadFailed');
+  } finally {
+    isLoadingPrinters.value = false;
+  }
+});
 
 watch(() => form.printer, async (next, prev) => {
   if (!props.show || next === prev) return;
@@ -179,13 +212,33 @@ const modeTitle = computed(() => {
         <div class="flex-1 overflow-y-auto p-6 space-y-5 text-sm text-gray-700">
           <div class="space-y-3">
             <div class="font-medium text-gray-900">{{ t('printDialog.sectionBasic') }}</div>
+            <div v-if="props.mode === 'remote'" class="grid grid-cols-2 gap-4">
+              <label class="flex flex-col gap-1 col-span-2">
+                <span class="text-xs text-gray-500">{{ t('printDialog.remoteClient') }}</span>
+                <select
+                  v-model="selectedClientId"
+                  class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                  :disabled="isLoadingPrinters"
+                >
+                  <option value="">{{ t('printDialog.remoteClientPlaceholder') }}</option>
+                  <option
+                    v-for="client in remoteClients"
+                    :key="client.client_id"
+                    :value="client.client_id"
+                    :disabled="client.online === false"
+                  >
+                    {{ client.client_name || client.client_id }}{{ client.online === false ? ' (offline)' : '' }}
+                  </option>
+                </select>
+              </label>
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.printer') }}</span>
                 <select
                   v-model="form.printer"
                   class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                  :disabled="isLoadingPrinters || isLoadingCaps"
+                  :disabled="isLoadingPrinters || isLoadingCaps || (props.mode === 'remote' && !selectedClientId)"
                 >
                   <option value="">{{ t('printDialog.printerSelect') }}</option>
                   <option
@@ -203,6 +256,9 @@ const modeTitle = computed(() => {
               </label>
             </div>
             <div v-if="printerLoadError" class="text-xs text-red-600">{{ printerLoadError }}</div>
+            <div v-else-if="props.mode === 'remote' && remoteClients.length === 0" class="text-xs text-gray-500">
+              {{ t('printDialog.remoteClientEmpty') }}
+            </div>
             <div v-else-if="activePrinters.length === 0" class="text-xs text-gray-500">{{ t('printDialog.printerEmpty') }}</div>
             <div v-if="props.mode === 'remote' && selectedRemotePrinter" class="text-xs text-gray-500">
               {{ t('printDialog.remotePrinterInfo', {

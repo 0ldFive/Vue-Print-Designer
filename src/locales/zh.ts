@@ -392,6 +392,8 @@ export default {
     apiBasePlaceholder: '/api 或 http://host:port',
     username: '用户名',
     password: '密码',
+    remoteClient: '默认客户端',
+    remoteClientPlaceholder: '请选择客户端',
     remoteAuthHint: '远程 WS 地址会附加 ?token=JWT 以便浏览器鉴权。',
     status: {
       connected: '已连接',
@@ -412,6 +414,9 @@ export default {
     printer: '打印机',
     printerSelect: '请选择打印机',
     printerEmpty: '未获取到打印机。',
+    remoteClient: '客户端',
+    remoteClientPlaceholder: '请选择客户端',
+    remoteClientEmpty: '未获取到客户端。',
     remotePrinterInfo: '类型：{type} | 纸张：{paper} | 格式：{format}',
     printerPlaceholder: '打印机名称',
     jobName: '任务名称',

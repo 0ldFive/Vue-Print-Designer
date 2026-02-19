@@ -392,6 +392,8 @@ export default {
     apiBasePlaceholder: '/api or http://host:port',
     username: 'Username',
     password: 'Password',
+    remoteClient: 'Default Client',
+    remoteClientPlaceholder: 'Select a client',
     remoteAuthHint: 'Remote WS URL appends ?token=JWT for browser WebSocket authentication.',
     status: {
       connected: 'Connected',
@@ -412,6 +414,9 @@ export default {
     printer: 'Printer',
     printerSelect: 'Select printer',
     printerEmpty: 'No printers found.',
+    remoteClient: 'Client',
+    remoteClientPlaceholder: 'Select client',
+    remoteClientEmpty: 'No clients found.',
     remotePrinterInfo: 'Type: {type} | Paper: {paper} | Formats: {format}',
     printerPlaceholder: 'Printer name',
     jobName: 'Job Name',

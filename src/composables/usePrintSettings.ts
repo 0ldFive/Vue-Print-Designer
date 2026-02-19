@@ -50,6 +50,13 @@ export interface RemotePrinterInfo {
   supported_format?: string;
 }
 
+export interface RemoteClientInfo {
+  client_id: string;
+  client_name?: string;
+  online?: boolean;
+  last_heartbeat?: string;
+}
+
 export interface LocalPrinterCaps {
   paperSizes?: string[];
   printerPaperNames?: string[];
@@ -73,9 +80,12 @@ interface PrintSettingsState {
   remoteAuthToken: ReturnType<typeof ref<string>>;
   localPrinters: ReturnType<typeof ref<LocalPrinterInfo[]>>;
   remotePrinters: ReturnType<typeof ref<RemotePrinterInfo[]>>;
+  remoteClients: ReturnType<typeof ref<RemoteClientInfo[]>>;
+  remoteSelectedClientId: ReturnType<typeof ref<string>>;
   localPrinterCaps: Record<string, LocalPrinterCaps | undefined>;
   fetchLocalPrinters: () => Promise<LocalPrinterInfo[]>;
-  fetchRemotePrinters: () => Promise<RemotePrinterInfo[]>;
+  fetchRemoteClients: () => Promise<RemoteClientInfo[]>;
+  fetchRemotePrinters: (clientId?: string) => Promise<RemotePrinterInfo[]>;
   fetchLocalPrinterCaps: (printer: string) => Promise<LocalPrinterCaps | undefined>;
   connectLocal: () => Promise<void>;
   disconnectLocal: () => void;
@@ -91,7 +101,8 @@ const storageKeys = {
   remoteSettings: 'print-designer-remote-settings',
   localPrintOptions: 'print-designer-local-print-options',
   remotePrintOptions: 'print-designer-remote-print-options',
-  remoteAuthToken: 'print-designer-remote-auth-token'
+  remoteAuthToken: 'print-designer-remote-auth-token',
+  remoteSelectedClientId: 'print-designer-remote-selected-client-id'
 };
 
 const defaultLocalSettings: LocalConnectionSettings = {
@@ -236,9 +247,11 @@ const createState = (): PrintSettingsState => {
   const remotePrintOptions = reactive(loadJson(storageKeys.remotePrintOptions, defaultPrintOptions));
 
   const remoteAuthToken = ref(localStorage.getItem(storageKeys.remoteAuthToken) || '');
+  const remoteSelectedClientId = ref(localStorage.getItem(storageKeys.remoteSelectedClientId) || '');
 
   const localPrinters = ref<LocalPrinterInfo[]>([]);
   const remotePrinters = ref<RemotePrinterInfo[]>([]);
+  const remoteClients = ref<RemoteClientInfo[]>([]);
   const localPrinterCaps = reactive<Record<string, LocalPrinterCaps | undefined>>({});
 
   const localSocket = ref<WebSocket | null>(null);
@@ -299,6 +312,10 @@ const createState = (): PrintSettingsState => {
 
   watch(remoteAuthToken, (value) => {
     localStorage.setItem(storageKeys.remoteAuthToken, value);
+  });
+
+  watch(remoteSelectedClientId, (value) => {
+    localStorage.setItem(storageKeys.remoteSelectedClientId, value);
   });
 
   const applyPreferredIfConnected = () => {
@@ -464,6 +481,18 @@ const createState = (): PrintSettingsState => {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        if (data?.cmd === 'clients_list') {
+          remoteClients.value = Array.isArray(data.clients) ? data.clients : [];
+          if (remoteClients.value.length > 0) {
+            const exists = remoteClients.value.some(c => c.client_id === remoteSelectedClientId.value);
+            if (!exists) {
+              const onlineClient = remoteClients.value.find(c => c.online) || remoteClients.value[0];
+              remoteSelectedClientId.value = onlineClient?.client_id || '';
+            }
+          } else {
+            remoteSelectedClientId.value = '';
+          }
+        }
         if (data?.cmd === 'printers_list') {
           remotePrinters.value = Array.isArray(data.printers) ? data.printers : [];
         }
@@ -585,7 +614,7 @@ const createState = (): PrintSettingsState => {
           socket.addEventListener('open', () => {
             remoteStatus.value = 'connected';
             clearRemoteRetry();
-            socket.send(JSON.stringify({ cmd: 'get_printers' }));
+            socket.send(JSON.stringify({ cmd: 'get_clients' }));
             resolve();
           });
           socket.addEventListener('error', () => {
@@ -646,12 +675,40 @@ const createState = (): PrintSettingsState => {
     return localPrinterCaps[printer];
   };
 
-  const fetchRemotePrinters = async () => {
+  const fetchRemoteClients = async () => {
+    await connectRemote();
+    const data = await sendWithWait<{ cmd: 'clients_list'; clients: RemoteClientInfo[] }>(
+      remoteSocket,
+      remoteWaiters,
+      { cmd: 'get_clients' },
+      (msg): msg is { cmd: 'clients_list'; clients: RemoteClientInfo[] } => msg?.cmd === 'clients_list'
+    );
+
+    remoteClients.value = Array.isArray(data.clients) ? data.clients : [];
+    if (remoteClients.value.length > 0) {
+      const exists = remoteClients.value.some(c => c.client_id === remoteSelectedClientId.value);
+      if (!exists) {
+        const onlineClient = remoteClients.value.find(c => c.online) || remoteClients.value[0];
+        remoteSelectedClientId.value = onlineClient?.client_id || '';
+      }
+    } else {
+      remoteSelectedClientId.value = '';
+    }
+    return remoteClients.value;
+  };
+
+  const fetchRemotePrinters = async (clientId?: string) => {
+    const targetClientId = clientId || remoteSelectedClientId.value;
+    if (!targetClientId) {
+      remotePrinters.value = [];
+      return remotePrinters.value;
+    }
+
     await connectRemote();
     const data = await sendWithWait<{ cmd: 'printers_list'; printers: RemotePrinterInfo[] }>(
       remoteSocket,
       remoteWaiters,
-      { cmd: 'get_printers' },
+      { cmd: 'get_printers', client_id: targetClientId },
       (msg): msg is { cmd: 'printers_list'; printers: RemotePrinterInfo[] } => msg?.cmd === 'printers_list'
     );
 
@@ -689,8 +746,11 @@ const createState = (): PrintSettingsState => {
     remoteAuthToken,
     localPrinters,
     remotePrinters,
+    remoteClients,
+    remoteSelectedClientId,
     localPrinterCaps,
     fetchLocalPrinters,
+    fetchRemoteClients,
     fetchRemotePrinters,
     fetchLocalPrinterCaps,
     connectLocal,
