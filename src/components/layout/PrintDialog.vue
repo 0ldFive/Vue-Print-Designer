@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { reactive, watch, computed } from 'vue';
+import { reactive, watch, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import X from '~icons/material-symbols/close';
-import type { PrintOptions, PrintMode } from '@/composables/usePrintSettings';
+import { usePrintSettings } from '@/composables/usePrintSettings';
+import type { PrintOptions, PrintMode, LocalPrinterCaps } from '@/composables/usePrintSettings';
 
 const props = defineProps<{
   show: boolean;
@@ -16,6 +17,18 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const {
+  localPrinters,
+  remotePrinters,
+  localPrinterCaps,
+  fetchLocalPrinters,
+  fetchRemotePrinters,
+  fetchLocalPrinterCaps
+} = usePrintSettings();
+
+const isLoadingPrinters = ref(false);
+const isLoadingCaps = ref(false);
+const printerLoadError = ref('');
 
 const form = reactive<PrintOptions>({
   printer: '',
@@ -36,6 +49,105 @@ const form = reactive<PrintOptions>({
 watch(() => props.show, (val) => {
   if (!val) return;
   Object.assign(form, JSON.parse(JSON.stringify(props.options)) as PrintOptions);
+  loadPrinters();
+});
+
+watch(() => props.mode, () => {
+  if (!props.show) return;
+  loadPrinters();
+});
+
+const activePrinters = computed(() => {
+  return props.mode === 'remote' ? remotePrinters.value : localPrinters.value;
+});
+
+const localCaps = computed<LocalPrinterCaps | undefined>(() => {
+  if (props.mode !== 'local' || !form.printer) return undefined;
+  return localPrinterCaps[form.printer];
+});
+
+const paperSizeOptions = computed(() => {
+  if (props.mode !== 'local') return [];
+  const caps = localCaps.value;
+  const sizes = caps?.printerPaperNames?.length ? caps.printerPaperNames : caps?.paperSizes || [];
+  return Array.from(new Set(sizes)).filter(Boolean);
+});
+
+const colorSupported = computed(() => {
+  if (props.mode !== 'local') return true;
+  return localCaps.value?.colorSupported !== false;
+});
+
+const duplexSupported = computed(() => {
+  if (props.mode !== 'local') return true;
+  return localCaps.value?.duplexSupported !== false;
+});
+
+const selectedRemotePrinter = computed(() => {
+  if (props.mode !== 'remote') return undefined;
+  return remotePrinters.value.find(p => p.printer_name === form.printer);
+});
+
+const loadPrinters = async () => {
+  isLoadingPrinters.value = true;
+  printerLoadError.value = '';
+  try {
+    if (props.mode === 'remote') {
+      await fetchRemotePrinters();
+    } else if (props.mode === 'local') {
+      await fetchLocalPrinters();
+    }
+
+    if (!form.printer && activePrinters.value.length > 0) {
+      const preferred = props.mode === 'local'
+        ? activePrinters.value.find((p: any) => p.isDefault) || activePrinters.value[0]
+        : activePrinters.value[0];
+      form.printer = props.mode === 'local' ? (preferred as any).name : (preferred as any).printer_name;
+    }
+
+    if (props.mode === 'local' && form.printer) {
+      await loadCaps(form.printer);
+    }
+  } catch (error) {
+    printerLoadError.value = (error as Error).message || t('printDialog.printerLoadFailed');
+  } finally {
+    isLoadingPrinters.value = false;
+  }
+};
+
+const loadCaps = async (printer: string) => {
+  if (!printer || props.mode !== 'local') return;
+  isLoadingCaps.value = true;
+  try {
+    await fetchLocalPrinterCaps(printer);
+  } finally {
+    isLoadingCaps.value = false;
+  }
+};
+
+watch(() => form.printer, async (next, prev) => {
+  if (!props.show || next === prev) return;
+  if (props.mode === 'local') {
+    await loadCaps(next);
+    if (paperSizeOptions.value.length && !form.paperSize) {
+      form.paperSize = paperSizeOptions.value[0];
+    }
+  } else if (props.mode === 'remote') {
+    const info = remotePrinters.value.find(p => p.printer_name === next);
+    if (info?.paper_spec && !form.paperSize) {
+      form.paperSize = info.paper_spec;
+    }
+  }
+});
+
+watch(localCaps, (caps) => {
+  if (!caps) return;
+  if (caps.colorSupported === false && form.colorMode === 'color') {
+    form.colorMode = 'monochrome';
+  }
+  if (caps.duplexSupported === false && form.sidesMode.startsWith('duplex')) {
+    form.sidesMode = 'simplex';
+  }
 });
 
 const close = () => {
@@ -70,12 +182,34 @@ const modeTitle = computed(() => {
             <div class="grid grid-cols-2 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.printer') }}</span>
-                <input v-model="form.printer" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.printerPlaceholder')" />
+                <select
+                  v-model="form.printer"
+                  class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                  :disabled="isLoadingPrinters || isLoadingCaps"
+                >
+                  <option value="">{{ t('printDialog.printerSelect') }}</option>
+                  <option
+                    v-for="printer in activePrinters"
+                    :key="props.mode === 'local' ? (printer as any).name : (printer as any).printer_name"
+                    :value="props.mode === 'local' ? (printer as any).name : (printer as any).printer_name"
+                  >
+                    {{ props.mode === 'local' ? (printer as any).name : (printer as any).printer_name }}
+                  </option>
+                </select>
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.jobName') }}</span>
                 <input v-model="form.jobName" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.jobNamePlaceholder')" />
               </label>
+            </div>
+            <div v-if="printerLoadError" class="text-xs text-red-600">{{ printerLoadError }}</div>
+            <div v-else-if="activePrinters.length === 0" class="text-xs text-gray-500">{{ t('printDialog.printerEmpty') }}</div>
+            <div v-if="props.mode === 'remote' && selectedRemotePrinter" class="text-xs text-gray-500">
+              {{ t('printDialog.remotePrinterInfo', {
+                type: selectedRemotePrinter.printer_type || '-',
+                paper: selectedRemotePrinter.paper_spec || '-',
+                format: selectedRemotePrinter.supported_format || '-'
+              }) }}
             </div>
             <div class="grid grid-cols-3 gap-4">
               <label class="flex flex-col gap-1">
@@ -123,14 +257,14 @@ const modeTitle = computed(() => {
             <div class="grid grid-cols-3 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.colorMode') }}</span>
-                <select v-model="form.colorMode" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                <select v-model="form.colorMode" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :disabled="!colorSupported">
                   <option value="color">{{ t('printDialog.color') }}</option>
                   <option value="monochrome">{{ t('printDialog.monochrome') }}</option>
                 </select>
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.sidesMode') }}</span>
-                <select v-model="form.sidesMode" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                <select v-model="form.sidesMode" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :disabled="!duplexSupported">
                   <option value="simplex">{{ t('printDialog.simplex') }}</option>
                   <option value="duplex">{{ t('printDialog.duplex') }}</option>
                   <option value="duplexshort">{{ t('printDialog.duplexShort') }}</option>
@@ -139,7 +273,10 @@ const modeTitle = computed(() => {
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.paperSize') }}</span>
-                <input v-model="form.paperSize" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.paperSizePlaceholder')" />
+                <select v-if="paperSizeOptions.length" v-model="form.paperSize" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                  <option v-for="size in paperSizeOptions" :key="size" :value="size">{{ size }}</option>
+                </select>
+                <input v-else v-model="form.paperSize" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.paperSizePlaceholder')" />
               </label>
             </div>
             <div class="grid grid-cols-2 gap-4">

@@ -39,6 +39,26 @@ export interface RemoteConnectionSettings {
   clientKey: string;
 }
 
+export interface LocalPrinterInfo {
+  name: string;
+  isDefault?: boolean;
+}
+
+export interface RemotePrinterInfo {
+  printer_name: string;
+  printer_type?: string;
+  paper_spec?: string;
+  is_ready?: boolean;
+  supported_format?: string;
+}
+
+export interface LocalPrinterCaps {
+  paperSizes?: string[];
+  printerPaperNames?: string[];
+  duplexSupported?: boolean;
+  colorSupported?: boolean;
+}
+
 interface PrintSettingsState {
   printMode: ReturnType<typeof ref<PrintMode>>;
   silentPrint: ReturnType<typeof ref<boolean>>;
@@ -53,6 +73,12 @@ interface PrintSettingsState {
   localWsUrl: ReturnType<typeof computed<string>>;
   remoteWsUrl: ReturnType<typeof computed<string>>;
   remoteAuthToken: ReturnType<typeof ref<string>>;
+  localPrinters: ReturnType<typeof ref<LocalPrinterInfo[]>>;
+  remotePrinters: ReturnType<typeof ref<RemotePrinterInfo[]>>;
+  localPrinterCaps: Record<string, LocalPrinterCaps | undefined>;
+  fetchLocalPrinters: () => Promise<LocalPrinterInfo[]>;
+  fetchRemotePrinters: () => Promise<RemotePrinterInfo[]>;
+  fetchLocalPrinterCaps: (printer: string) => Promise<LocalPrinterCaps | undefined>;
 }
 
 const storageKeys = {
@@ -133,6 +159,54 @@ const appendQueryParam = (url: string, key: string, value: string) => {
   }
 };
 
+const waitForWsMessage = <T>(
+  url: string,
+  initMessage: Record<string, any> | null,
+  isTarget: (data: any) => data is T,
+  timeoutMs = 5000
+) => new Promise<T>((resolve, reject) => {
+  let settled = false;
+  const socket = new WebSocket(url);
+  const timeoutId = window.setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    socket.close();
+    reject(new Error('WebSocket timeout'));
+  }, timeoutMs);
+
+  socket.onopen = () => {
+    if (initMessage) {
+      socket.send(JSON.stringify(initMessage));
+    }
+  };
+
+  socket.onmessage = (event) => {
+    if (settled) return;
+    try {
+      const data = JSON.parse(event.data);
+      if (isTarget(data)) {
+        settled = true;
+        window.clearTimeout(timeoutId);
+        socket.close();
+        resolve(data);
+      }
+    } catch (error) {
+      settled = true;
+      window.clearTimeout(timeoutId);
+      socket.close();
+      reject(error instanceof Error ? error : new Error('WebSocket parse error'));
+    }
+  };
+
+  socket.onerror = () => {
+    if (settled) return;
+    settled = true;
+    window.clearTimeout(timeoutId);
+    socket.close();
+    reject(new Error('WebSocket error'));
+  };
+});
+
 let state: PrintSettingsState | null = null;
 
 const createState = (): PrintSettingsState => {
@@ -151,6 +225,10 @@ const createState = (): PrintSettingsState => {
   const remotePrintOptions = reactive(loadJson(storageKeys.remotePrintOptions, defaultPrintOptions));
 
   const remoteAuthToken = ref(localStorage.getItem(storageKeys.remoteAuthToken) || '');
+
+  const localPrinters = ref<LocalPrinterInfo[]>([]);
+  const remotePrinters = ref<RemotePrinterInfo[]>([]);
+  const localPrinterCaps = reactive<Record<string, LocalPrinterCaps | undefined>>({});
 
   const localWsUrl = computed(() => {
     const base = buildWsUrl(localSettings.protocol, localSettings.host, localSettings.port, localSettings.path);
@@ -215,6 +293,42 @@ const createState = (): PrintSettingsState => {
 
   watch([localStatus, remoteStatus], ensureValidPrintMode, { immediate: true });
 
+  const fetchLocalPrinters = async () => {
+    const data = await waitForWsMessage<{ type: 'printer_list'; data: LocalPrinterInfo[] }>(
+      localWsUrl.value,
+      { type: 'get_printers' },
+      (msg): msg is { type: 'printer_list'; data: LocalPrinterInfo[] } => msg?.type === 'printer_list'
+    );
+    localPrinters.value = Array.isArray(data.data) ? data.data : [];
+    return localPrinters.value;
+  };
+
+  const fetchLocalPrinterCaps = async (printer: string) => {
+    if (!printer) return undefined;
+    if (localPrinterCaps[printer]) return localPrinterCaps[printer];
+
+    const data = await waitForWsMessage<{ type: 'printer_caps'; printer: string; data: LocalPrinterCaps }>(
+      localWsUrl.value,
+      { type: 'get_printer_caps', printer },
+      (msg): msg is { type: 'printer_caps'; printer: string; data: LocalPrinterCaps } => msg?.type === 'printer_caps'
+    );
+
+    localPrinterCaps[printer] = data?.data || {};
+    return localPrinterCaps[printer];
+  };
+
+  const fetchRemotePrinters = async () => {
+    if (!remoteSettings.clientId) return [];
+    const data = await waitForWsMessage<{ cmd: 'printers_list'; printers: RemotePrinterInfo[] }>(
+      remoteWsUrl.value,
+      { cmd: 'get_printers', client_id: remoteSettings.clientId },
+      (msg): msg is { cmd: 'printers_list'; printers: RemotePrinterInfo[] } => msg?.cmd === 'printers_list'
+    );
+
+    remotePrinters.value = Array.isArray(data.printers) ? data.printers : [];
+    return remotePrinters.value;
+  };
+
   return {
     printMode,
     silentPrint,
@@ -228,7 +342,13 @@ const createState = (): PrintSettingsState => {
     remotePrintOptions,
     localWsUrl,
     remoteWsUrl,
-    remoteAuthToken
+    remoteAuthToken,
+    localPrinters,
+    remotePrinters,
+    localPrinterCaps,
+    fetchLocalPrinters,
+    fetchRemotePrinters,
+    fetchLocalPrinterCaps
   };
 };
 
