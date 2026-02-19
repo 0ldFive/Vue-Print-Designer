@@ -35,6 +35,7 @@ import Lock from '~icons/material-symbols/lock';
 import Unlock from '~icons/material-symbols/lock-open';
 import ChevronDown from '~icons/material-symbols/expand-more';
 import { usePrint } from '@/utils/print';
+import { usePrintSettings, type PrintOptions } from '@/composables/usePrintSettings';
 import { ElementType } from '@/types';
 import PreviewModal from '../PreviewModal.vue';
 import ColorPicker from '@/components/common/ColorPicker.vue';
@@ -47,6 +48,7 @@ import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import cloneDeep from 'lodash/cloneDeep';
 import { useI18n } from 'vue-i18n';
 import { formatShortcut } from '@/utils/os';
+import PrintDialog from '../PrintDialog.vue';
 
 const emit = defineEmits<{
   (e: 'toggleHelp'): void
@@ -56,6 +58,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
+const { printMode, silentPrint, localPrintOptions, remotePrintOptions } = usePrintSettings();
 
 const showJsonModal = ref(false);
 const jsonContent = ref('');
@@ -126,6 +129,12 @@ const handleViewPdfBlob = async () => {
 const showPreview = ref(false);
 const previewContent = ref('');
 const showExportMenu = ref(false);
+const showPrintDialog = ref(false);
+const pendingPrintContent = ref<HTMLElement[] | HTMLElement | string | null>(null);
+
+const activePrintOptions = computed<PrintOptions>(() => {
+  return printMode.value === 'remote' ? remotePrintOptions : localPrintOptions;
+});
 
 const showZoomSettings = ref(false);
 const zoomPercent = ref(Math.round(store.zoom * 100));
@@ -272,7 +281,26 @@ const handlePreview = async () => {
 const handlePrint = async () => {
   // Use real DOM elements to ensure computed styles are captured correctly, similar to exportPdf
   const pages = Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
-  await print(pages);
+  if (printMode.value !== 'browser' && !silentPrint.value) {
+    pendingPrintContent.value = pages;
+    showPrintDialog.value = true;
+    return;
+  }
+  await print(pages, { mode: printMode.value });
+};
+
+const handlePrintConfirm = async (options: PrintOptions) => {
+  if (printMode.value === 'local') {
+    Object.assign(localPrintOptions, options);
+  }
+  if (printMode.value === 'remote') {
+    Object.assign(remotePrintOptions, options);
+  }
+
+  const content = pendingPrintContent.value || Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+  pendingPrintContent.value = null;
+  showPrintDialog.value = false;
+  await print(content, { mode: printMode.value, options });
 };
 
 const handleExport = async () => {
@@ -630,6 +658,13 @@ onUnmounted(() => {
     v-model:visible="showPreview"
     :html-content="previewContent"
     :width="store.canvasSize.width"
+  />
+
+  <PrintDialog
+    v-model:show="showPrintDialog"
+    :mode="printMode"
+    :options="activePrintOptions"
+    @confirm="handlePrintConfirm"
   />
 
   <CodeEditorModal

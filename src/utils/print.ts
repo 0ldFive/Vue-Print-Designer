@@ -6,11 +6,23 @@ import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType, type Page } from '@/types';
+import { usePrintSettings, type PrintMode, type PrintOptions } from '@/composables/usePrintSettings';
 
 import { pxToMm } from '@/utils/units';
 
 export const usePrint = () => {
   const store = useDesignerStore();
+  const {
+    printMode,
+    localSettings,
+    remoteSettings,
+    localStatus,
+    remoteStatus,
+    localPrintOptions,
+    remotePrintOptions,
+    localWsUrl,
+    remoteWsUrl
+  } = usePrintSettings();
 
   const createRepeatedPages = (originalPages: Page[]): Page[] => {
     const original = cloneDeep(originalPages);
@@ -718,7 +730,7 @@ export const usePrint = () => {
     }
   };
 
-  const print = async (content: HTMLElement | string | HTMLElement[]) => {
+  const browserPrint = async (content: HTMLElement | string | HTMLElement[]) => {
     try {
         const pdf = await createPdfDocument(content);
         pdf.autoPrint();
@@ -748,6 +760,154 @@ export const usePrint = () => {
     } catch (error) {
         console.error('Print failed', error);
         alert('Print failed');
+    }
+  };
+
+  const blobToDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read PDF blob'));
+    reader.readAsDataURL(blob);
+  });
+
+  const buildPrintPayload = (options: PrintOptions, content: string, key?: string) => {
+    const payload: Record<string, any> = {
+      printer: options.printer,
+      content
+    };
+
+    if (key) payload.key = key;
+    if (options.jobName || options.copies || options.intervalMs) {
+      payload.job = {
+        ...(options.jobName ? { name: options.jobName } : {}),
+        ...(options.copies ? { copies: options.copies } : {}),
+        ...(options.intervalMs ? { intervalMs: options.intervalMs } : {})
+      };
+    }
+    if (options.pageRange || options.pageSet) {
+      payload.pages = {
+        ...(options.pageRange ? { range: options.pageRange } : {}),
+        ...(options.pageSet ? { set: options.pageSet } : {})
+      };
+    }
+    if (options.scale || options.orientation) {
+      payload.layout = {
+        ...(options.scale ? { scale: options.scale } : {}),
+        ...(options.orientation ? { orientation: options.orientation } : {})
+      };
+    }
+    if (options.colorMode) {
+      payload.color = { mode: options.colorMode };
+    }
+    if (options.sidesMode) {
+      payload.sides = { mode: options.sidesMode };
+    }
+    if (options.paperSize) {
+      payload.paper = { size: options.paperSize };
+    }
+    if (options.trayBin) {
+      payload.tray = { bin: options.trayBin };
+    }
+    if (options.sumatraSettings) {
+      payload.sumatra = { settings: options.sumatraSettings };
+    }
+
+    return payload;
+  };
+
+  const sendWsPrint = (url: string, payload: Record<string, any>, waitFor: 'status' | 'task_result') => new Promise<void>((resolve, reject) => {
+    let resolved = false;
+    const socket = new WebSocket(url);
+    const timeoutId = window.setTimeout(() => {
+      if (resolved) return;
+      resolved = true;
+      socket.close();
+      reject(new Error('Print request timeout'));
+    }, 8000);
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify(payload));
+    };
+
+    socket.onmessage = (event) => {
+      if (resolved) return;
+      try {
+        const msg = JSON.parse(event.data);
+        if (waitFor === 'status' && (msg.status === 'success' || msg.status === 'error')) {
+          resolved = true;
+          window.clearTimeout(timeoutId);
+          socket.close();
+          if (msg.status === 'success') resolve();
+          else reject(new Error(msg.message || 'Print failed'));
+          return;
+        }
+
+        if (waitFor === 'task_result' && msg.cmd === 'task_result') {
+          resolved = true;
+          window.clearTimeout(timeoutId);
+          socket.close();
+          resolve();
+          return;
+        }
+      } catch (error) {
+        resolved = true;
+        window.clearTimeout(timeoutId);
+        socket.close();
+        reject(error instanceof Error ? error : new Error('Print failed'));
+      }
+    };
+
+    socket.onerror = () => {
+      if (resolved) return;
+      resolved = true;
+      window.clearTimeout(timeoutId);
+      socket.close();
+      reject(new Error('Print connection failed'));
+    };
+  });
+
+  const print = async (content: HTMLElement | string | HTMLElement[], request?: { mode?: PrintMode; options?: PrintOptions }) => {
+    const mode = request?.mode || printMode.value;
+
+    if (mode === 'browser') {
+      await browserPrint(content);
+      return;
+    }
+
+    const connectionOk = mode === 'local' ? localStatus.value === 'connected' : remoteStatus.value === 'connected';
+    if (!connectionOk) {
+      await browserPrint(content);
+      return;
+    }
+
+    const options = request?.options || (mode === 'local' ? localPrintOptions : remotePrintOptions);
+    if (!options.printer) {
+      alert('Printer is required');
+      return;
+    }
+
+    try {
+      const pdfBlob = await getPdfBlob(content);
+      const dataUrl = await blobToDataUrl(pdfBlob);
+
+      if (mode === 'local') {
+        const payload = buildPrintPayload(options, dataUrl, localSettings.secretKey.trim());
+        await sendWsPrint(localWsUrl.value, payload, 'status');
+        return;
+      }
+
+      if (!remoteSettings.clientId) {
+        alert('Client ID is required');
+        return;
+      }
+
+      const payload = buildPrintPayload(options, dataUrl, remoteSettings.clientKey.trim());
+      payload.cmd = 'submit_task';
+      payload.client_id = remoteSettings.clientId;
+      await sendWsPrint(remoteWsUrl.value, payload, 'task_result');
+    } catch (error) {
+      console.error('Print failed', error);
+      alert('Print failed');
     }
   };
 

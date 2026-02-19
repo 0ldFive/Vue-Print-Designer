@@ -26,7 +26,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const store = useDesignerStore();
-const { print: printHtml, exportPdf: exportPdfHtml, getPdfBlob, exportImages, getImageBlob } = usePrint();
+const { exportPdf: exportPdfHtml, getPdfBlob, exportImages, getImageBlob } = usePrint();
 const previewContainer = ref<HTMLElement | null>(null);
 const wrapperRef = ref<HTMLElement | null>(null);
 const zoomPercent = ref(100);
@@ -107,9 +107,7 @@ const handleViewPdfBlob = async () => {
 };
 
 const handlePrint = () => {
-  if (previewContainer.value) {
-    printHtml(previewContainer.value);
-  }
+  window.dispatchEvent(new CustomEvent('designer:print'));
 };
 
 const handlePdf = () => {
