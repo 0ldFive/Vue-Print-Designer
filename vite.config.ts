@@ -9,6 +9,15 @@ export default defineConfig({
     vue(),
     Icons({ compiler: 'vue3' })
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

@@ -35,8 +35,6 @@ export interface RemoteConnectionSettings {
   apiBaseUrl: string;
   username: string;
   password: string;
-  clientId: string;
-  clientKey: string;
 }
 
 export interface LocalPrinterInfo {
@@ -109,11 +107,9 @@ const defaultRemoteSettings: RemoteConnectionSettings = {
   wsPort: '1122',
   wsPath: '/ws/request',
   wsProtocol: 'ws',
-  apiBaseUrl: 'http://localhost:8080',
+  apiBaseUrl: '/api',
   username: '',
-  password: '',
-  clientId: '',
-  clientKey: ''
+  password: ''
 };
 
 const defaultPrintOptions: PrintOptions = {
@@ -589,9 +585,7 @@ const createState = (): PrintSettingsState => {
           socket.addEventListener('open', () => {
             remoteStatus.value = 'connected';
             clearRemoteRetry();
-            if (remoteSettings.clientId) {
-              socket.send(JSON.stringify({ cmd: 'get_printers', client_id: remoteSettings.clientId }));
-            }
+            socket.send(JSON.stringify({ cmd: 'get_printers' }));
             resolve();
           });
           socket.addEventListener('error', () => {
@@ -653,12 +647,11 @@ const createState = (): PrintSettingsState => {
   };
 
   const fetchRemotePrinters = async () => {
-    if (!remoteSettings.clientId) return [];
     await connectRemote();
     const data = await sendWithWait<{ cmd: 'printers_list'; printers: RemotePrinterInfo[] }>(
       remoteSocket,
       remoteWaiters,
-      { cmd: 'get_printers', client_id: remoteSettings.clientId },
+      { cmd: 'get_printers' },
       (msg): msg is { cmd: 'printers_list'; printers: RemotePrinterInfo[] } => msg?.cmd === 'printers_list'
     );
 

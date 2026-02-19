@@ -341,14 +341,6 @@ const close = () => {
                     <span class="text-xs text-gray-500">{{ t('settings.password') }}</span>
                     <input v-model="remoteSettings.password" type="password" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
                   </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.clientId') }}</span>
-                    <input v-model="remoteSettings.clientId" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.clientKey') }}</span>
-                    <input v-model="remoteSettings.clientKey" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="text-xs text-gray-500">

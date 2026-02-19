@@ -389,11 +389,9 @@ export default {
     connectionMissingFields: '请填写 API 地址、用户名和密码。',
     connectionMissingToken: '登录成功但未返回 Token。',
     apiBaseUrl: 'API 地址',
-    apiBasePlaceholder: 'http://host:port',
+    apiBasePlaceholder: '/api 或 http://host:port',
     username: '用户名',
     password: '密码',
-    clientId: '客户端 ID',
-    clientKey: '客户端密钥',
     remoteAuthHint: '远程 WS 地址会附加 ?token=JWT 以便浏览器鉴权。',
     status: {
       connected: '已连接',

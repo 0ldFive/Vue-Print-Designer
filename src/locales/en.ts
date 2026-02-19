@@ -389,11 +389,9 @@ export default {
     connectionMissingFields: 'Please fill in API URL, username, and password.',
     connectionMissingToken: 'Login succeeded but token is missing.',
     apiBaseUrl: 'API Base URL',
-    apiBasePlaceholder: 'http://host:port',
+    apiBasePlaceholder: '/api or http://host:port',
     username: 'Username',
     password: 'Password',
-    clientId: 'Client ID',
-    clientKey: 'Client Key',
     remoteAuthHint: 'Remote WS URL appends ?token=JWT for browser WebSocket authentication.',
     status: {
       connected: 'Connected',

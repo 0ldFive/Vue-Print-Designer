@@ -904,14 +904,8 @@ export const usePrint = () => {
         return;
       }
 
-      if (!remoteSettings.clientId) {
-        alert('Client ID is required');
-        return;
-      }
-
-      const payload = buildPrintPayload(options, dataUrl, remoteSettings.clientKey.trim());
+      const payload = buildPrintPayload(options, dataUrl);
       payload.cmd = 'submit_task';
-      payload.client_id = remoteSettings.clientId;
       await sendWsPrint(remoteWsUrl.value, payload, 'task_result');
     } catch (error) {
       console.error('Print failed', error);
