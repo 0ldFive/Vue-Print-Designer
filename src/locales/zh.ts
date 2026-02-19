@@ -407,6 +407,7 @@ export default {
       disconnected: '未连接',
       error: '错误'
     },
+    retrying: '重试中（{count}/{max}）',
     selectLanguage: '选择语言',
     zhLabel: '中文',
     enLabel: 'English'

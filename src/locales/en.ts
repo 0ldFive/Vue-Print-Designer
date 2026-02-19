@@ -407,6 +407,7 @@ export default {
       disconnected: 'Disconnected',
       error: 'Error'
     },
+    retrying: 'Retrying ({count}/{max})',
     selectLanguage: 'Select Language',
     zhLabel: 'Chinese',
     enLabel: 'English'

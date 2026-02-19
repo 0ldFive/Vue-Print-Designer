@@ -30,6 +30,8 @@ const {
   remoteSettings,
   localStatus,
   remoteStatus,
+  localRetryCount,
+  remoteRetryCount,
   remoteClients,
   remoteSelectedClientId,
   localWsUrl,
@@ -51,19 +53,20 @@ const localHasConfig = computed(() => Boolean(localSettings.host && localSetting
 const remoteHasConfig = computed(() => Boolean(remoteSettings.apiBaseUrl && remoteSettings.username && remoteSettings.password));
 
 const localButtonLabel = computed(() => {
-  if (localConnecting.value) return t('settings.connecting');
-  return localConnected.value ? t('settings.disconnect') : t('settings.connect');
+  if (localConnected.value) return t('settings.status.connected');
+  if (localRetryCount.value > 0) return t('settings.retrying', { count: localRetryCount.value, max: 10 });
+  return t('settings.status.disconnected');
 });
 
 const remoteButtonLabel = computed(() => {
-  if (remoteConnecting.value) return t('settings.connecting');
-  return remoteConnected.value ? t('settings.disconnect') : t('settings.connect');
+  if (remoteConnected.value) return t('settings.status.connected');
+  if (remoteRetryCount.value > 0) return t('settings.retrying', { count: remoteRetryCount.value, max: 10 });
+  return t('settings.status.disconnected');
 });
 
 const connectionButtonClass = (status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
-  if (status === 'connecting') return 'bg-gray-400 hover:bg-gray-400';
-  if (status === 'connected') return 'bg-red-600 hover:bg-red-700';
-  return 'bg-blue-600 hover:bg-blue-700';
+  if (status === 'connected') return 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600';
+  return 'bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 active:bg-blue-600 active:text-white';
 };
 
 const handleLocalConnection = async () => {
@@ -301,6 +304,19 @@ const close = () => {
                   <span class="font-medium text-gray-700">{{ t('settings.connectionUrl') }}: </span>
                   <span>{{ localWsUrl }}</span>
                 </div>
+                <div class="w-full pt-2">
+                  <button
+                    @click="handleLocalConnection"
+                    :disabled="localConnecting || localRetryCount > 0 || (!localConnected && !localHasConfig)"
+                    class="relative w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded-lg transition-colors text-sm shadow-sm overflow-hidden disabled:opacity-50"
+                    :class="connectionButtonClass(localStatus)"
+                  >
+                    <span v-if="localConnecting" class="btn-fill"></span>
+                    <LinkIcon v-if="localConnected" class="w-4 h-4" />
+                    <LinkOffIcon v-else class="w-4 h-4" />
+                    <span class="relative z-10">{{ localButtonLabel }}</span>
+                  </button>
+                </div>
             </div>
 
             <!-- Remote Connection Tab -->
@@ -371,35 +387,20 @@ const close = () => {
                   <span>{{ remoteWsUrl }}</span>
                 </div>
                 <p class="text-xs text-gray-500">{{ t('settings.remoteAuthHint') }}</p>
+                <div class="w-full pt-2">
+                  <button
+                    @click="handleRemoteConnection"
+                    :disabled="remoteConnecting || remoteRetryCount > 0 || (!remoteConnected && !remoteHasConfig)"
+                    class="relative w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded-lg transition-colors text-sm shadow-sm overflow-hidden disabled:opacity-50"
+                    :class="connectionButtonClass(remoteStatus)"
+                  >
+                    <span v-if="remoteConnecting" class="btn-fill"></span>
+                    <LinkIcon v-if="remoteConnected" class="w-4 h-4" />
+                    <LinkOffIcon v-else class="w-4 h-4" />
+                    <span class="relative z-10">{{ remoteButtonLabel }}</span>
+                  </button>
+                </div>
             </div>
-          </div>
-
-          <div v-if="activeTab === 'local'" class="absolute right-6 top-[84px] z-10">
-            <button
-              @click="handleLocalConnection"
-              :disabled="localConnecting || (!localConnected && !localHasConfig)"
-              class="h-9 w-9 inline-flex items-center justify-center rounded-full text-white transition-colors text-sm disabled:opacity-50"
-              :class="connectionButtonClass(localStatus)"
-              :title="localButtonLabel"
-              :aria-label="localButtonLabel"
-            >
-              <LinkOffIcon v-if="localConnected" class="w-5 h-5" />
-              <LinkIcon v-else class="w-5 h-5" :class="{ 'animate-spin': localConnecting }" />
-            </button>
-          </div>
-
-          <div v-if="activeTab === 'remote'" class="absolute right-6 top-[84px] z-10">
-            <button
-              @click="handleRemoteConnection"
-              :disabled="remoteConnecting || (!remoteConnected && !remoteHasConfig)"
-              class="h-9 w-9 inline-flex items-center justify-center rounded-full text-white transition-colors text-sm disabled:opacity-50"
-              :class="connectionButtonClass(remoteStatus)"
-              :title="remoteButtonLabel"
-              :aria-label="remoteButtonLabel"
-            >
-              <LinkOffIcon v-if="remoteConnected" class="w-5 h-5" />
-              <LinkIcon v-else class="w-5 h-5" :class="{ 'animate-spin': remoteConnecting }" />
-            </button>
           </div>
           
           <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-br-lg">
@@ -412,3 +413,21 @@ const close = () => {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.btn-fill {
+  position: absolute;
+  inset: 0;
+  background: #2563eb;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: btnFill 0.6s ease-out forwards;
+  opacity: 0.9;
+}
+
+@keyframes btnFill {
+  to {
+    transform: scaleX(1);
+  }
+}
+</style>

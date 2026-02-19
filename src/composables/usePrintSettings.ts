@@ -73,6 +73,8 @@ interface PrintSettingsState {
   remoteStatus: ReturnType<typeof ref<ConnectionStatus>>;
   localStatusMessage: ReturnType<typeof ref<string>>;
   remoteStatusMessage: ReturnType<typeof ref<string>>;
+  localRetryCount: ReturnType<typeof ref<number>>;
+  remoteRetryCount: ReturnType<typeof ref<number>>;
   localPrintOptions: PrintOptions;
   remotePrintOptions: PrintOptions;
   localWsUrl: ReturnType<typeof computed<string>>;
@@ -738,6 +740,8 @@ const createState = (): PrintSettingsState => {
     remoteStatus,
     localStatusMessage,
     remoteStatusMessage,
+    localRetryCount,
+    remoteRetryCount,
     localPrintOptions,
     remotePrintOptions,
     localWsUrl,
