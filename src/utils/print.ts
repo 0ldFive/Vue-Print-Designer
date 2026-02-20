@@ -608,7 +608,7 @@ export const usePrint = () => {
             clone.style.width = `${width}px`;
             clone.style.height = `${height}px`;
             clone.style.transform = 'none'; // Reset zoom
-            clone.style.background = store.canvasBackground;
+            clone.style.backgroundColor = store.canvasBackground;
 
             // MARK WRAPPERS for pagination logic BEFORE cleaning
             const wrappers = clone.querySelectorAll('.element-wrapper');

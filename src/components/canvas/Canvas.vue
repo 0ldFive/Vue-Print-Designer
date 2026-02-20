@@ -75,11 +75,16 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', handleLineMouseUp);
 });
 
-const pageStyle = computed(() => ({
-  width: `${store.canvasSize.width}px`,
-  height: `${store.canvasSize.height}px`,
-  backgroundColor: store.canvasBackground
-}));
+const pageStyle = computed(() => {
+  const base = {
+    width: `${store.canvasSize.width}px`,
+    height: `${store.canvasSize.height}px`,
+    backgroundColor: store.canvasBackground
+  } as const;
+
+  if (!watermarkStyle.value) return base;
+  return { ...base, ...watermarkStyle.value } as const;
+});
 
 const escapeXml = (value: string) => value
   .replace(/&/g, '&amp;')
@@ -583,8 +588,6 @@ const getGlobalElements = () => {
            style="background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
       </div>
 
-       <!-- Watermark -->
-       <div v-if="watermarkStyle" class="absolute inset-0 pointer-events-none z-[5]" :style="watermarkStyle"></div>
 
       <!-- Selection Box -->
       <div v-if="isBoxSelecting && currentSelectingPageIndex === index" :style="selectionBoxStyle"></div>
