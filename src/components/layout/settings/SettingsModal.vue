@@ -51,7 +51,7 @@ const localConnected = computed(() => localStatus.value === 'connected');
 const remoteConnected = computed(() => remoteStatus.value === 'connected');
 const localConnecting = computed(() => localStatus.value === 'connecting');
 const remoteConnecting = computed(() => remoteStatus.value === 'connecting');
-const localHasConfig = computed(() => Boolean(localSettings.host && localSettings.port));
+const localHasConfig = computed(() => Boolean(localSettings.wsAddress));
 const remoteHasConfig = computed(() => Boolean(remoteSettings.apiBaseUrl && remoteSettings.username && remoteSettings.password));
 
 const localButtonLabel = computed(() => {
@@ -274,24 +274,9 @@ const close = () => {
                   <p class="text-xs text-gray-500">{{ t('settings.localClientDesc') }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.host') }}</span>
-                    <input v-model="localSettings.host" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.port') }}</span>
-                    <input v-model="localSettings.port" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.wsPath') }}</span>
-                    <input v-model="localSettings.path" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.protocol') }}</span>
-                    <select v-model="localSettings.protocol" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                      <option value="ws">ws</option>
-                      <option value="wss">wss</option>
-                    </select>
+                  <label class="flex flex-col gap-1 col-span-2">
+                    <span class="text-xs text-gray-500">{{ t('settings.wsAddress') }}</span>
+                    <input v-model="localSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('settings.localWsAddressPlaceholder')" />
                   </label>
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.secretKey') }}</span>
@@ -347,24 +332,9 @@ const close = () => {
                   <p class="text-xs text-gray-500">{{ t('settings.remoteWsDesc') }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.host') }}</span>
-                    <input v-model="remoteSettings.host" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.port') }}</span>
-                    <input v-model="remoteSettings.wsPort" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.wsPath') }}</span>
-                    <input v-model="remoteSettings.wsPath" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
-                  </label>
-                  <label class="flex flex-col gap-1">
-                    <span class="text-xs text-gray-500">{{ t('settings.protocol') }}</span>
-                    <select v-model="remoteSettings.wsProtocol" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                      <option value="ws">ws</option>
-                      <option value="wss">wss</option>
-                    </select>
+                  <label class="flex flex-col gap-1 col-span-2">
+                    <span class="text-xs text-gray-500">{{ t('settings.wsAddress') }}</span>
+                    <input v-model="remoteSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('settings.wsAddressPlaceholder')" />
                   </label>
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.remoteClient') }}</span>

@@ -19,18 +19,12 @@ export interface PrintOptions {
 }
 
 export interface LocalConnectionSettings {
-  host: string;
-  port: string;
-  path: string;
-  protocol: 'ws' | 'wss';
+  wsAddress: string;
   secretKey: string;
 }
 
 export interface RemoteConnectionSettings {
-  host: string;
-  wsPort: string;
-  wsPath: string;
-  wsProtocol: 'ws' | 'wss';
+  wsAddress: string;
   apiBaseUrl: string;
   username: string;
   password: string;
@@ -109,18 +103,12 @@ const storageKeys = {
 };
 
 const defaultLocalSettings: LocalConnectionSettings = {
-  host: 'localhost',
-  port: '1122',
-  path: '/ws',
-  protocol: 'ws',
+  wsAddress: 'ws://localhost:1122/ws',
   secretKey: ''
 };
 
 const defaultRemoteSettings: RemoteConnectionSettings = {
-  host: 'localhost',
-  wsPort: '1122',
-  wsPath: '/ws/request',
-  wsProtocol: 'ws',
+  wsAddress: 'ws://localhost:8080/ws/request',
   apiBaseUrl: '/api',
   username: '',
   password: ''
@@ -159,6 +147,15 @@ const buildWsUrl = (protocol: string, host: string, port: string, path: string) 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const portPart = port ? `:${port}` : '';
   return `${protocol}://${host}${portPart}${normalizedPath}`;
+};
+
+const normalizeWsAddress = (address: string) => address.trim();
+
+const buildWsUrlFromAddress = (address: string) => {
+  const normalized = normalizeWsAddress(address);
+  if (!normalized) return 'ws://';
+  if (/^wss?:\/\//i.test(normalized)) return normalized;
+  return `ws://${normalized.replace(/^\/+/, '')}`;
 };
 
 const appendQueryParam = (url: string, key: string, value: string) => {
@@ -238,7 +235,26 @@ const createState = (): PrintSettingsState => {
   const silentPrint = ref(localStorage.getItem(storageKeys.silentPrint) === 'true');
 
   const localSettings = reactive(loadJson(storageKeys.localSettings, defaultLocalSettings));
+  if (!localSettings.wsAddress) {
+    const legacy = localSettings as LocalConnectionSettings & { host?: string; port?: string; path?: string; protocol?: string };
+    if (legacy.host || legacy.port || legacy.path) {
+      const host = legacy.host || 'localhost';
+      const portPart = legacy.port ? `:${legacy.port}` : '';
+      const path = legacy.path || '/ws';
+      const protocol = legacy.protocol || 'ws';
+      localSettings.wsAddress = `${protocol}://${host}${portPart}${path}`;
+    }
+  }
   const remoteSettings = reactive(loadJson(storageKeys.remoteSettings, defaultRemoteSettings));
+  if (!remoteSettings.wsAddress) {
+    const legacy = remoteSettings as RemoteConnectionSettings & { host?: string; wsPort?: string; wsPath?: string };
+    if (legacy.host || legacy.wsPort || legacy.wsPath) {
+      const host = legacy.host || 'localhost';
+      const portPart = legacy.wsPort ? `:${legacy.wsPort}` : '';
+      const path = legacy.wsPath || '/ws/request';
+      remoteSettings.wsAddress = `${host}${portPart}${path}`;
+    }
+  }
 
   const localStatus = ref<ConnectionStatus>('disconnected');
   const remoteStatus = ref<ConnectionStatus>('disconnected');
@@ -272,12 +288,12 @@ const createState = (): PrintSettingsState => {
   const maxRetries = 10;
 
   const localWsUrl = computed(() => {
-    const base = buildWsUrl(localSettings.protocol, localSettings.host, localSettings.port, localSettings.path);
+    const base = buildWsUrlFromAddress(localSettings.wsAddress);
     return appendQueryParam(base, 'key', localSettings.secretKey.trim());
   });
 
   const remoteWsUrl = computed(() => {
-    const base = buildWsUrl(remoteSettings.wsProtocol, remoteSettings.host, remoteSettings.wsPort, remoteSettings.wsPath);
+    const base = buildWsUrlFromAddress(remoteSettings.wsAddress);
     return appendQueryParam(base, 'token', remoteAuthToken.value.trim());
   });
 
