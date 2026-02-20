@@ -107,6 +107,9 @@ const handleSaveCustomEditAs = (name: string) => {
 };
 
 const handleExitCustomEdit = () => {
+  if (!confirm(t('sidebar.confirmExitEdit'))) {
+    return;
+  }
   store.cancelCustomElementEdit();
 };
 

@@ -152,6 +152,7 @@ export default {
     enterNamePlaceholder: '输入组件名称...',
     confirmDelete: '确定要删除 "{name}" 吗？',
     confirmSwitchEdit: '退出当前对 "{name}" 的编辑？',
+    confirmExitEdit: '存在未保存的更改，确定退出吗？',
     editingElement: '正在编辑自定义元素：{name}',
     saveEdit: '保存',
     saveAs: '另存为',

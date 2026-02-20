@@ -152,6 +152,7 @@ export default {
     enterNamePlaceholder: 'Enter element name...',
     confirmDelete: 'Are you sure you want to delete "{name}"?',
     confirmSwitchEdit: 'Exit current edit for "{name}"?',
+    confirmExitEdit: 'You have unsaved changes. Exit anyway?',
     editingElement: 'Editing custom element: {name}',
     saveEdit: 'Save',
     saveAs: 'Save As',
