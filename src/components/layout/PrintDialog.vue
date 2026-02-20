@@ -309,7 +309,7 @@ const modeTitle = computed(() => {
 
           <div class="space-y-3">
             <div class="font-medium text-gray-900">{{ t('printDialog.sectionAdvanced') }}</div>
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.colorMode') }}</span>
                 <select v-model="form.colorMode" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :disabled="!colorSupported">
@@ -326,6 +326,8 @@ const modeTitle = computed(() => {
                   <option value="duplexlong">{{ t('printDialog.duplexLong') }}</option>
                 </select>
               </label>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.paperSize') }}</span>
                 <select v-if="paperSizeOptions.length" v-model="form.paperSize" class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
@@ -333,8 +335,6 @@ const modeTitle = computed(() => {
                 </select>
                 <input v-else v-model="form.paperSize" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.paperSizePlaceholder')" />
               </label>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
               <label class="flex flex-col gap-1">
                 <span class="text-xs text-gray-500">{{ t('printDialog.trayBin') }}</span>
                 <input v-model="form.trayBin" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.trayBinPlaceholder')" />
