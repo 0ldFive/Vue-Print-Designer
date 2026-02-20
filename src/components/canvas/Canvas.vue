@@ -81,6 +81,39 @@ const pageStyle = computed(() => ({
   backgroundColor: store.canvasBackground
 }));
 
+const escapeXml = (value: string) => value
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;');
+
+const watermarkStyle = computed(() => {
+  const watermark = store.watermark;
+  if (!watermark || !watermark.enabled || !watermark.text) return null;
+
+  const text = escapeXml(watermark.text);
+  const angle = Number.isFinite(watermark.angle) ? watermark.angle : -30;
+  const size = Math.max(6, watermark.size || 24);
+  const density = Math.max(40, watermark.density || 160);
+  const color = watermark.color || '#000000';
+  const opacity = Math.min(1, Math.max(0, watermark.opacity ?? 0.1));
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${density}" height="${density}">` +
+    `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"` +
+    ` fill="${color}" fill-opacity="${opacity}" font-size="${size}"` +
+    ` transform="rotate(${angle} ${density / 2} ${density / 2})">${text}</text>` +
+    `</svg>`;
+
+  const encoded = encodeURIComponent(svg);
+  return {
+    backgroundImage: `url("data:image/svg+xml,${encoded}")`,
+    backgroundRepeat: 'repeat',
+    backgroundSize: `${density}px ${density}px`
+  } as const;
+});
+
 const draggingPageIndex = computed(() => {
   if (!store.isDragging || !store.selectedElementId) return -1;
   return store.pages.findIndex(p => p.elements.some(e => e.id === store.selectedElementId));
@@ -549,6 +582,9 @@ const getGlobalElements = () => {
       <div v-if="store.showGrid" class="absolute inset-0 pointer-events-none opacity-50"
            style="background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
       </div>
+
+       <!-- Watermark -->
+       <div v-if="watermarkStyle" class="absolute inset-0 pointer-events-none z-[5]" :style="watermarkStyle"></div>
 
       <!-- Selection Box -->
       <div v-if="isBoxSelecting && currentSelectingPageIndex === index" :style="selectionBoxStyle"></div>

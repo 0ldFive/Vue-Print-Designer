@@ -22,6 +22,44 @@ const canvasBackground = computed({
   set: (val) => store.setCanvasBackground(val)
 });
 
+const watermarkText = computed({
+  get: () => store.watermark?.text || '',
+  set: (val) => store.setWatermark({ text: val })
+});
+
+const watermarkEnabled = computed({
+  get: () => store.watermark?.enabled ?? false,
+  set: (val) => store.setWatermark({ enabled: Boolean(val) })
+});
+
+const watermarkAngle = computed({
+  get: () => store.watermark?.angle ?? -30,
+  set: (val) => store.setWatermark({ angle: Number(val) })
+});
+
+const watermarkColor = computed({
+  get: () => store.watermark?.color || '#000000',
+  set: (val) => store.setWatermark({ color: val })
+});
+
+const watermarkOpacity = computed({
+  get: () => Math.round(((store.watermark?.opacity ?? 0.1) * 100) as number),
+  set: (val) => {
+    const next = Math.max(0, Math.min(100, Number(val)));
+    store.setWatermark({ opacity: next / 100 });
+  }
+});
+
+const watermarkSize = computed({
+  get: () => formatUnitValue(store.watermark?.size ?? 24),
+  set: (val) => store.setWatermark({ size: unitToPx(Number(val), store.unit as Unit) })
+});
+
+const watermarkDensity = computed({
+  get: () => formatUnitValue(store.watermark?.density ?? 160),
+  set: (val) => store.setWatermark({ density: unitToPx(Number(val), store.unit as Unit) })
+});
+
 const unitLabel = computed(() => {
   if (store.unit === 'px') return t('common.px');
   if (store.unit === 'pt') return t('common.pt');
@@ -215,6 +253,98 @@ watch(() => store.canvasSize, (newSize) => {
             </div>
           </template>
         </ColorPicker>
+      </div>
+
+      <div class="border-t border-gray-200 my-4 pt-3">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ t('editor.watermark') }}</h3>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-700 font-medium">{{ t('editor.watermarkEnable') }}</span>
+            <button 
+              @click="watermarkEnabled = !watermarkEnabled"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              :class="watermarkEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+            >
+              <span class="sr-only">Toggle watermark</span>
+              <span
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                :class="watermarkEnabled ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkText') }}</label>
+            <input
+              v-model="watermarkText"
+              type="text"
+              class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+              :placeholder="t('editor.watermarkTextPlaceholder')"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkAngle') }}</label>
+              <input
+                v-model.number="watermarkAngle"
+                type="number"
+                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkOpacity') }}</label>
+              <input
+                v-model.number="watermarkOpacity"
+                type="number"
+                min="0"
+                max="100"
+                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkSize') }} ({{ unitLabel }})</label>
+              <input
+                v-model.number="watermarkSize"
+                type="number"
+                min="1"
+                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkDensity') }} ({{ unitLabel }})</label>
+              <input
+                v-model.number="watermarkDensity"
+                type="number"
+                min="20"
+                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkColor') }}</label>
+            <ColorPicker
+              v-model="watermarkColor"
+              default-color="#000000"
+              placement="bottom-end"
+            >
+              <template #trigger="{ color, open }">
+                <div
+                  class="w-8 h-6 rounded border border-gray-300 cursor-pointer relative overflow-hidden hover:border-blue-500 transition-colors"
+                  :class="{ 'ring-2 ring-blue-500 ring-offset-1': open }"
+                >
+                  <div class="absolute inset-0" :style="{ backgroundColor: color }"></div>
+                </div>
+              </template>
+            </ColorPicker>
+          </div>
+        </div>
       </div>
 
       <div class="border-t border-gray-200 my-4 pt-3">

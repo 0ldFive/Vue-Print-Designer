@@ -1,11 +1,32 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
-import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate } from '@/types';
+import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings } from '@/types';
+
+const defaultWatermark: WatermarkSettings = {
+  enabled: false,
+  text: '',
+  angle: -30,
+  color: '#000000',
+  opacity: 0.1,
+  size: 24,
+  density: 160
+};
+
+const loadWatermark = (): WatermarkSettings => {
+  const stored = localStorage.getItem('print-designer-watermark');
+  if (!stored) return { ...defaultWatermark };
+  try {
+    return { ...defaultWatermark, ...(JSON.parse(stored) as WatermarkSettings) };
+  } catch {
+    return { ...defaultWatermark };
+  }
+};
 
 export const useDesignerStore = defineStore('designer', {
   state: (): DesignerState => ({
     unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt') || 'mm',
+    watermark: loadWatermark(),
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
     customElements: JSON.parse(localStorage.getItem('print-designer-custom-elements') || '[]'),
@@ -38,6 +59,10 @@ export const useDesignerStore = defineStore('designer', {
     tableSelection: null,
   }),
   actions: {
+    setWatermark(update: Partial<WatermarkSettings>) {
+      this.watermark = { ...(this.watermark || defaultWatermark), ...update };
+      localStorage.setItem('print-designer-watermark', JSON.stringify(this.watermark));
+    },
     setUnit(unit: 'mm' | 'px' | 'pt') {
       this.unit = unit;
       localStorage.setItem('print-designer-unit', unit);
@@ -58,6 +83,8 @@ export const useDesignerStore = defineStore('designer', {
       this.isExporting = isExporting;
     },
     resetCanvas() {
+      this.watermark = { ...defaultWatermark };
+      localStorage.setItem('print-designer-watermark', JSON.stringify(this.watermark));
       this.pages = [{ id: uuidv4(), elements: [] }];
       this.currentPageIndex = 0;
       this.selectedElementId = null;

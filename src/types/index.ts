@@ -1,3 +1,12 @@
+export interface WatermarkSettings {
+  enabled: boolean;
+  text: string;
+  angle: number;
+  color: string;
+  opacity: number;
+  size: number;
+  density: number;
+}
 export interface Position {
   x: number;
   y: number;
@@ -121,6 +130,7 @@ export interface DesignerState {
   highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null;
   canvasSize: Size; // A4 usually
   unit?: 'mm' | 'px' | 'pt';
+  watermark?: WatermarkSettings;
   zoom: number;
   isDragging: boolean;
   showGrid: boolean;
