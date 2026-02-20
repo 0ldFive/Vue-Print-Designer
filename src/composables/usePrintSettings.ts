@@ -285,7 +285,9 @@ const createState = (): PrintSettingsState => {
     localStorage.setItem(storageKeys.printMode, value);
     if (value !== 'browser') {
       localStorage.setItem(storageKeys.preferredPrintMode, value);
+      return;
     }
+    localStorage.removeItem(storageKeys.preferredPrintMode);
   });
 
   watch(silentPrint, (value) => {
