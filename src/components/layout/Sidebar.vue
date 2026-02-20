@@ -39,6 +39,7 @@ const renameInitialName = ref('');
 const showTestDataModal = ref(false);
 const testDataContent = ref('');
 const testDataTarget = ref<CustomElementTemplate | null>(null);
+const testDataAllowedKeys = ref<string[]>([]);
 
 const categories = [
   {
@@ -193,13 +194,16 @@ const handleTestData = (item: CustomElementTemplate) => {
   testDataTarget.value = item;
   const existing = item.testData || {};
   const data = buildTestDataFromElement(item.element, existing);
+  testDataAllowedKeys.value = Object.keys(data);
   testDataContent.value = JSON.stringify(data, null, 2);
   showTestDataModal.value = true;
 };
 
 const handleTestDataClose = () => {
   const target = testDataTarget.value;
+  const allowedKeys = new Set(testDataAllowedKeys.value || []);
   testDataTarget.value = null;
+  testDataAllowedKeys.value = [];
 
   if (!target) return;
 
@@ -219,7 +223,24 @@ const handleTestDataClose = () => {
     return;
   }
 
-  target.testData = parsed;
+  if (allowedKeys.size > 0) {
+    const inputKeys = Object.keys(parsed);
+    const hasKeyDiff = inputKeys.length !== allowedKeys.size
+      || inputKeys.some(key => !allowedKeys.has(key));
+    if (hasKeyDiff) {
+      alert(t('common.testDataKeyChanged'));
+      return;
+    }
+  }
+
+  const base = buildTestDataFromElement(target.element, target.testData || {});
+  const next: Record<string, any> = {};
+  Object.keys(base).forEach((key) => {
+    if (allowedKeys.size === 0 || allowedKeys.has(key)) {
+      next[key] = Object.prototype.hasOwnProperty.call(parsed, key) ? parsed[key] : base[key];
+    }
+  });
+  target.testData = next;
   store.saveCustomElements();
 };
 

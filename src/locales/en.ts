@@ -27,6 +27,7 @@ export default {
     appTitle: 'Print Designer',
     testData: 'Test Data',
     invalidJson: 'Invalid JSON. Changes were not saved.',
+    testDataKeyChanged: 'Test data keys cannot be changed. Please only edit values.',
   },
   template: {
     select: 'Select Template',

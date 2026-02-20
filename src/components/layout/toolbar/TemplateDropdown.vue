@@ -37,6 +37,7 @@ const targetTemplateId = ref<string | null>(null);
 const showTestDataModal = ref(false);
 const testDataContent = ref('');
 const testDataTarget = ref<Template | null>(null);
+const testDataAllowedKeys = ref<string[]>([]);
 
 onMounted(() => {
   store.loadTemplates();
@@ -180,14 +181,18 @@ const buildTemplateTestData = (template: Template) => {
 const handleTestData = (template: Template) => {
   activeMenuId.value = null;
   testDataTarget.value = template;
-  testDataContent.value = JSON.stringify(buildTemplateTestData(template), null, 2);
+  const data = buildTemplateTestData(template);
+  testDataAllowedKeys.value = Object.keys(data);
+  testDataContent.value = JSON.stringify(data, null, 2);
   showTestDataModal.value = true;
   isOpen.value = false;
 };
 
 const handleTestDataClose = () => {
   const target = testDataTarget.value;
+  const allowedKeys = new Set(testDataAllowedKeys.value || []);
   testDataTarget.value = null;
+  testDataAllowedKeys.value = [];
 
   if (!target) return;
 
@@ -205,6 +210,16 @@ const handleTestDataClose = () => {
   if (!parsed) {
     alert(t('common.invalidJson'));
     return;
+  }
+
+  if (allowedKeys.size > 0) {
+    const inputKeys = Object.keys(parsed);
+    const hasKeyDiff = inputKeys.length !== allowedKeys.size
+      || inputKeys.some(key => !allowedKeys.has(key));
+    if (hasKeyDiff) {
+      alert(t('common.testDataKeyChanged'));
+      return;
+    }
   }
 
   target.data = { ...(target.data || {}), testData: parsed };

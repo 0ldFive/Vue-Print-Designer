@@ -27,6 +27,7 @@ export default {
     appTitle: '打印设计器',
     testData: '测试数据',
     invalidJson: 'JSON 无效，未保存更改。',
+    testDataKeyChanged: '测试数据的键不允许修改，请仅编辑值。',
   },
   template: {
     select: '选择模版',
