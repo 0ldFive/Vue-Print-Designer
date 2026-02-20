@@ -12,7 +12,7 @@ import { elementPropertiesSchema as QrCodeSchema } from '@/components/elements/Q
 import { elementPropertiesSchema as LineSchema } from '@/components/elements/LineElement.vue';
 import { elementPropertiesSchema as RectSchema } from '@/components/elements/RectElement.vue';
 import { elementPropertiesSchema as CircleSchema } from '@/components/elements/CircleElement.vue';
-import { pxToMm, mmToPx } from '@/utils/units';
+import { pxToUnit, unitToPx, type Unit } from '@/utils/units';
 import PropertyInput from '@/components/properties/PropertyInput.vue';
 import PropertySelect from '@/components/properties/PropertySelect.vue';
 import PropertyColor from '@/components/properties/PropertyColor.vue';
@@ -67,6 +67,61 @@ const canSplitCells = computed(() => {
 
 const activeTab = ref<'properties' | 'style' | 'advanced'>('properties');
 const copied = ref(false);
+const unit = computed(() => (store.unit || 'mm') as Unit);
+const unitLabel = computed(() => store.unit || 'mm');
+const unitFieldKeys = new Set([
+  'fontSize',
+  'borderWidth',
+  'barcodeWidth',
+  'barcodeHeight',
+  'margin',
+  'borderRadius',
+  'headerHeight',
+  'rowHeight',
+  'footerHeight',
+  'labelFontSize',
+  'labelBorderWidth'
+]);
+
+const isUnitField = (field: PropertyField) => {
+  if (field.type !== 'number' || !field.key) return false;
+  return unitFieldKeys.has(field.key);
+};
+
+const getFieldLabel = (field: PropertyField) => {
+  const base = t(field.label);
+  return isUnitField(field) ? `${base} (${unitLabel.value})` : base;
+};
+
+const getFieldDisplayValue = (field: PropertyField) => {
+  const value = getFieldValue(field);
+  if (isUnitField(field) && typeof value === 'number') {
+    return pxToUnit(value, unit.value);
+  }
+  return value;
+};
+
+const toFieldValue = (field: PropertyField, value: any) => {
+  if (isUnitField(field)) {
+    return unitToPx(Number(value), unit.value);
+  }
+  return value;
+};
+
+const getFieldMin = (field: PropertyField) => {
+  if (field.min === undefined || field.min === null) return undefined;
+  return isUnitField(field) ? pxToUnit(field.min, unit.value) : field.min;
+};
+
+const getFieldMax = (field: PropertyField) => {
+  if (field.max === undefined || field.max === null) return undefined;
+  return isUnitField(field) ? pxToUnit(field.max, unit.value) : field.max;
+};
+
+const getFieldStep = (field: PropertyField) => {
+  if (field.step === undefined || field.step === null) return undefined;
+  return isUnitField(field) ? pxToUnit(field.step, unit.value) : field.step;
+};
 
 const copyId = () => {
   if (element.value) {
@@ -272,32 +327,32 @@ const handleFocusOut = (e: FocusEvent) => {
           <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.positionSize') }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <PropertyInput 
-              :label="t('properties.label.x')" 
+              :label="`${t('properties.label.x')} (${unitLabel})`" 
               type="number" 
               :disabled="isLocked"
-              :value="pxToMm(element.x)" 
-              @update:value="(v) => handleChange('x', mmToPx(Number(v)))" 
+              :value="pxToUnit(element.x, unit)" 
+              @update:value="(v) => handleChange('x', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
-              :label="t('properties.label.y')" 
+              :label="`${t('properties.label.y')} (${unitLabel})`" 
               type="number" 
               :disabled="isLocked"
-              :value="pxToMm(element.y)" 
-              @update:value="(v) => handleChange('y', mmToPx(Number(v)))" 
+              :value="pxToUnit(element.y, unit)" 
+              @update:value="(v) => handleChange('y', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
-              :label="t('properties.label.width')" 
+              :label="`${t('properties.label.width')} (${unitLabel})`" 
               type="number" 
               :disabled="isLocked"
-              :value="pxToMm(element.width)" 
-              @update:value="(v) => handleChange('width', mmToPx(Number(v)))" 
+              :value="pxToUnit(element.width, unit)" 
+              @update:value="(v) => handleChange('width', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
-              :label="t('properties.label.height')" 
+              :label="`${t('properties.label.height')} (${unitLabel})`" 
               type="number" 
               :disabled="isLocked"
-              :value="pxToMm(element.height)" 
-              @update:value="(v) => handleChange('height', mmToPx(Number(v)))" 
+              :value="pxToUnit(element.height, unit)" 
+              @update:value="(v) => handleChange('height', unitToPx(Number(v), unit))" 
             />
           </div>
         </div>
@@ -343,15 +398,15 @@ const handleFocusOut = (e: FocusEvent) => {
                 <!-- Text/Number/Switch Input -->
                 <PropertyInput
                   v-else-if="field.type === 'text' || field.type === 'number' || field.type === 'switch'"
-                  :label="t(field.label)"
+                  :label="getFieldLabel(field)"
                   :type="field.type"
-                  :min="field.min"
-                  :max="field.max"
-                  :step="field.step"
+                  :min="getFieldMin(field)"
+                  :max="getFieldMax(field)"
+                  :step="getFieldStep(field)"
                   :disabled="isLocked"
                   :placeholder="field.placeholder ? (field.placeholder.startsWith('properties.') ? t(field.placeholder) : field.placeholder) : ''"
-                  :value="getFieldValue(field)"
-                  @update:value="(v) => handleFieldChange(field, v)"
+                  :value="getFieldDisplayValue(field)"
+                  @update:value="(v) => handleFieldChange(field, toFieldValue(field, v))"
                 />
 
                 <!-- Select -->
