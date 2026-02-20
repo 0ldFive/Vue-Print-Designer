@@ -456,9 +456,6 @@ export default {
     paperSizePlaceholder: 'e.g. A4',
     trayBin: 'Tray',
     trayBinPlaceholder: 'e.g. 2 or Manual',
-    sumatraSettings: 'Sumatra Settings',
-    sumatraPlaceholder: 'fit,duplex',
-    sumatraHint: 'Windows only: SumatraPDF native -print-settings overrides automatic mapping.',
     confirm: 'Print'
   },
   preview: {

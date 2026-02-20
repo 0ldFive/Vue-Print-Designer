@@ -456,9 +456,6 @@ export default {
     paperSizePlaceholder: '如 A4',
     trayBin: '纸盒',
     trayBinPlaceholder: '如 2 或 Manual',
-    sumatraSettings: 'Sumatra 设置',
-    sumatraPlaceholder: 'fit,duplex',
-    sumatraHint: '仅 Windows：SumatraPDF 原生 -print-settings 会覆盖自动映射。',
     confirm: '打印'
   },
   preview: {

@@ -46,8 +46,7 @@ const form = reactive<PrintOptions>({
   colorMode: 'color',
   sidesMode: 'simplex',
   paperSize: '',
-  trayBin: '',
-  sumatraSettings: ''
+  trayBin: ''
 });
 
 watch(() => props.show, (val) => {
@@ -340,12 +339,7 @@ const modeTitle = computed(() => {
                 <span class="text-xs text-gray-500">{{ t('printDialog.trayBin') }}</span>
                 <input v-model="form.trayBin" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.trayBinPlaceholder')" />
               </label>
-              <label class="flex flex-col gap-1">
-                <span class="text-xs text-gray-500">{{ t('printDialog.sumatraSettings') }}</span>
-                <input v-model="form.sumatraSettings" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('printDialog.sumatraPlaceholder')" />
-              </label>
             </div>
-            <p class="text-xs text-gray-500">{{ t('printDialog.sumatraHint') }}</p>
           </div>
         </div>
 

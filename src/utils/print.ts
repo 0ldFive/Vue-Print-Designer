@@ -817,10 +817,6 @@ export const usePrint = () => {
     if (options.trayBin) {
       payload.tray = { bin: options.trayBin };
     }
-    if (options.sumatraSettings) {
-      payload.sumatra = { settings: options.sumatraSettings };
-    }
-
     return payload;
   };
 
@@ -832,7 +828,7 @@ export const usePrint = () => {
       resolved = true;
       socket.close();
       reject(new Error('Print request timeout'));
-    }, 8000);
+    }, 30000);
 
     socket.onopen = () => {
       socket.send(JSON.stringify(payload));

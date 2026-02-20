@@ -16,7 +16,6 @@ export interface PrintOptions {
   sidesMode: '' | 'simplex' | 'duplex' | 'duplexshort' | 'duplexlong';
   paperSize: string;
   trayBin: string;
-  sumatraSettings: string;
 }
 
 export interface LocalConnectionSettings {
@@ -139,8 +138,7 @@ const defaultPrintOptions: PrintOptions = {
   colorMode: 'color',
   sidesMode: 'simplex',
   paperSize: '',
-  trayBin: '',
-  sumatraSettings: ''
+  trayBin: ''
 };
 
 const loadJson = <T>(key: string, fallback: T): T => {
