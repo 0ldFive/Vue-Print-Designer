@@ -25,6 +25,8 @@ export default {
     lock: '锁定',
     unlock: '解锁',
     appTitle: '打印设计器',
+    testData: '测试数据',
+    invalidJson: 'JSON 无效，未保存更改。',
   },
   template: {
     select: '选择模版',

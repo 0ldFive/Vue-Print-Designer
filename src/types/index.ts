@@ -117,12 +117,14 @@ export interface CustomElementTemplate {
   id: string;
   name: string;
   element: PrintElement;
+  testData?: Record<string, any>;
 }
 
 export interface DesignerState {
   pages: Page[];
   currentPageIndex: number;
   customElements: CustomElementTemplate[];
+  testData: Record<string, any>;
   selectedElementId: string | null;
   selectedElementIds: string[];
   selectedGuideId: string | null;

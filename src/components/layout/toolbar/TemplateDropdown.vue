@@ -12,11 +12,15 @@ import Trash2 from '~icons/material-symbols/delete';
 import Add from '~icons/material-symbols/add';
 import Check from '~icons/material-symbols/check'; // For selection indicator maybe?
 import Description from '~icons/material-symbols/description';
+import DataObject from '~icons/material-symbols/data-object';
 
 import InputModal from '@/components/common/InputModal.vue';
+import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
+import { buildTestDataFromPages } from '@/utils/variables';
 
 const { t } = useI18n();
 const store = useTemplateStore();
+const designerStore = useDesignerStore();
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -29,6 +33,10 @@ const showModal = ref(false);
 const modalMode = ref<'create' | 'rename'>('create');
 const modalInitialName = ref('');
 const targetTemplateId = ref<string | null>(null);
+
+const showTestDataModal = ref(false);
+const testDataContent = ref('');
+const testDataTarget = ref<Template | null>(null);
 
 onMounted(() => {
   store.loadTemplates();
@@ -104,7 +112,7 @@ const toggleRowMenu = (e: MouseEvent, id: string) => {
     }
 
     // Vertical edge detection
-    const MENU_HEIGHT_ESTIMATE = 110; // 3 items (Rename, Copy, Delete)
+    const MENU_HEIGHT_ESTIMATE = 150; // 4 items (Test Data, Rename, Copy, Delete)
     const spaceBelow = window.innerHeight - rect.bottom;
 
     if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
@@ -160,6 +168,52 @@ const handleDelete = (template: Template) => {
     }
   }
   activeMenuId.value = null;
+};
+
+const buildTemplateTestData = (template: Template) => {
+  const isCurrent = store.currentTemplateId === template.id;
+  const existing = isCurrent ? (designerStore.testData || {}) : (template.data?.testData || {});
+  const pages = isCurrent ? designerStore.pages : (template.data?.pages || []);
+  return buildTestDataFromPages(pages, existing);
+};
+
+const handleTestData = (template: Template) => {
+  activeMenuId.value = null;
+  testDataTarget.value = template;
+  testDataContent.value = JSON.stringify(buildTemplateTestData(template), null, 2);
+  showTestDataModal.value = true;
+  isOpen.value = false;
+};
+
+const handleTestDataClose = () => {
+  const target = testDataTarget.value;
+  testDataTarget.value = null;
+
+  if (!target) return;
+
+  let parsed: Record<string, any> | null = null;
+  try {
+    const value = testDataContent.value?.trim() || '{}';
+    const json = JSON.parse(value);
+    if (json && typeof json === 'object' && !Array.isArray(json)) {
+      parsed = json;
+    }
+  } catch {
+    parsed = null;
+  }
+
+  if (!parsed) {
+    alert(t('common.invalidJson'));
+    return;
+  }
+
+  target.data = { ...(target.data || {}), testData: parsed };
+  target.updatedAt = Date.now();
+  store.saveToLocalStorage();
+
+  if (store.currentTemplateId === target.id) {
+    designerStore.testData = parsed;
+  }
 };
 
 const handleModalSave = (name: string) => {
@@ -243,6 +297,9 @@ const handleModalSave = (name: string) => {
         @click.stop
       >
         <template v-if="getActiveTemplate()">
+          <button @click="handleTestData(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+            <DataObject class="w-3.5 h-3.5" /> {{ t('common.testData') }}
+          </button>
           <button @click="handleEdit(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
             <Edit class="w-3.5 h-3.5" /> {{ t('common.rename') }}
           </button>
@@ -262,6 +319,15 @@ const handleModalSave = (name: string) => {
       :title="modalMode === 'create' ? t('template.new') : t('template.rename')"
       @close="showModal = false"
       @save="handleModalSave"
+    />
+
+    <CodeEditorModal
+      v-model:visible="showTestDataModal"
+      :title="t('common.testData')"
+      :value="testDataContent"
+      language="json"
+      @update:value="testDataContent = $event"
+      @close="handleTestDataClose"
     />
   </div>
 </template>

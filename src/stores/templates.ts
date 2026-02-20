@@ -56,6 +56,7 @@ export const useTemplateStore = defineStore('templates', {
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
         watermark: cloneDeep(designerStore.watermark),
+        testData: cloneDeep(designerStore.testData || {}),
         // Add other necessary state here
       };
 
@@ -94,6 +95,7 @@ export const useTemplateStore = defineStore('templates', {
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
         watermark: designerStore.watermark,
+        testData: cloneDeep(designerStore.testData || {}),
         // ... capture current state if data not provided
       };
       
@@ -166,6 +168,7 @@ export const useTemplateStore = defineStore('templates', {
         if (data.pageSpacingY !== undefined) designerStore.pageSpacingY = data.pageSpacingY;
         if (data.unit !== undefined) designerStore.unit = data.unit;
         if (data.watermark !== undefined) designerStore.watermark = data.watermark;
+        designerStore.testData = data.testData || {};
         
         // Reset selection and history
         designerStore.selectedElementId = null;

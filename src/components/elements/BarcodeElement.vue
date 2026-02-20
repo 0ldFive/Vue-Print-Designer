@@ -1,18 +1,37 @@
 <script setup lang="ts">
-import { onMounted, watch, ref, nextTick } from 'vue';
+import { onMounted, watch, ref, nextTick, computed } from 'vue';
 import type { PrintElement } from '@/types';
 import JsBarcode from 'jsbarcode';
+import { useDesignerStore } from '@/stores/designer';
+import { normalizeVariableKey } from '@/utils/variables';
 
 const props = defineProps<{
   element: PrintElement;
 }>();
 
+const store = useDesignerStore();
+
 const barcodeRef = ref<HTMLImageElement | null>(null);
+
+const resolvedContent = computed(() => {
+  const variable = props.element.variable || '';
+  if (store.isExporting && variable) {
+    const key = normalizeVariableKey(variable);
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  return props.element.variable || props.element.content || '12345678';
+});
 
 const renderBarcode = () => {
   if (!barcodeRef.value) return;
   try {
-    const content = props.element.variable || props.element.content || '12345678';
+    const content = resolvedContent.value;
     const style = props.element.style as any;
 
     JsBarcode(barcodeRef.value, content, {
@@ -39,7 +58,7 @@ onMounted(() => {
     nextTick(renderBarcode);
 });
 
-watch(() => [props.element.content, props.element.variable, props.element.style], () => {
+watch(() => [props.element.content, props.element.variable, props.element.style, store.isExporting, store.testData], () => {
     nextTick(renderBarcode);
 }, { deep: true });
 </script>

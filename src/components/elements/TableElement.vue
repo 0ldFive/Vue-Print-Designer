@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import cloneDeep from 'lodash/cloneDeep';
+import { normalizeVariableKey } from '@/utils/variables';
 
 const props = defineProps<{
   element: PrintElement;
@@ -180,6 +181,15 @@ const processedData = computed(() => {
   const cols = props.element.columns || [];
   let data = props.element.data || [];
   let footerData = props.element.footerData || [];
+
+  if (store.isExporting && props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
+    const testData = store.testData || {};
+    const tableData = key ? testData[key] : undefined;
+    if (Array.isArray(tableData)) {
+      data = cloneDeep(tableData);
+    }
+  }
   
   if (props.element.customScript) {
     try {

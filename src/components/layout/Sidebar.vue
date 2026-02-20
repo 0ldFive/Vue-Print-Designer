@@ -16,8 +16,11 @@ import Delete from '~icons/material-symbols/delete';
 import MoreVert from '~icons/material-symbols/more-vert';
 import Edit from '~icons/material-symbols/edit';
 import Copy from '~icons/material-symbols/content-copy';
+import DataObject from '~icons/material-symbols/data-object';
 import { ElementType, type CustomElementTemplate } from '@/types';
 import InputModal from '@/components/common/InputModal.vue';
+import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
+import { buildTestDataFromElement, elementSupportsVariables } from '@/utils/variables';
 
 const { t } = useI18n();
 const store = useDesignerStore();
@@ -32,6 +35,10 @@ const menuPosition = ref<Record<string, string>>({});
 const showRenameModal = ref(false);
 const renameTargetId = ref<string | null>(null);
 const renameInitialName = ref('');
+
+const showTestDataModal = ref(false);
+const testDataContent = ref('');
+const testDataTarget = ref<CustomElementTemplate | null>(null);
 
 const categories = [
   {
@@ -109,7 +116,7 @@ const toggleMenu = (event: MouseEvent, id: string) => {
     }
 
     // Vertical edge detection
-    const MENU_HEIGHT_ESTIMATE = 130; // Estimate menu height (3 items + padding)
+    const MENU_HEIGHT_ESTIMATE = 170; // Estimate menu height (4 items + padding)
     const spaceBelow = window.innerHeight - rect.bottom;
     
     if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
@@ -158,6 +165,45 @@ const handleDelete = (item: CustomElementTemplate) => {
   if (confirm(t('sidebar.confirmDelete', { name: item.name }))) {
     store.removeCustomElement(item.id);
   }
+};
+
+const supportsTestData = (item: CustomElementTemplate) => {
+  return elementSupportsVariables(item.element);
+};
+
+const handleTestData = (item: CustomElementTemplate) => {
+  activeMenuId.value = null;
+  testDataTarget.value = item;
+  const existing = item.testData || {};
+  const data = buildTestDataFromElement(item.element, existing);
+  testDataContent.value = JSON.stringify(data, null, 2);
+  showTestDataModal.value = true;
+};
+
+const handleTestDataClose = () => {
+  const target = testDataTarget.value;
+  testDataTarget.value = null;
+
+  if (!target) return;
+
+  let parsed: Record<string, any> | null = null;
+  try {
+    const value = testDataContent.value?.trim() || '{}';
+    const json = JSON.parse(value);
+    if (json && typeof json === 'object' && !Array.isArray(json)) {
+      parsed = json;
+    }
+  } catch {
+    parsed = null;
+  }
+
+  if (!parsed) {
+    alert(t('common.invalidJson'));
+    return;
+  }
+
+  target.testData = parsed;
+  store.saveCustomElements();
 };
 
 // Close menu when clicking outside
@@ -254,6 +300,9 @@ onUnmounted(() => {
       >
         <template v-for="item in customElements" :key="item.id">
           <template v-if="item.id === activeMenuId">
+            <button v-if="supportsTestData(item)" @click="handleTestData(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <DataObject class="w-3.5 h-3.5" /> {{ t('common.testData') }}
+            </button>
             <button @click="handleRename(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
               <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.rename') }}
             </button>
@@ -275,6 +324,15 @@ onUnmounted(() => {
       :placeholder="t('sidebar.enterNamePlaceholder')"
       @close="showRenameModal = false"
       @save="onRenameSave"
+    />
+
+    <CodeEditorModal
+      v-model:visible="showTestDataModal"
+      :title="t('common.testData')"
+      :value="testDataContent"
+      language="json"
+      @update:value="testDataContent = $event"
+      @close="handleTestDataClose"
     />
   </aside>
 </template>

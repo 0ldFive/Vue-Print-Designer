@@ -1,17 +1,36 @@
 <script setup lang="ts">
-import { onMounted, watch, ref, nextTick } from 'vue';
+import { onMounted, watch, ref, nextTick, computed } from 'vue';
 import type { PrintElement } from '@/types';
 import QRCode from 'qrcode';
+import { useDesignerStore } from '@/stores/designer';
+import { normalizeVariableKey } from '@/utils/variables';
 
 const props = defineProps<{
   element: PrintElement;
 }>();
 
+const store = useDesignerStore();
+
 const qrSrc = ref('');
+
+const resolvedContent = computed(() => {
+  const variable = props.element.variable || '';
+  if (store.isExporting && variable) {
+    const key = normalizeVariableKey(variable);
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  return props.element.variable || props.element.content || 'https://example.com';
+});
 
 const renderQR = async () => {
   try {
-    const content = props.element.variable || props.element.content || 'https://example.com';
+    const content = resolvedContent.value;
     
     qrSrc.value = await QRCode.toDataURL(content, {
       margin: 0,
@@ -27,7 +46,7 @@ const renderQR = async () => {
 };
 
 onMounted(() => nextTick(renderQR));
-watch(() => [props.element.content, props.element.variable, props.element.style], () => nextTick(renderQR), { deep: true });
+watch(() => [props.element.content, props.element.variable, props.element.style, store.isExporting, store.testData], () => nextTick(renderQR), { deep: true });
 </script>
 
 <script lang="ts">

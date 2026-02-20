@@ -25,6 +25,8 @@ export default {
     lock: 'Lock',
     unlock: 'Unlock',
     appTitle: 'Print Designer',
+    testData: 'Test Data',
+    invalidJson: 'Invalid JSON. Changes were not saved.',
   },
   template: {
     select: 'Select Template',

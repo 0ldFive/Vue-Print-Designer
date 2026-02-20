@@ -30,6 +30,7 @@ export const useDesignerStore = defineStore('designer', {
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
     customElements: JSON.parse(localStorage.getItem('print-designer-custom-elements') || '[]'),
+    testData: {},
     selectedElementId: null,
     selectedElementIds: [],
     selectedGuideId: null,
@@ -95,6 +96,7 @@ export const useDesignerStore = defineStore('designer', {
       localStorage.setItem('print-designer-watermark', JSON.stringify(this.watermark));
       this.pages = [{ id: uuidv4(), elements: [] }];
       this.currentPageIndex = 0;
+      this.testData = {};
       this.selectedElementId = null;
       this.selectedElementIds = [];
       this.selectedGuideId = null;

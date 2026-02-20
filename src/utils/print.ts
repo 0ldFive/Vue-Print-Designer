@@ -53,7 +53,7 @@ export const usePrint = () => {
       
       // Add repeated headers with new IDs
       for (const el of repeatHeaders) {
-      const isHeader = copyHeader && headerHeight > 0 && top < headerHeight;
+        page.elements.push({ ...cloneDeep(el), id: uuidv4() });
       }
       
       // Add repeated footers with new IDs
@@ -181,6 +181,7 @@ export const usePrint = () => {
     showFooterLine: boolean;
     watermark: WatermarkSettings;
     unit: 'mm' | 'px' | 'pt';
+    testData: Record<string, any>;
   };
 
   const buildPrintRenderPayload = (): PrintRenderPayload => ({
@@ -192,7 +193,8 @@ export const usePrint = () => {
     showHeaderLine: store.showHeaderLine,
     showFooterLine: store.showFooterLine,
     watermark: cloneDeep(store.watermark),
-    unit: store.unit || 'mm'
+    unit: store.unit || 'mm',
+    testData: cloneDeep(store.testData || {})
   });
 
   const waitForMessage = (token: string, type: string, timeoutMs = 10000) => new Promise<any>((resolve, reject) => {

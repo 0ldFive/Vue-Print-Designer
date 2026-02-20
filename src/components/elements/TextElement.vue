@@ -1,9 +1,29 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { PrintElement } from '@/types';
+import { useDesignerStore } from '@/stores/designer';
+import { normalizeVariableKey } from '@/utils/variables';
 
-defineProps<{
+const props = defineProps<{
   element: PrintElement;
 }>();
+
+const store = useDesignerStore();
+
+const resolvedText = computed(() => {
+  const variable = props.element.variable || '';
+  if (store.isExporting && variable) {
+    const key = normalizeVariableKey(variable);
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  return props.element.variable || props.element.content || 'Double click to edit';
+});
 </script>
 
 <script lang="ts">
@@ -100,6 +120,6 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     padding: `${element.style.padding}px`,
     writingMode: element.style.writingMode as any || 'horizontal-tb',
   }">
-    {{ element.variable || element.content || 'Double click to edit' }}
+    {{ resolvedText }}
   </div>
 </template>

@@ -57,7 +57,8 @@ const applyPayload = async (payload: any) => {
     currentPageIndex: 0,
     selectedElementId: null,
     selectedElementIds: [],
-    guides: []
+    guides: [],
+    testData: payload.testData || {}
   });
 
   if (payload.watermark) {
