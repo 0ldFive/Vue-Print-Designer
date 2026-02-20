@@ -53,7 +53,7 @@ export const usePrint = () => {
       
       // Add repeated headers with new IDs
       for (const el of repeatHeaders) {
-        page.elements.push({ ...cloneDeep(el), id: uuidv4() });
+      const isHeader = copyHeader && headerHeight > 0 && top < headerHeight;
       }
       
       // Add repeated footers with new IDs
@@ -386,7 +386,15 @@ export const usePrint = () => {
     });
   };
 
-  const copyHeaderFooter = (sourcePage: HTMLElement, targetPage: HTMLElement, headerHeight: number, footerHeight: number, pageHeight: number) => {
+  const copyHeaderFooter = (
+    sourcePage: HTMLElement,
+    targetPage: HTMLElement,
+    headerHeight: number,
+    footerHeight: number,
+    pageHeight: number,
+    copyHeader: boolean,
+    copyFooter: boolean
+  ) => {
     const wrappers = sourcePage.querySelectorAll('[data-print-wrapper]');
     wrappers.forEach(w => {
       const el = w as HTMLElement;
@@ -400,8 +408,8 @@ export const usePrint = () => {
 
       // Check if strictly in header or footer region
       // We allow some overlap, but generally header elements are at the top
-      const isHeader = top < headerHeight;
-      const isFooter = top >= (pageHeight - footerHeight);
+      const isHeader = copyHeader && top < headerHeight;
+      const isFooter = copyFooter && top >= (pageHeight - footerHeight);
       
       if (isHeader || isFooter) {
         const clone = el.cloneNode(true) as HTMLElement;
@@ -484,7 +492,14 @@ export const usePrint = () => {
     }
   };
 
-  const handleTablePagination = (container: HTMLElement, pageHeight: number, headerHeight: number, footerHeight: number) => {
+  const handleTablePagination = (
+    container: HTMLElement,
+    pageHeight: number,
+    headerHeight: number,
+    footerHeight: number,
+    copyHeader: boolean,
+    copyFooter: boolean
+  ) => {
     let pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
     
     for (let i = 0; i < pages.length; i++) {
@@ -553,8 +568,8 @@ export const usePrint = () => {
                      // Prevent infinite loop: if we are at the first row (r=0) 
                      // AND the table is already at the top of the page, we MUST accept at least one row.
                      if (splitIndex === 0) {
-                         const wrapperTop = parseFloat(wrapper.style.top) || 0;
-                         const startY = headerHeight > 0 ? headerHeight + 10 : 20;
+                         const wrapperTop = parseFloat(getComputedStyle(wrapper).top) || 0;
+                         const startY = copyHeader && headerHeight > 0 ? headerHeight + 10 : 0;
                          // If we are essentially at the top already
                          if (wrapperTop <= startY + 5) {
                              splitIndex = 1; // Force one row to stay
@@ -572,7 +587,7 @@ export const usePrint = () => {
                  newPage.innerHTML = ''; // Empty
                  
                  // Copy header and footer to new page
-                 copyHeaderFooter(page, newPage, headerHeight, footerHeight, pageHeight);
+                 copyHeaderFooter(page, newPage, headerHeight, footerHeight, pageHeight, copyHeader, copyFooter);
 
                  // Insert new page
                  if (i === pages.length - 1) {
@@ -588,8 +603,9 @@ export const usePrint = () => {
                  const newWrapper = wrapper.cloneNode(true) as HTMLElement;
                  // Set top to headerHeight + padding or just below header
                  // If headerHeight is 0, use 20px padding.
-                 const startY = headerHeight > 0 ? headerHeight + 10 : 20;
-                 newWrapper.style.top = `${startY}px`; 
+                 const startY = copyHeader && headerHeight > 0 ? headerHeight + 10 : 0;
+                 newWrapper.style.removeProperty('top');
+                 newWrapper.style.setProperty('top', `${startY}px`, 'important');
                  // Height is already auto from the cloned wrapper
                  
                  // Clean up OLD table (remove rows from splitIndex onwards)
@@ -761,7 +777,14 @@ export const usePrint = () => {
     }
 
     // Handle Table Pagination
-    const pagesCount = handleTablePagination(container, height, store.headerHeight, store.footerHeight);
+    const pagesCount = handleTablePagination(
+      container,
+      height,
+      store.headerHeight,
+      store.footerHeight,
+      store.showHeaderLine,
+      store.showFooterLine
+    );
     
     // Update Page Numbers
     updatePageNumbers(container, pagesCount);
