@@ -44,6 +44,8 @@
   html.dark :not(.canvas-scroll).bg-gray-100 { background-color: #1f2937 !important; }
   html.dark .hover\\:bg-gray-50:hover { background-color: #1f2937 !important; }
   html.dark .hover\\:bg-gray-100:hover { background-color: #374151 !important; } /* gray-700 */
+  html.dark .bg-gray-200 { background-color: #374151 !important; }
+  html.dark .hover\:bg-gray-200:hover { background-color: #4b5563 !important; } /* gray-600 */
   html.dark .text-gray-800 { color: #f3f4f6 !important; }
   html.dark .text-gray-700 { color: #e5e7eb !important; }
   html.dark .text-gray-600 { color: #d1d5db !important; }
@@ -52,6 +54,11 @@
   html.dark .text-gray-900 { color: #f9fafb !important; } /* near-white for subheadings */
   html.dark .border-gray-100 { border-color: #1f2937 !important; }
   html.dark .border-gray-200 { border-color: #374151 !important; }
+  html.dark select,
+  html.dark option {
+    background-color: #1f2937;
+    color: #e5e7eb;
+  }
   html.dark .shadow-sm, 
   html.dark .shadow, 
   html.dark .shadow-xl { box-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 1px 1px rgba(0,0,0,0.4) !important; }

@@ -628,40 +628,40 @@ onUnmounted(() => {
       </div>
 
       <div v-if="showExportMenu" class="absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white border border-gray-200 shadow-xl rounded-lg p-1 z-[1000] flex flex-col gap-1">
-        <button @click="handlePreview(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handlePreview(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <Preview class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.preview') }}</span>
         </button>
-        <button @click="handlePrint(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handlePrint(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <Printer class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.print') }}</span>
         </button>
-        <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <FileOutput class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.exportPdf') }}</span>
         </button>
-        <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <FileOutput class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.exportImage') }}</span>
         </button>
-        <button @click="handleViewImageBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handleViewImageBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <DataObject class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.viewImageBlob') }}</span>
         </button>
-        <button @click="handleViewPdfBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handleViewPdfBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <DataObject class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.viewPdfBlob') }}</span>
         </button>
-        <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <DataObject class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.viewJson') }}</span>
         </button>        
         <div class="h-px bg-gray-200 my-0.5"></div>        
-        <button @click="emit('toggleHelp'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="emit('toggleHelp'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <HelpCircle class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.help') }}</span>
         </button>
-        <button @click="emit('toggleSettings'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm text-left transition-colors whitespace-nowrap">
+        <button @click="emit('toggleSettings'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <Settings class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.settings') }}</span>
         </button>
