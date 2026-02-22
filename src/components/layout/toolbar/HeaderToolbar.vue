@@ -10,6 +10,7 @@ import ZoomIn from '~icons/material-symbols/zoom-in';
 import ZoomOut from '~icons/material-symbols/zoom-out';
 import Settings from '~icons/material-symbols/settings';
 import Save from '~icons/material-symbols/save';
+import SaveAs from '~icons/material-symbols/save-as';
 import Loading from '~icons/material-symbols/progress-activity';
 import Undo2 from '~icons/material-symbols/undo';
 import Redo2 from '~icons/material-symbols/redo';
@@ -628,6 +629,10 @@ onUnmounted(() => {
       </div>
 
       <div v-if="showExportMenu" class="absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white border border-gray-200 shadow-xl rounded-lg p-1 z-[1000] flex flex-col gap-1">
+        <button @click="handleSaveAs(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <SaveAs class="w-4 h-4 text-gray-500" />
+          <span>{{ t('editor.saveAsTemplate') }}</span>
+        </button>
         <button @click="handlePreview(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
           <Preview class="w-4 h-4 text-gray-500" />
           <span>{{ t('editor.preview') }}</span>
