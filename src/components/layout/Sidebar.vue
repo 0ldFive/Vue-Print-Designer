@@ -288,7 +288,7 @@ onUnmounted(() => {
             <div 
               v-for="item in category.items" 
               :key="item.type"
-              class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-move transition-all"
+              class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all"
               draggable="true"
               @dragstart="(e) => handleDragStart(e, item.type)"
             >
@@ -308,7 +308,7 @@ onUnmounted(() => {
           <div 
             v-for="item in customElements" 
             :key="item.id"
-            class="group relative flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-move transition-all"
+            class="group relative flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all"
             draggable="true"
             @dragstart="(e) => handleDragStartCustom(e, item)"
           >

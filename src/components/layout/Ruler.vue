@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { MM_TO_PX, PT_TO_PX, type Unit } from '@/utils/units';
 
 const props = defineProps<{
@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const THICKNESS = props.thick || 20;
+let themeObserver: MutationObserver | null = null;
 
 const draw = () => {
   const canvas = canvasRef.value;
@@ -25,10 +26,11 @@ const draw = () => {
   const width = canvas.width;
   const height = canvas.height;
   const { zoom, scroll, offset, type, indicators } = props;
+  const isDark = document.documentElement.classList.contains('dark');
 
   // Clear
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = '#F9FAFB'; // bg-gray-50
+  ctx.fillStyle = isDark ? '#1f2937' : '#F9FAFB'; // dark: gray-800, light: gray-50
   ctx.fillRect(0, 0, width, height);
   
   // Draw Indicators
@@ -44,8 +46,8 @@ const draw = () => {
     }
   }
 
-  ctx.strokeStyle = '#9CA3AF'; // gray-400
-  ctx.fillStyle = '#6B7280'; // gray-500
+  ctx.strokeStyle = isDark ? '#6b7280' : '#9CA3AF'; // dark: gray-500, light: gray-400
+  ctx.fillStyle = isDark ? '#9ca3af' : '#6B7280'; // dark: gray-400, light: gray-500
   ctx.lineWidth = 1;
   ctx.font = '10px sans-serif';
   ctx.beginPath();
@@ -141,6 +143,15 @@ onMounted(() => {
     resizeObserver.observe(canvasRef.value.parentElement!);
     draw();
   }
+  themeObserver = new MutationObserver(() => {
+    draw();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
+
+onUnmounted(() => {
+  themeObserver?.disconnect();
+  themeObserver = null;
 });
 
 watch(() => [props.zoom, props.scroll, props.offset, props.indicators, props.unit], draw, { deep: true });

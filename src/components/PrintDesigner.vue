@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import { useTemplateStore } from '@/stores/templates';
 import { useAutoSave } from '@/composables/useAutoSave';
+import { useTheme } from '@/composables/useTheme';
 import debounce from 'lodash/debounce';
 import { pxToUnit, type Unit } from '@/utils/units';
 import { parseColor, toRgbaString } from '@/utils/color';
@@ -22,6 +23,7 @@ import Logout from '~icons/material-symbols/logout';
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
 const { autoSave } = useAutoSave();
+const { isDark } = useTheme();
 const { t } = useI18n();
 const scrollContainer = ref<HTMLElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
@@ -487,7 +489,7 @@ const rulerIndicators = computed(() => {
               <Save class="w-4 h-4" />
               {{ t('sidebar.saveEdit') }}
             </button>
-            <button @click="showSaveAsModal = true" class="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-900 rounded hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 dark:text-blue-100 inline-flex items-center gap-1.5">
+            <button @click="showSaveAsModal = true" class="px-3 py-1.5 text-xs font-medium bg-blue-200 text-blue-900 rounded hover:bg-blue-300 dark:bg-blue-700 dark:hover:bg-blue-600 dark:text-white inline-flex items-center gap-1.5">
               <SaveAs class="w-4 h-4" />
               {{ t('sidebar.saveAs') }}
             </button>
@@ -536,9 +538,9 @@ const rulerIndicators = computed(() => {
               <div
                 ref="scrollContainer"
                 tabindex="-1"
-                class="flex-1 overflow-auto bg-gray-100 p-8 flex relative canvas-scroll focus:outline-none"
+                class="flex-1 overflow-auto p-8 flex relative canvas-scroll bg-gray-100 focus:outline-none"
                 @scroll="handleScroll"
-                  @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
+                @click="(e) => { if (e.target === scrollContainer || e.target === e.currentTarget) { store.selectGuide(null); } }"
               >
                  <div ref="canvasWrapper" :style="canvasStyle" class="mx-auto relative">
                     <Canvas ref="canvasContainer" class="absolute top-0 left-0" />
