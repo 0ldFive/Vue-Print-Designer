@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings } from '@/types';
+import { getCrudConfig, buildEndpoint } from '@/utils/crudConfig';
 
 const defaultWatermark: WatermarkSettings = {
   enabled: false,
@@ -1411,26 +1412,82 @@ export const useDesignerStore = defineStore('designer', {
       // TODO: Implement grouping logic
       alert('Grouping feature is under development');
     },
-    addCustomElement(name: string, element: PrintElement) {
+    async loadCustomElements() {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      if (mode !== 'remote') return;
+      try {
+        const url = buildEndpoint(endpoints.customElements?.list || '');
+        const res = await (fetcher || fetch)(url, { headers });
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : data?.customElements || [];
+        this.customElements = list
+          .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
+          .map((el: any) => ({ id: el.id, name: el.name, element: cloneDeep(el.element) }));
+      } catch (e) {
+        console.error('Failed to load custom elements', e);
+      }
+    },
+    async addCustomElement(name: string, element: PrintElement) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const template: CustomElementTemplate = {
         id: uuidv4(),
         name,
         element: cloneDeep(element)
       };
+      if (mode === 'remote') {
+        try {
+          const url = buildEndpoint(endpoints.customElements?.upsert || '');
+          const res = await (fetcher || fetch)(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(template)
+          });
+          const result = await res.json();
+          template.id = result?.id || template.id;
+        } catch (e) {
+          console.error('Failed to add custom element', e);
+        }
+      }
       this.customElements.push(template);
-      this.saveCustomElements();
-    },
-    removeCustomElement(id: string) {
-      const index = this.customElements.findIndex(el => el.id === id);
-      if (index !== -1) {
-        this.customElements.splice(index, 1);
+      if (mode !== 'remote') {
         this.saveCustomElements();
       }
     },
-    renameCustomElement(id: string, newName: string) {
+    async removeCustomElement(id: string) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const index = this.customElements.findIndex(el => el.id === id);
+      if (index !== -1) {
+        this.customElements.splice(index, 1);
+        if (mode === 'remote') {
+          try {
+            const url = buildEndpoint(endpoints.customElements?.delete || '', id);
+            await (fetcher || fetch)(url, { method: 'DELETE', headers });
+          } catch (e) {
+            console.error('Failed to remove custom element', e);
+          }
+          return;
+        }
+        this.saveCustomElements();
+      }
+    },
+    async renameCustomElement(id: string, newName: string) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const template = this.customElements.find(el => el.id === id);
       if (template) {
         template.name = newName;
+        if (mode === 'remote') {
+          try {
+            const url = buildEndpoint(endpoints.customElements?.upsert || '');
+            await (fetcher || fetch)(url, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(template)
+            });
+          } catch (e) {
+            console.error('Failed to rename custom element', e);
+          }
+          return;
+        }
         this.saveCustomElements();
       }
     },

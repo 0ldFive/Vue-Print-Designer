@@ -16,6 +16,7 @@ import { useDesignerStore } from './stores/designer';
 import { useTemplateStore } from './stores/templates';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
+import { setCrudConfig, setCrudMode, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
 
 export type DesignerExportRequest = {
   type: 'pdf' | 'images' | 'pdfBlob' | 'imageBlob';
@@ -301,6 +302,18 @@ class PrintDesignerElement extends HTMLElement {
     if (payload.remotePrintOptions) {
       Object.assign(this.printSettings.remotePrintOptions, payload.remotePrintOptions);
     }
+  }
+
+  setCrudMode(mode: CrudMode) {
+    setCrudMode(mode);
+    if (mode === 'remote') {
+      this.templateStore?.loadTemplates();
+      this.designerStore?.loadCustomElements();
+    }
+  }
+
+  setCrudEndpoints(endpoints: CrudEndpoints, options: { baseUrl?: string; headers?: Record<string, string> } = {}) {
+    setCrudConfig({ endpoints: { ...endpoints, baseUrl: options.baseUrl }, headers: options.headers });
   }
 
   getTemplates(options: { includeData?: boolean } = {}) {

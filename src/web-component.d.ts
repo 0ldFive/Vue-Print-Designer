@@ -30,6 +30,13 @@ export interface PrintDesignerElement extends HTMLElement {
   upsertCustomElement(customElement: { id?: string; name: string; element: any }): string | null;
   setCustomElements(customElements: Array<{ id: string; name: string; element: any }>): void;
   deleteCustomElement(id: string): void;
+
+  setCrudMode(mode: 'local' | 'remote'): void;
+  setCrudEndpoints(endpoints: {
+    baseUrl?: string;
+    templates?: { list?: string; get?: string; upsert?: string; delete?: string };
+    customElements?: { list?: string; get?: string; upsert?: string; delete?: string };
+  }, options?: { baseUrl?: string; headers?: Record<string, string> }): void;
 }
 
 declare global {

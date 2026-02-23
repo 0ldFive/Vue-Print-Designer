@@ -33,6 +33,8 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 - 多页面布局、网格/标尺、缩放与对齐工具
 - 导出 PDF/图片/Blob，支持拼接/分片
 - 打印参数配置：打印机、份数、页范围、单双面、纸张等
+- **静默打印**：支持本地客户端直打，无需人工确认
+- **云打印**：支持远程客户端接入与云端下发打印任务
 - 模板与自定义元素 CRUD
 - Web Components 实例方法与事件回调
 
@@ -61,38 +63,66 @@ npm run build
 
 适合任何技术栈（Vue/React/Angular/原生）。
 
+说明：Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。
+
 ```bash
 npm install @your-scope/print-designer
 ```
 
-### 1) 使用组件
+### 1) 使用组件（Vue 3 / Vite）
 
-```html
-<link rel="stylesheet" href="node_modules/@your-scope/print-designer/dist/print-designer.css" />
-<script type="module" src="node_modules/@your-scope/print-designer/dist/print-designer.es.js"></script>
-
-<print-designer id="designer"></print-designer>
-```
-
-### 2) 调用实例方法
+在入口文件中引入：
 
 ```ts
-const el = document.querySelector('print-designer');
+// main.ts
+import '@your-scope/print-designer';
+import '@your-scope/print-designer/style.css';
+```
+
+然后在页面里直接使用自定义元素：
+
+```vue
+<template>
+    <print-designer id="designer"></print-designer>
+</template>
+```
+
+### 2) Vue 3 选项式 API：初始化与调用分离
+
+**设计器页（初始化与编辑）**
+
+```vue
+<script lang="ts">
+export default {
+    mounted() {
+        const el = this.$refs.designerRef as any;
+        // 初始化品牌与主题
+        el.setBranding({ title: '业务打印设计器', showLogo: true });
+        el.setTheme('light');
+        // 初始化模板或变量
+        el.loadTemplateData(/* 从你的 API 获取的数据 */);
+        el.setVariables({ orderNo: 'A001' }, { merge: true });
+    }
+};
+</script>
+
+<template>
+    <print-designer ref="designerRef"></print-designer>
+</template>
+```
+
+**业务页面（随处调用打印/导出）**
+
+```ts
+// 任何页面中只要能拿到元素实例即可
+const el = document.querySelector('print-designer') as any;
 
 // 打印
 await el.print({ mode: 'browser' });
 
-// 导出
-const blob = await el.export({ type: 'pdfBlob' });
-
-// 模板与自定义元素
-const templates = el.getTemplates({ includeData: false });
-el.upsertTemplate({ name: 'A4 模板', data: { pages: [] } }, { setCurrent: true });
-
-// 主题/品牌/变量
-el.setBranding({ title: '业务打印设计器', showLogo: true });
-el.setTheme('light');
-el.setVariables({ orderNo: 'A001' }, { merge: true });
+// 导出 PDF / 图片 / Blob
+await el.export({ type: 'pdf', filename: 'order-20240223.pdf' });
+const pdfBlob = await el.export({ type: 'pdfBlob' });
 ```
 
 ### 3) 事件回调

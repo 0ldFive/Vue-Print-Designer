@@ -33,6 +33,8 @@ Many plugins are either framework-locked or only provide a basic export button. 
 - Multi-page layout, grid/ruler, zoom and alignment tools
 - Export PDF/images/blob, merged or split
 - Print parameters: printer, copies, range, duplex, paper size
+- **Silent printing**: local client direct print without user confirmation
+- **Cloud printing**: remote clients with cloud-delivered print tasks
 - Template and custom element CRUD
 - Web Component instance methods and event hooks
 
@@ -60,6 +62,8 @@ npm run build
 ## Option B: npm Package (Web Components)
 
 Works with any stack.
+
+Note: Web Components **supports Vue 2** as a custom element, no Vue 2 component adapter required.
 
 ```bash
 npm install @your-scope/print-designer
