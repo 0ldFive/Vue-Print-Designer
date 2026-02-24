@@ -53,6 +53,8 @@ Recommended integration points:
 - Custom elements: `useDesignerStore.customElements`
 - Variables/template data: `setVariables` / `loadTemplateData`
 
+Custom element extension guide: [docs/en/guide/custom-element.md](docs/en/guide/custom-element.md)
+
 Build:
 
 ```bash
@@ -64,6 +66,8 @@ npm run build
 Works with any stack.
 
 Note: Web Components **supports Vue 2** as a custom element, no Vue 2 component adapter required.
+
+Parameters, CRUD, and JSON examples: [docs/en/guide/web-components-guide.md](docs/en/guide/web-components-guide.md)
 
 ```bash
 npm install @your-scope/print-designer

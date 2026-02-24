@@ -35,8 +35,6 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 - 打印参数配置：打印机、份数、页范围、单双面、纸张等
 - **静默打印**：支持本地客户端直打，无需人工确认
 - **云打印**：支持远程客户端接入与云端下发打印任务
-- 模板与自定义元素 CRUD
-- Web Components 实例方法与事件回调
 
 ## 引入方式一：下载源码自行改造与集成 API
 
@@ -53,6 +51,8 @@ npm run dev
 - 自定义元素 CRUD：`useDesignerStore` 中的 `customElements`
 - 变量与模板数据：组件实例方法 `setVariables` / `loadTemplateData`
 
+自定义元素扩展请看： [docs/zh/guide/custom-element.md](docs/zh/guide/custom-element.md)
+
 构建：
 
 ```bash
@@ -64,6 +64,8 @@ npm run build
 适合任何技术栈（Vue/React/Angular/原生）。
 
 说明：Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。
+
+详细参数、CRUD 与 JSON 示例请看： [docs/zh/guide/web-components-guide.md](docs/zh/guide/web-components-guide.md)
 
 ```bash
 npm install @your-scope/print-designer
