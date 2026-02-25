@@ -209,6 +209,6 @@ Built-in Chinese (zh) and English (en). The default follows browser language and
 
 ## License
 
-Apache-2.0
+AGPL-3.0-only
 
 Please follow [TRADEMARKS.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/TRADEMARKS.md) for brand and logo usage. For removing or replacing branding, see [COMMERCIAL_LICENSE.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/COMMERCIAL_LICENSE.md).

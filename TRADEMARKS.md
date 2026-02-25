@@ -1,8 +1,8 @@
 # Trademark and Branding Policy / 商标与品牌政策
 
-This project is open source under the Apache-2.0 license. The project name, logo, and branding are protected and are not granted by the code license.
+This project is open source under the AGPL-3.0 license. The project name, logo, and branding are protected and are not granted by the code license.
 
-本项目基于 Apache-2.0 开源，但项目名称、Logo 与品牌标识受保护，代码许可并不授予上述商标/品牌使用权。
+本项目基于 AGPL-3.0 开源，但项目名称、Logo 与品牌标识受保护，代码许可并不授予上述商标/品牌使用权。
 
 ## What you may do / 允许事项
 
@@ -29,6 +29,6 @@ This project is open source under the Apache-2.0 license. The project name, logo
 
 ## Commercial branding changes / 商业改动
 
-Commercial use is allowed under Apache-2.0, but <strong>branding changes (logo/name/notice removal or replacement)</strong> require a commercial license.
+Commercial use is allowed under AGPL-3.0, but <strong>branding changes (logo/name/notice removal or replacement)</strong> require a commercial license.
 
 允许商业使用，但<strong>涉及品牌变更（Logo/名称/署名移除或替换）</strong>需获得商业授权。
