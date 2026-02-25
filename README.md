@@ -1,3 +1,5 @@
+
+
 <p align="center">
     <img src="./src/assets/logo.png" alt="Vue Print Designer" width="96" height="96" />
 </p>
@@ -44,14 +46,51 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 | **打印参数配置**<br>![打印参数](docs/images/3.png) | **系统设置与偏好**<br>![系统设置](docs/images/4.png) |
 | **快捷键说明**<br>![快捷键](docs/images/5.png) | **高级表格编辑**<br>![高级表格](docs/images/6.png) |
 
-## 引入方式一：下载源码自行改造与集成 API
+## 快速开始
 
-适合有深度定制需求的团队。
+### 环境要求
+
+- Node.js >= 16.0.0
+- npm >= 7.0.0 或 yarn / pnpm
+
+### 安装依赖
 
 ```bash
 npm install
+```
+
+### 开发模式
+
+```bash
 npm run dev
 ```
+
+启动后访问本地服务即可使用设计器。
+
+### 生产构建
+
+```bash
+npm run build
+```
+
+### 构建 Web Components 包
+
+```bash
+npm run build:wc
+```
+
+产物说明：
+
+- `dist/print-designer.es.js` - ES 模块版本
+- `dist/print-designer.umd.js` - UMD 版本
+- `dist/print-designer.css` - 样式文件
+- `dist/web-component.d.ts` - TypeScript 类型声明
+
+## 引入方式
+
+### 方式一：下载源码自行改造与集成 API
+
+适合有深度定制需求的团队。
 
 建议接入点：
 
@@ -59,27 +98,19 @@ npm run dev
 - 自定义元素 CRUD：`useDesignerStore` 中的 `customElements`
 - 变量与模板数据：组件实例方法 `setVariables` / `loadTemplateData`
 
-自定义元素扩展请看： [docs/zh/guide/custom-element.md](docs/zh/guide/custom-element.md)
+自定义元素扩展请查看：[自定义元素扩展指南](docs/zh/guide/custom-element.md)
 
-构建：
+### 方式二：npm 组件（Web Components）
 
-```bash
-npm run build
-```
+适合任何技术栈（Vue/React/Angular/原生）。Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。
 
-## 引入方式二：npm 组件（Web Components）
-
-适合任何技术栈（Vue/React/Angular/原生）。
-
-说明：Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。
-
-详细参数、CRUD 与 JSON 示例请看： [docs/zh/guide/web-components-guide.md](docs/zh/guide/web-components-guide.md)
+详细参数、CRUD 与 JSON 示例请查看：[Web Components API 用户手册](docs/zh/guide/web-components-guide.md)
 
 ```bash
 npm i vue-print-designer
 ```
 
-### 1) 使用组件（Vue 3 / Vite）
+#### 1) 使用组件（Vue 3 / Vite）
 
 在入口文件中引入：
 
@@ -97,7 +128,7 @@ import '@your-scope/print-designer/style.css';
 </template>
 ```
 
-### 2) Vue 3 选项式 API：初始化与调用分离
+#### 2) Vue 3 选项式 API：初始化与调用分离
 
 **设计器页（初始化与编辑）**
 
@@ -135,7 +166,7 @@ await el.export({ type: 'pdf', filename: 'order-20240223.pdf' });
 const pdfBlob = await el.export({ type: 'pdfBlob' });
 ```
 
-### 3) 事件回调
+#### 3) 事件回调
 
 ```ts
 el.addEventListener('ready', () => {});
@@ -148,18 +179,34 @@ el.addEventListener('error', (e) => {
 });
 ```
 
-## 构建 Web Components 包
+## 项目结构
 
-```bash
-npm run build:wc
+```
+src/
+├── assets/               # 静态资源（Logo、图标）
+├── components/           # Vue 组件
+│   ├── canvas/           # 画布组件
+│   ├── common/           # 通用组件（颜色选择器、弹窗等）
+│   ├── elements/         # 打印元素组件（文本、图片、表格、条码等）
+│   ├── layout/           # 布局组件（头部、侧边栏、属性面板等）
+│   ├── print/            # 打印渲染组件
+│   └── properties/       # 属性配置组件
+├── composables/          # Vue 组合式函数
+│   ├── useAutoSave.ts    # 自动保存
+│   ├── usePrintSettings.ts # 打印设置
+│   └── useTheme.ts       # 主题管理
+├── constants/            # 常量定义
+├── locales/              # 国际化语言包
+├── stores/               # Pinia 状态管理
+├── types/                # TypeScript 类型声明
+├── utils/                # 工具函数
+├── web-component.ts      # Web Components 入口
+└── main.ts               # 应用入口
 ```
 
-产物：
+## 国际化
 
-- `dist/print-designer.es.js`
-- `dist/print-designer.umd.js`
-- `dist/print-designer.css`
-- `dist/web-component.d.ts`
+项目内置中文（zh）和英文（en）语言支持，默认根据浏览器语言自动切换，也可通过 API 手动设置。
 
 ## License
 
