@@ -118,8 +118,8 @@ npm i vue-print-designer
 
 ```ts
 // main.ts
-import '@your-scope/print-designer';
-import '@your-scope/print-designer/style.css';
+import 'vue-print-designer';
+import 'vue-print-designer/style.css';
 ```
 
 然后在页面里直接使用自定义元素：

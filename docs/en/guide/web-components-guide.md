@@ -21,8 +21,8 @@ Import in your entry file:
 
 ```ts
 // main.ts
-import '@your-scope/print-designer'
-import '@your-scope/print-designer/style.css'
+import 'vue-print-designer'
+import 'vue-print-designer/style.css'
 ```
 
 Use the custom element:
@@ -259,7 +259,7 @@ Description: read/write current template data.
 
 ```ts
 const data = el.getTemplateData()
-el.loadTemplateData(data)
+el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data })
 ```
 
 ### 9) Templates CRUD
@@ -399,7 +399,7 @@ Event details:
 
 ```ts
 const el = document.querySelector('print-designer') as any
-el.loadTemplateData(/* API data */)
+el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data: /* API data */ })
 el.setVariables({ orderNo: 'A001' }, { merge: true })
 ```
 
@@ -486,6 +486,8 @@ Request:
 
 ```json
 {
+  "id": "tpl_1",
+  "name": "A4 Template",
   "pages": [
     {
       "id": "page_1",

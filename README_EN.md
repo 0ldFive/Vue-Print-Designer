@@ -116,8 +116,8 @@ Import in the entry file:
 
 ```ts
 // main.ts
-import '@your-scope/print-designer';
-import '@your-scope/print-designer/style.css';
+import 'vue-print-designer';
+import 'vue-print-designer/style.css';
 ```
 
 Use the custom element in your template:
