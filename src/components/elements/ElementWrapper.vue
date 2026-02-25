@@ -372,7 +372,7 @@ const handleResizeStart = (e: MouseEvent) => {
        <!-- Rotation Handle (top right, no background) -->
        <div
          data-print-exclude="true"
-         class="rotate-handle absolute -top-4 -right-5 w-5 h-5 flex items-center justify-center cursor-grab z-50 text-blue-500 hover:text-blue-700"
+         class="rotate-handle absolute -top-4 -right-5 w-5 h-5 flex items-center justify-center cursor-grab z-50 theme-text theme-text-hover"
          :title="t('common.rotate')"
          @mousedown="handleRotateStart"
        >
@@ -380,7 +380,7 @@ const handleResizeStart = (e: MouseEvent) => {
          <RotateRight class="w-3 h-3" />
          
          <!-- Angle Tooltip -->
-         <div v-if="isRotating" :class="['absolute top-6 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none font-sans font-normal not-italic leading-none tracking-normal normal-case', isSnapped ? 'bg-green-600' : 'bg-black']">
+        <div v-if="isRotating" :class="['absolute top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none font-sans font-normal not-italic leading-none tracking-normal normal-case', isSnapped ? 'theme-bg-strong text-white' : 'theme-bg-soft text-white']">
             {{ currentRotationDisplay }}°
          </div>
        </div>

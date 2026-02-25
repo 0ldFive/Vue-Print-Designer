@@ -29,6 +29,39 @@
   .theme-hover-border:hover {
     border-color: var(--brand-500);
   }
+  .theme-text {
+    color: var(--brand-500);
+  }
+  .theme-text-hover:hover {
+    color: var(--brand-700);
+  }
+  .theme-text-strong {
+    color: var(--brand-700);
+  }
+  .theme-border {
+    border-color: var(--brand-500);
+  }
+  .theme-border-strong {
+    border-color: var(--brand-600);
+  }
+  .theme-border-soft {
+    border-color: var(--brand-400);
+  }
+  .theme-border-hover {
+    border-color: var(--brand-500);
+  }
+  .group:hover .theme-border-hover {
+    border-color: var(--brand-400);
+  }
+  .theme-bg {
+    background-color: var(--brand-500);
+  }
+  .theme-bg-strong {
+    background-color: var(--brand-600);
+  }
+  .theme-bg-soft {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
   .exporting .marker {
     display: none !important;
   }
