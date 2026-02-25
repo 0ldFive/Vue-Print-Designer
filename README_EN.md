@@ -10,6 +10,14 @@
 
 Vue Print Designer is a visual print designer for business forms, labels, receipts, and waybills. It supports templating and variables, provides silent printing and cloud printing, and works with multiple export/print pipelines.
 
+## UI Preview
+
+|  |  |
+| --- | --- |
+| **Designer main view and canvas**<br>![Designer main view](docs/images/1.png) | **Print preview**<br>![Print preview](docs/images/2.png) |
+| **Print parameter settings**<br>![Print parameters](docs/images/3.png) | **System settings and preferences**<br>![System settings](docs/images/4.png) |
+| **Shortcut reference**<br>![Shortcuts](docs/images/5.png) | **Advanced table editing**<br>![Advanced table](docs/images/6.png) |
+
 ## What Problems We Solve
 
 - The design and print pipeline is fragmented, templates are hard to reuse, and a field change can require a lot of code updates
@@ -35,14 +43,6 @@ Many plugins are either framework-locked or only provide basic export/print. Our
 - Print parameters: printer, copies, page range, duplex, paper size
 - **Silent printing**: local client direct print without user confirmation
 - **Cloud printing**: remote clients and cloud-delivered print tasks
-
-## UI Preview
-
-|  |  |
-| --- | --- |
-| **Designer main view and canvas**<br>![Designer main view](docs/images/1.png) | **Print preview**<br>![Print preview](docs/images/2.png) |
-| **Print parameter settings**<br>![Print parameters](docs/images/3.png) | **System settings and preferences**<br>![System settings](docs/images/4.png) |
-| **Shortcut reference**<br>![Shortcuts](docs/images/5.png) | **Advanced table editing**<br>![Advanced table](docs/images/6.png) |
 
 ## Quick Start
 
