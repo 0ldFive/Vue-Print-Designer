@@ -152,7 +152,7 @@ const selectionBoxStyle = computed(() => {
     width: `${width}px`,
     height: `${height}px`,
     border: '1px solid var(--brand-500)',
-    backgroundColor: 'var(--brand-100)',
+    backgroundColor: 'var(--brand-500-alpha-10)',
     pointerEvents: 'none' as const,
     zIndex: 1000,
   };

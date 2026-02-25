@@ -15,6 +15,7 @@
     --brand-800: #1e40af;
     --brand-900: #1e3a8a;
     --brand-950: #172554;
+    --brand-500-alpha-10: rgb(59 130 246 / 0.1);
   }
   input[type='radio'] {
     accent-color: var(--brand-600);
