@@ -46,6 +46,22 @@ Many plugins are either framework-locked or only provide basic export/print. Our
 - **Silent printing**: local client direct print without user confirmation
 - **Cloud printing**: remote clients and cloud-delivered print tasks
 
+## Companion Print Client (PrintDot Client)
+
+PrintDot Client is the companion desktop print helper (Wails + Vue) for device discovery, connection management, and job forwarding. It is designed to keep the local print pipeline stable and easy to operate when used with this project.
+
+- Platforms: Windows / macOS / Linux
+- Key capabilities: device discovery, stable connection & forwarding queue, lightweight background mode
+- Project: https://github.com/0ldFive/PrintDot-Client
+
+|  |  |
+| --- | --- |
+| **Main view - device status & connection**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot main view" width="280" /> | **Settings - preferences & options**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot settings" width="280" /> |
+
+<p>
+    <a href="https://github.com/0ldFive/PrintDot-Client/releases" target="_blank" rel="noopener noreferrer">⬇ Download PrintDot Client</a>
+</p>
+
 ## Quick Start
 
 ### Requirements

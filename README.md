@@ -48,6 +48,22 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 - **静默打印**：支持本地客户端直打，无需人工确认
 - **云打印**：支持远程客户端接入与云端下发打印任务
 
+## 配套打印客户端（PrintDot Client）
+
+PrintDot Client 是配套的桌面打印助手（Wails + Vue），用于设备发现、连接管理与任务转发，主打“稳定、快速、好上手”。与本项目配合可实现更稳定的本地客户端打印链路。
+
+- 支持平台：Windows / macOS / Linux
+- 关键能力：自动发现与识别设备、稳定连接维护与转发队列、轻量后台运行
+- 项目地址：https://github.com/0ldFive/PrintDot-Client
+
+|  |  |
+| --- | --- |
+| **主界面 - 设备状态与连接管理**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot 主界面" width="280" /> | **设置页面 - 偏好与配置选项**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot 设置页面" width="280" /> |
+
+<p>
+    <a href="https://github.com/0ldFive/PrintDot-Client/releases" target="_blank" rel="noopener noreferrer">⬇ 下载 PrintDot Client</a>
+</p>
+
 ## 快速开始
 
 ### 环境要求
