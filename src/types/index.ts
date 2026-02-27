@@ -135,6 +135,8 @@ export interface CustomElementEditSnapshot {
   guides: Guide[];
   zoom: number;
   showGrid: boolean;
+  showMarginLines: boolean;
+  showCornerMarkers: boolean;
   headerHeight: number;
   footerHeight: number;
   showHeaderLine: boolean;
@@ -173,6 +175,7 @@ export interface DesignerState {
   zoom: number;
   isDragging: boolean;
   showGrid: boolean;
+  showMarginLines: boolean;
   showCornerMarkers: boolean;
   headerHeight: number;
   footerHeight: number;

@@ -151,6 +151,8 @@ export const useDesignerStore = defineStore('designer', {
           guides: cloneDeep(this.guides),
           zoom: this.zoom,
           showGrid: this.showGrid,
+          showMarginLines: this.showMarginLines,
+          showCornerMarkers: this.showCornerMarkers,
           headerHeight: this.headerHeight,
           footerHeight: this.footerHeight,
           showHeaderLine: this.showHeaderLine,
@@ -199,6 +201,8 @@ export const useDesignerStore = defineStore('designer', {
       this.guides = snapshot.guides;
       this.zoom = snapshot.zoom;
       this.showGrid = snapshot.showGrid;
+      this.showMarginLines = snapshot.showMarginLines;
+      this.showCornerMarkers = snapshot.showCornerMarkers;
       this.headerHeight = snapshot.headerHeight;
       this.footerHeight = snapshot.footerHeight;
       this.showHeaderLine = snapshot.showHeaderLine;
