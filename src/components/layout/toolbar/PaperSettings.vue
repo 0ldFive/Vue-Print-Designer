@@ -283,6 +283,7 @@ watch(() => store.canvasSize, (newSize) => {
           :allow-transparent="true"
           default-color="#ffffff"
           placement="bottom-end"
+          :teleport-to-body="true"
         >
           <template #trigger="{ color, open }">
             <div 
@@ -441,36 +442,37 @@ watch(() => store.canvasSize, (newSize) => {
 
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkSize') }} ({{ unitLabel }})</label>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('editor.watermarkSize') }} ({{ unitLabel }})</label>
                     <input
                       v-model.number="watermarkSize"
                       type="number"
                       min="1"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkDensity') }} ({{ unitLabel }})</label>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('editor.watermarkDensity') }} ({{ unitLabel }})</label>
                     <input
                       v-model.number="watermarkDensity"
                       type="number"
                       min="20"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">{{ t('editor.watermarkColor') }}</label>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('editor.watermarkColor') }}</label>
                   <ColorPicker
                     v-model="watermarkColor"
                     default-color="#000000"
                     placement="bottom-end"
+                    :teleport-to-body="true"
                   >
                     <template #trigger="{ color, open }">
                       <div
-                        class="w-8 h-6 rounded border border-gray-300 cursor-pointer relative overflow-hidden hover:border-blue-500 transition-colors"
-                        :class="{ 'ring-2 ring-blue-500 ring-offset-1': open }"
+                        class="w-8 h-6 rounded border border-gray-300 dark:border-gray-600 cursor-pointer relative overflow-hidden hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                        :class="{ 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-1 dark:ring-offset-gray-900': open }"
                       >
                         <div class="absolute inset-0" :style="{ backgroundColor: color }"></div>
                       </div>
@@ -482,8 +484,8 @@ watch(() => store.canvasSize, (newSize) => {
 
           </div>
 
-          <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
-            <button @click="showAdvancedSettings = false" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm">
+          <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end">
+            <button @click="showAdvancedSettings = false" class="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm font-medium">
               {{ t('common.close') }}
             </button>
           </div>
