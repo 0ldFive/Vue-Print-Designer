@@ -261,7 +261,7 @@ onUnmounted(() => {
     <!-- Trigger -->
     <slot name="trigger" :open="isOpen" :color="displayColor" :disabled="disabled">
       <div 
-        class="w-6 h-6 rounded border border-gray-300 cursor-pointer flex items-center justify-center overflow-hidden transition-all hover:border-blue-500"
+        class="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 cursor-pointer flex items-center justify-center overflow-hidden transition-all hover:border-blue-500"
         :class="{ 'opacity-50 cursor-not-allowed': disabled, 'ring-2 ring-blue-500 ring-offset-1': isOpen }"
         :style="{ backgroundColor: isTransparent ? 'transparent' : displayColor }"
       >
@@ -274,7 +274,7 @@ onUnmounted(() => {
     <Teleport v-if="isOpen && teleportToBody" :to="modalContainer || 'body'">
       <div 
         ref="dropdownRef"
-        class="fixed z-[99999] bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-[240px]"
+        class="fixed z-[99999] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-[240px]"
         :style="dropdownStyle"
         @click.stop
       >
@@ -299,18 +299,18 @@ onUnmounted(() => {
             <!-- Hue Slider -->
             <div 
               ref="hueSliderRef"
-              class="h-3 rounded relative cursor-pointer border border-gray-200"
+              class="h-3 rounded relative cursor-pointer border border-gray-200 dark:border-gray-700"
               style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)"
               @mousedown="(e) => handleDrag(e, 'hue')"
             >
               <div 
-                class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+                class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-gray-100 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm -ml-1.5 pointer-events-none"
                 :style="hueCursorStyle"
               ></div>
             </div>
 
             <!-- Alpha Slider -->
-            <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] border border-gray-200">
+            <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] border border-gray-200 dark:border-gray-700">
               <div 
                 ref="alphaSliderRef"
                 class="absolute inset-0 cursor-pointer rounded"
@@ -318,7 +318,7 @@ onUnmounted(() => {
                 @mousedown="(e) => handleDrag(e, 'alpha')"
               >
                 <div 
-                  class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+                  class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-gray-100 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm -ml-1.5 pointer-events-none"
                   :style="alphaCursorStyle"
                 ></div>
               </div>
@@ -326,7 +326,7 @@ onUnmounted(() => {
           </div>
           
           <!-- Current Color Preview -->
-          <div class="w-8 h-8 rounded border border-gray-200 overflow-hidden relative">
+          <div class="w-8 h-8 rounded border border-gray-200 dark:border-gray-700 overflow-hidden relative">
               <div class="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] opacity-50"></div>
               <div class="absolute inset-0" :style="{ backgroundColor: rgbaValue }"></div>
               <div v-if="hsv.a === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -341,11 +341,11 @@ onUnmounted(() => {
             <input 
               type="text" 
               v-model="hexValue" 
-              class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:border-blue-500 outline-none font-mono uppercase"
+              class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded focus:border-blue-500 outline-none font-mono uppercase"
               placeholder="#000000"
             />
           </div>
-          <div class="w-16 text-right text-xs text-gray-500 flex items-center justify-end">
+          <div class="w-16 text-right text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end">
             {{ Math.round(hsv.a * 100) }}%
           </div>
         </div>
@@ -355,7 +355,7 @@ onUnmounted(() => {
           <div 
             v-for="color in PRESET_COLORS" 
             :key="color"
-            class="w-4 h-4 rounded-sm cursor-pointer border border-transparent hover:scale-110 hover:border-gray-400 hover:z-10 transition-all relative"
+            class="w-4 h-4 rounded-sm cursor-pointer border border-transparent hover:scale-110 hover:border-gray-400 dark:hover:border-gray-500 hover:z-10 transition-all relative"
             :class="{ 'ring-2 ring-blue-500 ring-offset-1 z-10': hexValue === color }"
             :style="{ backgroundColor: color }"
             @click="selectPreset(color)"
@@ -364,17 +364,17 @@ onUnmounted(() => {
         </div>
         
         <!-- Footer Actions -->
-        <div class="flex justify-between border-t pt-2">
+        <div class="flex justify-between border-t border-gray-100 dark:border-gray-700 pt-2">
           <button 
             @click="$emit('update:modelValue', undefined); close()"
-            class="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+            class="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 px-2 py-1 rounded transition-colors"
           >
             {{ t('colorPicker.clear') }}
           </button>
           <div v-if="allowTransparent">
             <button 
               @click="$emit('update:modelValue', 'transparent'); close()"
-              class="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+              class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors"
             >
               {{ t('colorPicker.transparent') }}
             </button>
@@ -386,7 +386,7 @@ onUnmounted(() => {
     <div 
       v-else-if="isOpen" 
       ref="dropdownRef"
-      class="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-[240px]"
+      class="absolute z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-[240px]"
       :style="dropdownStyle"
       @click.stop
     >
@@ -411,18 +411,18 @@ onUnmounted(() => {
           <!-- Hue Slider -->
           <div 
             ref="hueSliderRef"
-            class="h-3 rounded relative cursor-pointer border border-gray-200"
+            class="h-3 rounded relative cursor-pointer border border-gray-200 dark:border-gray-700"
             style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)"
             @mousedown="(e) => handleDrag(e, 'hue')"
           >
             <div 
-              class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+              class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-gray-100 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm -ml-1.5 pointer-events-none"
               :style="hueCursorStyle"
             ></div>
           </div>
 
           <!-- Alpha Slider -->
-          <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] border border-gray-200">
+          <div class="relative h-3 rounded bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] border border-gray-200 dark:border-gray-700">
             <div 
               ref="alphaSliderRef"
               class="absolute inset-0 cursor-pointer rounded"
@@ -430,7 +430,7 @@ onUnmounted(() => {
               @mousedown="(e) => handleDrag(e, 'alpha')"
             >
               <div 
-                class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-gray-300 rounded-full shadow-sm -ml-1.5 pointer-events-none"
+                class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-gray-100 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm -ml-1.5 pointer-events-none"
                 :style="alphaCursorStyle"
               ></div>
             </div>
@@ -438,7 +438,7 @@ onUnmounted(() => {
         </div>
         
         <!-- Current Color Preview -->
-        <div class="w-8 h-8 rounded border border-gray-200 overflow-hidden relative">
+        <div class="w-8 h-8 rounded border border-gray-200 dark:border-gray-700 overflow-hidden relative">
              <div class="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] opacity-50"></div>
              <div class="absolute inset-0" :style="{ backgroundColor: rgbaValue }"></div>
              <div v-if="hsv.a === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -453,11 +453,11 @@ onUnmounted(() => {
           <input 
             type="text" 
             v-model="hexValue" 
-            class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:border-blue-500 outline-none font-mono uppercase"
+            class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded focus:border-blue-500 outline-none font-mono uppercase"
             placeholder="#000000"
           />
         </div>
-        <div class="w-16 text-right text-xs text-gray-500 flex items-center justify-end">
+        <div class="w-16 text-right text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end">
           {{ Math.round(hsv.a * 100) }}%
         </div>
       </div>
@@ -467,7 +467,7 @@ onUnmounted(() => {
         <div 
           v-for="color in PRESET_COLORS" 
           :key="color"
-          class="w-4 h-4 rounded-sm cursor-pointer border border-transparent hover:scale-110 hover:border-gray-400 hover:z-10 transition-all relative"
+          class="w-4 h-4 rounded-sm cursor-pointer border border-transparent hover:scale-110 hover:border-gray-400 dark:hover:border-gray-500 hover:z-10 transition-all relative"
           :class="{ 'ring-2 ring-blue-500 ring-offset-1 z-10': hexValue === color }"
           :style="{ backgroundColor: color }"
           @click="selectPreset(color)"
@@ -476,17 +476,17 @@ onUnmounted(() => {
       </div>
       
       <!-- Footer Actions -->
-      <div class="flex justify-between border-t pt-2">
+      <div class="flex justify-between border-t border-gray-100 dark:border-gray-700 pt-2">
          <button 
            @click="$emit('update:modelValue', undefined); close()"
-           class="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+           class="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 px-2 py-1 rounded transition-colors"
          >
            {{ t('colorPicker.clear') }}
          </button>
          <div v-if="allowTransparent">
            <button 
              @click="$emit('update:modelValue', 'transparent'); close()"
-             class="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+             class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors"
            >
              {{ t('colorPicker.transparent') }}
            </button>

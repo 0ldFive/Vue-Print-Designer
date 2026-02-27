@@ -57,7 +57,7 @@ const handleTextInput = (e: Event) => {
 
 <template>
   <div>
-    <label class="block text-xs text-gray-500 mb-1">{{ label }}</label>
+    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ label }}</label>
     
     <div class="space-y-2">
       <!-- URL Input -->
@@ -67,7 +67,7 @@ const handleTextInput = (e: Event) => {
         :disabled="disabled"
         :placeholder="placeholder || t('properties.image.urlPlaceholder')"
         @input="handleTextInput"
-        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+        class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
       />
       
       <!-- Upload Button -->
@@ -76,14 +76,14 @@ const handleTextInput = (e: Event) => {
           type="button"
           @click="handleUploadClick"
           :disabled="disabled"
-          class="w-full py-1.5 px-3 bg-white text-gray-700 text-sm border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="w-full py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
           {{ t('properties.image.uploadBtn') }}
         </button>
-        <span class="text-[10px] text-gray-400 text-center">{{ t('properties.image.uploadTip') }}</span>
+        <span class="text-[10px] text-gray-400 dark:text-gray-500 text-center">{{ t('properties.image.uploadTip') }}</span>
       </div>
 
       <!-- Error Message -->

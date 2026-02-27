@@ -288,7 +288,7 @@ const handleModalSave = (name: string) => {
           
           <button 
             @click="toggleRowMenu($event, t.id)"
-            class="row-menu-trigger p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+            class="row-menu-trigger p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
             :class="{'opacity-100 bg-gray-200 dark:bg-gray-600': activeMenuId === t.id}"
           >
             <MoreVert class="w-4 h-4" />

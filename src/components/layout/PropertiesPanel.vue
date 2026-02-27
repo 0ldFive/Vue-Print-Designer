@@ -272,17 +272,17 @@ const handleFocusOut = (e: FocusEvent) => {
 
 <template>
   <aside 
-    class="w-[380px] bg-white border-l border-gray-200 flex flex-col h-full z-40 overflow-hidden"
+    class="w-[380px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full z-40 overflow-hidden"
     @focusin="handleFocusIn"
     @focusout="handleFocusOut"
   >
     <!-- Header -->
-    <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
       <div>
-        <h2 class="font-semibold text-gray-700">{{ t('properties.title') }}</h2>
-        <p class="text-xs text-gray-500 mt-1">{{ t('properties.subtitle') }}</p>
+        <h2 class="font-semibold text-gray-700 dark:text-gray-200">{{ t('properties.title') }}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('properties.subtitle') }}</p>
       </div>
-      <div v-if="isLocked" class="flex items-center text-red-500 gap-1 text-xs font-medium bg-red-50 px-2 py-1 rounded border border-red-100">
+      <div v-if="isLocked" class="flex items-center text-red-500 dark:text-red-400 gap-1 text-xs font-medium bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded border border-red-100 dark:border-red-800">
         <Lock class="w-3 h-3" />
         <span>{{ t('properties.locked') }}</span>
       </div>
@@ -291,15 +291,15 @@ const handleFocusOut = (e: FocusEvent) => {
     <!-- Multi-select Mode -->
     <div v-if="isMultiSelected" class="p-6 text-center">
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">{{ t('properties.multiSelectMode') }}</h3>
-        <p class="text-sm text-gray-500 mt-2">
-          <span class="font-medium">{{ store.selectedElementIds.length }}</span> 
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('properties.multiSelectMode') }}</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          <span class="font-medium text-gray-700 dark:text-gray-200">{{ store.selectedElementIds.length }}</span> 
           {{ t('properties.selectedElements', { n: '' }).replace('{n}', '') }}
         </p>
       </div>
       <button
         @click="handleDeleteSelected"
-        class="w-full py-2 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-sm font-medium"
+        class="w-full py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors text-sm font-medium"
       >
         {{ t('properties.deleteSelected') }}
       </button>
@@ -308,23 +308,23 @@ const handleFocusOut = (e: FocusEvent) => {
     <!-- Single Element Mode -->
     <div v-else-if="element" class="flex flex-col h-full overflow-hidden">
       <!-- Tabs -->
-      <div class="flex border-b border-gray-200 bg-white">
+      <div class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <button 
           v-for="tab in ['properties', 'style', 'advanced']" 
           :key="tab"
           @click="activeTab = tab as any"
-          :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === tab ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
+          :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === tab ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
         >
           {{ t(`properties.tab.${tab}`) }}
-          <div v-if="activeTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
+          <div v-if="activeTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>
         </button>
       </div>
 
-      <div class="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+      <div class="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar dark:bg-gray-900">
         
         <!-- Properties Tab: Position & Size -->
         <div v-if="activeTab === 'properties'" class="space-y-3">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.positionSize') }}</h3>
+          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.positionSize') }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <PropertyInput 
               :label="`${t('properties.label.x')} (${unitLabel})`" 
@@ -358,20 +358,20 @@ const handleFocusOut = (e: FocusEvent) => {
         </div>
 
         <!-- Table Cell Operations -->
-        <div v-if="activeTab === 'properties' && element.type === 'table' && store.tableSelection" class="space-y-3 pt-2 border-t border-gray-100">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.cellOperations') }}</h3>
+        <div v-if="activeTab === 'properties' && element.type === 'table' && store.tableSelection" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.cellOperations') }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <button
               @click="store.mergeSelectedCells()"
               :disabled="!canMergeCells || isLocked"
-              class="w-full py-2 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+              class="w-full py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-200 dark:disabled:border-gray-700"
             >
               {{ t('properties.action.mergeCells') }}
             </button>
             <button
               @click="store.splitSelectedCells()"
               :disabled="!canSplitCells || isLocked"
-              class="w-full py-2 bg-white text-gray-600 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.splitCells') }}
             </button>
@@ -380,8 +380,8 @@ const handleFocusOut = (e: FocusEvent) => {
 
         <!-- Dynamic Sections -->
         <template v-for="(section, si) in visibleSections" :key="si">
-          <div class="space-y-3 pt-2 first:pt-0 border-t first:border-0 border-gray-100">
-            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t(section.title) }}</h3>
+          <div class="space-y-3 pt-2 first:pt-0 border-t first:border-0 border-gray-100 dark:border-gray-800">
+            <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t(section.title) }}</h3>
             <div class="space-y-3">
               <template v-for="(field, fi) in section.fields" :key="fi">
                 <!-- Action Button -->
@@ -389,7 +389,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   <button
                     @click="handleFieldAction(field)"
                     :disabled="isLocked"
-                    class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    class="w-full py-2 bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-700"
                   >
                     {{ t(field.label) }}
                   </button>
@@ -450,13 +450,13 @@ const handleFocusOut = (e: FocusEvent) => {
 
                 <!-- Textarea -->
                 <div v-else-if="field.type === 'textarea'">
-                  <label class="block text-xs text-gray-500 mb-1 font-medium">{{ t(field.label) }}</label>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">{{ t(field.label) }}</label>
                   <textarea
                     :placeholder="field.placeholder ? (field.placeholder.startsWith('properties.') ? t(field.placeholder) : field.placeholder) : ''"
                     :disabled="isLocked"
                     :value="['data', 'columns', 'footerData'].includes(field.key!) ? JSON.stringify((element as any)[field.key!], null, 2) : getFieldValue(field)"
                     @change="['data', 'columns', 'footerData'].includes(field.key!) ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono disabled:bg-gray-100 disabled:text-gray-500"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                   ></textarea>
                 </div>
               </template>
@@ -465,8 +465,8 @@ const handleFocusOut = (e: FocusEvent) => {
         </template>
 
         <!-- Style Tab: Generic Appearance -->
-        <div v-if="activeTab === 'style' && !isSelfStyled" class="space-y-3 pt-2 border-t border-gray-100">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ t('properties.section.appearance') }}</h3>
+        <div v-if="activeTab === 'style' && !isSelfStyled" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.appearance') }}</h3>
           <PropertyColor 
             :label="t('properties.label.backgroundColor')" 
             :disabled="isLocked"
@@ -477,19 +477,19 @@ const handleFocusOut = (e: FocusEvent) => {
 
         <!-- Advanced Tab Content -->
         <div v-if="activeTab === 'advanced'" class="space-y-4">
-          <div class="p-4 bg-gray-50 rounded border border-gray-200">
-             <h4 class="text-sm font-medium text-gray-700 mb-3">{{ t('properties.section.elementInfo') }}</h4>
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+             <h4 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">{{ t('properties.section.elementInfo') }}</h4>
              <div class="space-y-3">
                <div>
-                 <p class="text-xs text-gray-500 mb-1.5 font-medium">{{ t('properties.label.id') }}</p>
-                 <div class="flex items-center gap-2 bg-white border border-gray-200 rounded px-2 py-1.5 hover:border-blue-400 transition-colors">
-                   <span class="font-mono text-xs text-gray-600 flex-1 truncate select-all" :title="element.id">{{ element.id }}</span>
+                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-medium">{{ t('properties.label.id') }}</p>
+                 <div class="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-2 py-1.5 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                   <span class="font-mono text-xs text-gray-600 dark:text-gray-400 flex-1 truncate select-all" :title="element.id">{{ element.id }}</span>
                    <button 
                      @click="copyId"
-                     class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-gray-100 flex-shrink-0"
+                     class="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
                      :title="copied ? t('properties.action.copied') : t('properties.action.copyId')"
                    >
-                     <Check v-if="copied" class="w-3.5 h-3.5 text-green-500" />
+                     <Check v-if="copied" class="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
                      <ContentCopy v-else class="w-3.5 h-3.5" />
                    </button>
                  </div>

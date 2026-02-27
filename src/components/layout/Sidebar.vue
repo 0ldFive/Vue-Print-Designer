@@ -264,45 +264,45 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full z-40">
-    <div class="p-4 border-b border-gray-200 bg-gray-50">
-      <h2 class="font-semibold text-gray-700">{{ t('sidebar.elements') }}</h2>
-      <p class="text-xs text-gray-500 mt-1">{{ t('sidebar.dragToCanvas') }}</p>
+  <aside class="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full z-40">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <h2 class="font-semibold text-gray-700 dark:text-gray-200">{{ t('sidebar.elements') }}</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('sidebar.dragToCanvas') }}</p>
     </div>
     
     <!-- Tabs -->
-    <div class="flex border-b border-gray-200 bg-white">
+    <div class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       <button 
         @click="activeTab = 'standard'"
-        :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'standard' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
+        :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'standard' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
       >
         {{ t('sidebar.standard') }}
-        <div v-if="activeTab === 'standard'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
+        <div v-if="activeTab === 'standard'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>
       </button>
       <button 
         @click="activeTab = 'custom'"
-        :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'custom' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50']"
+        :class="['flex-1 py-3 text-sm font-medium transition-colors relative', activeTab === 'custom' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
       >
         {{ t('sidebar.custom') }}
-        <div v-if="activeTab === 'custom'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
+        <div v-if="activeTab === 'custom'" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400"></div>
       </button>
     </div>
 
     <div class="flex-1 overflow-y-auto">
       <!-- Standard Elements Tab -->
       <template v-if="activeTab === 'standard'">
-        <div v-for="category in categories" :key="category.title" class="p-4 border-b border-gray-100 last:border-0">
-          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">{{ t(category.title) }}</h3>
+        <div v-for="category in categories" :key="category.title" class="p-4 border-b border-gray-100 dark:border-gray-800 last:border-0">
+          <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-1">{{ t(category.title) }}</h3>
           <div class="grid grid-cols-2 gap-3">
             <div 
               v-for="item in category.items" 
               :key="item.type"
-              class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all"
+              class="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all dark:bg-gray-800 dark:hover:bg-gray-700"
               draggable="true"
               @dragstart="(e) => handleDragStart(e, item.type)"
             >
-              <component :is="item.icon" class="w-8 h-8 text-gray-600 mb-2" />
-              <span class="text-sm font-medium text-gray-700">{{ t(item.label) }}</span>
+              <component :is="item.icon" class="w-8 h-8 text-gray-600 dark:text-gray-300 mb-2" />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ t(item.label) }}</span>
             </div>
           </div>
         </div>
@@ -311,23 +311,23 @@ onUnmounted(() => {
       <!-- Custom Elements Tab -->
       <template v-if="activeTab === 'custom'">
         <div v-if="customElements.length === 0" class="p-6 text-center">
-          <p class="text-sm text-gray-500">{{ t('sidebar.noCustomElements') }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('sidebar.noCustomElements') }}</p>
         </div>
         <div v-else class="p-4 grid grid-cols-2 gap-3">
           <div 
             v-for="item in customElements" 
             :key="item.id"
-            class="group relative flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all"
+            class="group relative flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all dark:bg-gray-800 dark:hover:bg-gray-700"
             draggable="true"
             @dragstart="(e) => handleDragStartCustom(e, item)"
           >
-            <component :is="getIcon(item.element.type)" class="w-8 h-8 text-gray-600 mb-2" />
-            <span class="text-sm font-medium text-gray-700 truncate w-full text-center" :title="item.name">{{ item.name }}</span>
+            <component :is="getIcon(item.element.type)" class="w-8 h-8 text-gray-600 dark:text-gray-300 mb-2" />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate w-full text-center" :title="item.name">{{ item.name }}</span>
             
             <button 
               @click="toggleMenu($event, item.id)"
-              class="absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
-              :class="{'opacity-100 bg-gray-100 text-gray-600': activeMenuId === item.id}"
+              class="absolute top-1 right-1 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+              :class="{'opacity-100 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300': activeMenuId === item.id}"
               :title="t('sidebar.moreOptions')"
             >
               <MoreVert class="w-4 h-4" />
@@ -341,25 +341,25 @@ onUnmounted(() => {
     <Teleport :to="modalContainer || 'body'">
       <div v-if="activeMenuId" class="fixed inset-0 z-[2000] pointer-events-auto" @click="activeMenuId = null">
         <div 
-          class="sidebar-context-menu absolute w-32 bg-white rounded shadow-lg border border-gray-100 z-[2001] py-1 pointer-events-auto"
+          class="sidebar-context-menu absolute w-32 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-100 dark:border-gray-700 z-[2001] py-1 pointer-events-auto"
           :style="menuPosition"
           @click.stop
         >
           <template v-for="item in customElements" :key="item.id">
             <template v-if="item.id === activeMenuId">
-              <button @click="handleEditElement(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <button @click="handleEditElement(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
                 <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.editElement') }}
               </button>
-              <button v-if="supportsTestData(item)" @click="handleTestData(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <button v-if="supportsTestData(item)" @click="handleTestData(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
                 <DataObject class="w-3.5 h-3.5" /> {{ t('common.testData') }}
               </button>
-              <button @click="handleRename(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <button @click="handleRename(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
                 <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.rename') }}
               </button>
-              <button @click="handleCopy(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <button @click="handleCopy(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
                 <Copy class="w-3.5 h-3.5" /> {{ t('sidebar.copy') }}
               </button>
-              <button @click="handleDelete(item)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
+              <button @click="handleDelete(item)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">
                 <Delete class="w-3.5 h-3.5" /> {{ t('sidebar.delete') }}
               </button>
             </template>

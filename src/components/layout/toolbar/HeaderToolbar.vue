@@ -386,7 +386,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-4 text-gray-700 dark:text-gray-200">
     <TemplateDropdown />
     <InputModal 
       :show="showSaveNameModal" 
@@ -397,42 +397,42 @@ onUnmounted(() => {
     />
 
     <!-- Font Controls -->
-    <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1 px-2">
+    <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 px-2">
       <!-- Font Family -->
       <select 
         v-model="selectedFont"
         :disabled="isFontControlsDisabled"
-        class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        class="w-32 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-200"
         :title="t('editor.fontFamily')"
       >
-        <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value">
+        <option v-for="opt in fontOptions" :key="opt.value" :value="opt.value" class="dark:bg-gray-800 dark:text-gray-200">
           {{ opt.label }}
         </option>
       </select>
       
-      <div class="w-px h-4 bg-gray-300"></div>
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700"></div>
 
       <!-- Font Size -->
       <div class="flex items-center gap-1">
-        <button @click="selectedFontSize--" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">-</button>
+        <button @click="selectedFontSize--" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">-</button>
         <input 
           type="number" 
           v-model="selectedFontSize" 
           :disabled="isFontControlsDisabled"
-          class="w-12 text-center text-sm bg-transparent border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          class="w-12 text-center text-sm bg-transparent dark:bg-gray-800 border-none outline-none focus:ring-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:text-gray-200"
           min="1" max="200"
         />
-        <button @click="selectedFontSize++" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">+</button>
+        <button @click="selectedFontSize++" :disabled="isFontControlsDisabled" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">+</button>
       </div>
 
-      <div class="w-px h-4 bg-gray-300"></div>
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700"></div>
 
       <!-- Style Toggles -->
       <button 
         @click="toggleBold" 
         :disabled="isFontControlsDisabled"
-        class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="{ 'bg-gray-300 text-blue-700': isBold }"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        :class="{ 'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400': isBold }"
         :title="t('editor.bold')"
       >
         <Bold class="w-4 h-4" />
@@ -440,8 +440,8 @@ onUnmounted(() => {
       <button 
         @click="toggleItalic" 
         :disabled="isFontControlsDisabled"
-        class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="{ 'bg-gray-300 text-blue-700': isItalic }"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        :class="{ 'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400': isItalic }"
         :title="t('editor.italic')"
       >
         <Italic class="w-4 h-4" />
@@ -449,8 +449,8 @@ onUnmounted(() => {
       <button 
         @click="toggleUnderline" 
         :disabled="isFontControlsDisabled"
-        class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="{ 'bg-gray-300 text-blue-700': isUnderline }"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        :class="{ 'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400': isUnderline }"
         :title="t('editor.underline')"
       >
         <FormatUnderlined class="w-4 h-4" />
@@ -459,8 +459,8 @@ onUnmounted(() => {
       <button 
         @click="toggleVertical" 
         :disabled="isFontControlsDisabled"
-        class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="{ 'bg-gray-300 text-blue-700': isVertical }"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        :class="{ 'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400': isVertical }"
         :title="t('editor.verticalText')"
       >
         <TextRotateVertical class="w-4 h-4" />
@@ -474,12 +474,12 @@ onUnmounted(() => {
         <template #trigger="{ color }">
           <button 
             type="button"
-            class="flex items-center gap-1 p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+            class="flex items-center gap-1 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
             :disabled="isFontControlsDisabled"
             :title="t('editor.textColor')"
           >
             <FontDownload class="w-4 h-4" />
-            <div class="w-1 h-3.5 rounded-[1px] border border-gray-300" :style="{ backgroundColor: color }"></div>
+            <div class="w-1 h-3.5 rounded-[1px] border border-gray-300 dark:border-gray-600" :style="{ backgroundColor: color }"></div>
           </button>
         </template>
       </ColorPicker>
@@ -493,12 +493,12 @@ onUnmounted(() => {
         <template #trigger="{ color }">
           <button
             type="button"
-            class="flex items-center gap-1 p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex items-center gap-1 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isFontControlsDisabled"
             :title="t('editor.backgroundColor')"
           >
             <FormatColorFill class="w-4 h-4" />
-            <div class="w-1 h-3.5 rounded-[1px] border border-gray-300 relative overflow-hidden bg-white">
+            <div class="w-1 h-3.5 rounded-[1px] border border-gray-300 dark:border-gray-600 relative overflow-hidden bg-white">
                <div v-if="color === 'transparent'" class="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwZ+5wNisxL//8n04mEeRAAAhNwX869V4DYAAAAASUVORK5CYII=')] opacity-50 bg-repeat bg-[length:6px_6px]"></div>
                <div class="absolute inset-0" :style="{ backgroundColor: color === 'transparent' ? 'transparent' : color }"></div>
                <div v-if="color === 'transparent'" class="absolute inset-0 flex items-center justify-center">
@@ -509,104 +509,104 @@ onUnmounted(() => {
         </template>
       </ColorPicker>
 
-      <div class="w-px h-4 bg-gray-300"></div>
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700"></div>
       
       <button 
         @click="resetRotation" 
         :disabled="isLocked || !store.selectedElementId"
-        class="p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :title="t('editor.resetRotation')"
       >
         <RotateCcw class="w-4 h-4" />
       </button>
     </div>
 
-    <div class="h-6 w-px bg-gray-300"></div>
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
     <!-- Alignment -->
-    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignLeft')">
+    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignLeft')">
         <AlignLeft class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignCenter')">
+      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignCenter')">
         <AlignCenterHorizontal class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignRight')">
+      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignRight')">
         <AlignRight class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignTop')">
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignTop')">
         <AlignStartVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignMiddle')">
+      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignMiddle')">
         <AlignCenterVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignBottom')">
+      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignBottom')">
         <AlignEndVertical class="w-4 h-4" />
       </button>
       <template v-if="store.selectedElementIds.length > 1">
-        <div class="w-px h-4 bg-gray-300 mx-1"></div>
-        <button @click="store.groupSelectedElements()" :disabled="isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.group')">
+        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+        <button @click="store.groupSelectedElements()" :disabled="isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.group')">
           <Group class="w-4 h-4" />
         </button>
       </template>
     </div>
 
-    <div class="h-6 w-px bg-gray-300"></div>
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
     <!-- History & Edit -->
-    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <button @click="store.undo()" :disabled="store.historyPast.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.undo') + ' (' + formatShortcut(['Ctrl', 'Z']) + ')'">
+    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <button @click="store.undo()" :disabled="store.historyPast.length === 0" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.undo') + ' (' + formatShortcut(['Ctrl', 'Z']) + ')'">
         <Undo2 class="w-4 h-4" />
       </button>
-      <button @click="store.redo()" :disabled="store.historyFuture.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.redo') + ' (' + formatShortcut(['Ctrl', 'Y']) + ')'">
+      <button @click="store.redo()" :disabled="store.historyFuture.length === 0" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.redo') + ' (' + formatShortcut(['Ctrl', 'Y']) + ')'">
         <Redo2 class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.copy') + ' (' + formatShortcut(['Ctrl', 'C']) + ')'">
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.copy') + ' (' + formatShortcut(['Ctrl', 'C']) + ')'">
         <Copy class="w-4 h-4" />
       </button>
-      <button @click="store.paste()" :disabled="store.clipboard.length === 0" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.paste') + ' (' + formatShortcut(['Ctrl', 'V']) + ')'">
+      <button @click="store.paste()" :disabled="store.clipboard.length === 0" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.paste') + ' (' + formatShortcut(['Ctrl', 'V']) + ')'">
         <ClipboardPaste class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="(isLocked ? t('editor.unlock') : t('editor.lock')) + ' (' + formatShortcut(['Ctrl', 'L']) + ')'">
+      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+      <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="(isLocked ? t('editor.unlock') : t('editor.lock')) + ' (' + formatShortcut(['Ctrl', 'L']) + ')'">
         <Unlock v-if="isLocked" class="w-4 h-4 text-red-500" />
         <Lock v-else class="w-4 h-4" />
       </button>
-      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.delete') + ' (' + formatShortcut(['Del']) + ')'">
+      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.delete') + ' (' + formatShortcut(['Del']) + ')'">
         <Trash2 class="w-4 h-4" />
       </button>
     </div>
 
-    <div class="h-6 w-px bg-gray-300"></div>
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
     <!-- Paper Settings -->
     <PaperSettings />
 
     <!-- Zoom Settings -->
     <div class="relative">
-      <div class="flex items-center bg-gray-100 rounded-lg p-1">
-        <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 rounded" :title="t('editor.zoomOut')">
+      <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <button @click="handleZoomOut" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" :title="t('editor.zoomOut')">
           <ZoomOut class="w-4 h-4" />
         </button>
         <button 
           @click="showZoomSettings = !showZoomSettings" 
-          class="text-xs w-12 text-center hover:bg-gray-200 rounded px-1 py-0.5"
+          class="text-xs w-12 text-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-1 py-0.5"
           :title="t('editor.zoomSettings')"
         >
           {{ Math.round(store.zoom * 100) }}%
         </button>
-        <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 rounded" :title="t('editor.zoomIn')">
+        <button @click="handleZoomIn" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" :title="t('editor.zoomIn')">
           <ZoomIn class="w-4 h-4" />
         </button>
       </div>
 
-      <div v-if="showZoomSettings" class="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-4 z-[1000]">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ t('editor.zoomLevel') }}</h3>
+      <div v-if="showZoomSettings" class="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-4 z-[1000]">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{{ t('editor.zoomLevel') }}</h3>
         <div class="space-y-3">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">{{ t('editor.zoomLevel') }} (20% - 500%)</label>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('editor.zoomLevel') }} (20% - 500%)</label>
             <input 
               type="range" 
               min="20" 
@@ -614,9 +614,9 @@ onUnmounted(() => {
               step="10" 
               v-model.number="zoomPercent" 
               @input="handleZoomSlider"
-              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-600 dark:[&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600 dark:[&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:transition-all [&::-moz-range-thumb]:hover:scale-110"
             />
-            <div class="text-right text-xs text-gray-600 mt-1">{{ zoomPercent }}%</div>
+            <div class="text-right text-xs text-gray-600 dark:text-gray-400 mt-1">{{ zoomPercent }}%</div>
           </div>
         </div>
 
@@ -626,7 +626,7 @@ onUnmounted(() => {
 
 <!-- Help moved to dropdown -->
 
-    <div class="h-6 w-px bg-gray-300"></div>
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
     <!-- Save / Export Dropdown -->
     <div class="relative">
@@ -648,46 +648,46 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div v-if="showExportMenu" class="absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white border border-gray-200 shadow-xl rounded-lg p-1 z-[1000] flex flex-col gap-1">
-        <button @click="handleSaveAs(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <SaveAs class="w-4 h-4 text-gray-500" />
+      <div v-if="showExportMenu" class="absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-1 z-[1000] flex flex-col gap-1">
+        <button @click="handleSaveAs(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <SaveAs class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.saveAsTemplate') }}</span>
         </button>
-        <button @click="handlePreview(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <Preview class="w-4 h-4 text-gray-500" />
+        <button @click="handlePreview(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <Preview class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.preview') }}</span>
         </button>
-        <button @click="handlePrint(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <Printer class="w-4 h-4 text-gray-500" />
+        <button @click="handlePrint(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <Printer class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.print') }}</span>
         </button>
-        <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <FileOutput class="w-4 h-4 text-gray-500" />
+        <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <FileOutput class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.exportPdf') }}</span>
         </button>
-        <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <FileOutput class="w-4 h-4 text-gray-500" />
+        <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <FileOutput class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.exportImage') }}</span>
         </button>
-        <button @click="handleViewImageBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <DataObject class="w-4 h-4 text-gray-500" />
+        <button @click="handleViewImageBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <DataObject class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.viewImageBlob') }}</span>
         </button>
-        <button @click="handleViewPdfBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <DataObject class="w-4 h-4 text-gray-500" />
+        <button @click="handleViewPdfBlob(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <DataObject class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.viewPdfBlob') }}</span>
         </button>
-        <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <DataObject class="w-4 h-4 text-gray-500" />
+        <button @click="handleViewJson(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <DataObject class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.viewJson') }}</span>
         </button>        
-        <div class="h-px bg-gray-200 my-0.5"></div>        
-        <button @click="emit('toggleHelp'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <HelpCircle class="w-4 h-4 text-gray-500" />
+        <div class="h-px bg-gray-200 dark:bg-gray-700 my-0.5"></div>        
+        <button @click="emit('toggleHelp'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <HelpCircle class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.help') }}</span>
         </button>
-        <button @click="emit('toggleSettings'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded text-sm text-left transition-colors whitespace-nowrap">
-          <Settings class="w-4 h-4 text-gray-500" />
+        <button @click="emit('toggleSettings'); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <Settings class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.settings') }}</span>
         </button>
       </div>
