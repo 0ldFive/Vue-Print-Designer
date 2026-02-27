@@ -42,14 +42,16 @@ export const usePrint = () => {
 
     const basePage = original[0];
     const canvasHeight = store.canvasSize.height;
+    const marginTop = store.pageSpacingY || 0;
+    const marginBottom = store.pageSpacingY || 0;
     
     // Filter elements that should be repeated (elements outside range)
     const repeatHeaders = hasHeader ? basePage.elements.filter(e => 
-      (e.y + e.height) <= store.headerHeight
+      (e.y + e.height) <= (store.headerHeight + marginTop)
     ) : [];
     
     const repeatFooters = hasFooter ? basePage.elements.filter(e => 
-      e.y >= (canvasHeight - store.footerHeight)
+      e.y >= (canvasHeight - (store.footerHeight + marginBottom))
     ) : [];
 
     const withRepeats = cloneDeep(original);
@@ -71,16 +73,21 @@ export const usePrint = () => {
   };
 
   const prepareEnvironment = async (options: { mutateStore?: boolean; setExporting?: boolean } = {}) => {
-    const mutateStore = options.mutateStore !== false;
-    const setExporting = options.setExporting !== false;
-    const previousSelection = mutateStore ? store.selectedElementId : null;
-    const previousShowGrid = mutateStore ? store.showGrid : false;
-    const previousZoom = mutateStore ? store.zoom : 1;
-    const previousPages = mutateStore ? cloneDeep(store.pages) : null;
-    const previousShowHeaderLine = mutateStore ? store.showHeaderLine : false;
-    const previousShowFooterLine = mutateStore ? store.showFooterLine : false;
-    const previousShowCornerMarkers = mutateStore ? store.showCornerMarkers : false;
-    const previousIsExporting = setExporting ? Boolean(store.isExporting) : false;
+    // We want to be very explicit about these defaults.
+    // By default, we should NOT mutate the main store unless explicitly requested.
+    const mutateStore = options.mutateStore === true;
+    const setExporting = options.setExporting === true;
+    
+    const previousSelection = store.selectedElementId;
+    const previousShowGrid = store.showGrid;
+    const previousZoom = store.zoom;
+    const previousPages = cloneDeep(store.pages);
+    const previousShowHeaderLine = store.showHeaderLine;
+    const previousShowFooterLine = store.showFooterLine;
+    const previousShowCornerMarkers = store.showCornerMarkers;
+    const previousIsExporting = Boolean(store.isExporting);
+    const previousBodyHasExporting = document.body.classList.contains('exporting');
+    
     const previousHtmlOverflowX = document.documentElement.style.overflowX;
     const previousHtmlOverflowY = document.documentElement.style.overflowY;
     const previousBodyOverflowX = document.body.style.overflowX;
@@ -91,54 +98,62 @@ export const usePrint = () => {
       store.setShowGrid(false);
       store.setZoom(1); // Ensure 100% zoom for correct rendering
 
-      // Apply repeats (Must be done BEFORE hiding lines, as createRepeatedPages checks showHeaderLine/showFooterLine)
+      // Apply repeats
       store.pages = createRepeatedPages(store.pages);
 
       // Hide UI overlays
       store.setShowHeaderLine(false);
       store.setShowFooterLine(false);
       store.showCornerMarkers = false;
-
-      if (setExporting) {
-        store.setIsExporting(true);
-        document.body.classList.add('exporting');
-      }
-
     }
 
-    document.documentElement.style.overflowX = 'hidden';
-    document.documentElement.style.overflowY = 'hidden';
-    document.body.style.overflowX = 'hidden';
-    document.body.style.overflowY = 'hidden';
-
-    if (!mutateStore && setExporting) {
+    if (setExporting) {
       store.setIsExporting(true);
       document.body.classList.add('exporting');
     }
 
-    await nextTick();
-    // Wait for async rendering (like QR Codes) which might take a moment to generate data URLs
-    await new Promise(resolve => setTimeout(resolve, 500));
+    if (mutateStore || setExporting) {
+      document.documentElement.style.overflowX = 'hidden';
+      document.documentElement.style.overflowY = 'hidden';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.overflowY = 'hidden';
+      
+      await nextTick();
+      // Wait for async rendering (like QR Codes)
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     return () => {
-      if (setExporting) {
+      // Always restore these critical UI states to ensure the canvas returns to normal
+      // even if something went wrong or mutateStore/setExporting were false
+      if (document.body.classList.contains('exporting') && !previousBodyHasExporting) {
         document.body.classList.remove('exporting');
+      }
+      
+      if (store.isExporting !== previousIsExporting) {
         store.setIsExporting(previousIsExporting);
       }
-      document.documentElement.style.overflowX = previousHtmlOverflowX;
-      document.documentElement.style.overflowY = previousHtmlOverflowY;
-      document.body.style.overflowX = previousBodyOverflowX;
-      document.body.style.overflowY = previousBodyOverflowY;
-      if (!mutateStore) return;
-      store.setShowGrid(previousShowGrid);
-      store.selectElement(previousSelection);
-      store.setZoom(previousZoom);
-      if (previousPages) {
-        store.pages = previousPages;
+
+      if (store.showCornerMarkers !== previousShowCornerMarkers) {
+        store.showCornerMarkers = previousShowCornerMarkers;
       }
-      store.setShowHeaderLine(previousShowHeaderLine);
-      store.setShowFooterLine(previousShowFooterLine);
-      store.showCornerMarkers = previousShowCornerMarkers;
+
+      // Restore overflow styles if they were changed
+      if (mutateStore || setExporting) {
+        document.documentElement.style.overflowX = previousHtmlOverflowX;
+        document.documentElement.style.overflowY = previousHtmlOverflowY;
+        document.body.style.overflowX = previousBodyOverflowX;
+        document.body.style.overflowY = previousBodyOverflowY;
+      }
+      
+      if (mutateStore) {
+        store.setShowGrid(previousShowGrid);
+        store.selectElement(previousSelection);
+        store.setZoom(previousZoom);
+        store.pages = previousPages;
+        store.setShowHeaderLine(previousShowHeaderLine);
+        store.setShowFooterLine(previousShowFooterLine);
+      }
     };
   };
 
@@ -189,6 +204,8 @@ export const usePrint = () => {
     canvasBackground: string;
     headerHeight: number;
     footerHeight: number;
+    pageSpacingX: number;
+    pageSpacingY: number;
     showHeaderLine: boolean;
     showFooterLine: boolean;
     watermark: WatermarkSettings;
@@ -212,6 +229,8 @@ export const usePrint = () => {
     canvasBackground: store.canvasBackground,
     headerHeight: store.headerHeight,
     footerHeight: store.footerHeight,
+    pageSpacingX: store.pageSpacingX || 0,
+    pageSpacingY: store.pageSpacingY || 0,
     showHeaderLine: store.showHeaderLine,
     showFooterLine: store.showFooterLine,
     watermark: cloneDeep(store.watermark || fallbackWatermark),
@@ -313,7 +332,8 @@ export const usePrint = () => {
     return { content: iframeResult.pages, cleanup: iframeResult.cleanup, getComputedStyleFn: iframeResult.getComputedStyleFn };
   };
 
-  const getPrintHtml = async (): Promise<string> => {
+  const getPrintHtml = async (content?: HTMLElement[]): Promise<string> => {
+    const targetContent = content || Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
     const restore = await prepareEnvironment({ mutateStore: false, setExporting: false });
 
     const width = store.canvasSize.width;
@@ -324,7 +344,7 @@ export const usePrint = () => {
     let cleanup: (() => void) | null = null;
 
     try {
-        const source = await resolveRenderSource(Array.from(document.querySelectorAll('.print-page')) as HTMLElement[]);
+        const source = await resolveRenderSource(targetContent);
         cleanup = source.cleanup;
 
         // Use the shared processing logic (handles pagination, SVG, etc.)
@@ -450,6 +470,9 @@ export const usePrint = () => {
     copyFooter: boolean
   ) => {
     const wrappers = sourcePage.querySelectorAll('[data-print-wrapper]');
+    const marginTop = store.pageSpacingY || 0;
+    const marginBottom = store.pageSpacingY || 0;
+
     wrappers.forEach(w => {
       const el = w as HTMLElement;
       // Skip if it's the table wrapper being split? 
@@ -462,8 +485,8 @@ export const usePrint = () => {
 
       // Check if strictly in header or footer region
       // We allow some overlap, but generally header elements are at the top
-      const isHeader = copyHeader && top < headerHeight;
-      const isFooter = copyFooter && top >= (pageHeight - footerHeight);
+      const isHeader = copyHeader && top < (headerHeight + marginTop);
+      const isFooter = copyFooter && top >= (pageHeight - footerHeight - marginBottom);
       
       if (isHeader || isFooter) {
         const clone = el.cloneNode(true) as HTMLElement;
@@ -570,6 +593,25 @@ export const usePrint = () => {
              const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
              if (!autoPaginate) return;
 
+             // Check for rotation (transform) on wrapper or table
+             // If rotated, pagination logic (based on Y-axis) will be incorrect, so we skip it.
+             const wrapperStyle = window.getComputedStyle(wrapper);
+             const transform = wrapperStyle.transform;
+             if (transform && transform !== 'none') {
+                // simple check for rotation matrix
+                // matrix(a, b, c, d, tx, ty). if b or c is not 0, there is rotation/skew
+                if (transform.startsWith('matrix')) {
+                    const values = transform.substring(7, transform.length - 1).split(',');
+                    if (values.length >= 4) {
+                        const b = parseFloat(values[1]);
+                        const c = parseFloat(values[2]);
+                        if (Math.abs(b) > 0.001 || Math.abs(c) > 0.001) {
+                            return;
+                        }
+                    }
+                }
+             }
+
              // UNLOCK HEIGHT: Allow the wrapper to expand to fit the table
             wrapper.style.height = 'auto';
             table.style.height = 'auto';
@@ -588,13 +630,16 @@ export const usePrint = () => {
              // Calculate positions using getBoundingClientRect for better precision
              // This handles sub-pixel rendering and spacing correctly
              const pageRect = page.getBoundingClientRect();
-             const limitBottom = pageRect.top + pageHeight - footerHeight;
+             const marginBottom = store.pageSpacingY || 0;
+             const effectiveFooterHeight = copyFooter ? footerHeight : 0;
+             const limitBottom = pageRect.top + pageHeight - effectiveFooterHeight - marginBottom;
              const wrapperRect = wrapper.getBoundingClientRect();
              const wrapperTop = wrapperRect.top;
              
              // Check if table extends beyond limit
              const tableRect = table.getBoundingClientRect();
-             if (tableRect.bottom <= limitBottom) {
+             // Add 1px tolerance for sub-pixel rendering issues
+             if (tableRect.bottom <= limitBottom + 1) {
                  updatePageSums(table);
                  return;
              }
@@ -624,7 +669,8 @@ export const usePrint = () => {
                      // Prevent infinite loop: if we are at the first row (r=0) 
                      // AND the table is already at the top of the page, we MUST accept at least one row.
                      if (splitIndex === 0) {
-                         const startY = copyHeader && headerHeight > 0 ? headerHeight + 10 : (store.pageSpacingY || 0);
+                         const marginTop = store.pageSpacingY || 0;
+                         const startY = copyHeader && headerHeight > 0 ? (headerHeight + marginTop + 10) : marginTop;
                          // If we are essentially at the top already
                          if (wrapperTop <= startY + 5) {
                              splitIndex = 1; // Force one row to stay
@@ -658,7 +704,8 @@ export const usePrint = () => {
                  const newWrapper = wrapper.cloneNode(true) as HTMLElement;
                  // Set top to headerHeight + padding or just below header
                  // If headerHeight is 0, use 20px padding.
-                 const startY = copyHeader && headerHeight > 0 ? headerHeight + 10 : (store.pageSpacingY || 0);
+                 const marginTop = store.pageSpacingY || 0;
+                 const startY = copyHeader && headerHeight > 0 ? (headerHeight + marginTop + 10) : marginTop;
                  newWrapper.style.removeProperty('top');
                  newWrapper.style.setProperty('top', `${startY}px`, 'important');
                  // Height is already auto from the cloned wrapper
@@ -753,7 +800,7 @@ export const usePrint = () => {
     // Create hidden container
     const container = document.createElement('div');
     container.style.position = 'fixed';
-    container.style.left = '0'; // Move to viewport to ensure rendering
+    container.style.left = '-10000px'; // Move off-screen to avoid flickering
     container.style.top = '0';
     container.style.width = `${width}px`;
     container.style.height = `${height}px`; // Start with 1 page height
@@ -824,7 +871,7 @@ export const usePrint = () => {
         });
 
     // Wait for DOM updates (images, fonts, etc)
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     // Handle SVGs
     if (convertSvg) {
@@ -892,7 +939,7 @@ export const usePrint = () => {
   };
 
     const createPdfDocument = async (content: HTMLElement | string | HTMLElement[]) => {
-    const restore = await prepareEnvironment({ mutateStore: false, setExporting: true });
+    const restore = await prepareEnvironment({ mutateStore: false, setExporting: false });
 
     const width = store.canvasSize.width;
     const height = store.canvasSize.height;

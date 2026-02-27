@@ -280,7 +280,8 @@ const handleZoomSlider = () => {
 
 const handlePreview = async () => {
   try {
-    previewContent.value = await getPrintHtml();
+    const pages = Array.from(getQueryRoot().querySelectorAll('.print-page')) as HTMLElement[];
+    previewContent.value = await getPrintHtml(pages);
     showPreview.value = true;
   } catch (e) {
     console.error(e);

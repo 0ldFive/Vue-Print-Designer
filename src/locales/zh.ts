@@ -73,6 +73,7 @@ export default {
     custom: '自定义',
     spacingX: '水平边距',
     spacingY: '垂直边距',
+    showMarginLines: '显示边距线',
     showCornerMarkers: '显示角标',
     showGrid: '显示网格',
     showMinimap: '显示缩略图',

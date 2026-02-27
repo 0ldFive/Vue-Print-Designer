@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from '@/stores/designer';
 import Canvas from '@/components/canvas/Canvas.vue';
@@ -9,20 +9,26 @@ const props = defineProps<{
   token?: string;
 }>();
 
+const root = ref<HTMLElement | null>(null);
 const store = useDesignerStore();
 const token = props.token || new URLSearchParams(window.location.search).get('printToken') || '';
 const origin = window.location.origin;
 
+const getDoc = () => root.value?.ownerDocument || document;
+const getWin = () => getDoc().defaultView || window;
+
 const postToParent = (type: string) => {
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type, token }, origin);
+  const win = getWin();
+  if (win.parent && win.parent !== win) {
+    win.parent.postMessage({ type, token }, origin);
   }
   // Also dispatch a custom event for local usage
   window.dispatchEvent(new CustomEvent(`print-renderer:${type}`, { detail: { token } }));
 };
 
 const waitForFonts = async (timeoutMs = 2000) => {
-  const fonts = (document as any).fonts as FontFaceSet | undefined;
+  const doc = getDoc();
+  const fonts = (doc as any).fonts as FontFaceSet | undefined;
   if (!fonts || !fonts.ready) return;
   await Promise.race([
     fonts.ready,
@@ -31,7 +37,8 @@ const waitForFonts = async (timeoutMs = 2000) => {
 };
 
 const waitForImages = async (timeoutMs = 2000) => {
-  const images = Array.from(document.images || []) as HTMLImageElement[];
+  const doc = getDoc();
+  const images = Array.from(doc.images || []) as HTMLImageElement[];
   const pending = images.filter(img => !img.complete);
   if (pending.length === 0) return;
 
@@ -56,6 +63,8 @@ const applyPayload = async (payload: any) => {
     canvasBackground: payload.canvasBackground || store.canvasBackground,
     headerHeight: payload.headerHeight ?? store.headerHeight,
     footerHeight: payload.footerHeight ?? store.footerHeight,
+    pageSpacingX: payload.pageSpacingX ?? store.pageSpacingX,
+    pageSpacingY: payload.pageSpacingY ?? store.pageSpacingY,
     showHeaderLine: payload.showHeaderLine ?? false,
     showFooterLine: payload.showFooterLine ?? false,
     showGrid: false,
@@ -76,7 +85,8 @@ const applyPayload = async (payload: any) => {
   }
 
   store.setIsExporting(true);
-  document.body.classList.add('exporting');
+  const doc = getDoc();
+  doc.body.classList.add('exporting');
 
   await nextTick();
   await waitForFonts();
@@ -94,9 +104,12 @@ const onMessage = (event: MessageEvent) => {
 };
 
 onMounted(() => {
-  document.body.style.margin = '0';
-  document.body.style.background = '#ffffff';
-  window.addEventListener('message', onMessage);
+  const doc = getDoc();
+  const win = getWin();
+  
+  doc.body.style.margin = '0';
+  doc.body.style.background = '#ffffff';
+  win.addEventListener('message', onMessage);
   
   if (props.payload) {
     applyPayload(props.payload);
@@ -106,12 +119,13 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('message', onMessage);
+  const win = getWin();
+  win.removeEventListener('message', onMessage);
 });
 </script>
 
 <template>
-  <div class="print-renderer">
+  <div class="print-renderer" ref="root">
     <Canvas />
   </div>
 </template>

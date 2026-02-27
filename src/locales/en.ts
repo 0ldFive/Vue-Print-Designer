@@ -73,6 +73,7 @@ export default {
     custom: 'Custom',
     spacingX: 'Horizontal Margin',
     spacingY: 'Vertical Margin',
+    showMarginLines: 'Show Margin Lines',
     showCornerMarkers: 'Show Corner Markers',
     showGrid: 'Show Grid',
     showMinimap: 'Show Minimap',

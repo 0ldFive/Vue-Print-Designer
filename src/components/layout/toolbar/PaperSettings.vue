@@ -217,18 +217,26 @@ watch(() => store.canvasSize, (newSize) => {
           </div>
         </div>
 
-        <div>
-          <button
-            @click="showAdvancedSettings = true"
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors text-sm font-medium"
-          >
-            <Settings class="w-4 h-4" />
-            {{ t('editor.advancedSettings') }}
-          </button>
-        </div>
+
       </div>
 
       <div class="mt-4 flex items-center justify-between">
+        <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{ t('editor.showMarginLines') }}</span>
+        <button 
+          @click="store.setShowMarginLines(!store.showMarginLines)"
+          class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+          :class="store.showMarginLines ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'"
+        >
+          <span class="sr-only">Toggle margin lines</span>
+          <span
+            aria-hidden="true"
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+            :class="store.showMarginLines ? 'translate-x-5' : 'translate-x-0'"
+          />
+        </button>
+      </div>
+
+      <div class="mt-3 flex items-center justify-between">
         <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{ t('editor.showCornerMarkers') }}</span>
         <button 
           @click="store.setShowCornerMarkers(!store.showCornerMarkers)"
@@ -369,6 +377,13 @@ watch(() => store.canvasSize, (newSize) => {
         >
           <Plus class="w-4 h-4" />
           <span>{{ t('editor.addNewPage') }}</span>
+        </button>
+        <button
+          @click="showAdvancedSettings = true"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"
+        >
+          <Settings class="w-4 h-4" />
+          <span>{{ t('editor.advancedSettings') }}</span>
         </button>
       </div>
       

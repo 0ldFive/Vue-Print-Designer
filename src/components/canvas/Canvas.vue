@@ -19,7 +19,7 @@ import CopyIcon from '~icons/material-symbols/content-copy';
 import PasteIcon from '~icons/material-symbols/content-paste';
 
 const store = useDesignerStore();
-const designerRoot = inject<Ref<HTMLElement | null>>('designer-root');
+const designerRoot = inject<Ref<HTMLElement | null>>('designer-root', ref(null));
 
 const getQueryRoot = () => {
   return (designerRoot?.value?.getRootNode() as Document | ShadowRoot) || document;
@@ -66,9 +66,13 @@ const handleLineMouseMove = (e: MouseEvent) => {
   const clampedY = Math.max(0, Math.min(store.canvasSize.height, relativeY));
   
   if (draggingLineType.value === 'header') {
-    store.setHeaderHeight(Math.round(clampedY));
+    const marginTop = store.pageSpacingY || 0;
+    const val = Math.max(0, clampedY - marginTop);
+    store.setHeaderHeight(Math.round(val));
   } else if (draggingLineType.value === 'footer') {
-    store.setFooterHeight(Math.round(store.canvasSize.height - clampedY));
+    const marginBottom = store.pageSpacingY || 0;
+    const val = Math.max(0, store.canvasSize.height - clampedY - marginBottom);
+    store.setFooterHeight(Math.round(val));
   }
 };
 
@@ -539,9 +543,12 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
 const getGlobalElements = () => {
   if (pages.value.length === 0) return [];
   const firstPage = pages.value[0];
+  const marginTop = store.pageSpacingY || 0;
+  const marginBottom = store.pageSpacingY || 0;
+
   return firstPage.elements.filter(el => 
-    (store.showHeaderLine && el.y < store.headerHeight) || 
-    (store.showFooterLine && el.y >= store.canvasSize.height - store.footerHeight)
+    (store.showHeaderLine && el.y < (store.headerHeight + marginTop)) || 
+    (store.showFooterLine && el.y >= (store.canvasSize.height - (store.footerHeight + marginBottom)))
   );
 };
 </script>
@@ -619,7 +626,9 @@ const getGlobalElements = () => {
           class="absolute left-0 w-full z-20 group flex flex-col justify-center items-center"
           :class="index === 0 ? 'cursor-row-resize' : 'cursor-default'"
           :style="{ 
-            top: `${store.headerHeight}px`, 
+            top: `${store.headerHeight + marginTop}px`, 
+            left: `${marginLeft}px`,
+            width: `${store.canvasSize.width - marginLeft - marginRight}px`,
             height: '12px',
             marginTop: '-6px'
           }"
@@ -646,7 +655,9 @@ const getGlobalElements = () => {
           class="absolute left-0 w-full z-20 group flex flex-col justify-center items-center"
           :class="index === 0 ? 'cursor-row-resize' : 'cursor-default'"
           :style="{ 
-            bottom: `${store.footerHeight}px`,
+            bottom: `${store.footerHeight + marginBottom}px`,
+            left: `${marginLeft}px`,
+            width: `${store.canvasSize.width - marginLeft - marginRight}px`,
             height: '12px',
             marginBottom: '-6px'
           }"
@@ -715,6 +726,34 @@ const getGlobalElements = () => {
         <div
           class="absolute w-3 h-3 border-b-2 border-r-2 border-gray-300"
           :style="{ bottom: `${marginBottom}px`, right: `${marginRight}px` }"
+        ></div>
+      </div>
+
+      <!-- Margin Guides -->
+      <div v-if="store.showMarginLines && (marginLeft > 0 || marginTop > 0)" data-print-exclude="true" class="margin-guides absolute inset-0 pointer-events-none z-40">
+        <!-- Top Line -->
+        <div 
+          v-if="marginTop > 0"
+          class="absolute border-t border-dashed border-gray-400 w-full"
+          :style="{ top: `${marginTop}px` }"
+        ></div>
+        <!-- Bottom Line -->
+        <div 
+          v-if="marginBottom > 0"
+          class="absolute border-b border-dashed border-gray-400 w-full"
+          :style="{ bottom: `${marginBottom}px` }"
+        ></div>
+        <!-- Left Line -->
+        <div 
+          v-if="marginLeft > 0"
+          class="absolute border-l border-dashed border-gray-400 h-full"
+          :style="{ left: `${marginLeft}px` }"
+        ></div>
+        <!-- Right Line -->
+        <div 
+          v-if="marginRight > 0"
+          class="absolute border-r border-dashed border-gray-400 h-full"
+          :style="{ right: `${marginRight}px` }"
         ></div>
       </div>
     </div>
