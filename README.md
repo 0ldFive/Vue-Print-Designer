@@ -22,21 +22,14 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 | **打印参数配置**<br>![打印参数](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png) | **系统设置与偏好**<br>![系统设置](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png) |
 | **快捷键说明**<br>![快捷键](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png) | **高级表格编辑**<br>![高级表格](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png) |
 
-## 我们解决了什么问题
+## 核心特性与优势
 
-- 设计与打印链路割裂，模板无法复用，改一个字段要改一堆代码
-- 复杂分页（尤其是表格）需要大量手写逻辑
-- 业务系统与打印插件的集成成本高、接口不统一、跨框架兼容性差
+市面上大多数打印插件要么**强耦合特定框架**，要么**仅提供基础打印功能**。我们专注于解决**分页逻辑复杂**与**集成成本高**的痛点，提供企业级的打印解决方案：
 
-## 为什么比同类更好用
-
-很多同类插件要么强耦合框架、要么只提供“导出图片/打印”而缺少工程化能力。我们的优势是：
-
-- **完整设计器**：元素、属性、分页、预览、模板管理一体化
-- **可扩展**：模板与自定义元素可以走本地存储，也能接入你的 API
-- **跨框架**：Web Components 方式适配 Vue/React/Angular/纯 HTML
-- **工程化**：导出 PDF/图片/Blob、打印参数、静默打印、连接配置都可控
-- **可维护**：代码结构清晰，便于二次开发与业务定制
+- **开箱即用**：不同于手写分页逻辑，内置完整的拖拽设计器与预览引擎，自动处理表格分页与表头重复。
+- **跨框架支持**：拒绝框架锁定，基于 Web Components，完美适配 Vue/React/Angular/原生 HTML 等所有技术栈。
+- **工程化完备**：不仅是打印，更提供静默打印、云打印、PDF/图片导出及精细的打印参数控制。
+- **灵活扩展**：支持自定义元素与 API 对接，满足深度业务定制需求。
 
 ## 功能亮点
 
