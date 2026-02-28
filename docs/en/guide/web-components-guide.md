@@ -28,7 +28,7 @@ import 'vue-print-designer/style.css'
 Use the custom element:
 
 ```html
-<print-designer id="designer"></print-designer>
+<print-designer id="designer" lang="en"></print-designer>
 ```
 
 ## Instance Methods and Parameters
@@ -349,6 +349,21 @@ Parameters:
 | `endpoints.customElements.delete` | `string` | No | Custom element delete endpoint (`{id}` placeholder) |
 | `options.baseUrl` | `string` | No | Base URL (same as `endpoints.baseUrl`) |
 | `options.headers` | `Record<string, string>` | No | Request headers (auth, etc) |
+
+### 13) setLanguage(lang)
+
+Description: switch language. You can also use `lang="en"` attribute to set initial language.
+
+```ts
+el.setLanguage('en')
+el.setLanguage('zh')
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `lang` | `'zh' \| 'en'` | Yes | Language code |
 
 ## Events
 

@@ -19,11 +19,15 @@ const getInitialLanguage = () => {
   return 'en'; // Default to English for other languages
 };
 
-const i18n = createI18n({
-  legacy: false, // Use Composition API
-  locale: getInitialLanguage(),
-  fallbackLocale: 'en',
-  messages,
-});
+export const createI18nInstance = (initialLocale?: 'zh' | 'en') => {
+  return createI18n({
+    legacy: false, // Use Composition API
+    locale: initialLocale || getInitialLanguage(),
+    fallbackLocale: 'en',
+    messages,
+  });
+};
+
+const i18n = createI18nInstance();
 
 export default i18n;

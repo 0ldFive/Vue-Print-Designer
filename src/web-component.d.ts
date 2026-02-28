@@ -12,6 +12,7 @@ export interface PrintDesignerElement extends HTMLElement {
   setBranding(payload?: { title?: string; logoUrl?: string; showTitle?: boolean; showLogo?: boolean }): void;
   setBrandVars(vars: Record<string, string>, options?: { persist?: boolean }): void;
   setTheme(theme: string): void;
+  setLanguage(lang: 'zh' | 'en'): void;
 
   getVariables(): Record<string, any>;
   setVariables(vars: Record<string, any>, options?: { merge?: boolean }): void;

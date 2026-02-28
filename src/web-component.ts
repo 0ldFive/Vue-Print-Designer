@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
-import i18n from './locales';
+import { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
 import PrintDesigner from './components/PrintDesigner.vue';
 import { useTheme } from './composables/useTheme';
@@ -62,8 +62,29 @@ class PrintDesignerElement extends HTMLElement {
   private designerStore: ReturnType<typeof useDesignerStore> | null = null;
   private templateStore: ReturnType<typeof useTemplateStore> | null = null;
   private themeApi: ReturnType<typeof useTheme> | null = null;
+  private i18n: ReturnType<typeof createI18nInstance> | null = null;
   private mountEl: HTMLElement | null = null;
   private headObserver: MutationObserver | null = null;
+
+  static get observedAttributes() {
+    return ['lang'];
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (name === 'lang' && newValue !== oldValue) {
+      this.setLanguage(newValue);
+    }
+  }
+
+  setLanguage(lang: string) {
+    if (lang === 'zh' || lang === 'en') {
+      if (this.i18n) {
+        // @ts-ignore
+        this.i18n.global.locale.value = lang;
+      }
+      localStorage.setItem('print-designer-language', lang);
+    }
+  }
 
   private syncMonacoStyles() {
     const shadow = this.shadowRoot;
@@ -139,6 +160,10 @@ class PrintDesignerElement extends HTMLElement {
     applyStoredBrandVars();
 
     app.use(pinia);
+    
+    const lang = this.getAttribute('lang') as 'zh' | 'en' | null;
+    const i18n = createI18nInstance(lang || undefined);
+    this.i18n = i18n;
     app.use(i18n);
 
     const shadow = this.ensureShadowRoot();
@@ -174,6 +199,7 @@ class PrintDesignerElement extends HTMLElement {
     this.designerStore = null;
     this.templateStore = null;
     this.themeApi = null;
+    this.i18n = null;
     this.mountEl = null;
   }
 

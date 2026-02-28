@@ -28,7 +28,7 @@ import 'vue-print-designer/style.css'
 使用自定义元素：
 
 ```html
-<print-designer id="designer"></print-designer>
+<print-designer id="designer" lang="zh"></print-designer>
 ```
 
 ## 实例方法与参数说明
@@ -349,6 +349,21 @@ el.setCrudEndpoints({
 | `endpoints.customElements.delete` | `string` | 否 | 自定义元素删除接口（`{id}` 占位） |
 | `options.baseUrl` | `string` | 否 | 接口域名（同 baseUrl） |
 | `options.headers` | `Record<string, string>` | 否 | 请求头（如鉴权） |
+
+### 13) setLanguage(lang)
+
+说明：切换语言。也可以通过 HTML 属性 `lang="zh"` 设置初始语言。
+
+```ts
+el.setLanguage('zh')
+el.setLanguage('en')
+```
+
+参数：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `lang` | `'zh' \| 'en'` | 是 | 语言代码 |
 
 ## 事件与回调
 
