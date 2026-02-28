@@ -16,7 +16,7 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 
 ## 界面预览
 
-|  |  |
+| 界面视图 | 界面视图 |
 | --- | --- |
 | **设计器主界面与画布视图**<br>![设计器主界面](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png) | **打印预览**<br>![打印预览](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png) |
 | **打印参数配置**<br>![打印参数](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png) | **系统设置与偏好**<br>![系统设置](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png) |
@@ -56,7 +56,7 @@ PrintDot Client 是配套的桌面打印助手（Wails + Vue），用于设备�
 - 关键能力：自动发现与识别设备、稳定连接维护与转发队列、轻量后台运行
 - 项目地址：https://github.com/0ldFive/PrintDot-Client
 
-|  |  |
+| 初始界面 | 偏好设置 |
 | --- | --- |
 | **主界面 - 设备状态与连接管理**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot 主界面" width="280" /> | **设置页面 - 偏好与配置选项**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot 设置页面" width="280" /> |
 
