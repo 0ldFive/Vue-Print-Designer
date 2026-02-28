@@ -1128,18 +1128,26 @@ export const useDesignerStore = defineStore('designer', {
       this.snapshot();
 
       if (elements.length === 1) {
-        // Align to canvas
+        // Align to canvas (respecting margins)
         const el = elements[0];
         const canvasW = this.canvasSize.width;
         const canvasH = this.canvasSize.height;
+        const marginX = this.pageSpacingX || 0;
+        const marginY = this.pageSpacingY || 0;
+        
+        // Effective content area
+        const contentX = marginX;
+        const contentY = marginY;
+        const contentW = Math.max(0, canvasW - marginX * 2);
+        const contentH = Math.max(0, canvasH - marginY * 2);
 
         switch (type) {
-          case 'left': el.x = 0; break;
-          case 'center': el.x = (canvasW - el.width) / 2; break;
-          case 'right': el.x = canvasW - el.width; break;
-          case 'top': el.y = 0; break;
-          case 'middle': el.y = (canvasH - el.height) / 2; break;
-          case 'bottom': el.y = canvasH - el.height; break;
+          case 'left': el.x = contentX; break;
+          case 'center': el.x = contentX + (contentW - el.width) / 2; break;
+          case 'right': el.x = contentX + contentW - el.width; break;
+          case 'top': el.y = contentY; break;
+          case 'middle': el.y = contentY + (contentH - el.height) / 2; break;
+          case 'bottom': el.y = contentY + contentH - el.height; break;
         }
       } else {
         // Align relative to selection bounds
