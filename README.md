@@ -190,6 +190,14 @@ el.addEventListener('error', (e) => {
 });
 ```
 
+## 集成示例
+
+我们提供了一个基于 **Vue 3 + Element Plus** 的完整集成示例项目，演示如何在实际业务系统中嵌入打印设计器。
+
+- **项目地址**：[https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
+- **技术栈**：Vue 3, TypeScript, Element Plus, Vite
+- **项目状态**：🚧 **建设中**（逐步完善更多业务场景）
+
 ## 项目结构
 
 ```
