@@ -262,6 +262,12 @@ watch(selectedLang, (val) => {
   localStorage.setItem('print-designer-language', val);
 });
 
+watch(locale, (val) => {
+  if (selectedLang.value !== val) {
+    selectedLang.value = val as string;
+  }
+});
+
 watch(selectedTheme, (val) => {
   setTheme(val);
 });

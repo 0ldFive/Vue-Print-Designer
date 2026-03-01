@@ -63,6 +63,15 @@ onMounted(() => {
   nextTick(() => {
     updateOffset();
   });
+
+  resizeObserver = new ResizeObserver(() => {
+    updateOffset();
+  });
+  
+  if (scrollContainer.value) {
+    resizeObserver.observe(scrollContainer.value);
+  }
+
   window.addEventListener('resize', updateOffset);
   window.addEventListener('keydown', handleCtrlKey);
   window.addEventListener('keydown', handleCustomEditShortcuts);
@@ -275,6 +284,10 @@ const updateOffset = () => {
 
 onUnmounted(() => {
   debouncedAutoSave.cancel();
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
   window.removeEventListener('resize', updateOffset);
   window.removeEventListener('mousemove', handleGuideMouseMove);
   window.removeEventListener('mouseup', handleGuideMouseUp);
