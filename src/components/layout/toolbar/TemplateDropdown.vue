@@ -40,8 +40,8 @@ const testDataContent = ref('');
 const testDataTarget = ref<Template | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
 
-onMounted(() => {
-  store.loadTemplates();
+onMounted(async () => {
+  await store.loadTemplates();
   // Auto-select first template if available and none selected
   if (!store.currentTemplateId && store.templates.length > 0) {
     store.loadTemplate(store.templates[0].id);
