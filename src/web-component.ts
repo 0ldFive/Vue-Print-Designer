@@ -375,7 +375,11 @@ class PrintDesignerElement extends HTMLElement {
   setCrudMode(mode: CrudMode) {
     setCrudMode(mode);
     if (mode === 'remote') {
-      this.templateStore?.loadTemplates();
+      this.templateStore?.loadTemplates().then(() => {
+        if (this.templateStore && !this.templateStore.currentTemplateId && this.templateStore.templates.length > 0) {
+          this.templateStore.loadTemplate(this.templateStore.templates[0].id);
+        }
+      });
       this.designerStore?.loadCustomElements();
     }
   }
