@@ -240,21 +240,29 @@ const loadStoredBrandVars = () => {
 loadStoredBrandVars();
 
 const handleLocalConnection = async () => {
-  if (localConnecting.value) return;
-  if (localConnected.value) {
-    disconnectLocal();
-    return;
+  try {
+    if (localConnecting.value) return;
+    if (localConnected.value) {
+      disconnectLocal();
+      return;
+    }
+    await connectLocal();
+  } catch (error) {
+    console.error('Local connection error:', error);
   }
-  await connectLocal();
 };
 
 const handleRemoteConnection = async () => {
-  if (remoteConnecting.value) return;
-  if (remoteConnected.value) {
-    disconnectRemote();
-    return;
+  try {
+    if (remoteConnecting.value) return;
+    if (remoteConnected.value) {
+      disconnectRemote();
+      return;
+    }
+    await connectRemote();
+  } catch (error) {
+    console.error('Remote connection error:', error);
   }
-  await connectRemote();
 };
 
 watch(selectedLang, (val) => {
@@ -294,14 +302,22 @@ watch([activeTab, remoteStatus], ([tab, status]) => {
 });
 
 const close = () => {
-  emit('update:show', false);
+  try {
+    emit('update:show', false);
+  } catch (error) {
+    console.error('Error closing modal:', error);
+  }
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (!props.show) return;
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    close();
+  try {
+    if (!props.show) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    }
+  } catch (error) {
+    console.error('Error in keydown handler:', error);
   }
 };
 
@@ -319,7 +335,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport :to="modalContainer || 'body'">
-    <div v-if="show" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 pointer-events-auto" @click.self="emit('update:show', false)">
+    <div v-if="show" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 pointer-events-auto" @click.self="close">
       <div class="bg-white rounded-lg shadow-xl w-[700px] max-w-full h-[500px] flex overflow-hidden">
         <!-- Sidebar Tabs -->
         <div class="w-48 bg-gray-50 border-r border-gray-200 flex flex-col">

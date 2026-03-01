@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { MM_TO_PX, PT_TO_PX, type Unit } from '@/utils/units';
+import { useTheme } from '@/composables/useTheme';
 
 const props = defineProps<{
   type: 'horizontal' | 'vertical';
@@ -12,9 +13,9 @@ const props = defineProps<{
   unit: Unit;
 }>();
 
+const { isDark } = useTheme();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const THICKNESS = props.thick || 20;
-let themeObserver: MutationObserver | null = null;
 
 const draw = () => {
   const canvas = canvasRef.value;
@@ -26,11 +27,11 @@ const draw = () => {
   const width = canvas.width;
   const height = canvas.height;
   const { zoom, scroll, offset, type, indicators } = props;
-  const isDark = document.documentElement.classList.contains('dark');
+  const _isDark = isDark.value;
 
   // Clear
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = isDark ? '#1f2937' : '#F9FAFB'; // dark: gray-800, light: gray-50
+  ctx.fillStyle = _isDark ? '#1f2937' : '#F9FAFB'; // dark: gray-800, light: gray-50
   ctx.fillRect(0, 0, width, height);
   
   // Draw Indicators
@@ -46,8 +47,8 @@ const draw = () => {
     }
   }
 
-  ctx.strokeStyle = isDark ? '#6b7280' : '#9CA3AF'; // dark: gray-500, light: gray-400
-  ctx.fillStyle = isDark ? '#9ca3af' : '#6B7280'; // dark: gray-400, light: gray-500
+  ctx.strokeStyle = _isDark ? '#6b7280' : '#9CA3AF'; // dark: gray-500, light: gray-400
+  ctx.fillStyle = _isDark ? '#9ca3af' : '#6B7280'; // dark: gray-400, light: gray-500
   ctx.lineWidth = 1;
   ctx.font = '10px sans-serif';
   ctx.beginPath();
@@ -143,18 +144,13 @@ onMounted(() => {
     resizeObserver.observe(canvasRef.value.parentElement!);
     draw();
   }
-  themeObserver = new MutationObserver(() => {
-    draw();
-  });
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 });
 
 onUnmounted(() => {
-  themeObserver?.disconnect();
-  themeObserver = null;
+  resizeObserver.disconnect();
 });
 
-watch(() => [props.zoom, props.scroll, props.offset, props.indicators, props.unit], draw, { deep: true });
+watch(() => [props.zoom, props.scroll, props.offset, props.indicators, props.unit, isDark.value], draw, { deep: true });
 
 const emit = defineEmits<{
   (e: 'guide-drag-start', event: MouseEvent): void
@@ -166,7 +162,7 @@ const handleMouseDown = (e: MouseEvent) => {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden bg-gray-50 relative" @mousedown="handleMouseDown">
+  <div class="w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-800 relative" @mousedown="handleMouseDown">
     <canvas ref="canvasRef" class="block"></canvas>
   </div>
 </template>

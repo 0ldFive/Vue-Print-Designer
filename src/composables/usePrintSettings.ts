@@ -766,19 +766,7 @@ const createState = (): PrintSettingsState => {
     return remotePrinters.value;
   };
 
-  const autoConnectIfReady = () => {
-    const hasLocalConfig = Boolean(localSettings.wsAddress);
-    const hasRemoteConfig = Boolean(remoteSettings.apiBaseUrl && remoteSettings.username && remoteSettings.password);
 
-    if (hasLocalConfig) {
-      connectLocal();
-    }
-    if (hasRemoteConfig) {
-      connectRemote();
-    }
-  };
-
-  autoConnectIfReady();
 
   return {
     printMode,

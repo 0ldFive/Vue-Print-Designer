@@ -161,3 +161,12 @@
     scrollbar-color: #4b5563 #1f2937;
   }
 }
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

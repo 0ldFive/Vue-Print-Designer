@@ -19,11 +19,6 @@ const setTheme = (newTheme: string) => {
   localStorage.setItem('print-designer-theme', newTheme);
 };
 
-// Apply theme to document
-// watch(isDark, (val) => {
-//   document.documentElement.classList.toggle('dark', val);
-// }, { immediate: true });
-
 export function useTheme() {
   return {
     theme,
