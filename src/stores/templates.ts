@@ -104,7 +104,12 @@ export const useTemplateStore = defineStore('templates', {
           const next = { ...payload, id } as Template;
           if (index >= 0) this.templates[index] = next;
           else this.templates.unshift(next);
-          this.currentTemplateId = id;
+          
+          // Only update currentTemplateId if we were creating a new template (no targetId)
+          // or if the user hasn't switched to another template yet
+          if (!targetId || this.currentTemplateId === targetId) {
+            this.currentTemplateId = id;
+          }
           return;
         }
 
