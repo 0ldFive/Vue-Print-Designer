@@ -273,12 +273,14 @@ const updateOffset = () => {
 
     const containerRect = scrollContainer.value.getBoundingClientRect();
     const wrapperRect = canvasWrapper.value.getBoundingClientRect();
+    const clientLeft = scrollContainer.value.clientLeft || 0;
+    const clientTop = scrollContainer.value.clientTop || 0;
 
     scrollX.value = scrollContainer.value.scrollLeft;
     scrollY.value = scrollContainer.value.scrollTop;
 
-    offsetX.value = wrapperRect.left - containerRect.left + scrollContainer.value.scrollLeft;
-    offsetY.value = wrapperRect.top - containerRect.top + scrollContainer.value.scrollTop;
+    offsetX.value = wrapperRect.left - containerRect.left + scrollContainer.value.scrollLeft - clientLeft;
+    offsetY.value = wrapperRect.top - containerRect.top + scrollContainer.value.scrollTop - clientTop;
   }
 };
 
