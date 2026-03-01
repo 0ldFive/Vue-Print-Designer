@@ -462,8 +462,18 @@ class PrintDesignerElement extends HTMLElement {
         data: t.data || {},
         updatedAt: t.updatedAt || Date.now()
       }));
-    if (options.currentTemplateId) {
-      this.templateStore.currentTemplateId = options.currentTemplateId;
+    let targetId = options.currentTemplateId || this.templateStore.currentTemplateId;
+    if (targetId && !this.templateStore.templates.some((t) => t.id === targetId)) {
+      targetId = null;
+    }
+    if (!targetId && this.templateStore.templates.length > 0) {
+      targetId = this.templateStore.templates[0].id;
+    }
+    if (targetId) {
+      this.templateStore.currentTemplateId = targetId;
+      if (this.designerStore && !this.designerStore.editingCustomElementId) {
+        this.templateStore.loadTemplate(targetId);
+      }
     }
     this.templateStore.saveToLocalStorage();
   }
