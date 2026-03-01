@@ -76,7 +76,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport :to="modalContainer || 'body'">
-    <div v-if="visible" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 pointer-events-auto" @click.self="handleClose">
+    <div v-if="visible" :class="{ 'dark': isDark }" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 pointer-events-auto" @click.self="handleClose">
       <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-[60vw] h-[80vh] flex flex-col overflow-hidden animate-fade-in">
         <!-- Header -->
         <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">

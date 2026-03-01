@@ -20,9 +20,9 @@ const setTheme = (newTheme: string) => {
 };
 
 // Apply theme to document
-watch(isDark, (val) => {
-  document.documentElement.classList.toggle('dark', val);
-}, { immediate: true });
+// watch(isDark, (val) => {
+//   document.documentElement.classList.toggle('dark', val);
+// }, { immediate: true });
 
 export function useTheme() {
   return {

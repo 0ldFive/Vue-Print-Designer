@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted, inject } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Close from '~icons/material-symbols/close';
 import { useDesignerStore } from '@/stores/designer';
+import { useTheme } from '@/composables/useTheme';
 
 const props = defineProps<{
   show: boolean;
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { isDark } = useTheme();
 const designerStore = useDesignerStore();
 const modalContainer = inject('modal-container', ref<HTMLElement | null>(null));
 
@@ -50,7 +52,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport :to="modalContainer || 'body'">
-    <div v-if="show" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 pointer-events-auto">
+    <div v-if="show" :class="{ 'dark': isDark }" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 pointer-events-auto">
       <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-96 animate-in fade-in zoom-in duration-200 flex flex-col overflow-hidden">
         <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ title || t('input.title') }}</h3>

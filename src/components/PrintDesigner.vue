@@ -586,7 +586,7 @@ const rulerIndicators = computed(() => {
                      <template v-if="dragProjection">
                        <!-- Top Line -->
                         <div class="absolute w-full border-t border-blue-500 border-dashed"
-                            :style="{ top: `${offsetY + dragProjection.minY * store.zoom}px`, left: 0 }">
+                            :style="{ top: `${offsetY + Math.round(dragProjection.minY * store.zoom)}px`, left: 0 }">
                           <div class="absolute -top-6 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
                                :style="{ left: `${scrollX + 10}px` }">
                              {{ formatUnitValue(dragProjection.minY) }} {{ unitLabel }}
@@ -594,7 +594,7 @@ const rulerIndicators = computed(() => {
                        </div>
                        <!-- Bottom Line -->
                         <div class="absolute w-full border-t border-dashed theme-border"
-                            :style="{ top: `${offsetY + dragProjection.maxY * store.zoom}px`, left: 0 }">
+                            :style="{ top: `${offsetY + Math.round(dragProjection.maxY * store.zoom)}px`, left: 0 }">
                           <div class="absolute -top-6 theme-bg text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
                                :style="{ left: `${scrollX + 10}px` }">
                              {{ formatUnitValue(dragProjection.maxY) }} {{ unitLabel }}
@@ -602,7 +602,7 @@ const rulerIndicators = computed(() => {
                        </div>
                        <!-- Left Line -->
                         <div class="absolute h-full border-l border-dashed theme-border"
-                            :style="{ left: `${offsetX + dragProjection.minX * store.zoom}px`, top: 0 }">
+                            :style="{ left: `${offsetX + Math.round(dragProjection.minX * store.zoom)}px`, top: 0 }">
                           <div class="absolute -left-2 transform -translate-x-full theme-bg text-white text-xs px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap"
                                :style="{ top: `${scrollY + 10}px` }">
                              {{ formatUnitValue(dragProjection.minX) }} {{ unitLabel }}
@@ -610,7 +610,7 @@ const rulerIndicators = computed(() => {
                        </div>
                        <!-- Right Line -->
                         <div class="absolute h-full border-l border-dashed theme-border"
-                            :style="{ left: `${offsetX + dragProjection.maxX * store.zoom}px`, top: 0 }">
+                            :style="{ left: `${offsetX + Math.round(dragProjection.maxX * store.zoom)}px`, top: 0 }">
                           <div class="absolute -left-2 transform -translate-x-full theme-bg text-white text-xs px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap"
                                :style="{ top: `${scrollY + 10}px` }">
                              {{ formatUnitValue(dragProjection.maxX) }} {{ unitLabel }}

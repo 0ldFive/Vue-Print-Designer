@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useTheme } from '@/composables/useTheme';
 import CheckIcon from '~icons/material-symbols/check';
 import CloseIcon from '~icons/material-symbols/close';
 import FormatColorReset from '~icons/material-symbols/format-color-reset';
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { isDark } = useTheme();
 const modalContainer = inject('modal-container', ref<HTMLElement | null>(null));
 
 const isOpen = ref(false);
@@ -302,7 +304,7 @@ onUnmounted(() => {
         v-if="isOpen"
         ref="dropdownRef"
         class="color-picker-dropdown bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-[240px] pointer-events-auto"
-        :class="teleportToBody ? 'fixed z-[100000]' : 'absolute z-[100]'"
+        :class="[teleportToBody ? 'fixed z-[100000]' : 'absolute z-[100]', { 'dark': isDark }]"
         :style="dropdownStyle"
         @click.stop
         @mousedown.stop
