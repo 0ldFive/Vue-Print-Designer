@@ -560,7 +560,7 @@ const getGlobalElements = () => {
       transform: `scale(${zoom})`,
       transformOrigin: 'top left',
       width: 'fit-content',
-      rowGap: `${pageSpacingY}px`
+      rowGap: '20px'
     }"
   >
     <div v-for="(page, index) in pages" :key="page.id" class="relative group">

@@ -228,7 +228,7 @@ const canvasStyle = computed(() => {
   const pagesCount = store.pages.length;
   const pageHeight = store.canvasSize.height;
   const pageWidth = store.canvasSize.width;
-  const gapY = store.pageSpacingY || 0;
+  const gapY = 20;
   // const paddingBottom = 80; // pb-20 - Removed to prevent unnecessary scrollbars
   
   const unscaledHeight = pagesCount > 0
@@ -458,11 +458,12 @@ const getRotatedBounds = (el: any) => {
 const dragProjection = computed(() => {
   if (!store.isDragging || store.selectedElementIds.length === 0) return null;
 
-  const elements: any[] = [];
+  const elements: { el: any, pageIndex: number }[] = [];
   for (const id of store.selectedElementIds) {
-    for (const page of store.pages) {
+    for (let i = 0; i < store.pages.length; i++) {
+      const page = store.pages[i];
       const el = page.elements.find(e => e.id === id);
-      if (el) elements.push(el);
+      if (el) elements.push({ el, pageIndex: i });
     }
   }
 
@@ -473,8 +474,16 @@ const dragProjection = computed(() => {
   let globalMinY = Infinity;
   let globalMaxY = -Infinity;
 
-  for (const el of elements) {
+  const gapY = 20; // Match Canvas.vue rowGap
+
+  for (const { el, pageIndex } of elements) {
     const bounds = getRotatedBounds(el);
+    const pageOffset = pageIndex * (store.canvasSize.height + gapY);
+    
+    // Apply page offset to Y coordinates
+    bounds.minY += pageOffset;
+    bounds.maxY += pageOffset;
+
     if (bounds.minX < globalMinX) globalMinX = bounds.minX;
     if (bounds.maxX > globalMaxX) globalMaxX = bounds.maxX;
     if (bounds.minY < globalMinY) globalMinY = bounds.minY;
