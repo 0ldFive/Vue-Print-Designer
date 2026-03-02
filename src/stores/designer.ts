@@ -33,7 +33,7 @@ const loadWatermark = (): WatermarkSettings => {
 
 export const useDesignerStore = defineStore('designer', {
   state: (): DesignerState => ({
-    unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt') || 'mm',
+    unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt' | 'in' | 'cm') || 'mm',
     watermark: loadWatermark(),
     branding: { ...defaultBranding },
     pages: [{ id: uuidv4(), elements: [] }],
@@ -85,7 +85,7 @@ export const useDesignerStore = defineStore('designer', {
       this.watermark = { ...(this.watermark || defaultWatermark), ...update };
       localStorage.setItem('print-designer-watermark', JSON.stringify(this.watermark));
     },
-    setUnit(unit: 'mm' | 'px' | 'pt') {
+    setUnit(unit: 'mm' | 'px' | 'pt' | 'in' | 'cm') {
       this.unit = unit;
       localStorage.setItem('print-designer-unit', unit);
     },

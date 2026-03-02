@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { MM_TO_PX, PT_TO_PX, type Unit } from '@/utils/units';
+import { MM_TO_PX, PT_TO_PX, IN_TO_PX, CM_TO_PX, type Unit } from '@/utils/units';
 import { useTheme } from '@/composables/useTheme';
 
 const props = defineProps<{
@@ -53,14 +53,14 @@ const draw = () => {
   ctx.font = '10px sans-serif';
   ctx.beginPath();
 
-  const pxPerUnit = props.unit === 'mm' ? MM_TO_PX : props.unit === 'pt' ? PT_TO_PX : 1;
+  const pxPerUnit = props.unit === 'mm' ? MM_TO_PX : props.unit === 'pt' ? PT_TO_PX : props.unit === 'in' ? IN_TO_PX : props.unit === 'cm' ? CM_TO_PX : 1;
   const visualPxPerUnit = pxPerUnit * zoom;
   
   const targetVisualGap = 50; // px between major marks
   const targetUnitGap = targetVisualGap / visualPxPerUnit;
   
   // Find closest nice number (steps in MM)
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+  const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
   let stepUnit = steps[steps.length - 1];
   for (const s of steps) {
     if (s >= targetUnitGap - 0.001) {
@@ -104,7 +104,7 @@ const draw = () => {
       ctx.save();
       ctx.translate(10, pos + 2);
       ctx.rotate(-Math.PI / 2);
-      ctx.fillText(label, 0, 0);
+      ctx.fillText(label, 4, 0); // Move text away from canvas edge to match horizontal ruler
       ctx.restore();
     }
     

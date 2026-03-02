@@ -145,7 +145,7 @@ export interface CustomElementEditSnapshot {
   canvasBackground: string;
   pageSpacingX?: number;
   pageSpacingY?: number;
-  unit?: 'mm' | 'px' | 'pt';
+  unit?: 'mm' | 'px' | 'pt' | 'in' | 'cm';
   watermark?: WatermarkSettings;
   testData?: Record<string, any>;
   currentPageIndex: number;
@@ -170,7 +170,7 @@ export interface DesignerState {
   highlightedGuideId: string | null;
   highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null;
   canvasSize: Size; // A4 usually
-  unit?: 'mm' | 'px' | 'pt';
+  unit?: 'mm' | 'px' | 'pt' | 'in' | 'cm';
   watermark?: WatermarkSettings;
   zoom: number;
   isDragging: boolean;

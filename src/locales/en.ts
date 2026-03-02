@@ -21,6 +21,8 @@ export default {
     mm: 'mm',
     px: 'px',
     pt: 'pt',
+    in: 'in',
+    cm: 'cm',
     rotate: 'Rotate',
     lock: 'Lock',
     unlock: 'Unlock',

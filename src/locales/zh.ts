@@ -21,6 +21,8 @@ export default {
     mm: '毫米',
     px: '像素',
     pt: '磅',
+    in: '英寸',
+    cm: '厘米',
     rotate: '旋转',
     lock: '锁定',
     unlock: '解锁',

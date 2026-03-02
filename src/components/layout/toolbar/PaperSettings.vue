@@ -76,6 +76,8 @@ const pageSpacingY = computed({
 const unitLabel = computed(() => {
   if (store.unit === 'px') return t('common.px');
   if (store.unit === 'pt') return t('common.pt');
+  if (store.unit === 'in') return t('common.in');
+  if (store.unit === 'cm') return t('common.cm');
   return t('common.mm');
 });
 
@@ -174,6 +176,8 @@ watch(showAdvancedSettings, (val) => {
             class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
           >
             <option value="mm" class="dark:bg-gray-800 dark:text-gray-200">{{ t('common.mm') }}</option>
+            <option value="cm" class="dark:bg-gray-800 dark:text-gray-200">{{ t('common.cm') }}</option>
+            <option value="in" class="dark:bg-gray-800 dark:text-gray-200">{{ t('common.in') }}</option>
             <option value="pt" class="dark:bg-gray-800 dark:text-gray-200">{{ t('common.pt') }}</option>
             <option value="px" class="dark:bg-gray-800 dark:text-gray-200">{{ t('common.px') }}</option>
           </select>

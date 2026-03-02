@@ -209,7 +209,7 @@ export const usePrint = () => {
     showHeaderLine: boolean;
     showFooterLine: boolean;
     watermark: WatermarkSettings;
-    unit: 'mm' | 'px' | 'pt';
+    unit: 'mm' | 'px' | 'pt' | 'in' | 'cm';
     testData: Record<string, any>;
   };
 
