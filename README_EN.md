@@ -187,7 +187,7 @@ el.addEventListener('error', (e) => {
 });
 ```
 
-## Integration Example
+### Integration Example
 
 To help developers get started quickly, we provide a complete integration example based on **Vue 3 + Element Plus**. This project demonstrates how to embed the print designer into a real-world business application.
 
