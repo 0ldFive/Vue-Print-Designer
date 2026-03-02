@@ -115,6 +115,10 @@ const handleMouseDown = (e: MouseEvent) => {
     // If already selected, do nothing on mouse down to preserve group selection for dragging
   }
 
+  if (store.selectedElementIds.includes(props.element.id)) {
+    store.bringElementsToFront(store.selectedElementIds);
+  }
+
   if (props.element.locked) return; // Prevent drag if locked
 
   isDragging = true;

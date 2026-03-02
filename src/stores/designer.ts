@@ -979,6 +979,30 @@ export const useDesignerStore = defineStore('designer', {
          this.pages[sourcePageIndex].elements.push(element);
        }
     },
+    bringElementsToFront(ids: string[]) {
+      if (!ids || ids.length === 0) return;
+      const idSet = new Set(ids);
+      for (const page of this.pages) {
+        const selectedInPage = page.elements.filter(el => idSet.has(el.id));
+        if (selectedInPage.length === 0) continue;
+        let maxNonSelected = 0;
+        for (const el of page.elements) {
+          if (idSet.has(el.id)) continue;
+          maxNonSelected = Math.max(maxNonSelected, el.style.zIndex || 1);
+        }
+        const needsRaise = selectedInPage.some(el => (el.style.zIndex || 1) <= maxNonSelected);
+        if (!needsRaise) continue;
+        let nextZ = maxNonSelected + 1;
+        const orderedIds = ids.filter(id => selectedInPage.some(el => el.id === id));
+        for (const id of orderedIds) {
+          const index = page.elements.findIndex(el => el.id === id);
+          if (index === -1) continue;
+          const el = page.elements[index];
+          page.elements[index] = { ...el, style: { ...el.style, zIndex: nextZ } };
+          nextZ += 1;
+        }
+      }
+    },
     updateElement(id: string, updates: Partial<PrintElement>, createSnapshot: boolean = true) {
       if (createSnapshot) {
         this.snapshot();
@@ -1052,6 +1076,10 @@ export const useDesignerStore = defineStore('designer', {
         this.selectedElementIds = id ? [id] : [];
       }
 
+      if (this.selectedElementIds.length > 0) {
+        this.bringElementsToFront(this.selectedElementIds);
+      }
+
       if (id) {
         // Find page and update current index
         const pageIndex = this.pages.findIndex(p => p.elements.some(e => e.id === id));
@@ -1072,6 +1100,9 @@ export const useDesignerStore = defineStore('designer', {
       }
       this.selectedElementIds = ids;
       this.selectedElementId = ids.length > 0 ? ids[ids.length - 1] : null;
+      if (ids.length > 0) {
+        this.bringElementsToFront(ids);
+      }
       if (ids.length > 0) {
         // Find page and update current index
         const pageIndex = this.pages.findIndex(p => p.elements.some(e => e.id === this.selectedElementId));
