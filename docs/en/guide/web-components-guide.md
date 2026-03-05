@@ -331,6 +331,7 @@ Parameters:
 
 ```ts
 const list = el.getCustomElements({ includeElement: false })
+const detail = el.getCustomElement('element-id')
 const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
 
 el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])

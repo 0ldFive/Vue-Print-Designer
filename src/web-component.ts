@@ -551,6 +551,12 @@ class PrintDesignerElement extends HTMLElement {
     return this.designerStore.customElements.map((el) => ({ id: el.id, name: el.name }));
   }
 
+  getCustomElement(id: string) {
+    if (!this.designerStore) return null;
+    const element = this.designerStore.customElements.find((el) => el.id === id);
+    return element ? cloneDeep(element) : null;
+  }
+
   async upsertCustomElement(customElement: { id?: string; name: string; element: any }) {
     if (!this.designerStore) return null;
     if (!customElement || typeof customElement.name !== 'string' || !customElement.element) return null;
