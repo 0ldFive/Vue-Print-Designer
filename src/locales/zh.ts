@@ -134,9 +134,9 @@ export default {
   },
   sidebar: {
     custom: '自定义',
-    elements: '组件库',
-    dragToCanvas: '拖拽组件到画布',
-    standard: '标准组件',
+    elements: '元素库',
+    dragToCanvas: '拖拽元素到画布',
+    standard: '标准元素',
     general: '通用',
     dataCodes: '数据 & 条码',
     shapes: '图形',
@@ -149,14 +149,14 @@ export default {
     line: '直线',
     rect: '矩形',
     circle: '圆形',
-    noCustomElements: '暂无自定义组件',
+    noCustomElements: '暂无自定义元素',
     moreOptions: '更多选项',
     editElement: '编辑元素',
     rename: '重命名',
     copy: '复制',
     delete: '删除',
-    renameModalTitle: '重命名自定义组件',
-    enterNamePlaceholder: '输入组件名称...',
+    renameModalTitle: '重命名自定义元素',
+    enterNamePlaceholder: '输入元素名称...',
     confirmDelete: '确定要删除 "{name}" 吗？',
     confirmSwitchEdit: '退出当前对 "{name}" 的编辑？',
     confirmExitEdit: '存在未保存的更改，确定退出吗？',
@@ -182,11 +182,11 @@ export default {
   },
   properties: {
     title: '属性面板',
-    subtitle: '编辑组件属性',
+    subtitle: '编辑元素属性',
     locked: '已锁定',
     multiSelectMode: '多选模式',
-    selectedElements: '已选择 {n} 个组件',
-    deleteSelected: '删除选中组件',
+    selectedElements: '已选择 {n} 个元素',
+    deleteSelected: '删除选中元素',
     tab: {
       properties: '属性',
       style: '样式',
@@ -200,7 +200,7 @@ export default {
       footerStyle: '表脚样式',
       cellOperations: '单元格操作',
       appearance: '外观',
-      elementInfo: '组件信息',
+      elementInfo: '元素信息',
       content: '内容',
       typography: '排版',
       border: '边框',
@@ -218,13 +218,13 @@ export default {
       splitCells: '拆分单元格',
       copyId: '复制 ID',
       copied: '已复制!',
-      saveCustom: '保存为自定义组件',
-      deleteElement: '删除当前组件',
-      saveCustomModal: '保存自定义组件'
+      saveCustom: '保存为自定义元素',
+      deleteElement: '删除当前元素',
+      saveCustomModal: '保存自定义元素'
     },
     empty: {
       noSelection: '未选择',
-      selectInstruction: '选择一个组件以编辑属性'
+      selectInstruction: '选择一个元素以编辑属性'
     },
     label: {
       type: '类型',
