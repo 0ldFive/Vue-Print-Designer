@@ -191,10 +191,15 @@ el.addEventListener('error', (e) => {
 
 To help developers get started quickly, we provide a complete integration example based on **Vue 3 + Element Plus**. This project demonstrates how to embed the print designer into a real-world business application.
 
+<p align="left">
+    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/11.png" alt="Integration example 11" width="240" />
+    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/12.png" alt="Integration example 12" width="240" />
+    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/13.png" alt="Integration example 13" width="240" />
+</p>
+
 - **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
 - **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
 - **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
-- **Status**: 🚧 **Work in Progress** (Adding more business scenarios gradually)
 
 ## Project Structure
 
