@@ -503,9 +503,7 @@ export const usePrint = () => {
 
     wrappers.forEach(w => {
       const el = w as HTMLElement;
-      // Skip if it's the table wrapper being split? 
-      // The split logic moves the table wrapper manually.
-      // We only want to copy OTHER elements that are in header/footer.
+      if (el.hasAttribute('data-table-flow-id')) return;
       
       const top = parseFloat(el.style.top) || 0;
       const height = parseFloat(el.style.height) || el.offsetHeight;
@@ -863,12 +861,13 @@ export const usePrint = () => {
                 const newTable = newWrapper.querySelector('table') as HTMLElement;
                 newTable.style.height = 'auto';
                 const newTbody = newTable.querySelector('tbody') as HTMLElement;
-                if (newTbody) newTbody.style.height = 'auto';
-                const newRowsList = Array.from(newTbody.querySelectorAll('tr'));
-                 
-                 for (let k = 0; k < splitIndex; k++) {
-                     newRowsList[k].remove();
-                 }
+                if (newTbody) {
+                    newTbody.style.height = 'auto';
+                    const newRowsList = Array.from(newTbody.querySelectorAll('tr'));
+                    for (let k = 0; k < splitIndex; k++) {
+                        newRowsList[k]?.remove();
+                    }
+                }
                  
                  newPage.appendChild(newWrapper);
              } else {
