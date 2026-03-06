@@ -10,6 +10,7 @@ const props = defineProps<{
   offset: number; // Start position offset (where 0 is)
   thick?: number;
   indicators?: { position: number; color: string }[];
+  range?: { start: number; end: number; color: string } | null;
   unit: Unit;
 }>();
 
@@ -26,7 +27,7 @@ const draw = () => {
 
   const width = canvas.width;
   const height = canvas.height;
-  const { zoom, scroll, offset, type, indicators } = props;
+  const { zoom, scroll, offset, type, indicators, range } = props;
   const _isDark = isDark.value;
 
   // Clear
@@ -34,6 +35,20 @@ const draw = () => {
   ctx.fillStyle = _isDark ? '#1f2937' : '#F9FAFB'; // dark: gray-800, light: gray-50
   ctx.fillRect(0, 0, width, height);
   
+  if (range) {
+    const startPos = offset + (range.start * zoom) - scroll;
+    const endPos = offset + (range.end * zoom) - scroll;
+    const minPos = Math.min(startPos, endPos);
+    const maxPos = Math.max(startPos, endPos);
+    const rangeSize = Math.max(0, maxPos - minPos);
+    ctx.fillStyle = range.color;
+    if (type === 'horizontal') {
+      ctx.fillRect(minPos, 0, rangeSize, THICKNESS);
+    } else {
+      ctx.fillRect(0, minPos, THICKNESS, rangeSize);
+    }
+  }
+
   // Draw Indicators
   if (indicators && indicators.length > 0) {
     for (const indicator of indicators) {

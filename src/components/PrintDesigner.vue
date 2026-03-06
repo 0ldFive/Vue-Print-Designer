@@ -514,6 +514,17 @@ const rulerIndicators = computed(() => {
     ]
   };
 });
+
+const rulerRanges = computed(() => {
+  if (!dragProjection.value) return { h: null, v: null };
+  brandTick.value;
+  const rangeColor = getThemeRgba('--brand-300', 0.6);
+  const { minX, maxX, minY, maxY } = dragProjection.value;
+  return {
+    h: { start: minX, end: maxX, color: rangeColor },
+    v: { start: minY, end: maxY, color: rangeColor }
+  };
+});
 </script>
 
 <template>
@@ -556,6 +567,7 @@ const rulerIndicators = computed(() => {
                     :thick="20"
                     :unit="(store.unit || 'mm') as Unit"
                     :indicators="rulerIndicators.h"
+                    :range="rulerRanges.h"
                     @guide-drag-start="(e) => handleGuideDragStart(e, 'horizontal')"
                  />
               </div>
@@ -572,6 +584,7 @@ const rulerIndicators = computed(() => {
                     :thick="20"
                     :unit="(store.unit || 'mm') as Unit"
                     :indicators="rulerIndicators.v"
+                    :range="rulerRanges.v"
                     @guide-drag-start="(e) => handleGuideDragStart(e, 'vertical')"
                  />
               </div>
