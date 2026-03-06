@@ -194,6 +194,7 @@ export default {
     },
     section: {
       positionSize: '位置 & 尺寸',
+      layer: '层级',
       dataBehavior: '数据 & 行为',
       layoutDimensions: '布局 & 尺寸',
       headerStyle: '表头样式',
@@ -216,6 +217,10 @@ export default {
     action: {
       mergeCells: '合并单元格',
       splitCells: '拆分单元格',
+      bringToFront: '置于顶层',
+      sendToBack: '置于底层',
+      moveUp: '上移一层',
+      moveDown: '下移一层',
       copyId: '复制 ID',
       copied: '已复制!',
       saveCustom: '保存为自定义元素',
@@ -232,6 +237,7 @@ export default {
       y: 'Y',
       width: '宽度',
       height: '高度',
+      zIndex: '层级',
       content: '内容',
       variable: '变量',
       writingMode: '书写模式',

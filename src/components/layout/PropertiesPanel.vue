@@ -257,6 +257,68 @@ const handleDeleteSelected = () => {
   }
 };
 
+const currentZIndex = computed(() => element.value?.style?.zIndex || 1);
+
+const layerOrderedElements = computed(() => {
+  if (!element.value) return [];
+  const page = store.pages.find(p => p.elements.some(el => el.id === element.value!.id));
+  if (!page) return [];
+  return page.elements
+    .map((el, index) => ({
+      id: el.id,
+      zIndex: el.style?.zIndex || 1,
+      originalIndex: index
+    }))
+    .sort((a, b) => {
+      if (a.zIndex === b.zIndex) return a.originalIndex - b.originalIndex;
+      return a.zIndex - b.zIndex;
+    });
+});
+
+const currentLayerIndex = computed(() => {
+  if (!element.value) return -1;
+  return layerOrderedElements.value.findIndex(item => item.id === element.value!.id);
+});
+
+const canMoveLayerUp = computed(() => {
+  if (!element.value) return false;
+  return currentLayerIndex.value >= 0 && currentLayerIndex.value < layerOrderedElements.value.length - 1;
+});
+
+const canMoveLayerDown = computed(() => {
+  if (!element.value) return false;
+  return currentLayerIndex.value > 0;
+});
+
+const handleZIndexChange = (value: string | number) => {
+  if (!element.value) return;
+  const parsed = Math.max(1, Math.round(Number(value) || 1));
+  store.updateElement(element.value.id, {
+    style: {
+      ...element.value.style,
+      zIndex: parsed
+    }
+  });
+};
+
+const handleLayerMove = (mode: 'front' | 'back' | 'forward' | 'backward') => {
+  if (!element.value) return;
+  const ids = [element.value.id];
+  if (mode === 'front') {
+    store.moveElementsLayer(ids, 'front');
+    return;
+  }
+  if (mode === 'back') {
+    store.sendElementsToBack(ids);
+    return;
+  }
+  if (mode === 'forward') {
+    store.moveElementsForward(ids);
+    return;
+  }
+  store.moveElementsBackward(ids);
+};
+
 const handleFocusIn = (e: FocusEvent) => {
   // If focus comes from another element within the aside, do nothing
   if (e.relatedTarget && (e.currentTarget as Element).contains(e.relatedTarget as Node)) {
@@ -359,6 +421,49 @@ const handleFocusOut = (e: FocusEvent) => {
               :value="pxToUnit(element.height, unit)" 
               @update:value="(v) => handleChange('height', unitToPx(Number(v), unit))" 
             />
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'properties'" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.layer') }}</h3>
+          <PropertyInput
+            :label="t('properties.label.zIndex')"
+            type="number"
+            :disabled="isLocked"
+            :min="1"
+            :step="1"
+            :value="currentZIndex"
+            @update:value="handleZIndexChange"
+          />
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              @click="handleLayerMove('forward')"
+              :disabled="isLocked || !canMoveLayerUp"
+              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('properties.action.moveUp') }}
+            </button>
+            <button
+              @click="handleLayerMove('backward')"
+              :disabled="isLocked || !canMoveLayerDown"
+              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('properties.action.moveDown') }}
+            </button>
+            <button
+              @click="handleLayerMove('front')"
+              :disabled="isLocked || !canMoveLayerUp"
+              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('properties.action.bringToFront') }}
+            </button>
+            <button
+              @click="handleLayerMove('back')"
+              :disabled="isLocked || !canMoveLayerDown"
+              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('properties.action.sendToBack') }}
+            </button>
           </div>
         </div>
 

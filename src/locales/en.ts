@@ -194,6 +194,7 @@ export default {
     },
     section: {
       positionSize: 'Position & Size',
+      layer: 'Layer',
       dataBehavior: 'Data & Behavior',
       layoutDimensions: 'Layout & Dimensions',
       headerStyle: 'Header Style',
@@ -216,6 +217,10 @@ export default {
     action: {
       mergeCells: 'Merge Cells',
       splitCells: 'Split Cells',
+      bringToFront: 'Bring to Front',
+      sendToBack: 'Send to Back',
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
       copyId: 'Copy ID',
       copied: 'Copied!',
       saveCustom: 'Save as Custom Element',
@@ -232,6 +237,7 @@ export default {
       y: 'Y',
       width: 'Width',
       height: 'Height',
+      zIndex: 'Layer',
       content: 'Content',
       variable: 'Variable',
       writingMode: 'Writing Mode',

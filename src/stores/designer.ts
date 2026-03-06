@@ -31,6 +31,68 @@ const loadWatermark = (): WatermarkSettings => {
   }
 };
 
+type LayerMoveMode = 'front' | 'back' | 'forward' | 'backward';
+
+const getElementZIndex = (element: PrintElement) => element.style?.zIndex || 1;
+
+const getLayerSortedElements = (page: Page) => {
+  return page.elements
+    .map((element, index) => ({ element, index }))
+    .sort((a, b) => {
+      const za = getElementZIndex(a.element);
+      const zb = getElementZIndex(b.element);
+      if (za === zb) return a.index - b.index;
+      return za - zb;
+    });
+};
+
+const buildLayerAssignments = (page: Page, idSet: Set<string>, mode: LayerMoveMode) => {
+  const ordered = getLayerSortedElements(page);
+  const selectedCount = ordered.filter(item => idSet.has(item.element.id)).length;
+  if (selectedCount === 0) return null;
+
+  let nextOrdered = [...ordered];
+
+  if (mode === 'front') {
+    const selected = ordered.filter(item => idSet.has(item.element.id));
+    const unselected = ordered.filter(item => !idSet.has(item.element.id));
+    nextOrdered = [...unselected, ...selected];
+  } else if (mode === 'back') {
+    const selected = ordered.filter(item => idSet.has(item.element.id));
+    const unselected = ordered.filter(item => !idSet.has(item.element.id));
+    nextOrdered = [...selected, ...unselected];
+  } else if (mode === 'forward') {
+    for (let i = nextOrdered.length - 2; i >= 0; i -= 1) {
+      const current = nextOrdered[i];
+      const next = nextOrdered[i + 1];
+      if (idSet.has(current.element.id) && !idSet.has(next.element.id)) {
+        nextOrdered[i] = next;
+        nextOrdered[i + 1] = current;
+      }
+    }
+  } else {
+    for (let i = 1; i < nextOrdered.length; i += 1) {
+      const current = nextOrdered[i];
+      const previous = nextOrdered[i - 1];
+      if (idSet.has(current.element.id) && !idSet.has(previous.element.id)) {
+        nextOrdered[i] = previous;
+        nextOrdered[i - 1] = current;
+      }
+    }
+  }
+
+  const assignments = new Map<string, number>();
+  nextOrdered.forEach((item, index) => {
+    const targetZ = index + 1;
+    if (getElementZIndex(item.element) !== targetZ) {
+      assignments.set(item.element.id, targetZ);
+    }
+  });
+
+  if (assignments.size === 0) return null;
+  return assignments;
+};
+
 export const useDesignerStore = defineStore('designer', {
   state: (): DesignerState => ({
     unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt' | 'in' | 'cm') || 'mm',
@@ -1017,6 +1079,56 @@ export const useDesignerStore = defineStore('designer', {
           nextZ += 1;
         }
       }
+    },
+    moveElementsLayer(ids: string[], mode: LayerMoveMode) {
+      if (!ids || ids.length === 0) return;
+
+      const idSet = new Set(ids);
+      const unlockedIds = new Set<string>();
+      for (const page of this.pages) {
+        for (const el of page.elements) {
+          if (idSet.has(el.id) && !el.locked) {
+            unlockedIds.add(el.id);
+          }
+        }
+      }
+      if (unlockedIds.size === 0) return;
+
+      const pageAssignments: Array<{ pageIndex: number; assignments: Map<string, number> }> = [];
+      for (let pageIndex = 0; pageIndex < this.pages.length; pageIndex += 1) {
+        const assignments = buildLayerAssignments(this.pages[pageIndex], unlockedIds, mode);
+        if (assignments && assignments.size > 0) {
+          pageAssignments.push({ pageIndex, assignments });
+        }
+      }
+
+      if (pageAssignments.length === 0) return;
+
+      this.snapshot();
+      for (const { pageIndex, assignments } of pageAssignments) {
+        const page = this.pages[pageIndex];
+        for (let i = 0; i < page.elements.length; i += 1) {
+          const el = page.elements[i];
+          const targetZ = assignments.get(el.id);
+          if (!targetZ || getElementZIndex(el) === targetZ) continue;
+          page.elements[i] = {
+            ...el,
+            style: {
+              ...el.style,
+              zIndex: targetZ
+            }
+          };
+        }
+      }
+    },
+    sendElementsToBack(ids: string[]) {
+      this.moveElementsLayer(ids, 'back');
+    },
+    moveElementsForward(ids: string[]) {
+      this.moveElementsLayer(ids, 'forward');
+    },
+    moveElementsBackward(ids: string[]) {
+      this.moveElementsLayer(ids, 'backward');
     },
     updateElement(id: string, updates: Partial<PrintElement>, createSnapshot: boolean = true) {
       if (createSnapshot) {

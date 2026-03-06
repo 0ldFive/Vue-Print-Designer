@@ -354,6 +354,8 @@ const handleResizeStart = (e: MouseEvent) => {
   <div
     ref="elementRef"
     class="element-wrapper absolute select-none"
+    :data-element-id="element.id"
+    :data-repeat-per-page="element.repeatPerPage === true ? 'true' : null"
     :class="[
       readOnly ? 'cursor-not-allowed' : 'group theme-outline-hover',
       !readOnly && element.locked ? 'cursor-not-allowed' : '',

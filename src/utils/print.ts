@@ -511,6 +511,7 @@ export const usePrint = () => {
     wrappers.forEach(w => {
       const el = w as HTMLElement;
       if (el.hasAttribute('data-table-flow-id')) return;
+      const isRepeatPerPage = el.getAttribute('data-repeat-per-page') === 'true';
       
       const top = parseFloat(el.style.top) || 0;
       const height = parseFloat(el.style.height) || el.offsetHeight;
@@ -521,7 +522,7 @@ export const usePrint = () => {
       const isHeader = copyHeader && top < (headerHeight + marginTop);
       const isFooter = copyFooter && top >= (pageHeight - footerHeight - marginBottom);
       
-      if (isHeader || isFooter) {
+      if (isHeader || isFooter || isRepeatPerPage) {
         const clone = el.cloneNode(true) as HTMLElement;
         targetPage.appendChild(clone);
       }
@@ -661,6 +662,7 @@ export const usePrint = () => {
 
         wrappers.forEach(wrapper => {
           if (wrapper.hasAttribute('data-table-flow-id')) return;
+          if (wrapper.getAttribute('data-repeat-per-page') === 'true') return;
 
           const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
           const tableEntries = tableEntriesByOrigin.get(originPage);
