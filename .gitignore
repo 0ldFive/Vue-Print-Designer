@@ -150,3 +150,4 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 >>>>>>> 35acecbb8e3ff78a31fbb692309ef3f6b4c3ad35
+wc-contextmenu-test.html

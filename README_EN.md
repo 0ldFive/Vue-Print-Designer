@@ -14,11 +14,10 @@ Vue Print Designer is a visual print designer for business forms, labels, receip
 
 ## UI Preview
 
-| Interface View | Interface View |
-| --- | --- |
-| **Designer main view and canvas**<br>![Designer main view](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png) | **Print preview**<br>![Print preview](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png) |
-| **Print parameter settings**<br>![Print parameters](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png) | **System settings and preferences**<br>![System settings](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png) |
-| **Shortcut reference**<br>![Shortcuts](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png) | **Advanced table editing**<br>![Advanced table](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png) |
+| Interface View | Interface View | Interface View |
+| --- | --- | --- |
+| **Designer main view and canvas**<br>![Designer main view](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png) | **Print preview**<br>![Print preview](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png) | **Print parameter settings**<br>![Print parameters](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png) |
+| **System settings and preferences**<br>![System settings](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png) | **Shortcut reference**<br>![Shortcuts](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png) | **Advanced table editing**<br>![Advanced table](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png) |
 
 ## Core Features & Advantages
 
@@ -49,7 +48,7 @@ PrintDot Client is the companion desktop print helper (Wails + Vue) for device d
 
 | Main Interface | Preferences |
 | --- | --- |
-| **Main view - device status & connection**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot main view" width="280" /> | **Settings - preferences & options**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot settings" width="280" /> |
+| **Main view - device status & connection**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot main view" width="220" /> | **Settings - preferences & options**<br><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot settings" width="220" /> |
 
 <p>
     <a href="https://github.com/0ldFive/PrintDot-Client/releases" target="_blank" rel="noopener noreferrer">⬇ Download PrintDot Client</a>
