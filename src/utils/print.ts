@@ -12,7 +12,6 @@ import { usePrintSettings, type PrintMode, type PrintOptions } from '@/composabl
 import i18n from '@/locales';
 import PrintRenderer from '@/components/print/PrintRenderer.vue';
 import baseStyles from '@/style.css?inline';
-
 import { pxToMm } from '@/utils/units';
 
 export const usePrint = () => {
@@ -1081,6 +1080,15 @@ export const usePrint = () => {
 
     const generatePageImage = async (page: HTMLElement) => {
         const canvas = await domtoimage.toCanvas(page, {
+            filter: (node: Node) => {
+                if (node.nodeType === 1 && (node as Element).tagName === 'LINK') {
+                    const href = (node as HTMLLinkElement).href;
+                    if (href && href.includes('monaco-editor')) {
+                        return false;
+                    }
+                }
+                return true;
+            },
             scale: 1.5, // Reduce scale slightly for performance (2 -> 1.5)
             width: width,
             height: height,

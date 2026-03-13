@@ -1,6 +1,5 @@
 import { createApp } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
-import { loader } from '@guolao/vue-monaco-editor';
 import { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
 import PrintDesigner from './components/PrintDesigner.vue';
@@ -22,12 +21,6 @@ import { useTemplateStore } from './stores/templates';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
-
-loader.config({
-  paths: {
-    vs: '/monaco-editor/min/vs'
-  }
-});
 
 export type DesignerExportRequest = {
   type: 'pdf' | 'images' | 'pdfBlob' | 'imageBlob';

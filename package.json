@@ -1,7 +1,7 @@
 {
   "name": "vue-print-designer",
   "private": false,
-  "version": "1.0.37",
+  "version": "1.0.38",
   "license": "AGPL-3.0-only",
   "type": "module",
   "main": "dist/print-designer.umd.js",
@@ -23,7 +23,7 @@
     "type": "git",
     "url": "https://github.com/0ldFive/Vue-Print-Designer.git"
   },
-  "homepage": "https://github.com/0ldFive/Vue-Print-Designer#readme",
+  "homepage": "https://printdot.cc",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
