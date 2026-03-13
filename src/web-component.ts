@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
+import { loader } from '@guolao/vue-monaco-editor';
 import { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
 import PrintDesigner from './components/PrintDesigner.vue';
@@ -21,6 +22,12 @@ import { useTemplateStore } from './stores/templates';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
+
+loader.config({
+  paths: {
+    vs: '/monaco-editor/min/vs'
+  }
+});
 
 export type DesignerExportRequest = {
   type: 'pdf' | 'images' | 'pdfBlob' | 'imageBlob';
@@ -73,14 +80,70 @@ class PrintDesignerElement extends HTMLElement {
   private i18n: ReturnType<typeof createI18nInstance> | null = null;
   private mountEl: HTMLElement | null = null;
   private headObserver: MutationObserver | null = null;
+  private _pendingClientUrl: string | null = null;
+  private _pendingCloudUrl: string | null = null;
+  private _pendingHideClientLink: boolean | null = null;
+  private _pendingHideCloudLink: boolean | null = null;
 
   static get observedAttributes() {
-    return ['lang'];
+    return ['lang', 'client-url', 'cloud-url', 'hide-links', 'hide-client-link', 'hide-cloud-link'];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (name === 'lang' && newValue !== oldValue) {
       this.setLanguage(newValue);
+    }
+    if (name === 'client-url' && newValue !== oldValue) {
+      this.setClientLink(newValue);
+    }
+    if (name === 'cloud-url' && newValue !== oldValue) {
+      this.setCloudLink(newValue);
+    }
+    if (name === 'hide-links' && newValue !== oldValue) {
+      this.hideLinks(newValue === 'true' || newValue === '');
+    }
+    if (name === 'hide-client-link' && newValue !== oldValue) {
+      this.hideClientLink(newValue === 'true' || newValue === '');
+    }
+    if (name === 'hide-cloud-link' && newValue !== oldValue) {
+      this.hideCloudLink(newValue === 'true' || newValue === '');
+    }
+  }
+
+  setClientLink(url: string) {
+    if (this.designerStore) {
+      this.designerStore.setClientUrl(url);
+    } else {
+      this._pendingClientUrl = url;
+    }
+  }
+
+  setCloudLink(url: string) {
+    if (this.designerStore) {
+      this.designerStore.setCloudUrl(url);
+    } else {
+      this._pendingCloudUrl = url;
+    }
+  }
+
+  hideLinks(hide: boolean) {
+    this.hideClientLink(hide);
+    this.hideCloudLink(hide);
+  }
+
+  hideClientLink(hide: boolean) {
+    if (this.designerStore) {
+      this.designerStore.setShowClientLink(!hide);
+    } else {
+      this._pendingHideClientLink = hide;
+    }
+  }
+
+  hideCloudLink(hide: boolean) {
+    if (this.designerStore) {
+      this.designerStore.setShowCloudLink(!hide);
+    } else {
+      this._pendingHideCloudLink = hide;
     }
   }
 
@@ -191,6 +254,24 @@ class PrintDesignerElement extends HTMLElement {
     this.printApi = usePrint();
     this.printSettings = usePrintSettings();
     this.designerStore = useDesignerStore(pinia);
+    
+    if (this._pendingClientUrl !== null) {
+      this.designerStore.setClientUrl(this._pendingClientUrl);
+      this._pendingClientUrl = null;
+    }
+    if (this._pendingCloudUrl !== null) {
+      this.designerStore.setCloudUrl(this._pendingCloudUrl);
+      this._pendingCloudUrl = null;
+    }
+    if (this._pendingHideClientLink !== null) {
+      this.designerStore.setShowClientLink(!this._pendingHideClientLink);
+      this._pendingHideClientLink = null;
+    }
+    if (this._pendingHideCloudLink !== null) {
+      this.designerStore.setShowCloudLink(!this._pendingHideCloudLink);
+      this._pendingHideCloudLink = null;
+    }
+
     this.templateStore = useTemplateStore(pinia);
 
     this.app = app;

@@ -396,7 +396,9 @@ export default {
     title: '帮助中心',
     about: '关于',
     aboutProject: '关于 {name}',
+    links: '相关链接',
     github: '项目地址',
+    website: '官网地址',
     dependencies: '开源依赖',
     package: '依赖包',
     version: '版本'
@@ -465,6 +467,8 @@ export default {
     remoteWsTitle: 'WebSocket（打印中转）',
     remoteWsDesc: '用于打印与查询客户端/打印机，Token 会拼到 WS 地址。',
     localClientTitle: '本地客户端',
+    downloadClient: '下载客户端',
+    cloudPrint: '云打印',
     localClientDesc: '配置本地客户端的 WebSocket 与密钥，用于本机打印。',
     remoteClient: '默认客户端',
     remoteClientPlaceholder: '请选择客户端',

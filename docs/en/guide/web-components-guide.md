@@ -9,6 +9,42 @@
 - Common Scenarios
 - Notes
 
+## API Index
+
+| Method | Description |
+| --- | --- |
+| `print(request)` | Execute print |
+| `export(request)` | Export PDF/Images |
+| `setPrintDefaults(payload)` | Set default print options |
+| `fetchLocalPrinters()` | Get local printer list |
+| `fetchLocalPrinterCaps(printer)` | Get local printer capabilities |
+| `fetchRemoteClients()` | Get remote print client list |
+| `fetchRemotePrinters(clientId)` | Get remote printer list |
+| `setBranding(payload)` | Set branding (Title/Logo) |
+| `setBrandVars(vars)` | Set brand colors |
+| `setTheme(theme)` | Set theme (light/dark) |
+| `setDesignerFont(fontFamily)` | Set designer font |
+| `setVariables(vars)` | Set variable data |
+| `getVariables()` | Get variable data |
+| `loadTemplateData(data)` | Load template data |
+| `getTemplateData()` | Get current template data |
+| `getTemplates()` | Get template list |
+| `getTemplate(id)` | Get template details |
+| `upsertTemplate(template)` | Create/Update template |
+| `deleteTemplate(id)` | Delete template |
+| `getCustomElements()` | Get custom element list |
+| `getCustomElement(id)` | Get custom element details |
+| `upsertCustomElement(element)` | Create/Update custom element |
+| `deleteCustomElement(id)` | Delete custom element |
+| `setCrudMode(mode)` | Set CRUD mode (local/remote) |
+| `setCrudEndpoints(endpoints)` | Set remote API endpoints |
+| `setLanguage(lang)` | Set language |
+| `setClientLink(url)` | Set client download link |
+| `setCloudLink(url)` | Set cloud print link |
+| `hideLinks(hide)` | Hide/Show all links |
+| `hideClientLink(hide)` | Hide/Show client download link |
+| `hideCloudLink(hide)` | Hide/Show cloud print link |
+
 ## Quick Start
 
 Install:
@@ -114,7 +150,7 @@ The component does not require a dedicated `init` method. Configure the followin
 
 | Method | Param | Type | Required | Description |
 | --- | --- | --- | --- | --- |
-| `fetchLocalPrinters` | - | - | No | Get local client printer list |
+| `fetchLocalPrinters` | - | - | No | Get Client Printer list |
 | `fetchLocalPrinterCaps` | `printer` | `string` | Yes | Get local printer capabilities |
 | `fetchRemoteClients` | - | - | No | Get remote print client list |
 | `fetchRemotePrinters` | `clientId` | `string` | No | Get remote printer list |
@@ -410,6 +446,18 @@ Parameters:
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `lang` | `'zh' \| 'en'` | Yes | Language code |
+
+### 16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)
+
+Description: Configure the client download link and cloud print link in the settings modal, or hide them. Can also be set via HTML attributes `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link`.
+
+```ts
+el.setClientLink('https://example.com/client.zip')
+el.setCloudLink('https://example.com/cloud-print')
+el.hideLinks(true) // Hide all links
+el.hideClientLink(true) // Hide client download link only
+el.hideCloudLink(true) // Hide cloud print link only
+```
 
 ## Events
 

@@ -50,9 +50,13 @@ onUnmounted(() => {
   }
 });
 
-const dependencies = Object.entries(pkg.dependencies).map(([name, version]) => ({
+const dependencies = [
+  ...Object.entries(pkg.dependencies || {}),
+  ...Object.entries(pkg.devDependencies || {})
+].map(([name, version]) => ({
   name,
-  version
+  version,
+  url: `https://www.npmjs.com/package/${encodeURIComponent(name)}`
 }));
 
 const version = pkg.version;
@@ -162,30 +166,34 @@ const projectName = startCase(pkg.name);
                   class="w-12 h-12 mx-auto mb-2"
                 />
                 <h2 class="text-xl font-bold text-gray-800">{{ projectName }}</h2>
-                <div class="mt-4 flex justify-center">
-                  <a
-                    href="https://github.com/0ldFive/Vue-Print-Designer"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="group inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] text-gray-700 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                    title="https://github.com/0ldFive/Vue-Print-Designer"
-                  >
-                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm transition-colors group-hover:text-blue-700">
-                      <svg viewBox="0 0 16 16" aria-hidden="true" class="w-3.5 h-3.5">
-                        <path fill="currentColor" d="M8 0C3.58 0 0 3.73 0 8.35c0 3.7 2.29 6.83 5.47 7.94.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.16-.28-.16-.68-.56-.01-.57.63-.01 1.08.6 1.23.85.72 1.25 1.87.9 2.33.69.07-.54.28-.9.51-1.11-1.78-.21-3.64-.92-3.64-4.08 0-.9.31-1.64.82-2.22-.08-.21-.36-1.06.08-2.2 0 0 .67-.22 2.2.85.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.07 2.2-.85 2.2-.85.44 1.14.16 1.99.08 2.2.51.58.82 1.32.82 2.22 0 3.17-1.87 3.87-3.65 4.08.29.26.54.77.54 1.56 0 1.12-.01 2.03-.01 2.32 0 .22.15.48.55.4C13.71 15.18 16 12.04 16 8.35 16 3.73 12.42 0 8 0z" />
-                      </svg>
-                    </span>
-                    <span class="text-gray-500 group-hover:text-blue-600">0ldFive/Vue-Print-Designer</span>
-                    <span class="text-gray-400">|</span>
-                    <span class="text-gray-600 group-hover:text-blue-600">{{ t('help.version') }} {{ version }}</span>
-                  </a>
+                <div class="mt-1 text-xs text-gray-500">{{ t('help.version') }} {{ version }}</div>
+                <div class="mt-4 mx-auto max-w-md text-left">
+                  <h4 class="font-medium text-gray-900 mb-2 border-b pb-1">{{ t('help.links') }}</h4>
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
+                      <span class="inline-flex items-center gap-1.5 text-gray-500">
+                        <img src="/src/assets/favicon.ico" alt="Website" class="w-3.5 h-3.5 rounded-sm" />
+                        {{ t('help.website') }}
+                      </span>
+                      <a href="https://printdot.cc" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 hover:underline" title="https://printdot.cc">https://printdot.cc</a>
+                    </div>
+                    <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
+                      <span class="inline-flex items-center gap-1.5 text-gray-500">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" class="w-3.5 h-3.5">
+                          <path fill="currentColor" d="M8 0C3.58 0 0 3.73 0 8.35c0 3.7 2.29 6.83 5.47 7.94.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.16-.28-.16-.68-.56-.01-.57.63-.01 1.08.6 1.23.85.72 1.25 1.87.9 2.33.69.07-.54.28-.9.51-1.11-1.78-.21-3.64-.92-3.64-4.08 0-.9.31-1.64.82-2.22-.08-.21-.36-1.06.08-2.2 0 0 .67-.22 2.2.85.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.07 2.2-.85 2.2-.85.44 1.14.16 1.99.08 2.2.51.58.82 1.32.82 2.22 0 3.17-1.87 3.87-3.65 4.08.29.26.54.77.54 1.56 0 1.12-.01 2.03-.01 2.32 0 .22.15.48.55.4C13.71 15.18 16 12.04 16 8.35 16 3.73 12.42 0 8 0z" />
+                        </svg>
+                        {{ t('help.github') }}
+                      </span>
+                      <a href="https://github.com/0ldFive/Vue-Print-Designer" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 hover:underline" title="https://github.com/0ldFive/Vue-Print-Designer">https://github.com/0ldFive/Vue-Print-Designer</a>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div>
                 <h4 class="font-medium text-gray-900 mb-3 border-b pb-1">{{ t('help.dependencies') }}</h4>
                 <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                  <table class="w-full text-sm text-left">
+                  <table class="w-full text-xs text-left">
                     <thead class="bg-gray-100 text-gray-700 font-medium">
                       <tr>
                         <th class="px-4 py-2 border-b">{{ t('help.package') }}</th>
@@ -194,20 +202,16 @@ const projectName = startCase(pkg.name);
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                       <tr v-for="dep in dependencies" :key="dep.name" class="hover:bg-gray-50">
-                        <td class="px-4 py-2 text-gray-700 font-mono">{{ dep.name }}</td>
-                        <td class="px-4 py-2 text-gray-500">{{ dep.version }}</td>
+                        <td class="px-4 py-1 text-gray-700 font-mono text-[11px]">
+                          <a :href="dep.url" target="_blank" rel="noopener noreferrer" :title="dep.url" class="hover:underline hover:decoration-blue-600 hover:text-blue-600 transition-colors">{{ dep.name }}</a>
+                        </td>
+                        <td class="px-4 py-1 text-gray-500 text-[11px]">{{ dep.version }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-br-lg">
-            <button @click="close" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm">
-              {{ t('common.close') }}
-            </button>
           </div>
         </div>
       </div>

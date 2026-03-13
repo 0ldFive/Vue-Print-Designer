@@ -1,9 +1,16 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { loader } from '@guolao/vue-monaco-editor'
 import i18n from './locales'
 import './style.css'
 import App from './App.vue'
 import { useTheme } from './composables/useTheme'
+
+loader.config({
+	paths: {
+		vs: '/monaco-editor/min/vs'
+	}
+})
 
 const pinia = createPinia()
 const app = createApp(App)

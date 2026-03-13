@@ -405,14 +405,16 @@ onUnmounted(() => {
         <!-- Content Area -->
         <div class="flex-1 flex flex-col min-w-0 relative">
           <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">
-              {{ 
-                activeTab === 'basic' ? t('settings.basic') :
-                activeTab === 'language' ? t('settings.language') :
-                activeTab === 'local' ? t('settings.localConnection') :
-                t('settings.remoteConnection')
-              }}
-            </h3>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-gray-800">
+                {{ 
+                  activeTab === 'basic' ? t('settings.basic') :
+                  activeTab === 'language' ? t('settings.language') :
+                  activeTab === 'local' ? t('settings.localConnection') :
+                  t('settings.remoteConnection')
+                }}
+              </h3>
+            </div>
             <button @click="close" class="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
               <X class="w-4 h-4" />
             </button>
@@ -583,61 +585,63 @@ onUnmounted(() => {
             <!-- Local Connection Tab -->
             <div v-if="activeTab === 'local'" class="space-y-4 text-sm text-gray-700">
                 <div class="space-y-2">
-                  <div class="font-medium text-gray-900">{{ t('settings.localClientTitle') }}</div>
+                  <div class="flex items-center gap-2">
+                    <div class="text-xl font-bold text-gray-900">{{ t('settings.localClientTitle') }}</div>
+                    <a 
+                      v-if="designerStore.showClientLink && designerStore.clientUrl"
+                      :href="designerStore.clientUrl"
+                      target="_blank"
+                      class="flex items-center gap-1 text-sm font-normal text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      {{ t('settings.downloadClient') }}
+                    </a>
+                  </div>
                   <p class="text-xs text-gray-500">{{ t('settings.localClientDesc') }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.wsAddress') }}</span>
-                    <input v-model="localSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('settings.localWsAddressPlaceholder')" />
+                    <input v-model="localSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" :placeholder="t('settings.localWsAddressPlaceholder')" />
                   </label>
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.secretKey') }}</span>
-                    <input v-model="localSettings.secretKey" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
+                    <input v-model="localSettings.secretKey" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" />
                   </label>
                 </div>
                 <div class="rounded bg-gray-100 px-3 py-2 text-xs text-gray-600 break-all">
                   <span class="font-medium text-gray-700">{{ t('settings.connectionUrl') }}: </span>
                   <span>{{ localWsUrl }}</span>
                 </div>
-                <div class="w-full pt-2">
-                  <button
-                    @click="handleLocalConnection"
-                    :disabled="localConnecting || localRetryCountValue > 0 || (!localConnected && !localHasConfig)"
-                    class="w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded transition-colors text-sm shadow-sm disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed"
-                    :class="connectionButtonClass(localStatusValue)"
-                  >
-                    <LinkIcon v-if="localConnected" class="w-4 h-4" />
-                    <LinkOffIcon v-else class="w-4 h-4" />
-                    <span>{{ localButtonLabel }}</span>
-                  </button>
-                  <div v-if="localRetryCountValue > 0 && !localConnected" class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                    <span>{{ t('settings.retrying', { count: localRetryCountValue, max: 10 }) }}</span>
-                    <button @click="cancelLocalRetry" class="text-blue-600 hover:text-blue-700">
-                      {{ t('settings.cancelRetry') }}
-                    </button>
-                  </div>
-                </div>
             </div>
 
             <!-- Remote Connection Tab -->
             <div v-if="activeTab === 'remote'" class="space-y-4 text-sm text-gray-700">
                 <div class="space-y-2">
-                  <div class="font-medium text-gray-900">{{ t('settings.remoteLoginTitle') }}</div>
+                  <div class="flex items-center gap-2">
+                    <div class="text-xl font-bold text-gray-900">{{ t('settings.remoteLoginTitle') }}</div>
+                    <a 
+                      v-if="designerStore.showCloudLink && designerStore.cloudUrl"
+                      :href="designerStore.cloudUrl"
+                      target="_blank"
+                      class="flex items-center gap-1 text-sm font-normal text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      {{ t('settings.cloudPrint') }}
+                    </a>
+                  </div>
                   <p class="text-xs text-gray-500">{{ t('settings.remoteLoginDesc') }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.apiBaseUrl') }}</span>
-                    <input v-model="remoteSettings.apiBaseUrl" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('settings.apiBasePlaceholder')" />
+                    <input v-model="remoteSettings.apiBaseUrl" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" :placeholder="t('settings.apiBasePlaceholder')" />
                   </label>
                   <label class="flex flex-col gap-1">
                     <span class="text-xs text-gray-500">{{ t('settings.username') }}</span>
-                    <input v-model="remoteSettings.username" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
+                    <input v-model="remoteSettings.username" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" />
                   </label>
                   <label class="flex flex-col gap-1">
                     <span class="text-xs text-gray-500">{{ t('settings.password') }}</span>
-                    <input v-model="remoteSettings.password" type="password" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" />
+                    <input v-model="remoteSettings.password" type="password" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" />
                   </label>
                 </div>
                 <div class="space-y-2 pt-2 border-t border-gray-200">
@@ -647,13 +651,13 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-4">
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.wsAddress') }}</span>
-                    <input v-model="remoteSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 focus:border-blue-600" :placeholder="t('settings.wsAddressPlaceholder')" />
+                    <input v-model="remoteSettings.wsAddress" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600" :placeholder="t('settings.wsAddressPlaceholder')" />
                   </label>
                   <label class="flex flex-col gap-1 col-span-2">
                     <span class="text-xs text-gray-500">{{ t('settings.remoteClient') }}</span>
                     <select
                       v-model="remoteSelectedClientId"
-                      class="w-full px-3 py-2 border rounded bg-white focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                      class="w-full px-3 py-2 border rounded bg-white focus:outline-none focus:border-blue-600"
                       :disabled="remoteStatusValue !== 'connected' || remoteClientsSafe.length === 0"
                     >
                       <option value="">{{ t('settings.remoteClientPlaceholder') }}</option>
@@ -673,31 +677,49 @@ onUnmounted(() => {
                   <span>{{ remoteWsUrl }}</span>
                 </div>
                 <p class="text-xs text-gray-500">{{ t('settings.remoteAuthHint') }}</p>
-                <div class="w-full pt-2">
-                  <button
-                    @click="handleRemoteConnection"
-                    :disabled="remoteConnecting || remoteRetryCountValue > 0 || (!remoteConnected && !remoteHasConfig)"
-                    class="w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded transition-colors text-sm shadow-sm disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed"
-                    :class="connectionButtonClass(remoteStatusValue)"
-                  >
-                    <LinkIcon v-if="remoteConnected" class="w-4 h-4" />
-                    <LinkOffIcon v-else class="w-4 h-4" />
-                    <span>{{ remoteButtonLabel }}</span>
-                  </button>
-                  <div v-if="remoteRetryCountValue > 0 && !remoteConnected" class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                    <span>{{ t('settings.retrying', { count: remoteRetryCountValue, max: 10 }) }}</span>
-                    <button @click="cancelRemoteRetry" class="text-blue-600 hover:text-blue-700">
-                      {{ t('settings.cancelRetry') }}
-                    </button>
-                  </div>
-                </div>
             </div>
           </div>
           
-          <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-br-lg">
-            <button @click="close" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm">
-              {{ t('common.close') }}
-            </button>
+          <div v-if="activeTab === 'local' || activeTab === 'remote'" class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-br-lg">
+            <!-- Local Connection Button -->
+            <div v-if="activeTab === 'local'" class="w-full">
+              <button
+                @click="handleLocalConnection"
+                :disabled="localConnecting || localRetryCountValue > 0 || (!localConnected && !localHasConfig)"
+                class="w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded transition-colors text-sm shadow-sm disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed"
+                :class="connectionButtonClass(localStatusValue)"
+              >
+                <LinkIcon v-if="localConnected" class="w-4 h-4" />
+                <LinkOffIcon v-else class="w-4 h-4" />
+                <span>{{ localButtonLabel }}</span>
+              </button>
+              <div v-if="localRetryCountValue > 0 && !localConnected" class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>{{ t('settings.retrying', { count: localRetryCountValue, max: 10 }) }}</span>
+                <button @click="cancelLocalRetry" class="text-blue-600 hover:text-blue-700">
+                  {{ t('settings.cancelRetry') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Remote Connection Button -->
+            <div v-if="activeTab === 'remote'" class="w-full">
+              <button
+                @click="handleRemoteConnection"
+                :disabled="remoteConnecting || remoteRetryCountValue > 0 || (!remoteConnected && !remoteHasConfig)"
+                class="w-full inline-flex items-center justify-center gap-2 px-3 h-9 rounded transition-colors text-sm shadow-sm disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed"
+                :class="connectionButtonClass(remoteStatusValue)"
+              >
+                <LinkIcon v-if="remoteConnected" class="w-4 h-4" />
+                <LinkOffIcon v-else class="w-4 h-4" />
+                <span>{{ remoteButtonLabel }}</span>
+              </button>
+              <div v-if="remoteRetryCountValue > 0 && !remoteConnected" class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>{{ t('settings.retrying', { count: remoteRetryCountValue, max: 10 }) }}</span>
+                <button @click="cancelRemoteRetry" class="text-blue-600 hover:text-blue-700">
+                  {{ t('settings.cancelRetry') }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

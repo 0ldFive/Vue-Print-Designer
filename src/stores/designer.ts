@@ -134,8 +134,28 @@ export const useDesignerStore = defineStore('designer', {
     disableGlobalShortcuts: false,
     disableShortcutsCount: 0,
     tableSelection: null,
+    clientUrl: 'https://github.com/0ldFive/PrintDot-Client/releases/tag/v1.1.1',
+    cloudUrl: 'https://printdot.cc/cloud-print',
+    showClientLink: true,
+    showCloudLink: true,
   }),
   actions: {
+    setClientUrl(url: string) {
+      this.clientUrl = url;
+    },
+    setCloudUrl(url: string) {
+      this.cloudUrl = url;
+    },
+    setShowClientLink(show: boolean) {
+      this.showClientLink = show;
+    },
+    setShowCloudLink(show: boolean) {
+      this.showCloudLink = show;
+    },
+    setShowLinks(show: boolean) {
+      this.showClientLink = show;
+      this.showCloudLink = show;
+    },
     setBranding(update: Partial<BrandingSettings>) {
       if (!update || typeof update !== 'object') return;
       const next = { ...this.branding, ...update };

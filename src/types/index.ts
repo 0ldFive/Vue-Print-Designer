@@ -196,6 +196,10 @@ export interface DesignerState {
   isExporting?: boolean;
   disableGlobalShortcuts?: boolean;
   disableShortcutsCount?: number;
+  clientUrl?: string;
+  cloudUrl?: string;
+  showClientLink?: boolean;
+  showCloudLink?: boolean;
   tableSelection?: {
     elementId: string;
     cells: { rowIndex: number; colField: string; section?: 'body' | 'footer' }[];

@@ -9,6 +9,42 @@
 - 常见场景示例
 - 注意事项
 
+## API 索引
+
+| 方法名 | 说明 |
+| --- | --- |
+| `print(request)` | 执行打印 |
+| `export(request)` | 导出 PDF/图片 |
+| `setPrintDefaults(payload)` | 设置默认打印参数 |
+| `fetchLocalPrinters()` | 获取本地打印机列表 |
+| `fetchLocalPrinterCaps(printer)` | 获取本地打印机能力 |
+| `fetchRemoteClients()` | 获取云打印客户端列表 |
+| `fetchRemotePrinters(clientId)` | 获取云打印机列表 |
+| `setBranding(payload)` | 设置品牌信息（标题/Logo） |
+| `setBrandVars(vars)` | 设置品牌色 |
+| `setTheme(theme)` | 设置主题（亮/暗） |
+| `setDesignerFont(fontFamily)` | 设置设计器字体 |
+| `setVariables(vars)` | 设置变量数据 |
+| `getVariables()` | 获取变量数据 |
+| `loadTemplateData(data)` | 加载模板数据 |
+| `getTemplateData()` | 获取当前模板数据 |
+| `getTemplates()` | 获取模板列表 |
+| `getTemplate(id)` | 获取模板详情 |
+| `upsertTemplate(template)` | 新增/保存模板 |
+| `deleteTemplate(id)` | 删除模板 |
+| `getCustomElements()` | 获取自定义元素列表 |
+| `getCustomElement(id)` | 获取自定义元素详情 |
+| `upsertCustomElement(element)` | 新增/保存自定义元素 |
+| `deleteCustomElement(id)` | 删除自定义元素 |
+| `setCrudMode(mode)` | 设置 CRUD 模式（本地/远程） |
+| `setCrudEndpoints(endpoints)` | 设置远程接口地址 |
+| `setLanguage(lang)` | 设置语言 |
+| `setClientLink(url)` | 设置客户端下载链接 |
+| `setCloudLink(url)` | 设置云打印链接 |
+| `hideLinks(hide)` | 隐藏/显示所有链接 |
+| `hideClientLink(hide)` | 隐藏/显示客户端下载链接 |
+| `hideCloudLink(hide)` | 隐藏/显示云打印链接 |
+
 ## 快速开始
 
 安装：
@@ -410,6 +446,25 @@ el.setLanguage('en')
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `lang` | `'zh' \| 'en'` | 是 | 语言代码 |
+
+### 16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)
+
+说明：配置设置弹窗中的客户端下载链接与云打印链接，或隐藏它们。也可以通过 HTML 属性 `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link` 设置。
+
+```ts
+el.setClientLink('https://example.com/client.zip')
+el.setCloudLink('https://example.com/cloud-print')
+el.hideLinks(true) // 隐藏所有链接
+el.hideClientLink(true) // 仅隐藏客户端下载链接
+el.hideCloudLink(true) // 仅隐藏云打印链接
+```
+
+参数：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `url` | `string` | 是 | 链接地址 |
+| `hide` | `boolean` | 是 | 是否隐藏链接 |
 
 ## 事件与回调
 
