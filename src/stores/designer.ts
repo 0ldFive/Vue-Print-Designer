@@ -134,7 +134,7 @@ export const useDesignerStore = defineStore('designer', {
     disableGlobalShortcuts: false,
     disableShortcutsCount: 0,
     tableSelection: null,
-    clientUrl: 'https://github.com/0ldFive/PrintDot-Client/releases/tag/v1.1.1',
+    clientUrl: 'https://github.com/0ldFive/PrintDot-Client/releases',
     cloudUrl: 'https://printdot.cc/cloud-print',
     showClientLink: true,
     showCloudLink: true,
