@@ -16,11 +16,23 @@ Vue Print Designer is a visual print designer for business forms, labels, receip
 
 | Designer main view and canvas | Print preview | Print parameter settings |
 | --- | --- | --- |
-| ![Designer main view](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png) | ![Print preview](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png) | ![Print parameters](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png) |
+| <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Designer main view" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="Print preview" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="Print parameters" width="240" /> |
 
 | System settings and preferences | Shortcut reference | Advanced table editing |
 | --- | --- | --- |
-| ![System settings](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png) | ![Shortcuts](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png) | ![Advanced table](https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png) |
+| <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="System settings" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="Shortcuts" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="Advanced table" width="240" /> |
+
+## Integration Example
+
+To help developers get started quickly, we provide a complete integration example based on **Vue 3 + Element Plus**. This project demonstrates how to embed the print designer into a real-world business application.
+
+| Parameter Debugging | Designer | Dark Mode |
+| --- | --- | --- |
+| <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/11.png" alt="Integration example 11" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/12.png" alt="Integration example 12" width="240" /> | <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/13.png" alt="Integration example 13" width="240" /> |
+
+- **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
+- **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
+- **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
 
 ## Community
 
@@ -29,7 +41,7 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting.
 - QQ Group: **1038069636**
 
 <p>
-    <img src="./docs/images/qq_group.jpg" alt="Vue Print Designer QQ Group QR Code (1038069636)" width="160" />
+    <img src="./docs/images/qq_group.jpg" alt="Vue Print Designer QQ Group QR Code (1038069636)" width="120" />
 </p>
 
 ## Core Features & Highlights
@@ -170,19 +182,7 @@ el.addEventListener('error', (e) => {
 });
 ```
 
-#### 4) Integration Example
 
-To help developers get started quickly, we provide a complete integration example based on **Vue 3 + Element Plus**. This project demonstrates how to embed the print designer into a real-world business application.
-
-<p align="left">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/11.png" alt="Integration example 11" width="240" />
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/12.png" alt="Integration example 12" width="240" />
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/13.png" alt="Integration example 13" width="240" />
-</p>
-
-- **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
-- **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
-- **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
 
 ## Project Structure
 
