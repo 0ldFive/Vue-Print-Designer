@@ -2,12 +2,31 @@
 
 ## 目录
 
-- 快速开始
-- 实例方法与参数说明
-- 事件与回调
-- 打印与导出参数明细
-- 常见场景示例
-- 注意事项
+- [快速开始](#快速开始)
+- [API 索引](#api-索引)
+- [实例方法与参数说明](#实例方法与参数说明)
+  - [初始化建议（必读）](#初始化建议必读)
+  - [1) print(request)](#1-printrequest)
+  - [2) export(request)](#2-exportrequest)
+  - [3) setPrintDefaults(payload)](#3-setprintdefaultspayload)
+  - [4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)](#4-fetchlocalprinters--fetchlocalprintercapsprinter--fetchremoteclients--fetchremoteprintersclientid)
+  - [5) setBranding(payload?)](#5-setbrandingpayload)
+  - [6) setBrandVars(vars)](#6-setbrandvarsvars)
+  - [7) setTheme(theme)](#7-setthemetheme)
+  - [8) setDesignerFont(fontFamily)](#8-setdesignerfontfontfamily)
+  - [9) setVariables(vars, options?) / getVariables()](#9-setvariablesvars-options--getvariables)
+  - [10) getTemplateData() / loadTemplateData(data)](#10-gettemplatedata--loadtemplatedatadata)
+  - [11) 模板 CRUD](#11-模板-crud)
+  - [12) 自定义元素 CRUD](#12-自定义元素-crud)
+  - [13) setCrudMode(mode)](#13-setcrudmodemode)
+  - [14) setCrudEndpoints(endpoints, options?)](#14-setcrudendpointsendpoints-options)
+  - [15) setLanguage(lang)](#15-setlanguagelang)
+  - [16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)](#16-setclientlinkurl--setcloudlinkurl--hidelinkshide--hideclientlinkhide--hidecloudlinkhide)
+- [事件与回调](#事件与回调)
+- [PrintOptions](#printoptions)
+- [常见场景示例](#常见场景示例)
+- [后端接口对接示例](#后端接口对接示例)
+- [注意事项](#注意事项)
 
 ## API 索引
 

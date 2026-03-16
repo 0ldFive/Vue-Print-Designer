@@ -2,12 +2,31 @@
 
 ## Contents
 
-- Quick Start
-- Instance Methods and Parameters
-- Events
-- Print and Export Parameters
-- Common Scenarios
-- Notes
+- [Quick Start](#quick-start)
+- [API Index](#api-index)
+- [Instance Methods and Parameters](#instance-methods-and-parameters)
+  - [Initialization (Recommended)](#initialization-recommended)
+  - [1) print(request)](#1-printrequest)
+  - [2) export(request)](#2-exportrequest)
+  - [3) setPrintDefaults(payload)](#3-setprintdefaultspayload)
+  - [4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)](#4-fetchlocalprinters--fetchlocalprintercapsprinter--fetchremoteclients--fetchremoteprintersclientid)
+  - [5) setBranding(payload?)](#5-setbrandingpayload)
+  - [6) setBrandVars(vars)](#6-setbrandvarsvars)
+  - [7) setTheme(theme)](#7-setthemetheme)
+  - [8) setDesignerFont(fontFamily)](#8-setdesignerfontfontfamily)
+  - [9) setVariables(vars, options?) / getVariables()](#9-setvariablesvars-options--getvariables)
+  - [10) getTemplateData() / loadTemplateData(data)](#10-gettemplatedata--loadtemplatedatadata)
+  - [11) Template CRUD](#11-template-crud)
+  - [12) Custom Element CRUD](#12-custom-element-crud)
+  - [13) setCrudMode(mode)](#13-setcrudmodemode)
+  - [14) setCrudEndpoints(endpoints, options?)](#14-setcrudendpointsendpoints-options)
+  - [15) setLanguage(lang)](#15-setlanguagelang)
+  - [16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)](#16-setclientlinkurl--setcloudlinkurl--hidelinkshide--hideclientlinkhide--hidecloudlinkhide)
+- [Events](#events)
+- [PrintOptions](#printoptions)
+- [Common Scenarios](#common-scenarios)
+- [Backend Integration Example](#backend-integration-example)
+- [Notes](#notes)
 
 ## API Index
 
