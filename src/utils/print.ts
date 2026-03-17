@@ -429,6 +429,7 @@ export const usePrint = () => {
   const svgToCanvas = async (root: HTMLElement) => {
     const svgs = root.querySelectorAll('svg');
     if (svgs.length === 0) return;
+    // @ts-ignore - Ignore TS7016: canvg package.json exports issue
     const { Canvg } = await import('canvg');
     
     svgs.forEach((svg) => {
@@ -1077,47 +1078,61 @@ export const usePrint = () => {
         page.style.top = '0px';
     });
 
-    const generatePageImage = async (page: HTMLElement) => {
-        const { default: domtoimage } = await import('dom-to-image-more');
-        const canvas = await domtoimage.toCanvas(page, {
-            filter: (node: Node) => {
-                if (node.nodeType === 1 && (node as Element).tagName === 'LINK') {
-                    const href = (node as HTMLLinkElement).href;
-                    if (href && href.includes('monaco-editor')) {
-                        return false;
+    // Temporarily remove cross-origin monaco-editor stylesheets to prevent dom-to-image SecurityError
+    const monacoLinks = Array.from(document.querySelectorAll('link[href*="monaco-editor"]'));
+    const linkParents = monacoLinks.map(link => link.parentNode);
+    monacoLinks.forEach(link => link.parentNode?.removeChild(link));
+
+    try {
+        const generatePageImage = async (page: HTMLElement) => {
+            const { default: domtoimage } = await import('dom-to-image-more');
+            const canvas = await domtoimage.toCanvas(page, {
+                filter: (node: Node) => {
+                    if (node.nodeType === 1 && (node as Element).tagName === 'LINK') {
+                        const href = (node as HTMLLinkElement).href;
+                        if (href && href.includes('monaco-editor')) {
+                            return false;
+                        }
                     }
-                }
-                return true;
-            },
-            scale: 1.5, // Reduce scale slightly for performance (2 -> 1.5)
-            width: width,
-            height: height,
-            useCORS: true,
-            bgcolor: store.canvasBackground,
-        });
+                    return true;
+                },
+                scale: 1.5, // Reduce scale slightly for performance (2 -> 1.5)
+                width: width,
+                height: height,
+                useCORS: true,
+                bgcolor: store.canvasBackground,
+            });
 
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            (ctx as any).mozImageSmoothingEnabled = false;
-            (ctx as any).webkitImageSmoothingEnabled = false;
-            (ctx as any).msImageSmoothingEnabled = false;
-            ctx.imageSmoothingEnabled = false;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                (ctx as any).mozImageSmoothingEnabled = false;
+                (ctx as any).webkitImageSmoothingEnabled = false;
+                (ctx as any).msImageSmoothingEnabled = false;
+                ctx.imageSmoothingEnabled = false;
+            }
+
+            return canvas.toDataURL('image/jpeg', 0.5);
+        };
+
+        // Process pages in batches to avoid freezing the browser
+        const batchSize = 3;
+        const pageImages: string[] = [];
+        
+        for (let i = 0; i < pages.length; i += batchSize) {
+            const batch = pages.slice(i, i + batchSize);
+            const results = await Promise.all(batch.map(page => generatePageImage(page)));
+            pageImages.push(...results);
         }
-
-        return canvas.toDataURL('image/jpeg', 0.5);
-    };
-
-    // Process pages in batches to avoid freezing the browser
-    const batchSize = 3;
-    const pageImages: string[] = [];
-    
-    for (let i = 0; i < pages.length; i += batchSize) {
-        const batch = pages.slice(i, i + batchSize);
-        const results = await Promise.all(batch.map(page => generatePageImage(page)));
-        pageImages.push(...results);
+        
+        return pageImages;
+    } finally {
+        // Restore the stylesheets
+        monacoLinks.forEach((link, index) => {
+            if (linkParents[index]) {
+                linkParents[index]?.appendChild(link);
+            }
+        });
     }
-    
-    return pageImages;
   };
 
     const createPdfDocument = async (content: HTMLElement | string | HTMLElement[]) => {
