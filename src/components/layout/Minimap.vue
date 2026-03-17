@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import JsBarcode from 'jsbarcode';
-import QRCode from 'qrcode';
 import { ElementType, type WatermarkSettings } from '@/types';
 
 const props = defineProps<{
@@ -245,8 +243,9 @@ const getResolvedContent = (element: any) => {
   return element.variable || element.content || '';
 };
 
-const renderBarcodeDataUrl = (element: any) => {
+const renderBarcodeDataUrl = async (element: any) => {
   try {
+    const { default: JsBarcode } = await import('jsbarcode');
     const canvas = document.createElement('canvas');
     const style = element.style || {};
     JsBarcode(canvas, getResolvedContent(element), {
@@ -272,6 +271,7 @@ const renderBarcodeDataUrl = (element: any) => {
 
 const renderQrDataUrl = async (element: any) => {
   try {
+    const { default: QRCode } = await import('qrcode');
     return await QRCode.toDataURL(getResolvedContent(element), {
       margin: 0,
       color: {
@@ -296,7 +296,7 @@ const updateCodeImages = async () => {
     for (const element of elements) {
       const key = getImageKey(element);
       if (element.type === ElementType.BARCODE) {
-        const src = renderBarcodeDataUrl(element);
+        const src = await renderBarcodeDataUrl(element);
         if (src) nextBarcodeMap[key] = src;
       } else if (element.type === ElementType.QRCODE) {
         const src = await renderQrDataUrl(element);

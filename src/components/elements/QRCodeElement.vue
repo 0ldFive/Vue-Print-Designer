@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, ref, nextTick, computed } from 'vue';
 import type { PrintElement } from '@/types';
-import QRCode from 'qrcode';
 import { useDesignerStore } from '@/stores/designer';
 import { normalizeVariableKey } from '@/utils/variables';
 
@@ -30,6 +29,7 @@ const resolvedContent = computed(() => {
 
 const renderQR = async () => {
   try {
+    const { default: QRCode } = await import('qrcode');
     const content = resolvedContent.value;
     
     qrSrc.value = await QRCode.toDataURL(content, {

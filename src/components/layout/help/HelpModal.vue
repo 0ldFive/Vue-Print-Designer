@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
-import { startCase } from 'lodash';
+import startCase from 'lodash/startCase';
 import { formatShortcut } from '@/utils/os';
 import X from '~icons/material-symbols/close';
 import KeyboardIcon from '~icons/material-symbols/keyboard';

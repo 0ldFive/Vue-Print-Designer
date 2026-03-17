@@ -1,9 +1,5 @@
 import { nextTick, createApp, h } from 'vue';
 import { createPinia } from 'pinia';
-import jsPDF from 'jspdf';
-import domtoimage from 'dom-to-image-more';
-import JSZip from 'jszip';
-import { Canvg } from 'canvg';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
 import { useDesignerStore } from '@/stores/designer';
@@ -430,8 +426,11 @@ export const usePrint = () => {
     }
   };
 
-  const svgToCanvas = (root: HTMLElement) => {
+  const svgToCanvas = async (root: HTMLElement) => {
     const svgs = root.querySelectorAll('svg');
+    if (svgs.length === 0) return;
+    const { Canvg } = await import('canvg');
+    
     svgs.forEach((svg) => {
       const parent = svg.parentElement as HTMLElement | null;
       if (!parent) return;
@@ -1048,7 +1047,7 @@ export const usePrint = () => {
 
     // Handle SVGs
     if (convertSvg) {
-        svgToCanvas(container);
+        await svgToCanvas(container);
     }
 
     // Handle Table Pagination
@@ -1079,6 +1078,7 @@ export const usePrint = () => {
     });
 
     const generatePageImage = async (page: HTMLElement) => {
+        const { default: domtoimage } = await import('dom-to-image-more');
         const canvas = await domtoimage.toCanvas(page, {
             filter: (node: Node) => {
                 if (node.nodeType === 1 && (node as Element).tagName === 'LINK') {
@@ -1139,6 +1139,7 @@ export const usePrint = () => {
       const { container, tempWrapper: wrapper } = await processContentForImage(source.content, width, height, true, source.getComputedStyleFn);
       tempWrapper = wrapper;
 
+      const { default: jsPDF } = await import('jspdf');
       const pdf = new jsPDF({
         orientation: width > height ? 'l' : 'p',
         unit: 'mm',
@@ -1537,6 +1538,7 @@ export const usePrint = () => {
               link.click();
               document.body.removeChild(link);
             } else {
+              const { default: JSZip } = await import('jszip');
               const zip = new JSZip();
               await Promise.all(pageImages.map(async (dataUrl, index) => {
                 const response = await fetch(dataUrl);

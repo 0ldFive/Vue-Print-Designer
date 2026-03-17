@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
-import { Editor } from '@guolao/vue-monaco-editor';
+import { ref, watch, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue';
 import { useDesignerStore } from '@/stores/designer';
 import { useTheme } from '@/composables/useTheme';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import OpenInFull from '~icons/material-symbols/open-in-full';
 import Close from '~icons/material-symbols/close';
+
+const Editor = defineAsyncComponent(() => import('@guolao/vue-monaco-editor').then(m => m.Editor));
 
 const props = defineProps<{
   label: string;

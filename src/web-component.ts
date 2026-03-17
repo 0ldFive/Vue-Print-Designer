@@ -21,6 +21,15 @@ import { useTemplateStore } from './stores/templates';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
+import { loader } from '@guolao/vue-monaco-editor';
+
+loader.config({
+  'vs/nls': {
+    availableLanguages: {
+      '*': 'en'
+    }
+  }
+});
 
 export type DesignerExportRequest = {
   type: 'pdf' | 'images' | 'pdfBlob' | 'imageBlob';

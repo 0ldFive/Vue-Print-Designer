@@ -4,6 +4,15 @@ import i18n from './locales'
 import './style.css'
 import App from './App.vue'
 import { useTheme } from './composables/useTheme'
+import { loader } from '@guolao/vue-monaco-editor'
+
+loader.config({
+  'vs/nls': {
+    availableLanguages: {
+      '*': 'en'
+    }
+  }
+})
 
 const pinia = createPinia()
 const app = createApp(App)

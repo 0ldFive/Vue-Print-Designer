@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, ref, nextTick, computed } from 'vue';
 import type { PrintElement } from '@/types';
-import JsBarcode from 'jsbarcode';
 import { useDesignerStore } from '@/stores/designer';
 import { normalizeVariableKey } from '@/utils/variables';
 
@@ -28,9 +27,10 @@ const resolvedContent = computed(() => {
   return props.element.variable || props.element.content || '12345678';
 });
 
-const renderBarcode = () => {
+const renderBarcode = async () => {
   if (!barcodeRef.value) return;
   try {
+    const { default: JsBarcode } = await import('jsbarcode');
     const content = resolvedContent.value;
     const style = props.element.style as any;
 

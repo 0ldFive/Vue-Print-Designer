@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted, computed, inject, ref } from 'vue';
+import { watch, onMounted, onUnmounted, computed, inject, ref, defineAsyncComponent } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Editor } from '@guolao/vue-monaco-editor';
 import { useDesignerStore } from '@/stores/designer';
 import { useTheme } from '@/composables/useTheme';
 import Close from '~icons/material-symbols/close';
+
+const Editor = defineAsyncComponent(() => import('@guolao/vue-monaco-editor').then(m => m.Editor));
 
 const { t } = useI18n();
 const { isDark } = useTheme();
