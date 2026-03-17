@@ -53,22 +53,16 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting.
     <img src="./docs/images/qq_group.jpg" alt="Vue Print Designer QQ Group QR Code (1038069636)" width="120" />
 </p>
 
-## Core Features & Highlights
+## Core Features
 
-Most printing plugins are either framework-locked or too basic. We focus on complex pagination and low-cost integration for an enterprise-grade solution:
-
-- **Out of the Box**: Unlike manual pagination logic, includes a complete drag-and-drop designer and preview engine, automatically handling table pagination and headers.
-- **Cross-Framework**: No framework lock-in. Built on Web Components, compatible with Vue/React/Angular/Pure HTML and any other stack.
-- **Production Ready**: More than just printing. Full support for silent printing, cloud printing, PDF/Image export, and detailed parameter control.
-- **Flexible Extension**: Supports custom elements and API integration for deep business customization.
-
-- Drag-and-drop editing with text, images, barcodes, QR codes, tables, and shapes
-- Automatic table pagination with header/footer repeat
-- Multi-page layout, grid/ruler, zoom, and alignment tools
-- Export PDF/image/blob, including merge/split
-- Print parameters: printer, copies, page range, duplex, paper size
-- **Silent printing**: local client direct print without user confirmation
-- **Cloud printing**: remote clients and cloud-delivered print tasks
+- **Visual Design**: Full-featured drag-and-drop designer supporting text, images, tables, barcodes, QR codes, and shapes. Includes rulers, grids, and alignment tools.
+- **Smart Pagination**: Automatically handles long table pagination with header/footer repetition. No complex manual logic required—what you see is what you get.
+- **Cross-Framework**: Built on Web Components, zero-dependency compatibility with Vue, React, Angular, and native HTML.
+- **Comprehensive Printing**:
+  - **Browser Print**: Native preview and print.
+  - **Export**: Generate PDF and images (merge/split supported).
+  - **Client Print**: Supports **Silent Printing** (direct print without dialogs) and **Cloud Printing** (remote task dispatch).
+- **Enterprise Ready**: Supports custom paper sizes, API data integration, template import/export, and fine-grained control over print parameters (printer selection, copies, duplex, DPI).
 
 ## Companion Print Client (PrintDot Client)
 
