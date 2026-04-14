@@ -1,6 +1,28 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { ElementType, type WatermarkSettings } from '@/types';
+// 定义元素类型枚举
+enum ElementType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  BARCODE = 'BARCODE',
+  QRCODE = 'QRCODE',
+  TABLE = 'TABLE',
+  LINE = 'LINE',
+  RECT = 'RECT',
+  CIRCLE = 'CIRCLE',
+  PAGE_NUMBER = 'PAGE_NUMBER'
+}
+
+// 定义水印设置接口
+interface WatermarkSettings {
+  enabled: boolean;
+  text?: string;
+  angle?: number;
+  size?: number;
+  density?: number;
+  color?: string;
+  opacity?: number;
+}
 
 const props = defineProps<{
   scrollWidth: number;
@@ -245,7 +267,8 @@ const getResolvedContent = (element: any) => {
 
 const renderBarcodeDataUrl = async (element: any) => {
   try {
-    const { default: JsBarcode } = await import('jsbarcode');
+    const jsBarcodeModule = await import('jsbarcode');
+    const JsBarcode = (jsBarcodeModule as any)?.default || jsBarcodeModule;
     const canvas = document.createElement('canvas');
     const style = element.style || {};
     JsBarcode(canvas, getResolvedContent(element), {
@@ -271,7 +294,8 @@ const renderBarcodeDataUrl = async (element: any) => {
 
 const renderQrDataUrl = async (element: any) => {
   try {
-    const { default: QRCode } = await import('qrcode');
+    const qrcodeModule = await import('qrcode');
+    const QRCode = (qrcodeModule as any)?.default || qrcodeModule;
     return await QRCode.toDataURL(getResolvedContent(element), {
       margin: 0,
       color: {

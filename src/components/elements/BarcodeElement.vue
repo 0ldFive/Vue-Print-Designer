@@ -30,7 +30,8 @@ const resolvedContent = computed(() => {
 const renderBarcode = async () => {
   if (!barcodeRef.value) return;
   try {
-    const { default: JsBarcode } = await import('jsbarcode');
+    const jsBarcodeModule = await import('jsbarcode');
+    const JsBarcode = (jsBarcodeModule as any)?.default || jsBarcodeModule;
     const content = resolvedContent.value;
     const style = props.element.style as any;
 

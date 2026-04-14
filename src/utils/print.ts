@@ -1085,7 +1085,8 @@ export const usePrint = () => {
 
     try {
         const generatePageImage = async (page: HTMLElement) => {
-            const { default: domtoimage } = await import('dom-to-image-more');
+            const domToImageModule = await import('dom-to-image-more');
+            const domtoimage = (domToImageModule as any)?.default || domToImageModule;
             const canvas = await domtoimage.toCanvas(page, {
                 filter: (node: Node) => {
                     if (node.nodeType === 1 && (node as Element).tagName === 'LINK') {
@@ -1154,7 +1155,8 @@ export const usePrint = () => {
       const { container, tempWrapper: wrapper } = await processContentForImage(source.content, width, height, true, source.getComputedStyleFn);
       tempWrapper = wrapper;
 
-      const { default: jsPDF } = await import('jspdf');
+      const jsPdfModule = await import('jspdf');
+      const jsPDF = (jsPdfModule as any)?.default || (jsPdfModule as any)?.jsPDF || jsPdfModule;
       const pdf = new jsPDF({
         orientation: width > height ? 'l' : 'p',
         unit: 'mm',
@@ -1553,7 +1555,8 @@ export const usePrint = () => {
               link.click();
               document.body.removeChild(link);
             } else {
-              const { default: JSZip } = await import('jszip');
+              const jsZipModule = await import('jszip');
+              const JSZip = (jsZipModule as any)?.default || jsZipModule;
               const zip = new JSZip();
               await Promise.all(pageImages.map(async (dataUrl, index) => {
                 const response = await fetch(dataUrl);

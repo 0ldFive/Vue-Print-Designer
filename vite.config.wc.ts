@@ -37,6 +37,7 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        minifyInternalExports: false,
         manualChunks: undefined,
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name || '';

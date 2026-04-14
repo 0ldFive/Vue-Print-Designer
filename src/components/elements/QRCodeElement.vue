@@ -29,7 +29,8 @@ const resolvedContent = computed(() => {
 
 const renderQR = async () => {
   try {
-    const { default: QRCode } = await import('qrcode');
+    const qrcodeModule = await import('qrcode');
+    const QRCode = (qrcodeModule as any)?.default || qrcodeModule;
     const content = resolvedContent.value;
     
     qrSrc.value = await QRCode.toDataURL(content, {
