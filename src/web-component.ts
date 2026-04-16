@@ -18,10 +18,11 @@ import {
 } from './composables/usePrintSettings';
 import { useDesignerStore } from './stores/designer';
 import { useTemplateStore } from './stores/templates';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
+import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem } from './types';
 
 loader.config({
   'vs/nls': {
@@ -72,6 +73,12 @@ const applyStoredBrandVars = () => {
 
 const getStoredDesignerFont = () => localStorage.getItem(designerFontStorageKey)?.trim() || '';
 
+export type DesignerListContextMenuItem = Omit<ListContextMenuItem, 'hidden' | 'disabled' | 'onClick'>;
+export interface DesignerListContextMenuConfig {
+  mode?: 'replace' | 'append';
+  items: DesignerListContextMenuItem[];
+}
+
 class PrintDesignerElement extends HTMLElement {
   private app: ReturnType<typeof createApp> | null = null;
   private printApi: ReturnType<typeof usePrint> | null = null;
@@ -86,6 +93,7 @@ class PrintDesignerElement extends HTMLElement {
   private _pendingCloudUrl: string | null = null;
   private _pendingHideClientLink: boolean | null = null;
   private _pendingHideCloudLink: boolean | null = null;
+  public isReady: boolean = false;
 
   static get observedAttributes() {
     return ['lang', 'client-url', 'cloud-url', 'hide-links', 'hide-client-link', 'hide-cloud-link'];
@@ -257,6 +265,10 @@ class PrintDesignerElement extends HTMLElement {
     this.printSettings = usePrintSettings();
     this.designerStore = useDesignerStore(pinia);
     
+    this.designerStore.setContextMenuEventEmitter((eventName, detail) => {
+      this.dispatchEvent(new CustomEvent(eventName, { detail }));
+    });
+    
     if (this._pendingClientUrl !== null) {
       this.designerStore.setClientUrl(this._pendingClientUrl);
       this._pendingClientUrl = null;
@@ -277,7 +289,12 @@ class PrintDesignerElement extends HTMLElement {
     this.templateStore = useTemplateStore(pinia);
 
     this.app = app;
-    this.dispatchEvent(new CustomEvent('ready'));
+    this.isReady = true;
+    
+    // Dispatch in the next tick to ensure consumers have a chance to add event listeners
+    setTimeout(() => {
+      this.dispatchEvent(new CustomEvent('ready'));
+    }, 0);
   }
 
   disconnectedCallback() {
@@ -690,6 +707,49 @@ class PrintDesignerElement extends HTMLElement {
   deleteCustomElement(id: string) {
     if (!this.designerStore) return;
     this.designerStore.removeCustomElement(id);
+  }
+
+  private normalizeListContextMenuConfig(
+    source: ListContextMenuSource,
+    input: DesignerListContextMenuConfig | DesignerListContextMenuItem[]
+  ): ListContextMenuConfig | null {
+    const config = Array.isArray(input) ? { items: input } : input;
+    if (!config || !Array.isArray(config.items)) return null;
+
+    const items = config.items
+      .filter((item): item is DesignerListContextMenuItem => 
+        Boolean(item && typeof item.key === 'string' && item.key && typeof item.label === 'string')
+      )
+      .map((item) => ({ ...item } as ListContextMenuItem));
+
+    if (items.length === 0) return null;
+
+    return {
+      mode: config.mode === 'replace' ? 'replace' : 'append',
+      items
+    };
+  }
+
+  setTemplateContextMenu(config: DesignerListContextMenuConfig | DesignerListContextMenuItem[]) {
+    if (!this.designerStore) return;
+    const normalized = this.normalizeListContextMenuConfig('template', config);
+    this.designerStore.setTemplateContextMenuConfig(normalized);
+  }
+
+  clearTemplateContextMenu() {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateContextMenuConfig(null);
+  }
+
+  setCustomElementContextMenu(config: DesignerListContextMenuConfig | DesignerListContextMenuItem[]) {
+    if (!this.designerStore) return;
+    const normalized = this.normalizeListContextMenuConfig('customElement', config);
+    this.designerStore.setCustomElementContextMenuConfig(normalized);
+  }
+
+  clearCustomElementContextMenu() {
+    if (!this.designerStore) return;
+    this.designerStore.setCustomElementContextMenuConfig(null);
   }
 }
 

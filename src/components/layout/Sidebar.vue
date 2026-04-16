@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue';
+import { ref, computed, onMounted, onUnmounted, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
 import Type from '~icons/material-symbols/text-fields';
@@ -17,7 +17,7 @@ import MoreVert from '~icons/material-symbols/more-vert';
 import Edit from '~icons/material-symbols/edit';
 import Copy from '~icons/material-symbols/content-copy';
 import DataObject from '~icons/material-symbols/data-object';
-import { ElementType, type CustomElementTemplate } from '@/types';
+import { ElementType, type CustomElementTemplate, type ListContextMenuItem } from '@/types';
 import InputModal from '@/components/common/InputModal.vue';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import { buildTestDataFromElement, elementSupportsVariables } from '@/utils/variables';
@@ -41,6 +41,9 @@ const showTestDataModal = ref(false);
 const testDataContent = ref('');
 const testDataTarget = ref<CustomElementTemplate | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
+
+type CustomMenuActionKey = 'editElement' | 'testData' | 'rename' | 'copy' | 'delete';
+type CustomMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 
 const categories = [
   {
@@ -101,42 +104,47 @@ const getIcon = (type: ElementType) => {
   }
 };
 
+const activeCustomElement = computed(() => {
+  if (!activeMenuId.value) return null;
+  return customElements.value.find(item => item.id === activeMenuId.value) || null;
+});
+
+const positionMenuAt = (x: number, y: number, id: string) => {
+  const target = customElements.value.find(item => item.id === id);
+  if (!target) return;
+
+  const menuWidth = 160;
+  const itemCount = Math.max(1, getResolvedCustomMenuItems(target).length);
+  const menuHeightEstimate = itemCount * 30 + 10;
+
+  const left = Math.max(5, Math.min(x, window.innerWidth - menuWidth - 5));
+  let top = y;
+  if (top + menuHeightEstimate > window.innerHeight - 5) {
+    top = Math.max(5, y - menuHeightEstimate);
+  }
+
+  menuPosition.value = {
+    top: `${top}px`,
+    left: `${left}px`
+  };
+  activeMenuId.value = id;
+};
+
 const toggleMenu = (event: MouseEvent, id: string) => {
   event.stopPropagation();
   if (activeMenuId.value === id) {
     activeMenuId.value = null;
-  } else {
-    const button = event.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-    
-    // Horizontal edge detection
-    // Default: Align right edge of menu with right edge of button (menu width ~128px)
-    let left = rect.right - 128;
-    // If aligning right causes overflow to left (e.g. left column), align to left edge instead
-    if (left < 5) {
-      left = rect.left;
-    }
-
-    // Vertical edge detection
-    const MENU_HEIGHT_ESTIMATE = 210; // Estimate menu height (5 items + padding)
-    const spaceBelow = window.innerHeight - rect.bottom;
-    
-    if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
-      // Position above the button
-      menuPosition.value = {
-        bottom: `${window.innerHeight - rect.top + 5}px`,
-        left: `${left}px`
-      };
-    } else {
-      // Position below the button
-      menuPosition.value = {
-        top: `${rect.bottom + 5}px`,
-        left: `${left}px`
-      };
-    }
-    
-    activeMenuId.value = id;
+    return;
   }
+  const button = event.currentTarget as HTMLElement;
+  const rect = button.getBoundingClientRect();
+  positionMenuAt(rect.right - 160, rect.bottom + 5, id);
+};
+
+const openMenuByContext = (event: MouseEvent, id: string) => {
+  event.stopPropagation();
+  event.preventDefault(); // 阻止默认右键菜单
+  positionMenuAt(event.clientX, event.clientY, id);
 };
 
 const handleGlobalClick = (e: MouseEvent) => {
@@ -210,6 +218,99 @@ const handleTestData = (item: CustomElementTemplate) => {
   testDataAllowedKeys.value = Object.keys(data);
   testDataContent.value = JSON.stringify(data, null, 2);
   showTestDataModal.value = true;
+};
+
+const defaultCustomMenuItems = computed<CustomMenuItemView[]>(() => ([
+  { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit },
+  { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject, hidden: ({ item }) => !supportsTestData(item as CustomElementTemplate) },
+  { key: 'rename', actionKey: 'rename', label: t('sidebar.rename'), iconComponent: Edit },
+  { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy },
+  { key: 'delete', actionKey: 'delete', label: t('sidebar.delete'), iconComponent: Delete, danger: true }
+]));
+
+const mergeCustomMenuItems = (defaults: CustomMenuItemView[], custom: CustomMenuItemView[], mode: 'replace' | 'append') => {
+  if (mode === 'replace') return custom;
+  const merged = [...defaults];
+  custom.forEach((item) => {
+    const idx = merged.findIndex(entry => entry.key === item.key);
+    if (idx >= 0) {
+      merged[idx] = { ...merged[idx], ...item };
+      return;
+    }
+    merged.push(item);
+  });
+  return merged;
+};
+
+function getResolvedCustomMenuItems(item: CustomElementTemplate): CustomMenuItemView[] {
+  const config = store.customElementContextMenuConfig;
+  const customItems = (config?.items || []).map(menuItem => ({ ...menuItem }));
+  const merged = mergeCustomMenuItems(
+    defaultCustomMenuItems.value,
+    customItems,
+    config?.mode === 'replace' ? 'replace' : 'append'
+  );
+
+  return merged.filter((menuItem) => {
+    if (typeof menuItem.hidden === 'function') {
+      return !menuItem.hidden({ source: 'customElement', item });
+    }
+    return !menuItem.hidden;
+  });
+}
+
+const isCustomMenuItemDisabled = (menuItem: CustomMenuItemView, item: CustomElementTemplate) => {
+  if (typeof menuItem.disabled === 'function') {
+    return menuItem.disabled({ source: 'customElement', item });
+  }
+  return Boolean(menuItem.disabled);
+};
+
+const runBuiltInCustomMenuAction = (actionKey: string | undefined, item: CustomElementTemplate) => {
+  const key = (actionKey || '') as CustomMenuActionKey;
+  if (key === 'editElement') {
+    handleEditElement(item);
+    return;
+  }
+  if (key === 'testData') {
+    handleTestData(item);
+    return;
+  }
+  if (key === 'rename') {
+    handleRename(item);
+    return;
+  }
+  if (key === 'copy') {
+    handleCopy(item);
+    return;
+  }
+  if (key === 'delete') {
+    handleDelete(item);
+  }
+};
+
+const handleCustomMenuClick = async (menuItem: CustomMenuItemView, item: CustomElementTemplate) => {
+  if (isCustomMenuItemDisabled(menuItem, item)) return;
+
+  activeMenuId.value = null;
+
+  runBuiltInCustomMenuAction(menuItem.actionKey, item);
+
+  try {
+    if (typeof menuItem.onClick === 'function') {
+      await menuItem.onClick({ source: 'customElement', item });
+    }
+    if (menuItem.eventName) {
+      store.emitContextMenuEvent(menuItem.eventName, {
+        source: 'customElement',
+        actionKey: menuItem.actionKey || null,
+        key: menuItem.key,
+        item
+      });
+    }
+  } catch (error) {
+    console.error('Custom element context menu action failed', error);
+  }
 };
 
 const handleTestDataClose = () => {
@@ -323,12 +424,13 @@ onUnmounted(() => {
             class="group relative flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg theme-hover-border theme-hover-bg cursor-move transition-all dark:bg-gray-800 dark:hover:bg-gray-700"
             draggable="true"
             @dragstart="(e) => handleDragStartCustom(e, item)"
+            @contextmenu.prevent="openMenuByContext($event, item.id)"
           >
             <component :is="getIcon(item.element.type)" class="w-8 h-8 text-gray-600 dark:text-gray-300 mb-2" />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate w-full text-center" :title="item.name">{{ item.name }}</span>
             
             <button 
-              @click="toggleMenu($event, item.id)"
+              @click.stop="toggleMenu($event, item.id)"
               class="absolute top-1 right-1 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
               :class="{'opacity-100 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300': activeMenuId === item.id}"
               :title="t('sidebar.moreOptions')"
@@ -344,28 +446,25 @@ onUnmounted(() => {
     <Teleport :to="modalContainer || 'body'">
       <div v-if="activeMenuId" class="fixed inset-0 z-[2000] pointer-events-auto" @click="activeMenuId = null">
         <div 
-          class="sidebar-context-menu absolute w-32 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-100 dark:border-gray-700 z-[2001] py-1 pointer-events-auto"
+          class="sidebar-context-menu absolute w-40 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-100 dark:border-gray-700 z-[2001] py-1 pointer-events-auto"
           :style="menuPosition"
           @click.stop
         >
-          <template v-for="item in customElements" :key="item.id">
-            <template v-if="item.id === activeMenuId">
-              <button @click="handleEditElement(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-                <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.editElement') }}
+          <template v-if="activeCustomElement">
+            <button
+              v-for="menuItem in getResolvedCustomMenuItems(activeCustomElement)"
+              :key="menuItem.key"
+              @click="handleCustomMenuClick(menuItem, activeCustomElement)"
+              :disabled="isCustomMenuItemDisabled(menuItem, activeCustomElement)"
+              class="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="menuItem.danger ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            >
+              <component v-if="menuItem.iconComponent" :is="menuItem.iconComponent" class="w-3.5 h-3.5" />
+              <img v-else-if="menuItem.iconImage" :src="menuItem.iconImage" class="w-3.5 h-3.5 object-contain" />
+              <i v-else-if="menuItem.iconClass" :class="menuItem.iconClass"></i>
+              <span v-else-if="menuItem.icon" class="w-3.5 h-3.5 inline-flex items-center justify-center">{{ menuItem.icon }}</span>
+              <span>{{ menuItem.label }}</span>
               </button>
-              <button v-if="supportsTestData(item)" @click="handleTestData(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-                <DataObject class="w-3.5 h-3.5" /> {{ t('common.testData') }}
-              </button>
-              <button @click="handleRename(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-                <Edit class="w-3.5 h-3.5" /> {{ t('sidebar.rename') }}
-              </button>
-              <button @click="handleCopy(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-                <Copy class="w-3.5 h-3.5" /> {{ t('sidebar.copy') }}
-              </button>
-              <button @click="handleDelete(item)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">
-                <Delete class="w-3.5 h-3.5" /> {{ t('sidebar.delete') }}
-              </button>
-            </template>
           </template>
         </div>
       </div>

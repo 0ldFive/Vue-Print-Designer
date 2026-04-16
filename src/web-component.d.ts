@@ -1,7 +1,9 @@
 import type {
   DesignerExportRequest,
   DesignerPrintRequest,
-  DesignerPrintDefaults
+  DesignerPrintDefaults,
+  DesignerListContextMenuConfig,
+  DesignerListContextMenuItem
 } from './web-component';
 import type {
   LocalPrinterInfo,
@@ -42,6 +44,10 @@ export interface PrintDesignerElement extends HTMLElement {
   upsertCustomElement(customElement: { id?: string; name: string; element: any }): Promise<string | null>;
   setCustomElements(customElements: Array<{ id: string; name: string; element: any }>): void;
   deleteCustomElement(id: string): void;
+  setTemplateContextMenu(config: DesignerListContextMenuConfig | DesignerListContextMenuItem[]): void;
+  clearTemplateContextMenu(): void;
+  setCustomElementContextMenu(config: DesignerListContextMenuConfig | DesignerListContextMenuItem[]): void;
+  clearCustomElementContextMenu(): void;
 
   setCrudMode(mode: 'local' | 'remote'): void;
   setCrudEndpoints(endpoints: {

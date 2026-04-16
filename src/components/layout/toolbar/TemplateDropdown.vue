@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
+import type { ListContextMenuItem } from '@/types';
 
 import ChevronDown from '~icons/material-symbols/expand-more';
 import MoreVert from '~icons/material-symbols/more-vert';
@@ -39,6 +40,9 @@ const showTestDataModal = ref(false);
 const testDataContent = ref('');
 const testDataTarget = ref<Template | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
+
+type TemplateMenuActionKey = 'testData' | 'rename' | 'copy' | 'delete';
+type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 
 onMounted(async () => {
   await store.loadTemplates();
@@ -93,49 +97,43 @@ const selectTemplate = (template: Template) => {
   isOpen.value = false;
 };
 
+const positionMenuAt = (x: number, y: number, id: string) => {
+  const target = store.templates.find(tpl => tpl.id === id);
+  if (!target) return;
+
+  const menuWidth = 160;
+  const itemCount = Math.max(1, getResolvedMenuItems(target).length);
+  const menuHeightEstimate = itemCount * 30 + 10;
+
+  let left = Math.max(5, Math.min(x, window.innerWidth - menuWidth - 5));
+  let top = y;
+  if (top + menuHeightEstimate > window.innerHeight - 5) {
+    top = Math.max(5, y - menuHeightEstimate);
+  }
+
+  menuPosition.value = {
+    top: `${top}px`,
+    left: `${left}px`
+  };
+  activeMenuId.value = id;
+};
+
 const toggleRowMenu = (e: MouseEvent, id: string) => {
-  e.stopPropagation(); // Prevent row selection
+  e.stopPropagation();
   if (activeMenuId.value === id) {
     activeMenuId.value = null;
-  } else {
-    // Calculate position
-    const button = e.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-    
-    // Position menu to the right of the button, but slightly overlapping
-    // or below it? Let's try below-right aligned or right-aligned.
-    // The previous implementation was top-8 right-0 (absolute).
-    // Let's do fixed positioning.
-    
-    // Check if we have enough space on the right
-    const menuWidth = 128; // w-32 = 8rem = 128px
-    
-    // Horizontal edge detection
-    let left = rect.right - menuWidth;
-    if (left < 5) {
-      left = rect.left;
-    }
-
-    // Vertical edge detection
-    const MENU_HEIGHT_ESTIMATE = 150; // 4 items (Test Data, Rename, Copy, Delete)
-    const spaceBelow = window.innerHeight - rect.bottom;
-
-    if (spaceBelow < MENU_HEIGHT_ESTIMATE) {
-      // Position above
-      menuPosition.value = {
-        bottom: `${window.innerHeight - rect.top + 5}px`,
-        left: `${left}px`
-      };
-    } else {
-      // Position below
-      menuPosition.value = {
-        top: `${rect.bottom + 5}px`,
-        left: `${left}px`
-      };
-    }
-
-    activeMenuId.value = id;
+    return;
   }
+
+  const button = e.currentTarget as HTMLElement;
+  const rect = button.getBoundingClientRect();
+  positionMenuAt(rect.right - 160, rect.bottom + 5, id);
+};
+
+const openRowMenuByContext = (e: MouseEvent, id: string) => {
+  e.stopPropagation();
+  e.preventDefault(); // 阻止默认右键菜单
+  positionMenuAt(e.clientX, e.clientY, id);
 };
 
 const getActiveTemplate = () => {
@@ -190,6 +188,95 @@ const handleTestData = (template: Template) => {
   testDataContent.value = JSON.stringify(data, null, 2);
   showTestDataModal.value = true;
   isOpen.value = false;
+};
+
+const defaultTemplateMenuItems = computed<TemplateMenuItemView[]>(() => ([
+  { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject },
+  { key: 'rename', actionKey: 'rename', label: t('common.rename'), iconComponent: Edit },
+  { key: 'copy', actionKey: 'copy', label: t('common.copy'), iconComponent: Copy },
+  { key: 'delete', actionKey: 'delete', label: t('common.delete'), iconComponent: Trash2, danger: true }
+]));
+
+const mergeTemplateMenuItems = (defaults: TemplateMenuItemView[], custom: TemplateMenuItemView[], mode: 'replace' | 'append') => {
+  if (mode === 'replace') return custom;
+  const merged = [...defaults];
+  custom.forEach((item) => {
+    const idx = merged.findIndex(entry => entry.key === item.key);
+    if (idx >= 0) {
+      merged[idx] = { ...merged[idx], ...item };
+      return;
+    }
+    merged.push(item);
+  });
+  return merged;
+};
+
+function getResolvedMenuItems(template: Template): TemplateMenuItemView[] {
+  const config = designerStore.templateContextMenuConfig;
+  const customItems = (config?.items || []).map(item => ({ ...item }));
+  const merged = mergeTemplateMenuItems(
+    defaultTemplateMenuItems.value,
+    customItems,
+    config?.mode === 'replace' ? 'replace' : 'append'
+  );
+
+  return merged.filter((menuItem) => {
+    if (typeof menuItem.hidden === 'function') {
+      return !menuItem.hidden({ source: 'template', item: template });
+    }
+    return !menuItem.hidden;
+  });
+}
+
+const isMenuItemDisabled = (menuItem: TemplateMenuItemView, template: Template) => {
+  if (typeof menuItem.disabled === 'function') {
+    return menuItem.disabled({ source: 'template', item: template });
+  }
+  return Boolean(menuItem.disabled);
+};
+
+const runBuiltInMenuAction = (actionKey: string | undefined, template: Template) => {
+  const key = (actionKey || '') as TemplateMenuActionKey;
+  if (key === 'testData') {
+    handleTestData(template);
+    return;
+  }
+  if (key === 'rename') {
+    handleEdit(template);
+    return;
+  }
+  if (key === 'copy') {
+    handleCopy(template);
+    return;
+  }
+  if (key === 'delete') {
+    handleDelete(template);
+  }
+};
+
+const handleMenuItemClick = async (menuItem: TemplateMenuItemView, template: Template) => {
+  if (isMenuItemDisabled(menuItem, template)) return;
+
+  activeMenuId.value = null;
+  isOpen.value = false;
+
+  runBuiltInMenuAction(menuItem.actionKey, template);
+
+  try {
+    if (typeof menuItem.onClick === 'function') {
+      await menuItem.onClick({ source: 'template', item: template });
+    }
+    if (menuItem.eventName) {
+      designerStore.emitContextMenuEvent(menuItem.eventName, {
+        source: 'template',
+        actionKey: menuItem.actionKey || null,
+        key: menuItem.key,
+        item: template
+      });
+    }
+  } catch (error) {
+    console.error('Template context menu action failed', error);
+  }
 };
 
 const handleTestDataClose = () => {
@@ -278,6 +365,7 @@ const handleModalSave = (name: string) => {
           :key="t.id"
           class="relative group border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
           @click="selectTemplate(t)"
+          @contextmenu.prevent="openRowMenuByContext($event, t.id)"
         >
           <div class="flex items-center gap-2 overflow-hidden flex-1">
              <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
@@ -287,7 +375,7 @@ const handleModalSave = (name: string) => {
           </div>
           
           <button 
-            @click="toggleRowMenu($event, t.id)"
+            @click.stop="toggleRowMenu($event, t.id)"
             class="row-menu-trigger p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
             :class="{'opacity-100 bg-gray-200 dark:bg-gray-600': activeMenuId === t.id}"
           >
@@ -311,22 +399,24 @@ const handleModalSave = (name: string) => {
     <Teleport :to="modalContainer || 'body'">
       <div v-if="activeMenuId" class="fixed inset-0 z-[2000] pointer-events-auto" @click="activeMenuId = null">
         <div 
-          class="row-menu-content absolute w-32 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-100 dark:border-gray-700 z-[2001] py-1 pointer-events-auto"
+          class="row-menu-content absolute w-40 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-100 dark:border-gray-700 z-[2001] py-1 pointer-events-auto"
           :style="menuPosition"
           @click.stop
         >
           <template v-if="getActiveTemplate()">
-            <button @click="handleTestData(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-              <DataObject class="w-3.5 h-3.5" /> {{ t('common.testData') }}
-            </button>
-            <button @click="handleEdit(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-              <Edit class="w-3.5 h-3.5" /> {{ t('common.rename') }}
-            </button>
-            <button @click="handleCopy(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
-              <Copy class="w-3.5 h-3.5" /> {{ t('common.copy') }}
-            </button>
-            <button @click="handleDelete(getActiveTemplate()!)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">
-              <Trash2 class="w-3.5 h-3.5" /> {{ t('common.delete') }}
+            <button
+              v-for="menuItem in getResolvedMenuItems(getActiveTemplate()!)"
+              :key="menuItem.key"
+              @click="handleMenuItemClick(menuItem, getActiveTemplate()!)"
+              :disabled="isMenuItemDisabled(menuItem, getActiveTemplate()!)"
+              class="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="menuItem.danger ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            >
+              <component v-if="menuItem.iconComponent" :is="menuItem.iconComponent" class="w-3.5 h-3.5" />
+              <img v-else-if="menuItem.iconImage" :src="menuItem.iconImage" class="w-3.5 h-3.5 object-contain" />
+              <i v-else-if="menuItem.iconClass" :class="menuItem.iconClass"></i>
+              <span v-else-if="menuItem.icon" class="w-3.5 h-3.5 inline-flex items-center justify-center">{{ menuItem.icon }}</span>
+              <span>{{ menuItem.label }}</span>
             </button>
           </template>
         </div>

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
-import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings } from '@/types';
+import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem } from '@/types';
 import { getCrudConfig, buildEndpoint } from '@/utils/crudConfig';
 
 const defaultWatermark: WatermarkSettings = {
@@ -93,6 +93,21 @@ const buildLayerAssignments = (page: Page, idSet: Set<string>, mode: LayerMoveMo
   return assignments;
 };
 
+const normalizeContextMenuConfig = (config: ListContextMenuConfig | null | undefined): ListContextMenuConfig | null => {
+  if (!config || !Array.isArray(config.items)) return null;
+
+  const items = config.items
+    .filter((item): item is ListContextMenuItem => Boolean(item && typeof item.key === 'string' && item.key && typeof item.label === 'string'))
+    .map((item) => ({ ...item }));
+
+  if (items.length === 0) return null;
+
+  return {
+    mode: config.mode === 'replace' ? 'replace' : 'append',
+    items
+  };
+};
+
 export const useDesignerStore = defineStore('designer', {
   state: (): DesignerState => ({
     unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt' | 'in' | 'cm') || 'mm',
@@ -101,6 +116,9 @@ export const useDesignerStore = defineStore('designer', {
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
     customElements: JSON.parse(localStorage.getItem('print-designer-custom-elements') || '[]'),
+    templateContextMenuConfig: null,
+    customElementContextMenuConfig: null,
+    contextMenuEventEmitter: null,
     testData: {},
     editingCustomElementId: null,
     customElementEditSnapshot: null,
@@ -140,6 +158,19 @@ export const useDesignerStore = defineStore('designer', {
     showCloudLink: true,
   }),
   actions: {
+    setContextMenuEventEmitter(emitter: ((eventName: string, detail: Record<string, any>) => void) | null) {
+      this.contextMenuEventEmitter = emitter;
+    },
+    emitContextMenuEvent(eventName: string, detail: Record<string, any>) {
+      if (!eventName || typeof eventName !== 'string') return;
+      this.contextMenuEventEmitter?.(eventName, detail || {});
+    },
+    setTemplateContextMenuConfig(config: ListContextMenuConfig | null) {
+      this.templateContextMenuConfig = normalizeContextMenuConfig(config);
+    },
+    setCustomElementContextMenuConfig(config: ListContextMenuConfig | null) {
+      this.customElementContextMenuConfig = normalizeContextMenuConfig(config);
+    },
     setClientUrl(url: string) {
       this.clientUrl = url;
     },

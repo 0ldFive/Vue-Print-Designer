@@ -22,6 +22,7 @@
   - [14) setCrudEndpoints(endpoints, options?)](#14-setcrudendpointsendpoints-options)
   - [15) setLanguage(lang)](#15-setlanguagelang)
   - [16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)](#16-setclientlinkurl--setcloudlinkurl--hidelinkshide--hideclientlinkhide--hidecloudlinkhide)
+  - [17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)](#17-settemplatecontextmenuconfig--setcustomelementcontextmenuconfig)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
@@ -63,6 +64,10 @@
 | `hideLinks(hide)` | Hide/Show all links |
 | `hideClientLink(hide)` | Hide/Show client download link |
 | `hideCloudLink(hide)` | Hide/Show cloud print link |
+| `setTemplateContextMenu(config)` | Configure template list right-click menu |
+| `clearTemplateContextMenu()` | Reset template list right-click menu to default |
+| `setCustomElementContextMenu(config)` | Configure custom element list right-click menu |
+| `clearCustomElementContextMenu()` | Reset custom element list right-click menu to default |
 
 ## Quick Start
 
@@ -477,6 +482,62 @@ el.hideLinks(true) // Hide all links
 el.hideClientLink(true) // Hide client download link only
 el.hideCloudLink(true) // Hide cloud print link only
 ```
+
+### 17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)
+
+Description: Configure the right-click context menu for the template list and the custom element list.
+You can either append to the default menu or replace it entirely. When a menu item is clicked, the designer dispatches a custom event with the provided `eventName`.
+
+```ts
+el.setTemplateContextMenu({
+  mode: 'append', // 'append' | 'replace'
+  items: [
+    {
+      key: 'custom-publish',
+      label: 'Publish Template',
+      icon: '🚀', // Optional emoji or Iconify icon string
+      eventName: 'template-custom-publish' // Event to dispatch
+    }
+  ]
+})
+
+el.setCustomElementContextMenu({
+  mode: 'replace',
+  items: [
+    {
+      key: 'editElement', // Built-in key to keep the default edit action
+      label: 'Edit Element',
+      actionKey: 'editElement', // Built-in action
+      icon: '✏️'
+    },
+    {
+      key: 'custom-sync',
+      label: 'Sync to Cloud',
+      eventName: 'custom-element-sync'
+    }
+  ]
+})
+
+// Listen to custom events
+el.addEventListener('template-custom-publish', (e) => {
+  console.log('Publish template:', e.detail.item)
+})
+el.addEventListener('custom-element-sync', (e) => {
+  console.log('Sync custom element:', e.detail.item)
+})
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `config.mode` | `'append' \| 'replace'` | No | Append to or replace the default menu (default: `append`) |
+| `config.items` | `Array` | Yes | List of menu items |
+| `item.key` | `string` | Yes | Unique key for the menu item |
+| `item.label` | `string` | Yes | Display text for the menu item |
+| `item.icon` | `string` | No | Emoji or Iconify icon string (e.g. `lucide:check`) |
+| `item.eventName` | `string` | No | Custom event to dispatch on click |
+| `item.actionKey` | `string` | No | Built-in action to trigger (e.g., `editElement`, `deleteTemplate`) |
 
 ## Events
 

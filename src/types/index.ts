@@ -128,6 +128,33 @@ export interface CustomElementTemplate {
   testData?: Record<string, any>;
 }
 
+export type ListContextMenuMode = 'replace' | 'append';
+export type ListContextMenuSource = 'template' | 'customElement';
+
+export interface ListContextMenuActionContext {
+  source: ListContextMenuSource;
+  item: any;
+}
+
+export interface ListContextMenuItem {
+  key: string;
+  label: string;
+  icon?: string;
+  iconClass?: string;
+  iconImage?: string;
+  danger?: boolean;
+  actionKey?: string;
+  hidden?: boolean | ((context: ListContextMenuActionContext) => boolean);
+  disabled?: boolean | ((context: ListContextMenuActionContext) => boolean);
+  onClick?: (context: ListContextMenuActionContext) => void | Promise<void>;
+  eventName?: string;
+}
+
+export interface ListContextMenuConfig {
+  mode?: ListContextMenuMode;
+  items: ListContextMenuItem[];
+}
+
 export interface CustomElementEditSnapshot {
   pages: Page[];
   historyPast: Page[][];
@@ -161,6 +188,9 @@ export interface DesignerState {
   pages: Page[];
   currentPageIndex: number;
   customElements: CustomElementTemplate[];
+  templateContextMenuConfig?: ListContextMenuConfig | null;
+  customElementContextMenuConfig?: ListContextMenuConfig | null;
+  contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
   testData: Record<string, any>;
   branding: BrandingSettings;
   editingCustomElementId?: string | null;
