@@ -144,7 +144,5 @@ bin-release/
 *.air
 *.ipa
 *.apk
-wc-test.html
 .trae
-stats-wc.html
 docs/zh/

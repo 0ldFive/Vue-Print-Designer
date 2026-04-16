@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from './designer';
-import { getCrudConfig, buildEndpoint } from '@/utils/crudConfig';
+import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 
 export interface Template {
   id: string;
@@ -53,8 +53,9 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.list || '');
-          const res = await (fetcher || fetch)(url, { headers });
+          const url = buildEndpoint(endpoints.templates?.list, '');
+          const options = buildFetchOptions(endpoints.templates?.list, 'GET', headers);
+          const res = await (fetcher || fetch)(url, options);
           const data = await res.json();
           const list = Array.isArray(data) ? data : data?.templates || [];
           this.templates = list
@@ -132,12 +133,9 @@ export const useTemplateStore = defineStore('templates', {
             data,
             updatedAt: Date.now()
           };
-          const url = buildEndpoint(endpoints.templates?.upsert || '');
-          const res = await (fetcher || fetch)(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-          });
+          const url = buildEndpoint(endpoints.templates?.upsert, '');
+          const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
+          const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           const id = result?.id || payload.id;
           const index = this.templates.findIndex(t => t.id === id);
@@ -195,12 +193,9 @@ export const useTemplateStore = defineStore('templates', {
 
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.upsert || '');
-          const res = await (fetcher || fetch)(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(newTemplate)
-          });
+          const url = buildEndpoint(endpoints.templates?.upsert, '');
+          const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
+          const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           const id = result?.id || newTemplate.id;
           newTemplate.id = id;
@@ -224,8 +219,9 @@ export const useTemplateStore = defineStore('templates', {
       }
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.delete || '', id);
-          await (fetcher || fetch)(url, { method: 'DELETE', headers });
+          const url = buildEndpoint(endpoints.templates?.delete, id);
+          const options = buildFetchOptions(endpoints.templates?.delete, 'DELETE', headers);
+          await (fetcher || fetch)(url, options);
         } catch (e) {
           console.error('Failed to delete template', e);
         }
@@ -242,12 +238,9 @@ export const useTemplateStore = defineStore('templates', {
         t.updatedAt = Date.now();
         if (mode === 'remote') {
           try {
-            const url = buildEndpoint(endpoints.templates?.upsert || '');
-            await (fetcher || fetch)(url, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(t)
-            });
+            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, t);
+            await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to rename template', e);
           }
@@ -269,12 +262,9 @@ export const useTemplateStore = defineStore('templates', {
         };
         if (mode === 'remote') {
           try {
-            const url = buildEndpoint(endpoints.templates?.upsert || '');
-            const res = await (fetcher || fetch)(url, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(newTemplate)
-            });
+            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
+            const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
             newTemplate.id = result?.id || newTemplate.id;
           } catch (e) {
@@ -292,8 +282,9 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.get || '', id);
-          const res = await (fetcher || fetch)(url, { headers });
+          const url = buildEndpoint(endpoints.templates?.get, id);
+          const options = buildFetchOptions(endpoints.templates?.get, 'GET', headers);
+          const res = await (fetcher || fetch)(url, options);
           const payload = await res.json();
           const t = payload?.template || payload;
           if (!t) return;

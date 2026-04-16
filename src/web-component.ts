@@ -20,7 +20,7 @@ import { useDesignerStore } from './stores/designer';
 import { useTemplateStore } from './stores/templates';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, type CrudMode, type CrudEndpoints } from './utils/crudConfig';
+import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
 import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem } from './types';
 
@@ -534,7 +534,8 @@ class PrintDesignerElement extends HTMLElement {
   }
 
   setCrudEndpoints(endpoints: CrudEndpoints, options: { baseUrl?: string; headers?: Record<string, string> } = {}) {
-    setCrudConfig({ endpoints: { ...endpoints, baseUrl: options.baseUrl }, headers: options.headers });
+    const finalBaseUrl = options.baseUrl !== undefined ? options.baseUrl : endpoints.baseUrl;
+    setCrudConfig({ endpoints: { ...endpoints, baseUrl: finalBaseUrl }, headers: options.headers });
   }
 
   getTemplates(options: { includeData?: boolean } = {}) {
@@ -578,11 +579,8 @@ class PrintDesignerElement extends HTMLElement {
     if (mode === 'remote') {
       try {
         const url = buildEndpoint(endpoints.templates?.upsert || '');
-        const res = await (fetcher || fetch)(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(next)
-        });
+        const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, next);
+        const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
         const remoteId = result?.id || next.id;
         if (remoteId !== next.id) {
@@ -672,11 +670,8 @@ class PrintDesignerElement extends HTMLElement {
     if (mode === 'remote') {
       try {
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
-        const res = await (fetcher || fetch)(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(next)
-        });
+        const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, next);
+        const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
         const remoteId = result?.id || next.id;
         if (remoteId !== next.id) {

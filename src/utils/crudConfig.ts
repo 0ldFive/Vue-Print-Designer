@@ -1,18 +1,24 @@
 export type CrudMode = 'local' | 'remote';
 
+export type EndpointConfig = string | {
+  url: string;
+  method?: string;
+  data?: Record<string, any>;
+};
+
 export type CrudEndpoints = {
   baseUrl?: string;
   templates?: {
-    list?: string;
-    get?: string;
-    upsert?: string;
-    delete?: string;
+    list?: EndpointConfig;
+    get?: EndpointConfig;
+    upsert?: EndpointConfig;
+    delete?: EndpointConfig;
   };
   customElements?: {
-    list?: string;
-    get?: string;
-    upsert?: string;
-    delete?: string;
+    list?: EndpointConfig;
+    get?: EndpointConfig;
+    upsert?: EndpointConfig;
+    delete?: EndpointConfig;
   };
 };
 
@@ -86,8 +92,59 @@ export const resolveUrl = (path: string) => {
   return `${baseUrl.replace(/\/+$/, '')}/${path}`;
 };
 
-export const buildEndpoint = (template: string, id?: string) => {
-  const raw = template || '';
+export const buildEndpoint = (config: EndpointConfig | undefined, id?: string) => {
+  const raw = typeof config === 'string' ? config : (config?.url || '');
   const withId = id ? raw.replace('{id}', id) : raw;
-  return resolveUrl(withId);
+  let finalUrl = resolveUrl(withId);
+
+  // If GET or DELETE, append data to query string
+  const method = typeof config === 'object' && config.method ? config.method.toUpperCase() : '';
+  const isQueryMethod = !method || method === 'GET' || method === 'DELETE';
+  
+  if (typeof config === 'object' && config.data && isQueryMethod) {
+    try {
+      const urlObj = new URL(finalUrl, window.location.origin);
+      Object.entries(config.data).forEach(([key, value]) => {
+        if (value !== undefined) {
+          urlObj.searchParams.append(key, String(value));
+        }
+      });
+      finalUrl = finalUrl.startsWith('http') ? urlObj.toString() : `${urlObj.pathname}${urlObj.search}`;
+    } catch (e) {
+      console.warn('Failed to append query params', e);
+    }
+  }
+
+  return finalUrl;
+};
+
+export const buildFetchOptions = (
+  config: EndpointConfig | undefined,
+  defaultMethod: string,
+  defaultHeaders: Record<string, string> | undefined,
+  defaultPayload?: any
+): RequestInit => {
+  const method = (typeof config === 'object' && config.method) ? config.method.toUpperCase() : defaultMethod.toUpperCase();
+  const isBodyMethod = method === 'POST' || method === 'PUT' || method === 'PATCH';
+  
+  const options: RequestInit = {
+    method,
+    headers: defaultHeaders
+  };
+
+  if (isBodyMethod) {
+    let payload = defaultPayload;
+    if (typeof config === 'object' && config.data) {
+      if (typeof payload === 'object' && !Array.isArray(payload)) {
+        payload = { ...payload, ...config.data };
+      } else if (payload === undefined) {
+        payload = config.data;
+      }
+    }
+    if (payload !== undefined) {
+      options.body = JSON.stringify(payload);
+    }
+  }
+
+  return options;
 };

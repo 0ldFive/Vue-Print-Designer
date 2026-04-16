@@ -44,6 +44,14 @@ const testDataAllowedKeys = ref<string[]>([]);
 type TemplateMenuActionKey = 'testData' | 'rename' | 'copy' | 'delete';
 type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 
+const resolveIconFromIconField = (icon: string | undefined) => {
+  if (!icon) return null;
+  // Support iconify-style names like "material-symbols:edit" via CDN svg.
+  const isIconifyName = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9-]+$/i.test(icon);
+  if (!isIconifyName) return null;
+  return `https://api.iconify.design/${encodeURIComponent(icon)}.svg`;
+};
+
 onMounted(async () => {
   await store.loadTemplates();
   // Auto-select first template if available and none selected
@@ -415,6 +423,7 @@ const handleModalSave = (name: string) => {
               <component v-if="menuItem.iconComponent" :is="menuItem.iconComponent" class="w-3.5 h-3.5" />
               <img v-else-if="menuItem.iconImage" :src="menuItem.iconImage" class="w-3.5 h-3.5 object-contain" />
               <i v-else-if="menuItem.iconClass" :class="menuItem.iconClass"></i>
+              <img v-else-if="resolveIconFromIconField(menuItem.icon)" :src="resolveIconFromIconField(menuItem.icon)!" class="w-3.5 h-3.5 object-contain" />
               <span v-else-if="menuItem.icon" class="w-3.5 h-3.5 inline-flex items-center justify-center">{{ menuItem.icon }}</span>
               <span>{{ menuItem.label }}</span>
             </button>

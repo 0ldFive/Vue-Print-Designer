@@ -6,23 +6,23 @@
 - [API 索引](#api-索引)
 - [实例方法与参数说明](#实例方法与参数说明)
   - [初始化建议（必读）](#初始化建议必读)
-  - [1) print(request)](#1-printrequest)
-  - [2) export(request)](#2-exportrequest)
-  - [3) setPrintDefaults(payload)](#3-setprintdefaultspayload)
-  - [4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)](#4-fetchlocalprinters--fetchlocalprintercapsprinter--fetchremoteclients--fetchremoteprintersclientid)
-  - [5) setBranding(payload?)](#5-setbrandingpayload)
-  - [6) setBrandVars(vars)](#6-setbrandvarsvars)
-  - [7) setTheme(theme)](#7-setthemetheme)
-  - [8) setDesignerFont(fontFamily)](#8-setdesignerfontfontfamily)
-  - [9) setVariables(vars, options?) / getVariables()](#9-setvariablesvars-options--getvariables)
-  - [10) getTemplateData() / loadTemplateData(data)](#10-gettemplatedata--loadtemplatedatadata)
-  - [11) 模板 CRUD](#11-模板-crud)
-  - [12) 自定义元素 CRUD](#12-自定义元素-crud)
-  - [13) setCrudMode(mode)](#13-setcrudmodemode)
-  - [14) setCrudEndpoints(endpoints, options?)](#14-setcrudendpointsendpoints-options)
-  - [15) setLanguage(lang)](#15-setlanguagelang)
-  - [16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)](#16-setclientlinkurl--setcloudlinkurl--hidelinkshide--hideclientlinkhide--hidecloudlinkhide)
-  - [17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)](#17-settemplatecontextmenuconfig--setcustomelementcontextmenuconfig)
+  - [1. 执行打印 (print)](#1-执行打印-print)
+  - [2. 导出 PDF/图片 (export)](#2-导出-pdf图片-export)
+  - [3. 设置默认打印参数 (setPrintDefaults)](#3-设置默认打印参数-setprintdefaults)
+  - [4. 获取打印机与客户端 (fetchPrinters)](#4-获取打印机与客户端-fetchprinters)
+  - [5. 设置品牌信息 (setBranding)](#5-设置品牌信息-setbranding)
+  - [6. 设置品牌色 (setBrandVars)](#6-设置品牌色-setbrandvars)
+  - [7. 设置主题 (setTheme)](#7-设置主题-settheme)
+  - [8. 设置设计器字体 (setDesignerFont)](#8-设置设计器字体-setdesignerfont)
+  - [9. 设置与获取变量数据 (setVariables / getVariables)](#9-设置与获取变量数据-setvariables--getvariables)
+  - [10. 获取与加载模板数据 (getTemplateData / loadTemplateData)](#10-获取与加载模板数据-gettemplatedata--loadtemplatedatadata)
+  - [11. 模板 CRUD 操作 (getTemplates / getTemplate / upsertTemplate / deleteTemplate)](#11-模板-crud-操作-gettemplates--gettemplate--upserttemplate--deletetemplate)
+  - [12. 自定义元素 CRUD 操作 (getCustomElements / getCustomElement / upsertCustomElement / deleteCustomElement)](#12-自定义元素-crud-操作-getcustomelements--getcustomelement--upsertcustomelement--deletecustomelement)
+  - [13. 设置 CRUD 模式 (setCrudMode)](#13-设置-crud-模式-setcrudmode)
+  - [14. 配置云端 CRUD 接口 (setCrudEndpoints)](#14-配置云端-crud-接口-setcrudendpoints)
+  - [15. 设置语言 (setLanguage)](#15-设置语言-setlanguage)
+  - [16. 配置客户端与云打印链接 (setLinks)](#16-配置客户端与云打印链接-setlinks)
+  - [17. 配置扩展菜单 (setContextMenu)](#17-配置扩展菜单-setcontextmenu)
 - [事件与回调](#事件与回调)
 - [PrintOptions](#printoptions)
 - [常见场景示例](#常见场景示例)
@@ -64,10 +64,10 @@
 | `hideLinks(hide)`                     | 隐藏/显示所有链接         |
 | `hideClientLink(hide)`                | 隐藏/显示客户端下载链接      |
 | `hideCloudLink(hide)`                 | 隐藏/显示云打印链接        |
-| `setTemplateContextMenu(config)`      | 配置模版列表右键菜单        |
-| `clearTemplateContextMenu()`          | 恢复模版列表默认右键菜单      |
-| `setCustomElementContextMenu(config)` | 配置自定义元素列表右键菜单     |
-| `clearCustomElementContextMenu()`     | 恢复自定义元素列表默认右键菜单   |
+| `setTemplateContextMenu(config)`      | 配置模版列表扩展菜单        |
+| `clearTemplateContextMenu()`          | 恢复模版列表默认扩展菜单      |
+| `setCustomElementContextMenu(config)` | 配置自定义元素列表扩展菜单     |
+| `clearCustomElementContextMenu()`     | 恢复自定义元素列表默认扩展菜单   |
 
 ## 快速开始
 
@@ -188,7 +188,7 @@ el.setCrudMode('remote')
 | `setCrudEndpoints` | `options.headers` | `Record<string, string>` | 否  | 请求头       |
 | `setCrudMode`      | `mode`            | `'local' \| 'remote'`    | 是  | CRUD 模式   |
 
-### 1) print(request?)
+### 1. 执行打印 (print)
 
 说明：执行打印。`mode` 为空时使用默认打印模式。
 
@@ -211,7 +211,7 @@ await el.print({
 | `mode`    | `'browser' \| 'local' \| 'remote'` | 否  | 打印模式，空则使用默认模式  |
 | `options` | `PrintOptions`                     | 否  | 打印参数，见“打印参数明细” |
 
-### 2) export(request)
+### 2. 导出 PDF/图片 (export)
 
 说明：导出 PDF/图片或返回 Blob。
 
@@ -231,7 +231,7 @@ const imageBlob = await el.export({ type: 'imageBlob' })
 | `filenamePrefix` | `string`                                        | 否  | 图片前缀    |
 | `merged`         | `boolean`                                       | 否  | 图片是否拼接  |
 
-### 3) setPrintDefaults(payload?)
+### 3. 设置默认打印参数 (setPrintDefaults)
 
 说明：设置默认打印模式、连接参数与打印参数。
 
@@ -263,7 +263,7 @@ el.setPrintDefaults({
 | `localPrintOptions`         | `PrintOptions`                     | 否  | 本地打印参数      |
 | `remotePrintOptions`        | `PrintOptions`                     | 否  | 远程打印参数      |
 
-### 4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)
+### 4. 获取打印机与客户端 (fetchPrinters)
 
 说明：用于本地与云打印场景下获取打印机、打印机能力、客户端列表。
 
@@ -282,7 +282,7 @@ const remotePrinters = await el.fetchRemotePrinters(clients[0]?.client_id)
 | `printer`  | `string` | 是  | 本地打印机名称（用于 `fetchLocalPrinterCaps`） |
 | `clientId` | `string` | 否  | 云客户端 ID（用于 `fetchRemotePrinters`）   |
 
-### 5) setBranding(payload?)
+### 5. 设置品牌信息 (setBranding)
 
 说明：设置标题、logo 以及显示开关。
 
@@ -295,7 +295,7 @@ el.setBranding({
 })
 ```
 
-### 6) setBrandVars(vars, options?)
+### 6. 设置品牌色 (setBrandVars)
 
 说明：设置品牌色 CSS 变量。
 
@@ -313,7 +313,7 @@ el.setBrandVars({
 | `vars`            | `Record<string, string>` | 是  | CSS 变量集合   |
 | `options.persist` | `boolean`                | 否  | 是否持久化到本地存储 |
 
-### 7) setTheme(theme)
+### 7. 设置主题 (setTheme)
 
 说明：切换主题。
 
@@ -327,7 +327,7 @@ el.setTheme('light')
 | ------- | ------------------------------- | -- | ---- |
 | `theme` | `'light' \| 'dark' \| 'system'` | 是  | 主题模式 |
 
-### 8) setDesignerFont(fontFamily, options?)
+### 8. 设置设计器字体 (setDesignerFont)
 
 说明：设置设计器字体。传入空字符串可恢复默认字体继承。
 
@@ -342,7 +342,7 @@ el.setDesignerFont('"Microsoft YaHei", "PingFang SC", sans-serif', { persist: tr
 | `fontFamily`      | `string`  | 是  | 字体族字符串     |
 | `options.persist` | `boolean` | 否  | 是否持久化到本地存储 |
 
-### 9) setVariables(vars, options?) / getVariables()
+### 9. 设置与获取变量数据 (setVariables / getVariables)
 
 说明：设置或获取变量数据。
 
@@ -358,7 +358,7 @@ const vars = el.getVariables()
 | `vars`          | `Record<string, any>` | 是  | 变量对象  |
 | `options.merge` | `boolean`             | 否  | 合并或覆盖 |
 
-### 10) getTemplateData() / loadTemplateData(data)
+### 10. 获取与加载模板数据 (getTemplateData / loadTemplateData)
 
 说明：读写当前画布模板数据。
 
@@ -367,44 +367,81 @@ const data = el.getTemplateData()
 el.loadTemplateData({ id: 'tpl_1', name: 'A4 模板', data })
 ```
 
-### 11) 模板 CRUD
+### 11. 模板 CRUD 操作
 
+#### 1) 获取模板列表 (getTemplates)
+说明：获取当前本地或云端的模板列表。
 ```ts
 const list = el.getTemplates({ includeData: false })
-const detail = el.getTemplate('template-id')
+```
+参数 `options.includeData` (`boolean`)：是否在列表中包含模板详细数据，默认 `false`。
 
-const id = await el.upsertTemplate({ name: 'A4 模板', data: { pages: [] } }, { setCurrent: true })
-el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
-el.deleteTemplate(id)
-el.loadTemplate(id)
+#### 2) 获取单个模板详情 (getTemplate)
+说明：通过模板 ID 获取模板详细数据。
+```ts
+const detail = el.getTemplate('template-id')
 ```
 
-参数：
+#### 3) 新增或更新模板 (upsertTemplate)
+说明：保存或更新模板数据。如果传入的数据中不包含 `id` 则为新增，否则为更新。
+```ts
+const id = await el.upsertTemplate({ name: 'A4 模板', data: { pages: [] } }, { setCurrent: true })
+```
+参数 `options.setCurrent` (`boolean`)：保存成功后是否自动将其设置为当前画布模板。
 
-| 字段                               | 类型        | 必填 | 说明       |
-| -------------------------------- | --------- | -- | -------- |
-| `getTemplates.includeData`       | `boolean` | 否  | 是否包含模板数据 |
-| `upsertTemplate.setCurrent`      | `boolean` | 否  | 是否设为当前模板 |
-| `setTemplates.currentTemplateId` | `string`  | 否  | 当前模板 ID  |
+#### 4) 删除模板 (deleteTemplate)
+说明：通过模板 ID 删除指定模板。
+```ts
+el.deleteTemplate('template-id')
+```
 
-### 12) 自定义元素 CRUD
+#### 5) 覆盖设置模板列表 (setTemplates)
+说明：直接覆盖设置本地存储的模板列表。
+```ts
+el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
+```
+参数 `options.currentTemplateId` (`string`)：可选，覆盖后设置的当前激活模板 ID。
 
+#### 6) 加载模板到画布 (loadTemplate)
+说明：根据模板 ID 将对应模板的数据加载到当前设计器画布中。
+```ts
+el.loadTemplate('template-id')
+```
+
+### 12. 自定义元素 CRUD 操作
+
+#### 1) 获取自定义元素列表 (getCustomElements)
+说明：获取当前本地或云端的自定义元素列表。
 ```ts
 const list = el.getCustomElements({ includeElement: false })
-const detail = el.getCustomElement('element-id')
-const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
+```
+参数 `options.includeElement` (`boolean`)：是否在列表中包含元素详细配置数据，默认 `false`。
 
-el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
-el.deleteCustomElement(id)
+#### 2) 获取单个自定义元素详情 (getCustomElement)
+说明：通过元素 ID 获取自定义元素详细数据。
+```ts
+const detail = el.getCustomElement('element-id')
 ```
 
-参数：
+#### 3) 新增或更新自定义元素 (upsertCustomElement)
+说明：保存或更新自定义元素。
+```ts
+const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
+```
 
-| 字段                                 | 类型        | 必填 | 说明       |
-| ---------------------------------- | --------- | -- | -------- |
-| `getCustomElements.includeElement` | `boolean` | 否  | 是否包含元素详情 |
+#### 4) 删除自定义元素 (deleteCustomElement)
+说明：通过元素 ID 删除指定自定义元素。
+```ts
+el.deleteCustomElement('element-id')
+```
 
-### 13) setCrudMode(mode)
+#### 5) 覆盖设置自定义元素列表 (setCustomElements)
+说明：直接覆盖设置本地存储的自定义元素列表。
+```ts
+el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
+```
+
+### 13. 设置 CRUD 模式 (setCrudMode)
 
 说明：切换 CRUD 模式。
 
@@ -419,25 +456,102 @@ el.setCrudMode('remote')
 | ------ | --------------------- | -- | ------- |
 | `mode` | `'local' \| 'remote'` | 是  | CRUD 模式 |
 
-### 14) setCrudEndpoints(endpoints, options?)
+### 14. 配置云端 CRUD 接口 (setCrudEndpoints)
 
-说明：配置云端 CRUD 接口地址与请求头。
+说明：配置云端 CRUD 接口地址与请求头。支持传入简单的字符串 URL，也可以传入对象来配置 `url`、`method` 和额外的传输数据 `data`。
+
+**关于 URL 的高度自定义说明：**
+无论你使用下面哪种配置方式，CRUD 的 `url` 都是**完全支持自定义**的，底层处理逻辑如下：
+1. **自动替换占位符**：当执行带 ID 的操作时，系统仅仅是将你定义的 URL 里的 `{id}` 字符串替换成真实的 ID。如果你后端的 URL 里不需要 `{id}`（例如通过 query 或 body 传递），则完全可以不写。
+2. **智能拼接路径**：
+   - **绝对路径**：如果你的 URL 包含 `http://` 或 `https://`，系统会认为这是一个绝对路径并直接发起请求，**完全无视全局的 `baseUrl`**（这非常适合某些接口需要对接第三方域名或微服务的场景）。
+   - **相对路径**：如果你的 URL 是 `/` 开头或纯字符串，系统会认为这是相对路径，会自动在前面拼接全局配置的 `baseUrl`。
+
+**方式 1：使用默认配置（字符串）**
+
+直接传入接口的 URL 字符串。系统会使用默认的 HTTP 请求方法（例如 `list` 默认是 GET，`upsert` 默认是 POST 等）。URL 可以是相对路径（会自动拼接 `baseUrl`），也可以是**完整的绝对路径**（会自动忽略 `baseUrl`）。
+
+```ts
+el.setCrudEndpoints({
+  baseUrl: 'https://api.example.com', // 可以在这里设置全局 baseUrl
+  templates: {
+    list: '/print/templates', // 相对路径，实际请求: https://api.example.com/print/templates
+    get: 'https://other-domain.com/api/print/templates/{id}', // 绝对路径，忽略 baseUrl
+    upsert: '/print/templates',
+    delete: '/print/templates/{id}'
+  },
+  customElements: {
+    list: '/print/custom-elements',
+    get: 'https://other-domain.com/api/print/custom-elements/{id}',
+    upsert: '/print/custom-elements',
+    delete: '/print/custom-elements/{id}'
+  }
+}, { 
+  // 也可以在 options 中设置 baseUrl，优先级更高
+  // baseUrl: 'https://your-domain.com', 
+  headers: { Authorization: 'Bearer xxx' } 
+})
+```
+
+**方式 2：使用自定义配置（对象）**
+
+如果你需要更改请求的方法，或者需要在请求时附带额外的业务数据（如租户 ID），你可以传入一个包含 `url`、`method` 和 `data` 的对象。下面展示了如何将所有的接口都自定义为 `POST` 请求并附带额外参数的示例：
+
+*提示：`url` 可以是相对路径（会自动拼接 `baseUrl`），也可以是**完整的绝对路径**（例如 `https://other-domain.com/...`，此时会自动忽略 `baseUrl`，方便对接第三方或微服务接口）。*
 
 ```ts
 el.setCrudEndpoints({
   templates: {
-    list: '/api/print/templates',
-    get: '/api/print/templates/{id}',
-    upsert: '/api/print/templates',
-    delete: '/api/print/templates/{id}'
+    list: {
+      url: '/api/print/templates/search', // 相对路径，会自动拼接 baseUrl
+      method: 'POST', // 将默认的 GET 更改为 POST
+      data: { status: 1, type: 'A4', tenantId: '123' } // POST 请求时，data 会被合并到 Body 中
+    },
+    get: {
+      url: 'https://other-domain.com/api/print/templates/detail/{id}', // 完整的绝对路径，将忽略 baseUrl
+      method: 'POST', // 将默认的 GET 更改为 POST
+      data: { tenantId: '123' } // 额外参数会被合并到 Body 中
+    },
+    upsert: {
+      url: '/api/print/templates/save',
+      method: 'POST', // 明确指定 POST 请求
+      data: { tenantId: '123', operator: 'admin' } // 额外参数会与模板本身的数据合并到 Body 中
+    },
+    delete: {
+      url: '/api/print/templates/remove/{id}',
+      method: 'POST', // 将默认的 DELETE 更改为 POST
+      data: { tenantId: '123' }
+    }
   },
   customElements: {
-    list: '/api/print/custom-elements',
-    get: '/api/print/custom-elements/{id}',
-    upsert: '/api/print/custom-elements',
-    delete: '/api/print/custom-elements/{id}'
+    list: {
+      url: 'https://other-domain.com/api/print/custom-elements/search', // 完整的绝对路径
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    get: {
+      url: '/api/print/custom-elements/detail/{id}',
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    upsert: {
+      url: '/api/print/custom-elements/save',
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    delete: {
+      url: '/api/print/custom-elements/remove/{id}',
+      method: 'POST',
+      data: { tenantId: '123' }
+    }
   }
-}, { baseUrl: 'https://your-domain.com', headers: { Authorization: 'Bearer xxx' } })
+}, { 
+  baseUrl: 'https://your-domain.com', 
+  headers: { 
+    Authorization: 'Bearer xxx',
+    'X-Tenant-ID': '123'
+  } 
+})
 ```
 
 参数：
@@ -445,18 +559,20 @@ el.setCrudEndpoints({
 | 字段                                | 类型                       | 必填 | 说明                   |
 | --------------------------------- | ------------------------ | -- | -------------------- |
 | `endpoints.baseUrl`               | `string`                 | 否  | 接口域名                 |
-| `endpoints.templates.list`        | `string`                 | 否  | 模板列表接口               |
-| `endpoints.templates.get`         | `string`                 | 否  | 模板详情接口（`{id}` 占位）    |
-| `endpoints.templates.upsert`      | `string`                 | 否  | 模板新增/保存接口            |
-| `endpoints.templates.delete`      | `string`                 | 否  | 模板删除接口（`{id}` 占位）    |
-| `endpoints.customElements.list`   | `string`                 | 否  | 自定义元素列表接口            |
-| `endpoints.customElements.get`    | `string`                 | 否  | 自定义元素详情接口（`{id}` 占位） |
-| `endpoints.customElements.upsert` | `string`                 | 否  | 自定义元素新增/保存接口         |
-| `endpoints.customElements.delete` | `string`                 | 否  | 自定义元素删除接口（`{id}` 占位） |
+| `endpoints.templates.list`        | `EndpointConfig`         | 否  | 模板列表接口               |
+| `endpoints.templates.get`         | `EndpointConfig`         | 否  | 模板详情接口（`{id}` 占位）    |
+| `endpoints.templates.upsert`      | `EndpointConfig`         | 否  | 模板新增/保存接口            |
+| `endpoints.templates.delete`      | `EndpointConfig`         | 否  | 模板删除接口（`{id}` 占位）    |
+| `endpoints.customElements.list`   | `EndpointConfig`         | 否  | 自定义元素列表接口            |
+| `endpoints.customElements.get`    | `EndpointConfig`         | 否  | 自定义元素详情接口（`{id}` 占位） |
+| `endpoints.customElements.upsert` | `EndpointConfig`         | 否  | 自定义元素新增/保存接口         |
+| `endpoints.customElements.delete` | `EndpointConfig`         | 否  | 自定义元素删除接口（`{id}` 占位） |
 | `options.baseUrl`                 | `string`                 | 否  | 接口域名（同 baseUrl）      |
 | `options.headers`                 | `Record<string, string>` | 否  | 请求头（如鉴权）             |
 
-### 15) setLanguage(lang)
+注：`EndpointConfig` 类型定义为 `string | { url: string; method?: string; data?: Record<string, any> }`。当使用 GET 或 DELETE 请求时，`data` 会被拼接到 URL 的 query 参数中；当使用 POST、PUT、PATCH 请求时，`data` 会被合并到请求体中。
+
+### 15. 设置语言 (setLanguage)
 
 说明：切换语言。也可以通过 HTML 属性 `lang="zh"` 设置初始语言。
 
@@ -471,7 +587,7 @@ el.setLanguage('en')
 | ------ | -------------- | -- | ---- |
 | `lang` | `'zh' \| 'en'` | 是  | 语言代码 |
 
-### 16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)
+### 16. 配置客户端与云打印链接 (setLinks)
 
 说明：配置设置弹窗中的客户端下载链接与云打印链接，或隐藏它们。也可以通过 HTML 属性 `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link` 设置。
 
@@ -490,9 +606,9 @@ el.hideCloudLink(true) // 仅隐藏云打印链接
 | `url`  | `string`  | 是  | 链接地址   |
 | `hide` | `boolean` | 是  | 是否隐藏链接 |
 
-### 17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)
+### 17. 配置扩展菜单 (setContextMenu)
 
-说明：配置模版列表和自定义元素列表的右键菜单。
+说明：配置模版列表和自定义元素列表的扩展菜单。
 你可以选择追加（`append`）到默认菜单，或者完全替换（`replace`）。当点击菜单项时，设计器会派发你配置的自定义事件 `eventName`。
 
 ```ts
@@ -502,7 +618,10 @@ el.setTemplateContextMenu({
     {
       key: 'custom-publish',
       label: '发布模版',
-      icon: '🚀', // 可选：emoji 或 Iconify 字符串
+      icon: 'material-symbols:rocket-launch', // 可选：Iconify 名称（如 material-symbols:edit）
+      // icon: '🚀', // 可选：文本或 Emoji
+      // iconClass: 'fa fa-edit', // 可选：CSS 字体图标类名
+      // iconImage: 'https://example.com/icon.png', // 可选：图片 URL
       eventName: 'template-custom-publish' // 点击时派发的事件
     }
   ]
@@ -515,7 +634,7 @@ el.setCustomElementContextMenu({
       key: 'editElement', // 使用内置 key 可以保留内置动作
       label: '编辑元素',
       actionKey: 'editElement', // 触发内置动作
-      icon: '✏️'
+      icon: 'material-symbols:edit'
     },
     {
       key: 'custom-sync',
@@ -536,30 +655,40 @@ el.addEventListener('custom-element-sync', (e) => {
 
 参数：
 
-| 字段               | 类型                      | 必填 | 说明                                           |
-| ---------------- | ----------------------- | -- | -------------------------------------------- |
-| `config.mode`    | `'append' \| 'replace'` | 否  | 追加或替换默认菜单（默认：`append`）                       |
-| `config.items`   | `Array`                 | 是  | 菜单项列表                                        |
-| `item.key`       | `string`                | 是  | 菜单项唯一标识                                      |
-| `item.label`     | `string`                | 是  | 菜单项显示文本                                      |
-| `item.icon`      | `string`                | 否  | Emoji 或 Iconify 字符串（如 `lucide:check`）        |
-| `item.eventName` | `string`                | 否  | 点击时派发的自定义事件名称                                |
-| `item.actionKey` | `string`                | 否  | 触发的内置动作 |
+| 字段               | 类型                      | 必填 | 说明                                               |
+| ---------------- | ----------------------- | -- | ------------------------------------------------ |
+| `config.mode`    | `'append' \| 'replace'` | 否  | 追加或替换默认菜单（默认：`append`）                           |
+| `config.items`   | `Array`                 | 是  | 菜单项列表                                            |
+| `item.key`       | `string`                | 是  | 菜单项唯一标识                                          |
+| `item.label`     | `string`                | 是  | 菜单项显示文本                                          |
+| `item.icon`      | `string`                | 否  | 文本/Emoji，或 Iconify 名称（如 `material-symbols:edit`） |
+| `item.iconClass` | `string`                | 否  | 图标的 CSS 类名（如字体图标 `fa fa-edit`）                   |
+| `item.iconImage` | `string`                | 否  | 图片的 URL 或 Base64 字符串                             |
+| `item.eventName` | `string`                | 否  | 点击时派发的自定义事件名称                                    |
+| `item.actionKey` | `string`                | 否  | 触发的内置动作                                          |
+
+说明：当 `item.icon` 传入 `collection:name` 格式（例如 `material-symbols:content-copy`）时，会按图标渲染；否则按普通文本显示。
+可用的 `material-symbols` 图标集合可在这里查看：<https://icon-sets.iconify.design/material-symbols/>。
 
 **内置菜单 Key 和 ActionKey 列表：**
 
+> **内置图标说明：**
+> 下列内置菜单的图标使用的是 Iconify 图标库中的 `material-symbols` 集合。
+
 对于 `setTemplateContextMenu`（模版列表）：
-- `testData`: 测试数据
-- `rename`: 重命名
-- `copy`: 复制
-- `delete`: 删除
+
+- `testData`: 测试数据 (Icon: `material-symbols:data-object`)
+- `rename`: 重命名 (Icon: `material-symbols:edit`)
+- `copy`: 复制 (Icon: `material-symbols:content-copy`)
+- `delete`: 删除 (Icon: `material-symbols:delete`)
 
 对于 `setCustomElementContextMenu`（自定义元素列表）：
-- `editElement`: 编辑
-- `testData`: 测试数据
-- `rename`: 重命名
-- `copy`: 复制
-- `delete`: 删除
+
+- `editElement`: 编辑 (Icon: `material-symbols:edit`)
+- `testData`: 测试数据 (Icon: `material-symbols:data-object`)
+- `rename`: 重命名 (Icon: `material-symbols:edit`)
+- `copy`: 复制 (Icon: `material-symbols:content-copy`)
+- `delete`: 删除 (Icon: `material-symbols:delete`)
 
 ## 事件与回调
 

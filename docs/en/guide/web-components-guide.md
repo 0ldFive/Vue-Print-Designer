@@ -6,23 +6,23 @@
 - [API Index](#api-index)
 - [Instance Methods and Parameters](#instance-methods-and-parameters)
   - [Initialization (Recommended)](#initialization-recommended)
-  - [1) print(request)](#1-printrequest)
-  - [2) export(request)](#2-exportrequest)
-  - [3) setPrintDefaults(payload)](#3-setprintdefaultspayload)
-  - [4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)](#4-fetchlocalprinters--fetchlocalprintercapsprinter--fetchremoteclients--fetchremoteprintersclientid)
-  - [5) setBranding(payload?)](#5-setbrandingpayload)
-  - [6) setBrandVars(vars)](#6-setbrandvarsvars)
-  - [7) setTheme(theme)](#7-setthemetheme)
-  - [8) setDesignerFont(fontFamily)](#8-setdesignerfontfontfamily)
-  - [9) setVariables(vars, options?) / getVariables()](#9-setvariablesvars-options--getvariables)
-  - [10) getTemplateData() / loadTemplateData(data)](#10-gettemplatedata--loadtemplatedatadata)
-  - [11) Template CRUD](#11-template-crud)
-  - [12) Custom Element CRUD](#12-custom-element-crud)
-  - [13) setCrudMode(mode)](#13-setcrudmodemode)
-  - [14) setCrudEndpoints(endpoints, options?)](#14-setcrudendpointsendpoints-options)
-  - [15) setLanguage(lang)](#15-setlanguagelang)
-  - [16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)](#16-setclientlinkurl--setcloudlinkurl--hidelinkshide--hideclientlinkhide--hidecloudlinkhide)
-  - [17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)](#17-settemplatecontextmenuconfig--setcustomelementcontextmenuconfig)
+  - [1. Execute Print (print)](#1-execute-print-print)
+  - [2. Export PDF/Images (export)](#2-export-pdfimages-export)
+  - [3. Set Default Print Options (setPrintDefaults)](#3-set-default-print-options-setprintdefaults)
+  - [4. Get Printers and Clients (fetchPrinters)](#4-get-printers-and-clients-fetchprinters)
+  - [5. Set Branding Info (setBranding)](#5-set-branding-info-setbranding)
+  - [6. Set Brand Colors (setBrandVars)](#6-set-brand-colors-setbrandvars)
+  - [7. Set Theme (setTheme)](#7-set-theme-settheme)
+  - [8. Set Designer Font (setDesignerFont)](#8-set-designer-font-setdesignerfont)
+  - [9. Set and Get Variables (setVariables / getVariables)](#9-set-and-get-variables-setvariables--getvariables)
+  - [10. Get and Load Template Data (getTemplateData / loadTemplateData)](#10-get-and-load-template-data-gettemplatedata--loadtemplatedatadata)
+  - [11. Template CRUD Operations (getTemplates / getTemplate / upsertTemplate / deleteTemplate)](#11-template-crud-operations-gettemplates--gettemplate--upserttemplate--deletetemplate)
+  - [12. Custom Element CRUD Operations (getCustomElements / getCustomElement / upsertCustomElement / deleteCustomElement)](#12-custom-element-crud-operations-getcustomelements--getcustomelement--upsertcustomelement--deletecustomelement)
+  - [13. Set CRUD Mode (setCrudMode)](#13-set-crud-mode-setcrudmode)
+  - [14. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#14-configure-cloud-crud-endpoints-setcrudendpoints)
+  - [15. Set Language (setLanguage)](#15-set-language-setlanguage)
+  - [16. Configure Client and Cloud Print Links (setLinks)](#16-configure-client-and-cloud-print-links-setlinks)
+  - [17. Configure Extension Menu (setContextMenu)](#17-configure-extension-menu-setcontextmenu)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
@@ -64,10 +64,10 @@
 | `hideLinks(hide)` | Hide/Show all links |
 | `hideClientLink(hide)` | Hide/Show client download link |
 | `hideCloudLink(hide)` | Hide/Show cloud print link |
-| `setTemplateContextMenu(config)` | Configure template list right-click menu |
-| `clearTemplateContextMenu()` | Reset template list right-click menu to default |
-| `setCustomElementContextMenu(config)` | Configure custom element list right-click menu |
-| `clearCustomElementContextMenu()` | Reset custom element list right-click menu to default |
+| `setTemplateContextMenu(config)` | Configure template list extension menu |
+| `clearTemplateContextMenu()` | Restore default template list extension menu |
+| `setCustomElementContextMenu(config)` | Configure custom element list extension menu |
+| `clearCustomElementContextMenu()` | Restore default custom element list extension menu |
 
 ## Quick Start
 
@@ -188,7 +188,7 @@ The component does not require a dedicated `init` method. Configure the followin
 | `setCrudEndpoints` | `options.headers` | `Record<string, string>` | No | Request headers |
 | `setCrudMode` | `mode` | `'local' \| 'remote'` | Yes | CRUD mode |
 
-### 1) print(request?)
+### 1. Execute Print (print)
 
 Description: trigger printing. If `mode` is omitted, default mode is used.
 
@@ -211,7 +211,7 @@ Parameters:
 | `mode` | `'browser' \| 'local' \| 'remote'` | No | Print mode |
 | `options` | `PrintOptions` | No | Print options (see PrintOptions) |
 
-### 2) export(request)
+### 2. Export PDF/Images (export)
 
 Description: export PDF/images or return Blob.
 
@@ -231,7 +231,7 @@ Parameters:
 | `filenamePrefix` | `string` | No | Image filename prefix |
 | `merged` | `boolean` | No | Merge images or not |
 
-### 3) setPrintDefaults(payload?)
+### 3. Set Default Print Options (setPrintDefaults)
 
 Description: set default print mode, connection settings, and print options.
 
@@ -263,7 +263,7 @@ Parameters:
 | `localPrintOptions` | `PrintOptions` | No | Local print options |
 | `remotePrintOptions` | `PrintOptions` | No | Remote print options |
 
-### 4) fetchLocalPrinters() / fetchLocalPrinterCaps(printer) / fetchRemoteClients() / fetchRemotePrinters(clientId?)
+### 4. Get Printers and Clients (fetchPrinters)
 
 Description: query printers, printer capabilities, and clients for local/remote print modes.
 
@@ -282,7 +282,7 @@ Parameters:
 | `printer` | `string` | Yes | Local printer name (for `fetchLocalPrinterCaps`) |
 | `clientId` | `string` | No | Remote client ID (for `fetchRemotePrinters`) |
 
-### 5) setBranding(payload?)
+### 5. Set Branding Info (setBranding)
 
 Description: set title, logo, and visibility.
 
@@ -295,7 +295,7 @@ el.setBranding({
 })
 ```
 
-### 6) setBrandVars(vars, options?)
+### 6. Set Brand Colors (setBrandVars)
 
 Description: set brand CSS variables.
 
@@ -313,7 +313,7 @@ Parameters:
 | `vars` | `Record<string, string>` | Yes | CSS variables |
 | `options.persist` | `boolean` | No | Persist to local storage |
 
-### 7) setTheme(theme)
+### 7. Set Theme (setTheme)
 
 Description: switch theme.
 
@@ -327,7 +327,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `theme` | `'light' \| 'dark' \| 'system'` | Yes | Theme mode |
 
-### 8) setDesignerFont(fontFamily, options?)
+### 8. Set Designer Font (setDesignerFont)
 
 Description: set designer font family. Pass an empty string to reset to default inherited font.
 
@@ -342,7 +342,7 @@ Parameters:
 | `fontFamily` | `string` | Yes | Font family string |
 | `options.persist` | `boolean` | No | Persist to local storage |
 
-### 9) setVariables(vars, options?) / getVariables()
+### 9. Set and Get Variables (setVariables / getVariables)
 
 Description: set or get variable data.
 
@@ -358,7 +358,7 @@ Parameters:
 | `vars` | `Record<string, any>` | Yes | Variables map |
 | `options.merge` | `boolean` | No | Merge or overwrite |
 
-### 10) getTemplateData() / loadTemplateData(data)
+### 10. Get and Load Template Data (getTemplateData / loadTemplateData)
 
 Description: read/write current template data.
 
@@ -367,44 +367,81 @@ const data = el.getTemplateData()
 el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data })
 ```
 
-### 11) Templates CRUD
+### 11. Templates CRUD Operations
 
+#### 1) Get Template List (getTemplates)
+Description: Get the current local or cloud template list.
 ```ts
 const list = el.getTemplates({ includeData: false })
-const detail = el.getTemplate('template-id')
+```
+Parameter `options.includeData` (`boolean`): Whether to include detailed template data in the list. Default is `false`.
 
-const id = await el.upsertTemplate({ name: 'A4 Template', data: { pages: [] } }, { setCurrent: true })
-el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
-el.deleteTemplate(id)
-el.loadTemplate(id)
+#### 2) Get Template Details (getTemplate)
+Description: Get detailed data of a template by ID.
+```ts
+const detail = el.getTemplate('template-id')
 ```
 
-Parameters:
+#### 3) Create or Update Template (upsertTemplate)
+Description: Save or update template data. It acts as a create operation if no `id` is provided, otherwise it's an update.
+```ts
+const id = await el.upsertTemplate({ name: 'A4 Template', data: { pages: [] } }, { setCurrent: true })
+```
+Parameter `options.setCurrent` (`boolean`): Whether to automatically set it as the current canvas template after saving.
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `getTemplates.includeData` | `boolean` | No | Include full template data |
-| `upsertTemplate.setCurrent` | `boolean` | No | Set as current template |
-| `setTemplates.currentTemplateId` | `string` | No | Current template ID |
+#### 4) Delete Template (deleteTemplate)
+Description: Delete a specific template by ID.
+```ts
+el.deleteTemplate('template-id')
+```
 
-### 12) Custom Elements CRUD
+#### 5) Overwrite Template List (setTemplates)
+Description: Overwrite the locally stored template list directly.
+```ts
+el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
+```
+Parameter `options.currentTemplateId` (`string`): Optional, set the currently active template ID after overwriting.
 
+#### 6) Load Template to Canvas (loadTemplate)
+Description: Load the corresponding template data into the current designer canvas by ID.
+```ts
+el.loadTemplate('template-id')
+```
+
+### 12. Custom Elements CRUD Operations
+
+#### 1) Get Custom Element List (getCustomElements)
+Description: Get the current local or cloud custom element list.
 ```ts
 const list = el.getCustomElements({ includeElement: false })
-const detail = el.getCustomElement('element-id')
-const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
+```
+Parameter `options.includeElement` (`boolean`): Whether to include detailed element configuration data in the list. Default is `false`.
 
-el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
-el.deleteCustomElement(id)
+#### 2) Get Custom Element Details (getCustomElement)
+Description: Get detailed data of a custom element by ID.
+```ts
+const detail = el.getCustomElement('element-id')
 ```
 
-Parameters:
+#### 3) Create or Update Custom Element (upsertCustomElement)
+Description: Save or update a custom element.
+```ts
+const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
+```
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `getCustomElements.includeElement` | `boolean` | No | Include element details |
+#### 4) Delete Custom Element (deleteCustomElement)
+Description: Delete a specific custom element by ID.
+```ts
+el.deleteCustomElement('element-id')
+```
 
-### 13) setCrudMode(mode)
+#### 5) Overwrite Custom Element List (setCustomElements)
+Description: Overwrite the locally stored custom element list directly.
+```ts
+el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
+```
+
+### 13. Set CRUD Mode (setCrudMode)
 
 Description: switch CRUD mode.
 
@@ -419,25 +456,102 @@ Parameters:
 | --- | --- | --- | --- |
 | `mode` | `'local' \| 'remote'` | Yes | CRUD mode |
 
-### 14) setCrudEndpoints(endpoints, options?)
+### 14. Configure Cloud CRUD Endpoints (setCrudEndpoints)
 
-Description: configure CRUD endpoints and headers.
+Description: configure CRUD endpoints and headers. Supports passing a simple string URL, or an object to configure `url`, `method`, and additional `data`.
+
+**Highly Customizable URL Note:**
+Whichever configuration method you use below, the CRUD `url` is **fully customizable**. The underlying logic is as follows:
+1. **Auto Placeholder Replacement**: When executing operations with an ID, the system simply replaces the `{id}` string in your URL with the actual ID. If your backend URL doesn't require `{id}` (e.g., passing via query or body), you can omit it entirely.
+2. **Smart Path Resolution**:
+   - **Absolute Path**: If your URL contains `http://` or `https://`, the system considers it an absolute path and requests it directly, **completely ignoring the global `baseUrl`** (this is ideal for scenarios where some endpoints need to connect to third-party domains or microservices).
+   - **Relative Path**: If your URL starts with `/` or is a plain string, the system considers it a relative path and automatically prepends the globally configured `baseUrl`.
+
+**Method 1: Default configuration (String)**
+
+Pass the endpoint URL directly as a string. The system will use default HTTP request methods (e.g. GET for `list`, POST for `upsert`). The URL can be a relative path (which will automatically append `baseUrl`) or a **full absolute path** (which will automatically ignore `baseUrl`).
+
+```ts
+el.setCrudEndpoints({
+  baseUrl: 'https://api.example.com', // You can set the global baseUrl here
+  templates: {
+    list: '/print/templates', // Relative path, actual request: https://api.example.com/print/templates
+    get: 'https://other-domain.com/api/print/templates/{id}', // Absolute path, ignores baseUrl
+    upsert: '/print/templates',
+    delete: '/print/templates/{id}'
+  },
+  customElements: {
+    list: '/print/custom-elements',
+    get: 'https://other-domain.com/api/print/custom-elements/{id}',
+    upsert: '/print/custom-elements',
+    delete: '/print/custom-elements/{id}'
+  }
+}, { 
+  // You can also set baseUrl in options, which has higher priority
+  // baseUrl: 'https://your-domain.com', 
+  headers: { Authorization: 'Bearer xxx' } 
+})
+```
+
+**Method 2: Custom configuration (Object)**
+
+If you need to change the HTTP method or append extra business data to your requests (such as a tenant ID), you can provide an object containing `url`, `method`, and `data`. The following example demonstrates how to customize all endpoints as `POST` requests with extra parameters:
+
+*Tip: `url` can be a relative path (which automatically appends `baseUrl`), or a **full absolute URL** (e.g. `https://other-domain.com/...`, which automatically ignores `baseUrl`, convenient for connecting to third-party or microservice APIs).*
 
 ```ts
 el.setCrudEndpoints({
   templates: {
-    list: '/api/print/templates',
-    get: '/api/print/templates/{id}',
-    upsert: '/api/print/templates',
-    delete: '/api/print/templates/{id}'
+    list: {
+      url: '/api/print/templates/search', // Relative path, automatically appends baseUrl
+      method: 'POST', // Change the default GET to POST
+      data: { status: 1, type: 'A4', tenantId: '123' } // For POST requests, data will be merged into the Body
+    },
+    get: {
+      url: 'https://other-domain.com/api/print/templates/detail/{id}', // Full absolute URL, ignores baseUrl
+      method: 'POST', // Change the default GET to POST
+      data: { tenantId: '123' } // Extra parameters will be merged into the Body
+    },
+    upsert: {
+      url: '/api/print/templates/save',
+      method: 'POST', // Explicitly specify POST request
+      data: { tenantId: '123', operator: 'admin' } // Extra parameters will be merged into the Body alongside template data
+    },
+    delete: {
+      url: '/api/print/templates/remove/{id}',
+      method: 'POST', // Change the default DELETE to POST
+      data: { tenantId: '123' }
+    }
   },
   customElements: {
-    list: '/api/print/custom-elements',
-    get: '/api/print/custom-elements/{id}',
-    upsert: '/api/print/custom-elements',
-    delete: '/api/print/custom-elements/{id}'
+    list: {
+      url: 'https://other-domain.com/api/print/custom-elements/search', // Full absolute URL
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    get: {
+      url: '/api/print/custom-elements/detail/{id}',
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    upsert: {
+      url: '/api/print/custom-elements/save',
+      method: 'POST',
+      data: { tenantId: '123' }
+    },
+    delete: {
+      url: '/api/print/custom-elements/remove/{id}',
+      method: 'POST',
+      data: { tenantId: '123' }
+    }
   }
-}, { baseUrl: 'https://your-domain.com', headers: { Authorization: 'Bearer xxx' } })
+}, { 
+  baseUrl: 'https://your-domain.com', 
+  headers: { 
+    Authorization: 'Bearer xxx',
+    'X-Tenant-ID': '123'
+  } 
+})
 ```
 
 Parameters:
@@ -445,18 +559,20 @@ Parameters:
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `endpoints.baseUrl` | `string` | No | Base URL |
-| `endpoints.templates.list` | `string` | No | Template list endpoint |
-| `endpoints.templates.get` | `string` | No | Template detail endpoint (`{id}` placeholder) |
-| `endpoints.templates.upsert` | `string` | No | Template upsert endpoint |
-| `endpoints.templates.delete` | `string` | No | Template delete endpoint (`{id}` placeholder) |
-| `endpoints.customElements.list` | `string` | No | Custom element list endpoint |
-| `endpoints.customElements.get` | `string` | No | Custom element detail endpoint (`{id}` placeholder) |
-| `endpoints.customElements.upsert` | `string` | No | Custom element upsert endpoint |
-| `endpoints.customElements.delete` | `string` | No | Custom element delete endpoint (`{id}` placeholder) |
+| `endpoints.templates.list` | `EndpointConfig` | No | Template list endpoint |
+| `endpoints.templates.get` | `EndpointConfig` | No | Template detail endpoint (`{id}` placeholder) |
+| `endpoints.templates.upsert` | `EndpointConfig` | No | Template upsert endpoint |
+| `endpoints.templates.delete` | `EndpointConfig` | No | Template delete endpoint (`{id}` placeholder) |
+| `endpoints.customElements.list` | `EndpointConfig` | No | Custom element list endpoint |
+| `endpoints.customElements.get` | `EndpointConfig` | No | Custom element detail endpoint (`{id}` placeholder) |
+| `endpoints.customElements.upsert` | `EndpointConfig` | No | Custom element upsert endpoint |
+| `endpoints.customElements.delete` | `EndpointConfig` | No | Custom element delete endpoint (`{id}` placeholder) |
 | `options.baseUrl` | `string` | No | Base URL (same as `endpoints.baseUrl`) |
 | `options.headers` | `Record<string, string>` | No | Request headers (auth, etc) |
 
-### 15) setLanguage(lang)
+Note: The `EndpointConfig` type is defined as `string | { url: string; method?: string; data?: Record<string, any> }`. When using a GET or DELETE request, `data` will be appended to the URL as query parameters; when using a POST, PUT, or PATCH request, `data` will be merged into the request body.
+
+### 15. Set Language (setLanguage)
 
 Description: switch language. You can also use `lang="en"` attribute to set initial language.
 
@@ -471,7 +587,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `lang` | `'zh' \| 'en'` | Yes | Language code |
 
-### 16) setClientLink(url) / setCloudLink(url) / hideLinks(hide) / hideClientLink(hide) / hideCloudLink(hide)
+### 16. Configure Client and Cloud Print Links (setLinks)
 
 Description: Configure the client download link and cloud print link in the settings modal, or hide them. Can also be set via HTML attributes `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link`.
 
@@ -483,10 +599,10 @@ el.hideClientLink(true) // Hide client download link only
 el.hideCloudLink(true) // Hide cloud print link only
 ```
 
-### 17) setTemplateContextMenu(config) / setCustomElementContextMenu(config)
+### 17. Configure Extension Menu (setContextMenu)
 
-Description: Configure the right-click context menu for the template list and the custom element list.
-You can either append to the default menu or replace it entirely. When a menu item is clicked, the designer dispatches a custom event with the provided `eventName`.
+Description: Configure the extension menu for the template list and custom element list.
+You can choose to append (`append`) to the default menu, or completely replace it (`replace`). When a menu item is clicked, the designer dispatches the custom event `eventName` you configured.
 
 ```ts
 el.setTemplateContextMenu({
@@ -495,7 +611,10 @@ el.setTemplateContextMenu({
     {
       key: 'custom-publish',
       label: 'Publish Template',
-      icon: '🚀', // Optional emoji or Iconify icon string
+      icon: 'material-symbols:rocket-launch', // Optional: Iconify name (e.g. material-symbols:edit)
+      // icon: '🚀', // Optional: Text or emoji
+      // iconClass: 'fa fa-edit', // Optional: CSS class for icon fonts
+      // iconImage: 'https://example.com/icon.png', // Optional: Image URL
       eventName: 'template-custom-publish' // Event to dispatch
     }
   ]
@@ -508,7 +627,7 @@ el.setCustomElementContextMenu({
       key: 'editElement', // Built-in key to keep the default edit action
       label: 'Edit Element',
       actionKey: 'editElement', // Built-in action
-      icon: '✏️'
+      icon: 'material-symbols:edit'
     },
     {
       key: 'custom-sync',
@@ -535,24 +654,32 @@ Parameters:
 | `config.items` | `Array` | Yes | List of menu items |
 | `item.key` | `string` | Yes | Unique key for the menu item |
 | `item.label` | `string` | Yes | Display text for the menu item |
-| `item.icon` | `string` | No | Emoji or Iconify icon string (e.g. `lucide:check`) |
+| `item.icon` | `string` | No | Text/emoji, or an Iconify name (e.g. `material-symbols:edit`) |
+| `item.iconClass` | `string` | No | CSS class for icon fonts (e.g. `fa fa-edit`) |
+| `item.iconImage` | `string` | No | URL or Base64 string of an image |
 | `item.eventName` | `string` | No | Custom event to dispatch on click |
 | `item.actionKey` | `string` | No | Built-in action to trigger |
 
+Note: If `item.icon` uses the `collection:name` format (for example, `material-symbols:content-copy`), it is rendered as an icon. Otherwise it is treated as plain text.
+You can browse available `material-symbols` icons here: <https://icon-sets.iconify.design/material-symbols/>.
+
 **Built-in Menu Keys and ActionKeys:**
 
+> **Note on Built-in Icons:** 
+> The built-in icons shown below use the `material-symbols` collection from Iconify. 
+
 For `setTemplateContextMenu` (Template List):
-- `testData`: Test Data
-- `rename`: Rename
-- `copy`: Copy
-- `delete`: Delete
+- `testData`: Test Data (Icon: `material-symbols:data-object`)
+- `rename`: Rename (Icon: `material-symbols:edit`)
+- `copy`: Copy (Icon: `material-symbols:content-copy`)
+- `delete`: Delete (Icon: `material-symbols:delete`)
 
 For `setCustomElementContextMenu` (Custom Element List):
-- `editElement`: Edit Element
-- `testData`: Test Data
-- `rename`: Rename
-- `copy`: Copy
-- `delete`: Delete
+- `editElement`: Edit Element (Icon: `material-symbols:edit`)
+- `testData`: Test Data (Icon: `material-symbols:data-object`)
+- `rename`: Rename (Icon: `material-symbols:edit`)
+- `copy`: Copy (Icon: `material-symbols:content-copy`)
+- `delete`: Delete (Icon: `material-symbols:delete`)
 
 ## Events
 

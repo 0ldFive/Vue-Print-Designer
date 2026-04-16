@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem } from '@/types';
-import { getCrudConfig, buildEndpoint } from '@/utils/crudConfig';
+import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 
 const defaultWatermark: WatermarkSettings = {
   enabled: false,
@@ -1658,8 +1658,9 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode !== 'remote') return;
       try {
-        const url = buildEndpoint(endpoints.customElements?.list || '');
-        const res = await (fetcher || fetch)(url, { headers });
+        const url = buildEndpoint(endpoints.customElements?.list, '');
+        const options = buildFetchOptions(endpoints.customElements?.list, 'GET', headers);
+        const res = await (fetcher || fetch)(url, options);
         const data = await res.json();
         const list = Array.isArray(data) ? data : data?.customElements || [];
         this.customElements = list
@@ -1678,12 +1679,9 @@ export const useDesignerStore = defineStore('designer', {
       };
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.customElements?.upsert || '');
-          const res = await (fetcher || fetch)(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(template)
-          });
+          const url = buildEndpoint(endpoints.customElements?.upsert, '');
+          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+          const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           template.id = result?.id || template.id;
         } catch (e) {
@@ -1702,8 +1700,9 @@ export const useDesignerStore = defineStore('designer', {
         this.customElements.splice(index, 1);
         if (mode === 'remote') {
           try {
-            const url = buildEndpoint(endpoints.customElements?.delete || '', id);
-            await (fetcher || fetch)(url, { method: 'DELETE', headers });
+            const url = buildEndpoint(endpoints.customElements?.delete, id);
+            const options = buildFetchOptions(endpoints.customElements?.delete, 'DELETE', headers);
+            await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to remove custom element', e);
           }
@@ -1719,12 +1718,9 @@ export const useDesignerStore = defineStore('designer', {
         template.name = newName;
         if (mode === 'remote') {
           try {
-            const url = buildEndpoint(endpoints.customElements?.upsert || '');
-            await (fetcher || fetch)(url, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(template)
-            });
+            const url = buildEndpoint(endpoints.customElements?.upsert, '');
+            const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+            await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to rename custom element', e);
           }

@@ -12,6 +12,28 @@ import type {
   RemoteClientInfo
 } from './composables/usePrintSettings';
 
+export type EndpointConfig = string | {
+  url: string;
+  method?: string;
+  data?: Record<string, any>;
+};
+
+export type CrudEndpoints = {
+  baseUrl?: string;
+  templates?: {
+    list?: EndpointConfig;
+    get?: EndpointConfig;
+    upsert?: EndpointConfig;
+    delete?: EndpointConfig;
+  };
+  customElements?: {
+    list?: EndpointConfig;
+    get?: EndpointConfig;
+    upsert?: EndpointConfig;
+    delete?: EndpointConfig;
+  };
+};
+
 export interface PrintDesignerElement extends HTMLElement {
   print(request?: DesignerPrintRequest): Promise<void>;
   export(request: DesignerExportRequest): Promise<void | Blob>;
@@ -50,11 +72,7 @@ export interface PrintDesignerElement extends HTMLElement {
   clearCustomElementContextMenu(): void;
 
   setCrudMode(mode: 'local' | 'remote'): void;
-  setCrudEndpoints(endpoints: {
-    baseUrl?: string;
-    templates?: { list?: string; get?: string; upsert?: string; delete?: string };
-    customElements?: { list?: string; get?: string; upsert?: string; delete?: string };
-  }, options?: { baseUrl?: string; headers?: Record<string, string> }): void;
+  setCrudEndpoints(endpoints: CrudEndpoints, options?: { baseUrl?: string; headers?: Record<string, string> }): void;
 }
 
 declare global {
