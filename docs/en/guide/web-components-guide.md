@@ -537,7 +537,22 @@ Parameters:
 | `item.label` | `string` | Yes | Display text for the menu item |
 | `item.icon` | `string` | No | Emoji or Iconify icon string (e.g. `lucide:check`) |
 | `item.eventName` | `string` | No | Custom event to dispatch on click |
-| `item.actionKey` | `string` | No | Built-in action to trigger (e.g., `editElement`, `deleteTemplate`) |
+| `item.actionKey` | `string` | No | Built-in action to trigger |
+
+**Built-in Menu Keys and ActionKeys:**
+
+For `setTemplateContextMenu` (Template List):
+- `testData`: Test Data
+- `rename`: Rename
+- `copy`: Copy
+- `delete`: Delete
+
+For `setCustomElementContextMenu` (Custom Element List):
+- `editElement`: Edit Element
+- `testData`: Test Data
+- `rename`: Rename
+- `copy`: Copy
+- `delete`: Delete
 
 ## Events
 
