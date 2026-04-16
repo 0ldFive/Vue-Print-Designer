@@ -186,8 +186,7 @@ const onRenameSave = (newName: string) => {
 
 const handleCopy = (item: CustomElementTemplate) => {
   activeMenuId.value = null;
-  // Create a copy with a new ID and appended name
-  store.addCustomElement(`${item.name} Copy`, item.element);
+  store.copyCustomElement(item.id);
 };
 
 const handleDelete = (item: CustomElementTemplate) => {

@@ -127,7 +127,9 @@ export const useTemplateStore = defineStore('templates', {
       this.isSaving = true;
       try {
         if (mode === 'remote') {
+          const existingTemplate = targetId ? this.templates.find(t => t.id === targetId) : {};
           const payload = {
+            ...existingTemplate,
             id: targetId || uuidv4(),
             name,
             data,
@@ -255,6 +257,7 @@ export const useTemplateStore = defineStore('templates', {
       const t = this.templates.find(t => t.id === id);
       if (t) {
         const newTemplate: Template = {
+          ...t,
           id: uuidv4(),
           name: `${t.name} Copy`,
           data: sanitizeTemplateData(JSON.parse(JSON.stringify(t.data))),

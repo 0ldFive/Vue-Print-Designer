@@ -341,7 +341,7 @@ export const useDesignerStore = defineStore('designer', {
       this.highlightedEdge = snapshot.highlightedEdge;
       this.tableSelection = null;
     },
-    commitCustomElementEdit() {
+    async commitCustomElementEdit() {
       if (!this.editingCustomElementId) return false;
       const template = this.customElements.find(el => el.id === this.editingCustomElementId);
       if (!template) return false;
@@ -350,7 +350,19 @@ export const useDesignerStore = defineStore('designer', {
       if (!element) return false;
 
       template.element = cloneDeep(element);
-      this.saveCustomElements();
+      
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      if (mode === 'remote') {
+        try {
+          const url = buildEndpoint(endpoints.customElements?.upsert, '');
+          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+          await (fetcher || fetch)(url, options);
+        } catch (e) {
+          console.error('Failed to commit custom element edit', e);
+        }
+      } else {
+        this.saveCustomElements();
+      }
       return true;
     },
     saveCustomElementEditAs(name: string) {
@@ -1668,6 +1680,32 @@ export const useDesignerStore = defineStore('designer', {
           .map((el: any) => ({ id: el.id, name: el.name, element: cloneDeep(el.element) }));
       } catch (e) {
         console.error('Failed to load custom elements', e);
+      }
+    },
+    async copyCustomElement(id: string) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const el = this.customElements.find(el => el.id === id);
+      if (!el) return;
+      const template: CustomElementTemplate = {
+        ...el,
+        id: uuidv4(),
+        name: `${el.name} Copy`,
+        element: cloneDeep(el.element)
+      };
+      if (mode === 'remote') {
+        try {
+          const url = buildEndpoint(endpoints.customElements?.upsert, '');
+          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+          const res = await (fetcher || fetch)(url, options);
+          const result = await res.json();
+          template.id = result?.id || template.id;
+        } catch (e) {
+          console.error('Failed to copy custom element', e);
+        }
+      }
+      this.customElements.push(template);
+      if (mode !== 'remote') {
+        this.saveCustomElements();
       }
     },
     async addCustomElement(name: string, element: PrintElement) {

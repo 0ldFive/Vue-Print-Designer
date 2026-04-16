@@ -26,7 +26,7 @@
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
-- [Backend Integration Example](#backend-integration-example)
+- [Backend API Specifications](#backend-api-specifications)
 - [Notes](#notes)
 
 ## API Index
@@ -742,7 +742,9 @@ await el.print({ mode: 'browser' })
 const pdfBlob = await el.export({ type: 'pdfBlob' })
 ```
 
-## Backend API Examples
+## Backend API Specifications
+
+When integrating with the designer's cloud CRUD capabilities, your backend services **MUST strictly adhere** to the following data structure specifications:
 
 **1) List templates**
 
