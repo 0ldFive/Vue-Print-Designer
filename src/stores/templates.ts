@@ -275,6 +275,9 @@ export const useTemplateStore = defineStore('templates', {
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
             const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
+            if (result && typeof result === 'object') {
+              Object.assign(newTemplate, result);
+            }
             newTemplate.id = result?.id || newTemplate.id;
           } catch (e) {
             console.error('Failed to copy template', e);

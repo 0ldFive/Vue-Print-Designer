@@ -585,15 +585,14 @@ class PrintDesignerElement extends HTMLElement {
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, next);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const remoteId = result?.id || next.id;
-        if (remoteId !== next.id) {
-          const targetIndex = this.templateStore.templates.findIndex((t) => t.id === next.id);
-          const updated = { ...next, id: remoteId };
-          if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
-          else this.templateStore.templates.unshift(updated);
-          if (this.templateStore.currentTemplateId === next.id) {
-            this.templateStore.currentTemplateId = remoteId;
-          }
+        const merged = { ...next, ...(result && typeof result === 'object' ? result : {}) };
+        const remoteId = merged.id || next.id;
+        const targetIndex = this.templateStore.templates.findIndex((t) => t.id === next.id);
+        const updated = { ...merged, id: remoteId };
+        if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
+        else this.templateStore.templates.unshift(updated);
+        if (this.templateStore.currentTemplateId === next.id) {
+          this.templateStore.currentTemplateId = remoteId;
         }
         return remoteId;
       } catch (e) {
@@ -678,13 +677,12 @@ class PrintDesignerElement extends HTMLElement {
         const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, next);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const remoteId = result?.id || next.id;
-        if (remoteId !== next.id) {
-          const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === next.id);
-          const updated = { ...next, id: remoteId };
-          if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
-          else this.designerStore.customElements.push(updated);
-        }
+        const merged = { ...next, ...(result && typeof result === 'object' ? result : {}) };
+        const remoteId = merged.id || next.id;
+        const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === next.id);
+        const updated = { ...merged, id: remoteId };
+        if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
+        else this.designerStore.customElements.push(updated);
         return remoteId;
       } catch (e) {
         console.error('Failed to upsert custom element', e);
