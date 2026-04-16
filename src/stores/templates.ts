@@ -61,6 +61,7 @@ export const useTemplateStore = defineStore('templates', {
           this.templates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
             .map((t: any) => ({
+              ...t,
               id: t.id,
               name: t.name,
               data: sanitizeTemplateData(t.data),
@@ -104,8 +105,10 @@ export const useTemplateStore = defineStore('templates', {
       const designerStore = useDesignerStore();
       // Capture current ID synchronously to prevent race conditions if template changes during async save
       const targetId = this.currentTemplateId;
-
+      const existingTemplate = targetId ? this.templates.find(t => t.id === targetId) : undefined;
+      
       const data = {
+        ...(existingTemplate?.data || {}),
         pages: sanitizePages(cloneDeep(designerStore.pages)),
         canvasSize: cloneDeep(designerStore.canvasSize),
         guides: cloneDeep(designerStore.guides),
@@ -128,7 +131,6 @@ export const useTemplateStore = defineStore('templates', {
       this.isSaving = true;
       try {
         if (mode === 'remote') {
-          const existingTemplate = targetId ? this.templates.find(t => t.id === targetId) : {};
           const payload = {
             ...existingTemplate,
             id: targetId || uuidv4(),
@@ -142,7 +144,7 @@ export const useTemplateStore = defineStore('templates', {
           const result = await res.json();
           const id = result?.id || payload.id;
           const index = this.templates.findIndex(t => t.id === id);
-          const next = { ...payload, id } as Template;
+          const next = { ...payload, ...(result && typeof result === 'object' ? result : {}), id } as Template;
           if (index >= 0) this.templates[index] = next;
           else this.templates.unshift(next);
           
@@ -200,6 +202,9 @@ export const useTemplateStore = defineStore('templates', {
           const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
+          if (result && typeof result === 'object') {
+            Object.assign(newTemplate, result);
+          }
           const id = result?.id || newTemplate.id;
           newTemplate.id = id;
         } catch (e) {
@@ -316,6 +321,13 @@ export const useTemplateStore = defineStore('templates', {
           designerStore.historyPast = [];
           designerStore.historyFuture = [];
           this.currentTemplateId = t.id || id;
+          
+          const existingIndex = this.templates.findIndex(item => item.id === this.currentTemplateId);
+          if (existingIndex >= 0) {
+            this.templates[existingIndex] = { ...this.templates[existingIndex], ...t, data };
+          } else {
+            this.templates.push({ ...t, id: this.currentTemplateId, data });
+          }
           return;
         } catch (e) {
           console.error('Failed to load template', e);

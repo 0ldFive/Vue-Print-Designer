@@ -1698,6 +1698,9 @@ export const useDesignerStore = defineStore('designer', {
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
+          if (result && typeof result === 'object') {
+            Object.assign(template, result);
+          }
           template.id = result?.id || template.id;
         } catch (e) {
           console.error('Failed to copy custom element', e);
@@ -1721,6 +1724,9 @@ export const useDesignerStore = defineStore('designer', {
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
+          if (result && typeof result === 'object') {
+            Object.assign(template, result);
+          }
           template.id = result?.id || template.id;
         } catch (e) {
           console.error('Failed to add custom element', e);

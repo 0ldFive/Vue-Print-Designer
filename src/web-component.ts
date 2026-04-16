@@ -556,13 +556,16 @@ class PrintDesignerElement extends HTMLElement {
     return template ? cloneDeep(template) : null;
   }
 
-  async upsertTemplate(template: { id?: string; name: string; data?: any; updatedAt?: number }, options: { setCurrent?: boolean } = {}) {
+  async upsertTemplate(template: { id?: string; name: string; data?: any; updatedAt?: number; [key: string]: any }, options: { setCurrent?: boolean } = {}) {
     if (!this.templateStore) return null;
     if (!template || typeof template.name !== 'string') return null;
     const { mode, endpoints, headers, fetcher } = getCrudConfig();
     const id = template.id || uuidv4();
     const index = this.templateStore.templates.findIndex((t) => t.id === id);
+    const existing = index >= 0 ? this.templateStore.templates[index] : {};
     const next = {
+      ...existing,
+      ...template,
       id,
       name: template.name,
       data: template.data || this.templateStore.templates[index]?.data || {},
@@ -602,12 +605,13 @@ class PrintDesignerElement extends HTMLElement {
     return next.id;
   }
 
-  setTemplates(templates: Array<{ id: string; name: string; data?: any; updatedAt?: number }>, options: { currentTemplateId?: string } = {}) {
+  setTemplates(templates: Array<{ id: string; name: string; data?: any; updatedAt?: number; [key: string]: any }>, options: { currentTemplateId?: string } = {}) {
     if (!this.templateStore) return;
     if (!Array.isArray(templates)) return;
     this.templateStore.templates = templates
       .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string')
       .map((t) => ({
+        ...t,
         id: t.id,
         name: t.name,
         data: t.data || {},
@@ -655,13 +659,14 @@ class PrintDesignerElement extends HTMLElement {
     return element ? cloneDeep(element) : null;
   }
 
-  async upsertCustomElement(customElement: { id?: string; name: string; element: any }) {
+  async upsertCustomElement(customElement: { id?: string; name: string; element: any; [key: string]: any }) {
     if (!this.designerStore) return null;
     if (!customElement || typeof customElement.name !== 'string' || !customElement.element) return null;
     const { mode, endpoints, headers, fetcher } = getCrudConfig();
     const id = customElement.id || uuidv4();
     const index = this.designerStore.customElements.findIndex((el) => el.id === id);
-    const next = { id, name: customElement.name, element: cloneDeep(customElement.element) };
+    const existing = index >= 0 ? this.designerStore.customElements[index] : {};
+    const next = { ...existing, ...customElement, id, name: customElement.name, element: cloneDeep(customElement.element) };
     if (index >= 0) {
       this.designerStore.customElements.splice(index, 1, next);
     } else {
@@ -690,12 +695,12 @@ class PrintDesignerElement extends HTMLElement {
     return next.id;
   }
 
-  setCustomElements(customElements: Array<{ id: string; name: string; element: any }>) {
+  setCustomElements(customElements: Array<{ id: string; name: string; element: any; [key: string]: any }>) {
     if (!this.designerStore) return;
     if (!Array.isArray(customElements)) return;
     this.designerStore.customElements = customElements
       .filter((el) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
-      .map((el) => ({ id: el.id, name: el.name, element: cloneDeep(el.element) }));
+      .map((el) => ({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
     this.designerStore.saveCustomElements();
   }
 
