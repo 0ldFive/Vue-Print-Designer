@@ -81,6 +81,7 @@ export const useTemplateStore = defineStore('templates', {
           this.templates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
             .map((t: any) => ({
+              ...t,
               id: t.id,
               name: t.name,
               data: sanitizeTemplateData(t.data),

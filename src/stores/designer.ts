@@ -1677,7 +1677,7 @@ export const useDesignerStore = defineStore('designer', {
         const list = Array.isArray(data) ? data : data?.customElements || [];
         this.customElements = list
           .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
-          .map((el: any) => ({ id: el.id, name: el.name, element: cloneDeep(el.element) }));
+          .map((el: any) => ({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
       } catch (e) {
         console.error('Failed to load custom elements', e);
       }
