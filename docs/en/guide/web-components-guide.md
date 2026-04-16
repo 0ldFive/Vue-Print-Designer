@@ -801,11 +801,18 @@ Response:
 
 `GET /api/print/custom-elements`
 
+Note: To ensure custom elements are visible in the left list and can be edited directly, each item in this list response must include the `element` field. Returning only `id/name` will be filtered out by the frontend.
+
 Response:
 
 ```json
 [
-  { "id": "ce_1", "name": "Barcode Element" }
+  {
+    "id": "ce_1",
+    "name": "Barcode Element",
+    "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
+    "updatedAt": 1700000000000
+  }
 ]
 ```
 
