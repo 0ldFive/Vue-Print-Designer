@@ -553,7 +553,7 @@ el.setCrudEndpoints({
 
 **Method 2: Custom configuration (Object)**
 
-If you need to change the HTTP method or append extra business data to your requests (such as a tenant ID), you can provide an object containing `url`, `method`, and `data`. The following example demonstrates how to customize all endpoints as `POST` requests with extra parameters:
+If you need to change the HTTP method, you can provide an object containing `url` and `method`. The following example demonstrates how to customize all endpoints as `POST` requests:
 
 *Tip: `url` can be a relative path (which automatically appends `baseUrl`), or a **full absolute URL** (e.g. `https://other-domain.com/...`, which automatically ignores `baseUrl`, convenient for connecting to third-party or microservice APIs).*
 
@@ -562,45 +562,37 @@ el.setCrudEndpoints({
   templates: {
     list: {
       url: '/api/print/templates/search', // Relative path, automatically appends baseUrl
-      method: 'POST', // Change the default GET to POST
-      data: { status: 1, type: 'A4', tenantId: '123' } // For POST requests, data will be merged into the Body
+      method: 'POST' // Change the default GET to POST
     },
     get: {
       url: 'https://other-domain.com/api/print/templates/detail/{id}', // Full absolute URL, ignores baseUrl
-      method: 'POST', // Change the default GET to POST
-      data: { tenantId: '123' } // Extra parameters will be merged into the Body
+      method: 'POST' // Change the default GET to POST
     },
     upsert: {
       url: '/api/print/templates/save',
-      method: 'POST', // Explicitly specify POST request
-      data: { tenantId: '123', operator: 'admin' } // Extra parameters will be merged into the Body alongside template data
+      method: 'POST' // Explicitly specify POST request
     },
     delete: {
       url: '/api/print/templates/remove/{id}',
-      method: 'POST', // Change the default DELETE to POST
-      data: { tenantId: '123' }
+      method: 'POST' // Change the default DELETE to POST
     }
   },
   customElements: {
     list: {
       url: 'https://other-domain.com/api/print/custom-elements/search', // Full absolute URL
-      method: 'POST',
-      data: { tenantId: '123' }
+      method: 'POST'
     },
     get: {
       url: '/api/print/custom-elements/detail/{id}',
-      method: 'POST',
-      data: { tenantId: '123' }
+      method: 'POST'
     },
     upsert: {
       url: '/api/print/custom-elements/save',
-      method: 'POST',
-      data: { tenantId: '123' }
+      method: 'POST'
     },
     delete: {
       url: '/api/print/custom-elements/remove/{id}',
-      method: 'POST',
-      data: { tenantId: '123' }
+      method: 'POST'
     }
   }
 }, { 
@@ -628,7 +620,10 @@ Parameters:
 | `options.baseUrl` | `string` | No | Base URL (same as `endpoints.baseUrl`) |
 | `options.headers` | `Record<string, string>` | No | Request headers (auth, etc) |
 
-Note: The `EndpointConfig` type is defined as `string | { url: string; method?: string; data?: Record<string, any> }`. When using a GET or DELETE request, `data` will be appended to the URL as query parameters; when using a POST, PUT, or PATCH request, `data` will be merged into the request body.
+Note: The `EndpointConfig` type is defined as `string | { url: string; method?: string }`. If you need to append extra business data to your requests (such as a tenant ID):
+1. **For Query Requests** (e.g., `list`): Please append query parameters directly to the `url`, or handle it via interceptors on the server side.
+2. **For Write Requests** (e.g., `upsert`): Please place extra parameters directly into the `ext` field of the entity data object.
+3. **For Global Parameters**: It is recommended to pass them uniformly in the request headers by configuring `options.headers` (e.g., `X-Tenant-ID`).
 
 ### 15. Set Language (setLanguage)
 
@@ -998,6 +993,7 @@ Request:
 - `GET /templates/{id}` should return the latest `ext.templateModalForm`; frontend uses it for `edit/copy` modal echo.
 - Returning `ext` in `GET /templates` list response is optional but recommended to reduce first-open differences.
 - If backend does not return `ext`, frontend still works and falls back to `setTemplateModalForm(...).initialValues`.
+- Convention: All template extension parameters must be placed inside the `ext` object. Appending custom parameters to the root level of the template is no longer supported.
 
 **3.2) Template Tag Round-Trip Contract (Template List Tags)**
 
@@ -1037,6 +1033,9 @@ Response:
     "id": "ce_1",
     "name": "Barcode Element",
     "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
+    "ext": {
+      "customField": "value"
+    },
     "updatedAt": 1700000000000
   }
 ]
@@ -1053,6 +1052,9 @@ Response:
   "id": "ce_1",
   "name": "Barcode Element",
   "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
+  "ext": {
+    "customField": "value"
+  },
   "updatedAt": 1700000000000
 }
 ```
@@ -1067,9 +1069,14 @@ Request:
 {
   "id": "ce_1",
   "name": "Barcode Element",
-  "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } }
+  "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
+  "ext": {
+    "customField": "value"
+  }
 }
 ```
+
+- Convention: All custom element extension parameters must be placed inside the `ext` object. Appending custom parameters to the root level is no longer supported.
 
 **8) Delete custom element**
 

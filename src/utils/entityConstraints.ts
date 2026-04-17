@@ -36,11 +36,48 @@ export const resolveEntityPermissions = (entity: unknown): EntityPermissions => 
   };
 };
 
+export const extractStandardTemplateFields = (entity: any) => {
+  if (!isRecord(entity)) return {};
+  const standard: any = {
+    id: entity.id,
+    name: entity.name,
+    data: entity.data,
+    updatedAt: entity.updatedAt,
+  };
+  if (entity.system !== undefined) standard.system = entity.system;
+  if (entity.editable !== undefined) standard.editable = entity.editable;
+  if (entity.deletable !== undefined) standard.deletable = entity.deletable;
+  if (entity.copyable !== undefined) standard.copyable = entity.copyable;
+  if (entity.permissions !== undefined) standard.permissions = entity.permissions;
+  if (entity.ext !== undefined) standard.ext = entity.ext;
+  return standard;
+};
+
+export const extractStandardCustomElementFields = (entity: any) => {
+  if (!isRecord(entity)) return {};
+  const standard: any = {
+    id: entity.id,
+    name: entity.name,
+    element: entity.element,
+    testData: entity.testData,
+  };
+  if (entity.system !== undefined) standard.system = entity.system;
+  if (entity.editable !== undefined) standard.editable = entity.editable;
+  if (entity.deletable !== undefined) standard.deletable = entity.deletable;
+  if (entity.copyable !== undefined) standard.copyable = entity.copyable;
+  if (entity.permissions !== undefined) standard.permissions = entity.permissions;
+  if (entity.ext !== undefined) standard.ext = entity.ext;
+  return standard;
+};
+
 export const normalizeEntityConstraints = <T extends Record<string, any>>(entity: T): T => {
   const permissions = resolveEntityPermissions(entity);
   const normalizedExt = isRecord(entity.ext) ? entity.ext : {};
-  return {
-    ...entity,
+  
+  // Enforce standard fields only, stripping all non-standard root parameters
+  const standard: any = {
+    id: entity.id,
+    name: entity.name,
     system: permissions.system,
     editable: permissions.editable,
     deletable: permissions.deletable,
@@ -51,6 +88,14 @@ export const normalizeEntityConstraints = <T extends Record<string, any>>(entity
       ...permissions
     }
   };
+
+  // Conditionally add entity-specific standard fields
+  if ('data' in entity) standard.data = entity.data;
+  if ('updatedAt' in entity) standard.updatedAt = entity.updatedAt;
+  if ('element' in entity) standard.element = entity.element;
+  if ('testData' in entity) standard.testData = entity.testData;
+
+  return standard as T;
 };
 
 export const canEditEntity = (entity: unknown) => resolveEntityPermissions(entity).editable;

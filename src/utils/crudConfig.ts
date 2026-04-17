@@ -3,7 +3,6 @@ export type CrudMode = 'local' | 'remote';
 export type EndpointConfig = string | {
   url: string;
   method?: string;
-  data?: Record<string, any>;
 };
 
 export type CrudEndpoints = {
@@ -95,27 +94,7 @@ export const resolveUrl = (path: string) => {
 export const buildEndpoint = (config: EndpointConfig | undefined, id?: string) => {
   const raw = typeof config === 'string' ? config : (config?.url || '');
   const withId = id ? raw.replace('{id}', id) : raw;
-  let finalUrl = resolveUrl(withId);
-
-  // If GET or DELETE, append data to query string
-  const method = typeof config === 'object' && config.method ? config.method.toUpperCase() : '';
-  const isQueryMethod = !method || method === 'GET' || method === 'DELETE';
-  
-  if (typeof config === 'object' && config.data && isQueryMethod) {
-    try {
-      const urlObj = new URL(finalUrl, window.location.origin);
-      Object.entries(config.data).forEach(([key, value]) => {
-        if (value !== undefined) {
-          urlObj.searchParams.append(key, String(value));
-        }
-      });
-      finalUrl = finalUrl.startsWith('http') ? urlObj.toString() : `${urlObj.pathname}${urlObj.search}`;
-    } catch (e) {
-      console.warn('Failed to append query params', e);
-    }
-  }
-
-  return finalUrl;
+  return resolveUrl(withId);
 };
 
 export const buildFetchOptions = (
@@ -133,16 +112,8 @@ export const buildFetchOptions = (
   };
 
   if (isBodyMethod) {
-    let payload = defaultPayload;
-    if (typeof config === 'object' && config.data) {
-      if (typeof payload === 'object' && !Array.isArray(payload)) {
-        payload = { ...payload, ...config.data };
-      } else if (payload === undefined) {
-        payload = config.data;
-      }
-    }
-    if (payload !== undefined) {
-      options.body = JSON.stringify(payload);
+    if (defaultPayload !== undefined) {
+      options.body = JSON.stringify(defaultPayload);
     }
   }
 

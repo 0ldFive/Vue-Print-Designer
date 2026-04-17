@@ -115,13 +115,16 @@ export const useTemplateStore = defineStore('templates', {
               const existing = this.templates.find(e => e.id === t.id);
               const cached = this.templateDetailCache[t.id];
               const merged = {
-                ...cached,
-                ...existing,
-                ...t,
                 id: t.id,
                 name: t.name,
                 data: t.data ? sanitizeTemplateData(t.data) : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
-                updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now()
+                updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now(),
+                system: t.system ?? cached?.system ?? existing?.system,
+                editable: t.editable ?? cached?.editable ?? existing?.editable,
+                deletable: t.deletable ?? cached?.deletable ?? existing?.deletable,
+                copyable: t.copyable ?? cached?.copyable ?? existing?.copyable,
+                permissions: t.permissions ?? cached?.permissions ?? existing?.permissions,
+                ext: { ...(existing?.ext || {}), ...(cached?.ext || {}), ...(t.ext || {}) }
               };
               const normalized = normalizeEntityConstraints(merged);
               this.templateDetailCache[t.id] = normalized;
@@ -145,12 +148,16 @@ export const useTemplateStore = defineStore('templates', {
             .map((t: any) => {
               const existing = this.templates.find(e => e.id === t.id);
               return normalizeEntityConstraints({
-                ...existing,
-                ...t,
                 id: t.id,
                 name: t.name,
                 data: t.data ? sanitizeTemplateData(t.data) : (existing?.data || sanitizeTemplateData(undefined)),
-                updatedAt: t.updatedAt || existing?.updatedAt || Date.now()
+                updatedAt: t.updatedAt || existing?.updatedAt || Date.now(),
+                system: t.system ?? existing?.system,
+                editable: t.editable ?? existing?.editable,
+                deletable: t.deletable ?? existing?.deletable,
+                copyable: t.copyable ?? existing?.copyable,
+                permissions: t.permissions ?? existing?.permissions,
+                ext: { ...(existing?.ext || {}), ...(t.ext || {}) }
               }) as Template;
             });
         } catch (e) {
@@ -204,14 +211,19 @@ export const useTemplateStore = defineStore('templates', {
           try {
             const upsertBase: any = targetId ? (this.templateDetailCache[targetId] || existingTemplate || {}) : {};
             const payload = normalizeEntityConstraints({
-              ...upsertBase,
               id: targetId || uuidv4(),
               name,
               data: {
                 ...(upsertBase?.data || {}),
                 ...data
               },
-              updatedAt: Date.now()
+              updatedAt: Date.now(),
+              system: upsertBase?.system,
+              editable: upsertBase?.editable,
+              deletable: upsertBase?.deletable,
+              copyable: upsertBase?.copyable,
+              permissions: upsertBase?.permissions,
+              ext: upsertBase?.ext || {}
             });
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
@@ -219,7 +231,8 @@ export const useTemplateStore = defineStore('templates', {
             const result = await res.json();
             const id = result?.id || payload.id;
             const index = this.templates.findIndex(t => t.id === id);
-            const next = normalizeEntityConstraints({ ...payload, ...(result && typeof result === 'object' ? result : {}), id }) as Template;
+            const resultExt = result && typeof result === 'object' && result.ext ? result.ext : {};
+            const next = normalizeEntityConstraints({ ...payload, ext: { ...payload.ext, ...resultExt }, id }) as Template;
             if (index >= 0) this.templates[index] = next;
             else this.templates.push(next);
             this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...next };
@@ -290,11 +303,25 @@ export const useTemplateStore = defineStore('templates', {
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           if (result && typeof result === 'object') {
-            Object.assign(newTemplate, result);
+            if (result.ext) {
+              newTemplate.ext = { ...(newTemplate.ext || {}), ...result.ext };
+            }
           }
           const id = result?.id || newTemplate.id;
           newTemplate.id = id;
-          this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...newTemplate };
+          const cached = this.templateDetailCache[id];
+          this.templateDetailCache[id] = normalizeEntityConstraints({
+            id: newTemplate.id,
+            name: newTemplate.name,
+            data: newTemplate.data || cached?.data,
+            updatedAt: newTemplate.updatedAt || cached?.updatedAt,
+            system: newTemplate.system ?? cached?.system,
+            editable: newTemplate.editable ?? cached?.editable,
+            deletable: newTemplate.deletable ?? cached?.deletable,
+            copyable: newTemplate.copyable ?? cached?.copyable,
+            permissions: newTemplate.permissions ?? cached?.permissions,
+            ext: { ...(cached?.ext || {}), ...(newTemplate.ext || {}) }
+          });
           
           await this.loadTemplates();
         } catch (e) {
@@ -352,12 +379,16 @@ export const useTemplateStore = defineStore('templates', {
           try {
             const cachedTemplate = this.templateDetailCache[id];
             const payloadBase = applyModalExtraValues({
-              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
-              ...t,
               id: t.id,
               name: newName,
               data: t.data || cachedTemplate?.data || {},
-              updatedAt: t.updatedAt
+              updatedAt: t.updatedAt,
+              system: t.system ?? cachedTemplate?.system,
+              editable: t.editable ?? cachedTemplate?.editable,
+              deletable: t.deletable ?? cachedTemplate?.deletable,
+              copyable: t.copyable ?? cachedTemplate?.copyable,
+              permissions: t.permissions ?? cachedTemplate?.permissions,
+              ext: { ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
             }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -387,17 +418,18 @@ export const useTemplateStore = defineStore('templates', {
         const cachedTemplate = this.templateDetailCache[id];
         const source: any = mode === 'remote'
           ? {
-              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
-              ...t,
-              data: t.data || cachedTemplate?.data
+              id: t.id,
+              name: t.name,
+              data: t.data || cachedTemplate?.data,
+              ext: { ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
             }
           : t;
         const newTemplateBase = applyModalExtraValues({
-          ...source,
           id: uuidv4(),
           name: typeof newName === 'string' && newName.trim() ? newName.trim() : `${source.name} Copy`,
           data: sanitizeTemplateData(JSON.parse(JSON.stringify(source.data))),
           updatedAt: Date.now(),
+          ext: source.ext,
           // A copied template should be a normal editable template by default,
           // instead of inheriting source read-only/system flags.
           system: false,
@@ -420,10 +452,24 @@ export const useTemplateStore = defineStore('templates', {
             const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
             if (result && typeof result === 'object') {
-              Object.assign(newTemplate, result);
+              if (result.ext) {
+                newTemplate.ext = { ...(newTemplate.ext || {}), ...result.ext };
+              }
             }
             newTemplate.id = result?.id || newTemplate.id;
-            this.templateDetailCache[newTemplate.id] = { ...(this.templateDetailCache[newTemplate.id] || {}), ...newTemplate };
+            const cached = this.templateDetailCache[newTemplate.id];
+              this.templateDetailCache[newTemplate.id] = normalizeEntityConstraints({
+                id: newTemplate.id,
+                name: newTemplate.name,
+                data: newTemplate.data || cached?.data,
+                updatedAt: newTemplate.updatedAt || cached?.updatedAt,
+                system: newTemplate.system ?? cached?.system,
+                editable: newTemplate.editable ?? cached?.editable,
+                deletable: newTemplate.deletable ?? cached?.deletable,
+                copyable: newTemplate.copyable ?? cached?.copyable,
+                permissions: newTemplate.permissions ?? cached?.permissions,
+                ext: { ...(cached?.ext || {}), ...(newTemplate.ext || {}) }
+              });
             
             await this.loadTemplates();
             this.currentTemplateId = newTemplate.id;
@@ -477,16 +523,45 @@ export const useTemplateStore = defineStore('templates', {
           const currentId = t.id || id;
           this.currentTemplateId = currentId;
           this.templateDetailCache[currentId] = {
-            ...(this.templateDetailCache[currentId] || {}),
-            ...t,
-            data
+            id: t.id || currentId,
+            name: t.name || '',
+            data,
+            updatedAt: t.updatedAt || Date.now(),
+            system: t.system,
+            editable: t.editable,
+            deletable: t.deletable,
+            copyable: t.copyable,
+            permissions: t.permissions,
+            ext: t.ext || {}
           };
           
           const existingIndex = this.templates.findIndex(item => item.id === currentId);
           if (existingIndex >= 0) {
-            this.templates[existingIndex] = normalizeEntityConstraints({ ...this.templates[existingIndex], ...t, data }) as Template;
+            this.templates[existingIndex] = normalizeEntityConstraints({
+              id: currentId,
+              name: t.name || this.templates[existingIndex].name,
+              data,
+              updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,
+              system: t.system ?? this.templates[existingIndex].system,
+              editable: t.editable ?? this.templates[existingIndex].editable,
+              deletable: t.deletable ?? this.templates[existingIndex].deletable,
+              copyable: t.copyable ?? this.templates[existingIndex].copyable,
+              permissions: t.permissions ?? this.templates[existingIndex].permissions,
+              ext: { ...(this.templates[existingIndex].ext || {}), ...(t.ext || {}) }
+            }) as Template;
           } else {
-            this.templates.push(normalizeEntityConstraints({ ...t, id: currentId, data }) as Template);
+            this.templates.push(normalizeEntityConstraints({
+              id: currentId,
+              name: t.name || '',
+              data,
+              updatedAt: t.updatedAt || Date.now(),
+              system: t.system,
+              editable: t.editable,
+              deletable: t.deletable,
+              copyable: t.copyable,
+              permissions: t.permissions,
+              ext: t.ext || {}
+            }) as Template);
           }
           return;
         } catch (e) {

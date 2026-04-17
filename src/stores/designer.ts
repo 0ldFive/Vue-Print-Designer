@@ -407,16 +407,33 @@ export const useDesignerStore = defineStore('designer', {
         try {
           const cachedTemplate = this.customElementDetailCache[template.id];
           const payload = normalizeEntityConstraints({
-            ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
-            ...template,
             id: template.id,
             name: template.name,
-            element: cloneDeep(template.element)
+            element: cloneDeep(template.element),
+            testData: template.testData,
+            system: template.system ?? cachedTemplate?.system,
+            editable: template.editable ?? cachedTemplate?.editable,
+            deletable: template.deletable ?? cachedTemplate?.deletable,
+            copyable: template.copyable ?? cachedTemplate?.copyable,
+            permissions: template.permissions ?? cachedTemplate?.permissions,
+            ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
           });
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
           await (fetcher || fetch)(url, options);
-          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...payload };
+          const cached = this.customElementDetailCache[template.id];
+          this.customElementDetailCache[template.id] = normalizeEntityConstraints({
+            id: payload.id,
+            name: payload.name,
+            element: cloneDeep(payload.element || cached?.element || {}),
+            testData: payload.testData || cached?.testData,
+            system: payload.system ?? cached?.system,
+            editable: payload.editable ?? cached?.editable,
+            deletable: payload.deletable ?? cached?.deletable,
+            copyable: payload.copyable ?? cached?.copyable,
+            permissions: payload.permissions ?? cached?.permissions,
+            ext: { ...(cached?.ext || {}), ...(payload.ext || {}) }
+          }) as CustomElementTemplate;
         } catch (e) {
           console.error('Failed to commit custom element edit', e);
         }
@@ -1768,12 +1785,16 @@ export const useDesignerStore = defineStore('designer', {
             const existing = this.customElements.find(e => e.id === el.id);
             const cached = this.customElementDetailCache[el.id];
             const merged = {
-              ...cached,
-              ...existing,
-              ...el,
               id: el.id,
               name: el.name,
-              element: el.element ? cloneDeep(el.element) : cloneDeep(cached?.element || existing?.element || {})
+              element: el.element ? cloneDeep(el.element) : cloneDeep(cached?.element || existing?.element || {}),
+              testData: el.testData || cached?.testData || existing?.testData,
+              system: el.system ?? cached?.system ?? existing?.system,
+              editable: el.editable ?? cached?.editable ?? existing?.editable,
+              deletable: el.deletable ?? cached?.deletable ?? existing?.deletable,
+              copyable: el.copyable ?? cached?.copyable ?? existing?.copyable,
+              permissions: el.permissions ?? cached?.permissions ?? existing?.permissions,
+              ext: { ...(existing?.ext || {}), ...(cached?.ext || {}), ...(el.ext || {}) }
             };
             const normalized = normalizeEntityConstraints(merged);
             this.customElementDetailCache[el.id] = normalized;
@@ -1794,16 +1815,19 @@ export const useDesignerStore = defineStore('designer', {
       const cachedElement = this.customElementDetailCache[id];
       const source: any = mode === 'remote'
         ? {
-            ...(cachedElement && typeof cachedElement === 'object' ? cachedElement : {}),
-            ...el,
-            element: (el as any).element || cachedElement?.element
+            id: el.id,
+            name: el.name,
+            element: (el as any).element || cachedElement?.element,
+            testData: (el as any).testData || cachedElement?.testData,
+            ext: { ...(cachedElement?.ext || {}), ...(el.ext || {}) }
           }
         : el;
       const template: CustomElementTemplate = normalizeEntityConstraints({
-        ...source,
         id: uuidv4(),
         name: `${source.name} Copy`,
         element: cloneDeep(source.element),
+        testData: cloneDeep(source.testData),
+        ext: source.ext,
         // A copied custom element should become a normal editable entity by default.
         system: false,
         editable: true,
@@ -1824,10 +1848,24 @@ export const useDesignerStore = defineStore('designer', {
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           if (result && typeof result === 'object') {
-            Object.assign(template, result);
+            if (result.ext) {
+              template.ext = { ...(template.ext || {}), ...result.ext };
+            }
           }
           template.id = result?.id || template.id;
-          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...template };
+          const cached = this.customElementDetailCache[template.id];
+          this.customElementDetailCache[template.id] = normalizeEntityConstraints({
+            id: template.id,
+            name: template.name,
+            element: cloneDeep(template.element || cached?.element || {}),
+            testData: template.testData || cached?.testData,
+            system: template.system ?? cached?.system,
+            editable: template.editable ?? cached?.editable,
+            deletable: template.deletable ?? cached?.deletable,
+            copyable: template.copyable ?? cached?.copyable,
+            permissions: template.permissions ?? cached?.permissions,
+            ext: { ...(cached?.ext || {}), ...(template.ext || {}) }
+          }) as CustomElementTemplate;
           
           await this.loadCustomElements();
         } catch (e) {
@@ -1853,10 +1891,24 @@ export const useDesignerStore = defineStore('designer', {
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           if (result && typeof result === 'object') {
-            Object.assign(template, result);
+            if (result.ext) {
+              template.ext = { ...(template.ext || {}), ...result.ext };
+            }
           }
           template.id = result?.id || template.id;
-          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...template };
+          const cached = this.customElementDetailCache[template.id];
+          this.customElementDetailCache[template.id] = normalizeEntityConstraints({
+            id: template.id,
+            name: template.name,
+            element: cloneDeep(template.element || cached?.element || {}),
+            testData: template.testData || cached?.testData,
+            system: template.system ?? cached?.system,
+            editable: template.editable ?? cached?.editable,
+            deletable: template.deletable ?? cached?.deletable,
+            copyable: template.copyable ?? cached?.copyable,
+            permissions: template.permissions ?? cached?.permissions,
+            ext: { ...(cached?.ext || {}), ...(template.ext || {}) }
+          }) as CustomElementTemplate;
           
           await this.loadCustomElements();
         } catch (e) {
@@ -1906,16 +1958,33 @@ export const useDesignerStore = defineStore('designer', {
           try {
             const cachedTemplate = this.customElementDetailCache[id];
             const payload = normalizeEntityConstraints({
-              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
-              ...template,
               id: template.id,
               name: newName,
-              element: cloneDeep(template.element)
+              element: cloneDeep(template.element),
+              testData: template.testData,
+              system: template.system ?? cachedTemplate?.system,
+              editable: template.editable ?? cachedTemplate?.editable,
+              deletable: template.deletable ?? cachedTemplate?.deletable,
+              copyable: template.copyable ?? cachedTemplate?.copyable,
+              permissions: template.permissions ?? cachedTemplate?.permissions,
+              ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
             });
             const url = buildEndpoint(endpoints.customElements?.upsert, '');
             const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
-            this.customElementDetailCache[id] = { ...(this.customElementDetailCache[id] || {}), ...payload };
+            const cached = this.customElementDetailCache[id];
+            this.customElementDetailCache[id] = normalizeEntityConstraints({
+              id: payload.id,
+              name: payload.name,
+              element: cloneDeep(payload.element || cached?.element || {}),
+              testData: payload.testData || cached?.testData,
+              system: payload.system ?? cached?.system,
+              editable: payload.editable ?? cached?.editable,
+              deletable: payload.deletable ?? cached?.deletable,
+              copyable: payload.copyable ?? cached?.copyable,
+              permissions: payload.permissions ?? cached?.permissions,
+              ext: { ...(cached?.ext || {}), ...(payload.ext || {}) }
+            }) as CustomElementTemplate;
           } catch (e) {
             console.error('Failed to edit custom element', e);
             toast.error(i18n.global.t('toast.customElementEditFailed'));

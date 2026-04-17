@@ -585,18 +585,22 @@ class PrintDesignerElement extends HTMLElement {
     const { mode, endpoints, headers, fetcher } = getCrudConfig();
     const id = template.id || uuidv4();
     const index = this.templateStore.templates.findIndex((t) => t.id === id);
-    const existing = index >= 0 ? this.templateStore.templates[index] : {};
+    const existing: any = index >= 0 ? this.templateStore.templates[index] : {};
     if (index >= 0 && !canEditEntity(existing)) {
       toast.warning(i18n.global.t('toast.templateReadOnly'));
       return null;
     }
     const next = normalizeEntityConstraints({
-      ...existing,
-      ...template,
       id,
       name: template.name,
       data: template.data || this.templateStore.templates[index]?.data || {},
-      updatedAt: template.updatedAt || Date.now()
+      updatedAt: template.updatedAt || Date.now(),
+      system: template.system ?? existing?.system,
+      editable: template.editable ?? existing?.editable,
+      deletable: template.deletable ?? existing?.deletable,
+      copyable: template.copyable ?? existing?.copyable,
+      permissions: template.permissions ?? existing?.permissions,
+      ext: { ...(existing?.ext || {}), ...(template.ext || {}) }
     });
     if (index >= 0) {
       this.templateStore.templates[index] = next;
@@ -610,27 +614,41 @@ class PrintDesignerElement extends HTMLElement {
       try {
         const cachedTemplate = (this.templateStore as any).templateDetailCache?.[id] || {};
         const requestPayload = normalizeEntityConstraints({
-          ...cachedTemplate,
-          ...next,
           id: next.id,
           name: next.name,
-          data: next.data || cachedTemplate.data || {}
+          data: next.data || cachedTemplate.data || {},
+          updatedAt: next.updatedAt || cachedTemplate.updatedAt,
+          system: next.system ?? cachedTemplate.system,
+          editable: next.editable ?? cachedTemplate.editable,
+          deletable: next.deletable ?? cachedTemplate.deletable,
+          copyable: next.copyable ?? cachedTemplate.copyable,
+          permissions: next.permissions ?? cachedTemplate.permissions,
+          ext: { ...(cachedTemplate.ext || {}), ...(next.ext || {}) }
         });
         const url = buildEndpoint(endpoints.templates?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
-        const remoteId = merged.id || requestPayload.id;
+        const resultObj = result && typeof result === 'object' ? result : {};
+        const mergedExt = { ...(requestPayload.ext || {}), ...(resultObj.ext || {}) };
+        const remoteId = resultObj.id || requestPayload.id;
         const targetIndex = this.templateStore.templates.findIndex((t) => t.id === requestPayload.id);
-        const updated = normalizeEntityConstraints({ ...merged, id: remoteId });
+        const updated = normalizeEntityConstraints({
+          id: remoteId,
+          name: resultObj.name || requestPayload.name,
+          data: resultObj.data || requestPayload.data,
+          updatedAt: resultObj.updatedAt || requestPayload.updatedAt,
+          system: resultObj.system ?? requestPayload.system,
+          editable: resultObj.editable ?? requestPayload.editable,
+          deletable: resultObj.deletable ?? requestPayload.deletable,
+          copyable: resultObj.copyable ?? requestPayload.copyable,
+          permissions: resultObj.permissions ?? requestPayload.permissions,
+          ext: mergedExt
+        });
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
         else this.templateStore.templates.push(updated);
         (this.templateStore as any).templateDetailCache = (this.templateStore as any).templateDetailCache || {};
-        (this.templateStore as any).templateDetailCache[remoteId] = {
-          ...((this.templateStore as any).templateDetailCache[remoteId] || {}),
-          ...updated
-        };
+        (this.templateStore as any).templateDetailCache[remoteId] = updated;
         if (this.templateStore.currentTemplateId === requestPayload.id) {
           this.templateStore.currentTemplateId = remoteId;
         }
@@ -654,11 +672,16 @@ class PrintDesignerElement extends HTMLElement {
     this.templateStore.templates = templates
       .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string')
       .map((t) => normalizeEntityConstraints({
-        ...t,
         id: t.id,
         name: t.name,
         data: t.data || {},
-        updatedAt: t.updatedAt || Date.now()
+        updatedAt: t.updatedAt || Date.now(),
+        system: t.system,
+        editable: t.editable,
+        deletable: t.deletable,
+        copyable: t.copyable,
+        permissions: t.permissions,
+        ext: t.ext || {}
       }));
     let targetId = options.currentTemplateId || this.templateStore.currentTemplateId;
     if (targetId && !this.templateStore.templates.some((t) => t.id === targetId)) {
@@ -719,12 +742,23 @@ class PrintDesignerElement extends HTMLElement {
     const { mode, endpoints, headers, fetcher } = getCrudConfig();
     const id = customElement.id || uuidv4();
     const index = this.designerStore.customElements.findIndex((el) => el.id === id);
-    const existing = index >= 0 ? this.designerStore.customElements[index] : {};
+    const existing: any = index >= 0 ? this.designerStore.customElements[index] : {};
     if (index >= 0 && !canEditEntity(existing)) {
       toast.warning(i18n.global.t('toast.customElementReadOnly'));
       return null;
     }
-    const next = normalizeEntityConstraints({ ...existing, ...customElement, id, name: customElement.name, element: cloneDeep(customElement.element) });
+    const next = normalizeEntityConstraints({
+      id,
+      name: customElement.name,
+      element: cloneDeep(customElement.element),
+      testData: customElement.testData,
+      system: customElement.system ?? existing?.system,
+      editable: customElement.editable ?? existing?.editable,
+      deletable: customElement.deletable ?? existing?.deletable,
+      copyable: customElement.copyable ?? existing?.copyable,
+      permissions: customElement.permissions ?? existing?.permissions,
+      ext: { ...(existing?.ext || {}), ...(customElement.ext || {}) }
+    });
     if (index >= 0) {
       this.designerStore.customElements.splice(index, 1, next);
     } else {
@@ -734,27 +768,41 @@ class PrintDesignerElement extends HTMLElement {
       try {
         const cachedCustomElement = (this.designerStore as any).customElementDetailCache?.[id] || {};
         const requestPayload = normalizeEntityConstraints({
-          ...cachedCustomElement,
-          ...next,
           id: next.id,
           name: next.name,
-          element: cloneDeep(next.element || cachedCustomElement.element || {})
+          element: cloneDeep(next.element || cachedCustomElement.element || {}),
+          testData: next.testData || cachedCustomElement.testData,
+          system: next.system ?? cachedCustomElement.system,
+          editable: next.editable ?? cachedCustomElement.editable,
+          deletable: next.deletable ?? cachedCustomElement.deletable,
+          copyable: next.copyable ?? cachedCustomElement.copyable,
+          permissions: next.permissions ?? cachedCustomElement.permissions,
+          ext: { ...(cachedCustomElement.ext || {}), ...(next.ext || {}) }
         });
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
-        const remoteId = merged.id || requestPayload.id;
+        const resultObj = result && typeof result === 'object' ? result : {};
+        const mergedExt = { ...(requestPayload.ext || {}), ...(resultObj.ext || {}) };
+        const remoteId = resultObj.id || requestPayload.id;
         const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === requestPayload.id);
-        const updated = normalizeEntityConstraints({ ...merged, id: remoteId });
+        const updated = normalizeEntityConstraints({
+          id: remoteId,
+          name: resultObj.name || requestPayload.name,
+          element: cloneDeep(resultObj.element || requestPayload.element),
+          testData: resultObj.testData || requestPayload.testData,
+          system: resultObj.system ?? requestPayload.system,
+          editable: resultObj.editable ?? requestPayload.editable,
+          deletable: resultObj.deletable ?? requestPayload.deletable,
+          copyable: resultObj.copyable ?? requestPayload.copyable,
+          permissions: resultObj.permissions ?? requestPayload.permissions,
+          ext: mergedExt
+        });
         if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
         else this.designerStore.customElements.push(updated);
         (this.designerStore as any).customElementDetailCache = (this.designerStore as any).customElementDetailCache || {};
-        (this.designerStore as any).customElementDetailCache[remoteId] = {
-          ...((this.designerStore as any).customElementDetailCache[remoteId] || {}),
-          ...updated
-        };
+        (this.designerStore as any).customElementDetailCache[remoteId] = updated;
         
         await this.designerStore.loadCustomElements();
         return remoteId;
@@ -774,7 +822,18 @@ class PrintDesignerElement extends HTMLElement {
     const { mode } = getCrudConfig();
     this.designerStore.customElements = customElements
       .filter((el) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
-      .map((el) => normalizeEntityConstraints({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
+      .map((el) => normalizeEntityConstraints({
+        id: el.id,
+        name: el.name,
+        element: cloneDeep(el.element),
+        testData: el.testData,
+        system: el.system,
+        editable: el.editable,
+        deletable: el.deletable,
+        copyable: el.copyable,
+        permissions: el.permissions,
+        ext: el.ext || {}
+      }));
     if (mode !== 'remote') {
       this.designerStore.saveCustomElements();
     }
