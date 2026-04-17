@@ -35,7 +35,7 @@ const menuPosition = ref<Record<string, string>>({});
 
 // Modal State
 const showModal = ref(false);
-const modalMode = ref<'create' | 'rename' | 'copy'>('create');
+const modalMode = ref<'create' | 'edit' | 'copy'>('create');
 const modalInitialName = ref('');
 const modalInitialValues = ref<Record<string, any>>({});
 const targetTemplateId = ref<string | null>(null);
@@ -50,11 +50,11 @@ type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 type ModalSavePayload = string | Record<string, any>;
 const maxVisibleTemplateTags = 2;
 
-const getModalConfigItem = (mode: 'create' | 'rename' | 'copy'): TemplateModalConfigItem | null => {
+const getModalConfigItem = (mode: 'create' | 'edit' | 'copy'): TemplateModalConfigItem | null => {
   return designerStore.templateModalFormConfig?.[mode] || null;
 };
 
-const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'rename' | 'copy') => {
+const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'edit' | 'copy') => {
   if (!templateId) return {};
   const template = store.templates.find(item => item.id === templateId);
   const fromTemplate = template?.ext?.templateModalForm?.[mode];
@@ -64,7 +64,7 @@ const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' |
   return {};
 };
 
-const buildModalInitialValues = (name: string, mode: 'create' | 'rename' | 'copy', templateId: string | null = null) => {
+const buildModalInitialValues = (name: string, mode: 'create' | 'edit' | 'copy', templateId: string | null = null) => {
   const configItem = getModalConfigItem(mode);
   const configInitialValues = configItem?.initialValues && typeof configItem.initialValues === 'object'
     ? { ...configItem.initialValues }
@@ -390,10 +390,10 @@ const handleEdit = (template: Template) => {
     return;
   }
   activeMenuId.value = null;
-  modalMode.value = 'rename';
+  modalMode.value = 'edit';
   targetTemplateId.value = template.id;
   modalInitialName.value = template.name;
-  modalInitialValues.value = buildModalInitialValues(template.name, 'rename', template.id);
+  modalInitialValues.value = buildModalInitialValues(template.name, 'edit', template.id);
   showModal.value = true;
   isOpen.value = false; // Close dropdown? Or keep open? Close is better.
 };
@@ -594,8 +594,8 @@ const handleModalSave = (payload: ModalSavePayload) => {
     const designerStore = useDesignerStore(); // Ensure we have access to designer store
     designerStore.resetCanvas();
     store.createTemplate(name, undefined, extraValues);
-  } else if (modalMode.value === 'rename' && targetTemplateId.value) {
-    store.renameTemplate(targetTemplateId.value, name, extraValues);
+  } else if (modalMode.value === 'edit' && targetTemplateId.value) {
+    store.editTemplate(targetTemplateId.value, name, extraValues);
   } else if (modalMode.value === 'copy' && targetTemplateId.value) {
     store.copyTemplate(targetTemplateId.value, name, extraValues);
   }
@@ -703,7 +703,7 @@ const handleModalSave = (payload: ModalSavePayload) => {
       :initial-value="modalInitialName"
       :initial-values="modalInitialValues"
       :fields="modalFields"
-      :title="modalMode === 'create' ? t('template.new') : (modalMode === 'rename' ? t('template.rename') : t('common.copy'))"
+      :title="modalMode === 'create' ? t('template.new') : (modalMode === 'edit' ? t('template.edit') : t('common.copy'))"
       @close="showModal = false"
       @save="handleModalSave"
     />

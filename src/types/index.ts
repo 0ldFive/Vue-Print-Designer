@@ -167,7 +167,7 @@ export interface ListContextMenuConfig {
   items: ListContextMenuItem[];
 }
 
-export type TemplateModalMode = 'create' | 'rename' | 'copy';
+export type TemplateModalMode = 'create' | 'edit' | 'copy';
 export type TemplateModalFieldType = 'input' | 'number' | 'textarea' | 'select' | 'radio' | 'date' | 'datetime';
 
 export interface TemplateModalFieldOption {
@@ -195,7 +195,7 @@ export interface TemplateModalConfigItem {
 
 export interface TemplateModalFormConfig {
   create?: TemplateModalConfigItem;
-  rename?: TemplateModalConfigItem;
+  edit?: TemplateModalConfigItem;
   copy?: TemplateModalConfigItem;
 }
 

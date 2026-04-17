@@ -128,7 +128,7 @@ const normalizeTemplateModalFields = (fields: TemplateModalField[] | undefined):
 const normalizeTemplateModalFormConfig = (config: TemplateModalFormConfig | null | undefined): TemplateModalFormConfig | null => {
   if (!config || typeof config !== 'object') return null;
   const next: TemplateModalFormConfig = {};
-  (['create', 'rename', 'copy'] as const).forEach((mode) => {
+  (['create', 'edit', 'copy'] as const).forEach((mode) => {
     const item = config[mode];
     if (!item || typeof item !== 'object') return;
     const fields = normalizeTemplateModalFields(item.fields);
@@ -1893,7 +1893,7 @@ export const useDesignerStore = defineStore('designer', {
         this.saveCustomElements();
       }
     },
-    async renameCustomElement(id: string, newName: string) {
+    async editCustomElement(id: string, newName: string) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const template = this.customElements.find(el => el.id === id);
       if (template) {
@@ -1917,8 +1917,8 @@ export const useDesignerStore = defineStore('designer', {
             await (fetcher || fetch)(url, options);
             this.customElementDetailCache[id] = { ...(this.customElementDetailCache[id] || {}), ...payload };
           } catch (e) {
-            console.error('Failed to rename custom element', e);
-            toast.error(i18n.global.t('toast.customElementRenameFailed'));
+            console.error('Failed to edit custom element', e);
+            toast.error(i18n.global.t('toast.customElementEditFailed'));
           }
           return;
         }

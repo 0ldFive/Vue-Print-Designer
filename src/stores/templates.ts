@@ -69,7 +69,7 @@ const normalizeModalExtraValues = (values?: Record<string, any>) => {
 
 const applyModalExtraValues = (
   templateLike: Record<string, any>,
-  mode: 'create' | 'rename' | 'copy',
+  mode: 'create' | 'edit' | 'copy',
   values?: Record<string, any>
 ) => {
   const normalized = normalizeModalExtraValues(values);
@@ -334,7 +334,7 @@ export const useTemplateStore = defineStore('templates', {
       this.saveToLocalStorage();
     },
 
-    async renameTemplate(id: string, newName: string, extraValues?: Record<string, any>) {
+    async editTemplate(id: string, newName: string, extraValues?: Record<string, any>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const t = this.templates.find(t => t.id === id);
       if (t) {
@@ -344,7 +344,7 @@ export const useTemplateStore = defineStore('templates', {
         }
         t.name = newName;
         t.updatedAt = Date.now();
-        const nextTemplate = applyModalExtraValues(t as Record<string, any>, 'rename', extraValues) as Template;
+        const nextTemplate = applyModalExtraValues(t as Record<string, any>, 'edit', extraValues) as Template;
         if (nextTemplate !== t) {
           Object.assign(t, nextTemplate);
         }
@@ -358,7 +358,7 @@ export const useTemplateStore = defineStore('templates', {
               name: newName,
               data: t.data || cachedTemplate?.data || {},
               updatedAt: t.updatedAt
-            }, 'rename', extraValues);
+            }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
@@ -367,8 +367,8 @@ export const useTemplateStore = defineStore('templates', {
             
             await this.loadTemplates();
           } catch (e) {
-            console.error('Failed to rename template', e);
-            toast.error(i18n.global.t('toast.templateRenameFailed'));
+            console.error('Failed to edit template', e);
+            toast.error(i18n.global.t('toast.templateEditFailed'));
           }
           return;
         }

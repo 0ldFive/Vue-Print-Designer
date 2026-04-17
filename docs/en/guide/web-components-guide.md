@@ -72,7 +72,7 @@
 | `clearTemplateContextMenu()` | Restore default template list extension menu |
 | `setCustomElementContextMenu(config)` | Configure custom element list extension menu |
 | `clearCustomElementContextMenu()` | Restore default custom element list extension menu |
-| `setTemplateModalForm(config)` | Configure custom forms for create/rename/copy template modals |
+| `setTemplateModalForm(config)` | Configure custom forms for create/edit/copy template modals |
 | `clearTemplateModalForm()` | Clear template modal custom form configuration |
 | `setTemplateTagResolver(resolver)` | Configure template list tag resolver |
 | `clearTemplateTagResolver()` | Clear template list tag resolver |
@@ -741,7 +741,7 @@ For `setCustomElementContextMenu` (Custom Element List):
 
 ### 18. Configure Template Modal Custom Form (setTemplateModalForm)
 
-Description: Configure custom form structure and default values for template `create / rename / copy` modals.
+Description: Configure custom form structure and default values for template `create / edit / copy` modals.
 
 ```ts
 el.setTemplateModalForm({
@@ -778,7 +778,7 @@ el.setTemplateModalForm({
       priority: 1
     }
   },
-  rename: {
+  edit: {
     fields: [
       { key: 'name', label: 'Name', type: 'input', required: true },
       { key: 'scope', label: 'Visibility', type: 'radio', options: [{ label: 'Private', value: 'private' }, { label: 'Team', value: 'team' }] }
@@ -800,7 +800,7 @@ Parameter contract:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `config.create/rename/copy` | `TemplateModalConfigItem` | No | Config for create/rename/copy modal |
+| `config.create/edit/copy` | `TemplateModalConfigItem` | No | Config for create/edit/copy modal |
 | `item.fields` | `TemplateModalField[]` | No | Field list; fallback to default input if empty |
 | `item.initialValues` | `Record<string, any>` | No | Default initial values (used for create or as fallback for echo) |
 | `field.key` | `string` | Yes | Unique field key |
@@ -809,9 +809,9 @@ Parameter contract:
 
 Behavior notes:
 
-- `name` is still the primary template name field and is used as the name argument for `create/rename/copy`.
+- `name` is still the primary template name field and is used as the name argument for `create/edit/copy`.
 - Other fields are sent back as "extended form values" and stored under `ext.templateModalForm` (see Backend API Specifications).
-- When opening `rename/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
+- When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
 - `create` uses `initialValues` by default; when not configured, component default behavior applies.
 
 ### 19. Configure Template List Tag Extension (setTemplateTagResolver)
@@ -982,7 +982,7 @@ Request:
   "ext": {
     "templateModalForm": {
       "create": { "category": "standard", "scope": "private", "priority": 1 },
-      "rename": { "scope": "team" },
+      "edit": { "scope": "team" },
       "copy": { "category": "shipment", "priority": 2 },
       "lastMode": "copy",
       "updatedAt": 1700000000000
@@ -994,8 +994,8 @@ Request:
 **3.1) Template ext Round-Trip and Load Contract (Custom Form)**
 
 - To ensure custom form values can be echoed after save, backend should persist and return the `ext` field in template objects as-is.
-- Recommended path: `ext.templateModalForm.{create|rename|copy}` where each value stores the latest submitted extended form values for that mode (excluding `name`).
-- `GET /templates/{id}` should return the latest `ext.templateModalForm`; frontend uses it for `rename/copy` modal echo.
+- Recommended path: `ext.templateModalForm.{create|edit|copy}` where each value stores the latest submitted extended form values for that mode (excluding `name`).
+- `GET /templates/{id}` should return the latest `ext.templateModalForm`; frontend uses it for `edit/copy` modal echo.
 - Returning `ext` in `GET /templates` list response is optional but recommended to reduce first-open differences.
 - If backend does not return `ext`, frontend still works and falls back to `setTemplateModalForm(...).initialValues`.
 
@@ -1115,7 +1115,7 @@ Response:
   "ext": {
     "templateModalForm": {
       "create": { "category": "standard", "scope": "private", "priority": 1 },
-      "rename": { "scope": "team" },
+      "edit": { "scope": "team" },
       "copy": { "category": "shipment", "priority": 2 },
       "lastMode": "copy",
       "updatedAt": 1700000000000

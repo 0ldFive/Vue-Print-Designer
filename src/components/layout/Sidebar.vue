@@ -36,9 +36,9 @@ const activeMenuId = ref<string | null>(null);
 const menuPosition = ref<Record<string, string>>({});
 
 // Modal state
-const showRenameModal = ref(false);
-const renameTargetId = ref<string | null>(null);
-const renameInitialName = ref('');
+const showEditModal = ref(false);
+const editTargetId = ref<string | null>(null);
+const editInitialName = ref('');
 
 const showTestDataModal = ref(false);
 const testDataContent = ref('');
@@ -174,20 +174,20 @@ const handleGlobalClick = (e: MouseEvent) => {
   }
 };
 
-const handleRename = (item: CustomElementTemplate) => {
+const handleEdit = (item: CustomElementTemplate) => {
   if (!canEditEntity(item)) {
     toast.warning(t('toast.customElementReadOnly'));
     return;
   }
   activeMenuId.value = null;
-  renameTargetId.value = item.id;
-  renameInitialName.value = item.name;
-  showRenameModal.value = true;
+  editTargetId.value = item.id;
+  editInitialName.value = item.name;
+  showEditModal.value = true;
 };
 
-const onRenameSave = (newName: string) => {
-  if (renameTargetId.value && newName) {
-    store.renameCustomElement(renameTargetId.value, newName);
+const onEditSave = (newName: string) => {
+  if (editTargetId.value && newName) {
+    store.editCustomElement(editTargetId.value, newName);
   }
 };
 
@@ -250,7 +250,7 @@ const handleTestData = (item: CustomElementTemplate) => {
 const defaultCustomMenuItems = computed<CustomMenuItemView[]>(() => ([
   { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject, hidden: ({ item }) => !supportsTestData(item as CustomElementTemplate) },
-  { key: 'edit', actionKey: 'edit', label: t('sidebar.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'edit', actionKey: 'edit', label: t('sidebar.edit'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
   { key: 'delete', actionKey: 'delete', label: t('sidebar.delete'), iconComponent: Delete, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
 ]));
@@ -304,7 +304,7 @@ const runBuiltInCustomMenuAction = (actionKey: string | undefined, item: CustomE
     return;
   }
   if (key === 'edit') {
-    handleRename(item);
+    handleEdit(item);
     return;
   }
   if (key === 'copy') {
@@ -499,12 +499,12 @@ onUnmounted(() => {
     </Teleport>
 
     <InputModal
-      :show="showRenameModal"
-      :initial-value="renameInitialName"
-      :title="t('sidebar.renameModalTitle')"
+      :show="showEditModal"
+      :initial-value="editInitialName"
+      :title="t('sidebar.editModalTitle')"
       :placeholder="t('sidebar.enterNamePlaceholder')"
-      @close="showRenameModal = false"
-      @save="onRenameSave"
+      @close="showEditModal = false"
+      @save="onEditSave"
     />
 
     <CodeEditorModal
