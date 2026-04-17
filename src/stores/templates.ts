@@ -46,6 +46,7 @@ const sanitizeTemplateData = (data: any) => {
 export const useTemplateStore = defineStore('templates', {
   state: () => ({
     templates: [] as Template[],
+    templateDetailCache: {} as Record<string, any>,
     currentTemplateId: null as string | null,
     isSaving: false,
   }),
@@ -61,13 +62,23 @@ export const useTemplateStore = defineStore('templates', {
           const list = Array.isArray(data) ? data : data?.templates || [];
           this.templates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
-            .map((t: any) => ({
-              ...t,
-              id: t.id,
-              name: t.name,
-              data: sanitizeTemplateData(t.data),
-              updatedAt: t.updatedAt || Date.now()
-            }))
+            .map((t: any) => {
+              const existing = this.templates.find(e => e.id === t.id);
+              const cached = this.templateDetailCache[t.id];
+              const merged = {
+                ...cached,
+                ...existing,
+                ...t,
+                id: t.id,
+                name: t.name,
+                data: t.data ? sanitizeTemplateData(t.data) : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
+                updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now()
+              };
+              this.templateDetailCache[t.id] = merged;
+              return {
+                ...merged
+              };
+            })
             .sort((a: Template, b: Template) => b.updatedAt - a.updatedAt);
           return;
         } catch (e) {
@@ -141,11 +152,15 @@ export const useTemplateStore = defineStore('templates', {
       try {
         if (mode === 'remote') {
           try {
+            const upsertBase: any = targetId ? (this.templateDetailCache[targetId] || existingTemplate || {}) : {};
             const payload = {
-              ...existingTemplate,
+              ...upsertBase,
               id: targetId || uuidv4(),
               name,
-              data,
+              data: {
+                ...(upsertBase?.data || {}),
+                ...data
+              },
               updatedAt: Date.now()
             };
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -157,6 +172,7 @@ export const useTemplateStore = defineStore('templates', {
             const next = { ...payload, ...(result && typeof result === 'object' ? result : {}), id } as Template;
             if (index >= 0) this.templates[index] = next;
             else this.templates.unshift(next);
+            this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...next };
             
             // Only update currentTemplateId if we were creating a new template (no targetId)
             // or if the user hasn't switched to another template yet
@@ -227,6 +243,7 @@ export const useTemplateStore = defineStore('templates', {
           }
           const id = result?.id || newTemplate.id;
           newTemplate.id = id;
+          this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...newTemplate };
           
           await this.loadTemplates();
         } catch (e) {
@@ -243,6 +260,7 @@ export const useTemplateStore = defineStore('templates', {
     async deleteTemplate(id: string) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       this.templates = this.templates.filter(t => t.id !== id);
+      delete this.templateDetailCache[id];
       if (this.currentTemplateId === id) {
         this.currentTemplateId = null;
       }
@@ -268,9 +286,19 @@ export const useTemplateStore = defineStore('templates', {
         t.updatedAt = Date.now();
         if (mode === 'remote') {
           try {
+            const cachedTemplate = this.templateDetailCache[id];
+            const payload = {
+              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
+              ...t,
+              id: t.id,
+              name: newName,
+              data: t.data || cachedTemplate?.data || {},
+              updatedAt: t.updatedAt
+            };
             const url = buildEndpoint(endpoints.templates?.upsert, '');
-            const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, t);
+            const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
+            this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...payload };
             
             await this.loadTemplates();
           } catch (e) {
@@ -287,11 +315,19 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const t = this.templates.find(t => t.id === id);
       if (t) {
+        const cachedTemplate = this.templateDetailCache[id];
+        const source: any = mode === 'remote'
+          ? {
+              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
+              ...t,
+              data: t.data || cachedTemplate?.data
+            }
+          : t;
         const newTemplate: Template = {
-          ...t,
+          ...source,
           id: uuidv4(),
-          name: `${t.name} Copy`,
-          data: sanitizeTemplateData(JSON.parse(JSON.stringify(t.data))),
+          name: `${source.name} Copy`,
+          data: sanitizeTemplateData(JSON.parse(JSON.stringify(source.data))),
           updatedAt: Date.now()
         };
         if (mode === 'remote') {
@@ -304,6 +340,7 @@ export const useTemplateStore = defineStore('templates', {
               Object.assign(newTemplate, result);
             }
             newTemplate.id = result?.id || newTemplate.id;
+            this.templateDetailCache[newTemplate.id] = { ...(this.templateDetailCache[newTemplate.id] || {}), ...newTemplate };
             
             await this.loadTemplates();
           } catch (e) {
@@ -350,13 +387,19 @@ export const useTemplateStore = defineStore('templates', {
           designerStore.selectedGuideId = null;
           designerStore.historyPast = [];
           designerStore.historyFuture = [];
-          this.currentTemplateId = t.id || id;
+          const currentId = t.id || id;
+          this.currentTemplateId = currentId;
+          this.templateDetailCache[currentId] = {
+            ...(this.templateDetailCache[currentId] || {}),
+            ...t,
+            data
+          };
           
-          const existingIndex = this.templates.findIndex(item => item.id === this.currentTemplateId);
+          const existingIndex = this.templates.findIndex(item => item.id === currentId);
           if (existingIndex >= 0) {
             this.templates[existingIndex] = { ...this.templates[existingIndex], ...t, data };
           } else {
-            this.templates.push({ ...t, id: this.currentTemplateId, data });
+            this.templates.push({ ...t, id: currentId, data });
           }
           return;
         } catch (e) {

@@ -117,6 +117,7 @@ export const useDesignerStore = defineStore('designer', {
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
     customElements: JSON.parse(localStorage.getItem('print-designer-custom-elements') || '[]'),
+    customElementDetailCache: {} as Record<string, any>,
     templateContextMenuConfig: null,
     customElementContextMenuConfig: null,
     contextMenuEventEmitter: null,
@@ -355,9 +356,18 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
         try {
+          const cachedTemplate = this.customElementDetailCache[template.id];
+          const payload = {
+            ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
+            ...template,
+            id: template.id,
+            name: template.name,
+            element: cloneDeep(template.element)
+          };
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
-          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
           await (fetcher || fetch)(url, options);
+          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...payload };
         } catch (e) {
           console.error('Failed to commit custom element edit', e);
         }
@@ -1677,15 +1687,21 @@ export const useDesignerStore = defineStore('designer', {
         const data = await res.json();
         const list = Array.isArray(data) ? data : data?.customElements || [];
         this.customElements = list
-          .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && (el.element || this.customElements.some(e => e.id === el.id)))
+          .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && (el.element || this.customElements.some(e => e.id === el.id) || this.customElementDetailCache[el.id]))
           .map((el: any) => {
             const existing = this.customElements.find(e => e.id === el.id);
-            return {
+            const cached = this.customElementDetailCache[el.id];
+            const merged = {
+              ...cached,
               ...existing,
               ...el,
               id: el.id,
               name: el.name,
-              element: el.element ? cloneDeep(el.element) : cloneDeep(existing?.element || {})
+              element: el.element ? cloneDeep(el.element) : cloneDeep(cached?.element || existing?.element || {})
+            };
+            this.customElementDetailCache[el.id] = merged;
+            return {
+              ...merged
             };
           });
       } catch (e) {
@@ -1696,11 +1712,19 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const el = this.customElements.find(el => el.id === id);
       if (!el) return;
+      const cachedElement = this.customElementDetailCache[id];
+      const source: any = mode === 'remote'
+        ? {
+            ...(cachedElement && typeof cachedElement === 'object' ? cachedElement : {}),
+            ...el,
+            element: (el as any).element || cachedElement?.element
+          }
+        : el;
       const template: CustomElementTemplate = {
-        ...el,
+        ...source,
         id: uuidv4(),
-        name: `${el.name} Copy`,
-        element: cloneDeep(el.element)
+        name: `${source.name} Copy`,
+        element: cloneDeep(source.element)
       };
       if (mode === 'remote') {
         try {
@@ -1712,6 +1736,7 @@ export const useDesignerStore = defineStore('designer', {
             Object.assign(template, result);
           }
           template.id = result?.id || template.id;
+          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...template };
           
           await this.loadCustomElements();
         } catch (e) {
@@ -1740,6 +1765,7 @@ export const useDesignerStore = defineStore('designer', {
             Object.assign(template, result);
           }
           template.id = result?.id || template.id;
+          this.customElementDetailCache[template.id] = { ...(this.customElementDetailCache[template.id] || {}), ...template };
           
           await this.loadCustomElements();
         } catch (e) {
@@ -1756,6 +1782,7 @@ export const useDesignerStore = defineStore('designer', {
       const index = this.customElements.findIndex(el => el.id === id);
       if (index !== -1) {
         this.customElements.splice(index, 1);
+        delete this.customElementDetailCache[id];
         if (mode === 'remote') {
           try {
             const url = buildEndpoint(endpoints.customElements?.delete, id);
@@ -1777,9 +1804,18 @@ export const useDesignerStore = defineStore('designer', {
         template.name = newName;
         if (mode === 'remote') {
           try {
+            const cachedTemplate = this.customElementDetailCache[id];
+            const payload = {
+              ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
+              ...template,
+              id: template.id,
+              name: newName,
+              element: cloneDeep(template.element)
+            };
             const url = buildEndpoint(endpoints.customElements?.upsert, '');
-            const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+            const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
+            this.customElementDetailCache[id] = { ...(this.customElementDetailCache[id] || {}), ...payload };
           } catch (e) {
             console.error('Failed to rename custom element', e);
             toast.error('Failed to rename custom element');

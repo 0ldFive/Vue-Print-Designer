@@ -601,17 +601,30 @@ class PrintDesignerElement extends HTMLElement {
     }
     if (mode === 'remote') {
       try {
+        const cachedTemplate = (this.templateStore as any).templateDetailCache?.[id] || {};
+        const requestPayload = {
+          ...cachedTemplate,
+          ...next,
+          id: next.id,
+          name: next.name,
+          data: next.data || cachedTemplate.data || {}
+        };
         const url = buildEndpoint(endpoints.templates?.upsert || '');
-        const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, next);
+        const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const merged = { ...next, ...(result && typeof result === 'object' ? result : {}) };
-        const remoteId = merged.id || next.id;
-        const targetIndex = this.templateStore.templates.findIndex((t) => t.id === next.id);
+        const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
+        const remoteId = merged.id || requestPayload.id;
+        const targetIndex = this.templateStore.templates.findIndex((t) => t.id === requestPayload.id);
         const updated = { ...merged, id: remoteId };
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
         else this.templateStore.templates.unshift(updated);
-        if (this.templateStore.currentTemplateId === next.id) {
+        (this.templateStore as any).templateDetailCache = (this.templateStore as any).templateDetailCache || {};
+        (this.templateStore as any).templateDetailCache[remoteId] = {
+          ...((this.templateStore as any).templateDetailCache[remoteId] || {}),
+          ...updated
+        };
+        if (this.templateStore.currentTemplateId === requestPayload.id) {
           this.templateStore.currentTemplateId = remoteId;
         }
         
@@ -703,16 +716,29 @@ class PrintDesignerElement extends HTMLElement {
     }
     if (mode === 'remote') {
       try {
+        const cachedCustomElement = (this.designerStore as any).customElementDetailCache?.[id] || {};
+        const requestPayload = {
+          ...cachedCustomElement,
+          ...next,
+          id: next.id,
+          name: next.name,
+          element: cloneDeep(next.element || cachedCustomElement.element || {})
+        };
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
-        const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, next);
+        const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
-        const merged = { ...next, ...(result && typeof result === 'object' ? result : {}) };
-        const remoteId = merged.id || next.id;
-        const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === next.id);
+        const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
+        const remoteId = merged.id || requestPayload.id;
+        const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === requestPayload.id);
         const updated = { ...merged, id: remoteId };
         if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
         else this.designerStore.customElements.push(updated);
+        (this.designerStore as any).customElementDetailCache = (this.designerStore as any).customElementDetailCache || {};
+        (this.designerStore as any).customElementDetailCache[remoteId] = {
+          ...((this.designerStore as any).customElementDetailCache[remoteId] || {}),
+          ...updated
+        };
         
         await this.designerStore.loadCustomElements();
         return remoteId;

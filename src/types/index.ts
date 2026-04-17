@@ -188,6 +188,7 @@ export interface DesignerState {
   pages: Page[];
   currentPageIndex: number;
   customElements: CustomElementTemplate[];
+  customElementDetailCache: Record<string, any>;
   templateContextMenuConfig?: ListContextMenuConfig | null;
   customElementContextMenuConfig?: ListContextMenuConfig | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
