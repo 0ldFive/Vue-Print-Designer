@@ -7,6 +7,7 @@ import { useTemplateStore } from '@/stores/templates';
 import { useAutoSave } from '@/composables/useAutoSave';
 import { useTheme } from '@/composables/useTheme';
 import debounce from 'lodash/debounce';
+import { canEditEntity } from '@/utils/entityConstraints';
 import { pxToUnit, type Unit } from '@/utils/units';
 import { parseColor, toRgbaString } from '@/utils/color';
 import Header from './layout/Header.vue';
@@ -128,7 +129,7 @@ const debouncedAutoSave = debounce(() => {
   if (store.editingCustomElementId) return;
   if (autoSave.value && templateStore.currentTemplateId && !templateStore.isSaving) {
     const currentTemplate = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
-    if (currentTemplate) {
+    if (currentTemplate && canEditEntity(currentTemplate)) {
       templateStore.saveCurrentTemplate(currentTemplate.name);
     }
   }

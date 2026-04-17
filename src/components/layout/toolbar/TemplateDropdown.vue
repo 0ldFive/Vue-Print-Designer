@@ -57,10 +57,18 @@ const getModalConfigItem = (mode: 'create' | 'edit' | 'copy'): TemplateModalConf
 const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'edit' | 'copy') => {
   if (!templateId) return {};
   const template = store.templates.find(item => item.id === templateId);
-  const fromTemplate = template?.ext?.templateModalForm?.[mode];
-  if (fromTemplate && typeof fromTemplate === 'object') return { ...fromTemplate };
-  const fromCache = store.templateDetailCache?.[templateId]?.ext?.templateModalForm?.[mode];
-  if (fromCache && typeof fromCache === 'object') return { ...fromCache };
+  const extForm = template?.ext?.templateModalForm || {};
+  const cacheForm = store.templateDetailCache?.[templateId]?.ext?.templateModalForm || {};
+  
+  // Use current mode's values if available
+  if (extForm[mode] && typeof extForm[mode] === 'object') return { ...extForm[mode] };
+  if (cacheForm[mode] && typeof cacheForm[mode] === 'object') return { ...cacheForm[mode] };
+  
+  // Fallback to the last saved mode's values
+  const lastMode = extForm.lastMode || cacheForm.lastMode;
+  if (lastMode && extForm[lastMode] && typeof extForm[lastMode] === 'object') return { ...extForm[lastMode] };
+  if (lastMode && cacheForm[lastMode] && typeof cacheForm[lastMode] === 'object') return { ...cacheForm[lastMode] };
+  
   return {};
 };
 
@@ -208,7 +216,7 @@ const selectTemplate = (template: Template) => {
   // Auto-save current template if it exists
   if (store.currentTemplateId) {
     const currentTemplate = store.templates.find(tpl => tpl.id === store.currentTemplateId);
-    if (currentTemplate) {
+    if (currentTemplate && canEditEntity(currentTemplate)) {
       store.saveCurrentTemplate(currentTemplate.name);
     }
   }
@@ -470,7 +478,7 @@ const handleModalSave = (payload: ModalSavePayload) => {
     // Auto-save current template before creating new one
     if (store.currentTemplateId) {
       const currentTemplate = store.templates.find(tpl => tpl.id === store.currentTemplateId);
-      if (currentTemplate) {
+      if (currentTemplate && canEditEntity(currentTemplate)) {
         store.saveCurrentTemplate(currentTemplate.name);
       }
     }

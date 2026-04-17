@@ -73,18 +73,29 @@ const applyModalExtraValues = (
   values?: Record<string, any>
 ) => {
   const normalized = normalizeModalExtraValues(values);
-  if (!normalized) return templateLike;
   const ext = templateLike.ext && typeof templateLike.ext === 'object' ? templateLike.ext : {};
   const templateModalForm = ext.templateModalForm && typeof ext.templateModalForm === 'object'
     ? ext.templateModalForm
     : {};
+
+  const lastMode = templateModalForm.lastMode;
+  let modeData = normalized;
+
+  if (!modeData) {
+    if (templateModalForm[mode]) {
+      modeData = templateModalForm[mode];
+    } else if (lastMode && templateModalForm[lastMode]) {
+      modeData = templateModalForm[lastMode];
+    }
+  }
+
   return {
     ...templateLike,
     ext: {
       ...ext,
       templateModalForm: {
         ...templateModalForm,
-        [mode]: normalized,
+        ...(modeData ? { [mode]: modeData } : {}),
         lastMode: mode,
         updatedAt: Date.now()
       }
