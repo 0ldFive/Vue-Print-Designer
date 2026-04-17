@@ -728,14 +728,14 @@ You can browse available `material-symbols` icons here: <https://icon-sets.iconi
 
 For `setTemplateContextMenu` (Template List):
 - `testData`: Test Data (Icon: `material-symbols:data-object`)
-- `rename`: Rename (Icon: `material-symbols:edit`)
+- `edit`: Edit (Icon: `material-symbols:edit`)
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
 
 For `setCustomElementContextMenu` (Custom Element List):
 - `editElement`: Edit Element (Icon: `material-symbols:edit`)
 - `testData`: Test Data (Icon: `material-symbols:data-object`)
-- `rename`: Rename (Icon: `material-symbols:edit`)
+- `edit`: Edit (Icon: `material-symbols:edit`)
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
 
@@ -930,6 +930,9 @@ When integrating with the designer's cloud CRUD capabilities, your backend servi
 **1) List templates**
 
 `GET /api/print/templates`
+
+Ordering rule (Remote CRUD): the frontend renders the template list strictly in the order returned by this API, and no longer reorders by `updatedAt` or copy actions on the client side.  
+So the backend must return a **stable, business-expected** order (e.g. `displayOrder ASC, id ASC`), otherwise the visible order will change with API responses.
 
 Response:
 

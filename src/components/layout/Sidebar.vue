@@ -45,7 +45,7 @@ const testDataContent = ref('');
 const testDataTarget = ref<CustomElementTemplate | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
 
-type CustomMenuActionKey = 'editElement' | 'testData' | 'rename' | 'copy' | 'delete';
+type CustomMenuActionKey = 'editElement' | 'testData' | 'edit' | 'copy' | 'delete';
 type CustomMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 
 const resolveIconFromIconField = (icon: string | undefined) => {
@@ -250,7 +250,7 @@ const handleTestData = (item: CustomElementTemplate) => {
 const defaultCustomMenuItems = computed<CustomMenuItemView[]>(() => ([
   { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject, hidden: ({ item }) => !supportsTestData(item as CustomElementTemplate) },
-  { key: 'rename', actionKey: 'rename', label: t('sidebar.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'edit', actionKey: 'edit', label: t('sidebar.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
   { key: 'delete', actionKey: 'delete', label: t('sidebar.delete'), iconComponent: Delete, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
 ]));
@@ -303,7 +303,7 @@ const runBuiltInCustomMenuAction = (actionKey: string | undefined, item: CustomE
     handleTestData(item);
     return;
   }
-  if (key === 'rename') {
+  if (key === 'edit') {
     handleRename(item);
     return;
   }

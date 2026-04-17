@@ -19,6 +19,7 @@ const customWidth = ref(PAPER_SIZES.A4.width);
 const customHeight = ref(PAPER_SIZES.A4.height);
 const showPaperSettings = ref(false);
 const showAdvancedSettings = ref(false);
+const isPageSettingsReadOnly = computed(() => !store.isTemplateEditable);
 
 const canvasBackground = computed({
   get: () => store.canvasBackground,
@@ -87,6 +88,7 @@ const formatUnitValue = (px: number) => {
 };
 
 const handlePaperChange = () => {
+  if (isPageSettingsReadOnly.value) return;
   if (selectedPaper.value !== 'CUSTOM') {
     const size = PAPER_SIZES[selectedPaper.value];
     customWidth.value = size.width;
@@ -96,10 +98,21 @@ const handlePaperChange = () => {
 };
 
 const applyCustomSize = () => {
+  if (isPageSettingsReadOnly.value) return;
   store.setCanvasSize(customWidth.value, customHeight.value);
   if (!Object.values(PAPER_SIZES).some(s => s.width === customWidth.value && s.height === customHeight.value)) {
     selectedPaper.value = 'CUSTOM';
   }
+};
+
+const togglePaperSettings = () => {
+  if (isPageSettingsReadOnly.value) return;
+  showPaperSettings.value = !showPaperSettings.value;
+};
+
+const openAdvancedSettings = () => {
+  if (isPageSettingsReadOnly.value) return;
+  showAdvancedSettings.value = true;
 };
 
 // Sync local state with store
@@ -122,28 +135,38 @@ watch(() => store.canvasSize, (newSize) => {
 watch(showAdvancedSettings, (val) => {
   store.setDisableGlobalShortcuts(val);
 });
+
+watch(isPageSettingsReadOnly, (readOnly) => {
+  if (readOnly) {
+    showPaperSettings.value = false;
+    showAdvancedSettings.value = false;
+  }
+});
 </script>
 
 <template>
   <div class="relative">
     <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
       <button 
-        @click="showPaperSettings = !showPaperSettings"
-        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors dark:text-gray-200"
+        @click="togglePaperSettings"
+        :disabled="isPageSettingsReadOnly"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
         :title="t('editor.paperSettings')"
       >
         <Settings class="w-4 h-4" />
       </button>
       <button 
-        @click="showPaperSettings = !showPaperSettings"
-        class="flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-1 py-0.5 transition-colors w-16 text-center"
+        @click="togglePaperSettings"
+        :disabled="isPageSettingsReadOnly"
+        class="flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-1 py-0.5 transition-colors w-16 text-center disabled:opacity-50 disabled:cursor-not-allowed"
         :title="t('editor.paperSettings')"
       >
         <span class="truncate">{{ selectedPaper === 'CUSTOM' ? t('editor.custom') : selectedPaper }}</span>
       </button>
       <button 
-        @click="showPaperSettings = !showPaperSettings"
-        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors dark:text-gray-200"
+        @click="togglePaperSettings"
+        :disabled="isPageSettingsReadOnly"
+        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
         :title="t('editor.paperSettings')"
       >
         <ChevronDown class="w-4 h-4" />
@@ -380,15 +403,17 @@ watch(showAdvancedSettings, (val) => {
 
       <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
         <button 
-          @click="store.addPage(); showPaperSettings = false" 
-          class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors text-sm font-medium"
+          @click="store.addPage(); showPaperSettings = false"
+          :disabled="isPageSettingsReadOnly"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus class="w-4 h-4" />
           <span>{{ t('editor.addNewPage') }}</span>
         </button>
         <button
-          @click="showAdvancedSettings = true"
-          class="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"
+          @click="openAdvancedSettings"
+          :disabled="isPageSettingsReadOnly"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Settings class="w-4 h-4" />
           <span>{{ t('editor.advancedSettings') }}</span>

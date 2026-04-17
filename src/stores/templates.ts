@@ -426,11 +426,6 @@ export const useTemplateStore = defineStore('templates', {
             this.templateDetailCache[newTemplate.id] = { ...(this.templateDetailCache[newTemplate.id] || {}), ...newTemplate };
             
             await this.loadTemplates();
-            const copiedIndex = this.templates.findIndex(item => item.id === newTemplate.id);
-            if (copiedIndex > 0) {
-              const [copied] = this.templates.splice(copiedIndex, 1);
-              this.templates.unshift(copied);
-            }
             this.currentTemplateId = newTemplate.id;
             await this.loadTemplate(newTemplate.id);
           } catch (e) {

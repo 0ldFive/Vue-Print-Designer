@@ -45,7 +45,7 @@ const testDataContent = ref('');
 const testDataTarget = ref<Template | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
 
-type TemplateMenuActionKey = 'testData' | 'rename' | 'copy' | 'delete';
+type TemplateMenuActionKey = 'testData' | 'edit' | 'copy' | 'delete';
 type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 type ModalSavePayload = string | Record<string, any>;
 const maxVisibleTemplateTags = 2;
@@ -447,7 +447,7 @@ const handleTestData = (template: Template) => {
 
 const defaultTemplateMenuItems = computed<TemplateMenuItemView[]>(() => ([
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject },
-  { key: 'rename', actionKey: 'rename', label: t('common.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'edit', actionKey: 'edit', label: t('common.edit'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'copy', actionKey: 'copy', label: t('common.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
   { key: 'delete', actionKey: 'delete', label: t('common.delete'), iconComponent: Trash2, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
 ]));
@@ -496,7 +496,7 @@ const runBuiltInMenuAction = (actionKey: string | undefined, template: Template)
     handleTestData(template);
     return;
   }
-  if (key === 'rename') {
+  if (key === 'edit') {
     handleEdit(template);
     return;
   }

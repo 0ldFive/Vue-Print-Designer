@@ -40,6 +40,7 @@
       <button id="btn-modal-cases-guide">查看 Modal 用例步骤</button>
       <button id="btn-seed-permission-templates">注入权限模板</button>
       <button id="btn-load-readonly-template">加载只读模板</button>
+      <button id="btn-test-paper-settings-readonly">测试页面设置只读模式</button>
       <button id="btn-try-upsert-readonly">测试只读模板更新拦截</button>
       <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
       <button id="btn-load-editable-template">加载可编辑模板</button>
@@ -272,6 +273,59 @@
     document.getElementById('btn-load-readonly-template').addEventListener('click', () => {
       const ok = designer.loadTemplate('tpl-readonly-system');
       alert(ok ? '已加载只读模板，可尝试拖拽/属性编辑验证 UI 禁用' : '加载失败，请先点击“注入权限模板”');
+    });
+
+    document.getElementById('btn-test-paper-settings-readonly').addEventListener('click', async () => {
+      const ensureReadonlyTemplate = () => {
+        const readonly = designer.getTemplate('tpl-readonly-system');
+        const editable = designer.getTemplate('tpl-editable-demo');
+        if (readonly && editable) return;
+        designer.setTemplates([
+          {
+            id: 'tpl-readonly-system',
+            name: '系统只读模板',
+            editable: false,
+            deletable: false,
+            copyable: true,
+            data: { pages: [{ id: 'page-readonly', elements: [] }] }
+          },
+          {
+            id: 'tpl-editable-demo',
+            name: '可编辑模板',
+            editable: true,
+            deletable: true,
+            copyable: true,
+            data: { pages: [{ id: 'page-editable', elements: [] }] }
+          }
+        ], { currentTemplateId: 'tpl-readonly-system' });
+      };
+
+      ensureReadonlyTemplate();
+      designer.loadTemplate('tpl-readonly-system');
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      const root = designer.shadowRoot;
+      if (!root) {
+        alert('FAIL: 未找到组件 shadowRoot，无法执行自动检测');
+        return;
+      }
+
+      const triggerButtons = Array.from(root.querySelectorAll('button[title="页面设置"],button[title="Paper Settings"]'));
+      const allDisabled = triggerButtons.length > 0 && triggerButtons.every(btn => btn.disabled);
+
+      // 尝试点击入口，确认不会展开页面设置面板
+      triggerButtons[0]?.click();
+      await new Promise(resolve => setTimeout(resolve, 80));
+      const panel = root.querySelector('div.absolute.top-full.left-0.mt-2.w-64');
+      const panelBlocked = !panel;
+
+      const passed = allDisabled && panelBlocked;
+      alert([
+        passed ? 'PASS: 页面设置在只读模板下不可操作' : 'FAIL: 页面设置只读限制未生效',
+        `入口按钮数: ${triggerButtons.length}`,
+        `按钮均禁用: ${allDisabled ? '是' : '否'}`,
+        `点击后未展开面板: ${panelBlocked ? '是' : '否'}`
+      ].join('\n'));
     });
 
     document.getElementById('btn-load-editable-template').addEventListener('click', () => {
