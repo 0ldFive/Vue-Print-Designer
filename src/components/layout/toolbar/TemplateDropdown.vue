@@ -277,11 +277,15 @@ const handleCreate = () => {
   isOpen.value = false;
 };
 
-const handleEdit = (template: Template) => {
+const handleEdit = async (template: Template) => {
   if (!canEditEntity(template)) {
     toast.warning(t('toast.templateReadOnly'));
     return;
   }
+  
+  // Ensure we have the full detail loaded to populate custom modal fields properly
+  await store.fetchTemplateDetail(template.id);
+  
   activeMenuId.value = null;
   modalMode.value = 'edit';
   targetTemplateId.value = template.id;
@@ -291,11 +295,15 @@ const handleEdit = (template: Template) => {
   isOpen.value = false; // Close dropdown? Or keep open? Close is better.
 };
 
-const handleCopy = (template: Template) => {
+const handleCopy = async (template: Template) => {
   if (!canCopyEntity(template)) {
     toast.warning(t('toast.templateCopyNotAllowed'));
     return;
   }
+  
+  // Ensure we have the full detail loaded to populate custom modal fields properly
+  await store.fetchTemplateDetail(template.id);
+  
   modalMode.value = 'copy';
   targetTemplateId.value = template.id;
   modalInitialName.value = `${template.name} Copy`;

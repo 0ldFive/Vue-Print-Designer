@@ -111,6 +111,47 @@ export const useTemplateStore = defineStore('templates', {
     isSaving: false,
   }),
   actions: {
+    async fetchTemplateDetail(id: string) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      if (mode === 'remote') {
+        try {
+          const url = buildEndpoint(endpoints.templates?.get, id);
+          const options = buildFetchOptions(endpoints.templates?.get, 'GET', headers);
+          const res = await (fetcher || fetch)(url, options);
+          const payload = await res.json();
+          const t = payload?.template || payload;
+          if (!t) return null;
+          const data = sanitizeTemplateData(t.data);
+          
+          const currentId = t.id || id;
+          const detail = {
+            id: currentId,
+            name: t.name || '',
+            data,
+            updatedAt: t.updatedAt || Date.now(),
+            system: t.system,
+            editable: t.editable,
+            deletable: t.deletable,
+            copyable: t.copyable,
+            permissions: t.permissions,
+            ext: t.ext || {}
+          };
+          const normalized = normalizeEntityConstraints(detail);
+          this.templateDetailCache[currentId] = normalized;
+          return normalized as Template;
+        } catch (e) {
+          console.error('Failed to fetch template detail', e);
+          return null;
+        }
+      } else {
+        const t = this.templates.find(item => item.id === id);
+        if (t) {
+          this.templateDetailCache[id] = t;
+          return t;
+        }
+        return null;
+      }
+    },
     async loadTemplates() {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
@@ -502,15 +543,12 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.get, id);
-          const options = buildFetchOptions(endpoints.templates?.get, 'GET', headers);
-          const res = await (fetcher || fetch)(url, options);
-          const payload = await res.json();
-          const t = payload?.template || payload;
-          if (!t) return;
+          const detail = await this.fetchTemplateDetail(id);
+          if (!detail) return;
+          const t = detail;
           const designerStore = useDesignerStore();
           designerStore.resetCanvas();
-          const data = sanitizeTemplateData(t.data);
+          const data = t.data;
           if (data.pages.length > 0) designerStore.pages = data.pages;
           if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
           if (data.guides) designerStore.guides = data.guides;
@@ -533,18 +571,6 @@ export const useTemplateStore = defineStore('templates', {
           designerStore.historyFuture = [];
           const currentId = t.id || id;
           this.currentTemplateId = currentId;
-          this.templateDetailCache[currentId] = {
-            id: t.id || currentId,
-            name: t.name || '',
-            data,
-            updatedAt: t.updatedAt || Date.now(),
-            system: t.system,
-            editable: t.editable,
-            deletable: t.deletable,
-            copyable: t.copyable,
-            permissions: t.permissions,
-            ext: t.ext || {}
-          };
           
           const existingIndex = this.templates.findIndex(item => item.id === currentId);
           if (existingIndex >= 0) {
