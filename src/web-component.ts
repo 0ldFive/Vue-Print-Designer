@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
-import { createI18nInstance } from './locales';
+import i18n, { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
 import PrintDesigner from './components/PrintDesigner.vue';
 import { useTheme } from './composables/useTheme';
@@ -22,7 +22,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
-import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem } from './types';
+import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig, TemplateListTagResolver } from './types';
 import { canDeleteEntity, canEditEntity, normalizeEntityConstraints } from './utils/entityConstraints';
 
 loader.config({
@@ -79,6 +79,8 @@ export interface DesignerListContextMenuConfig {
   mode?: 'replace' | 'append';
   items: DesignerListContextMenuItem[];
 }
+export type DesignerTemplateModalFormConfig = TemplateModalFormConfig;
+export type DesignerTemplateTagResolver = TemplateListTagResolver;
 
 import { toast } from './utils/toast';
 import { uiConfirm } from './utils/confirm';
@@ -585,7 +587,7 @@ class PrintDesignerElement extends HTMLElement {
     const index = this.templateStore.templates.findIndex((t) => t.id === id);
     const existing = index >= 0 ? this.templateStore.templates[index] : {};
     if (index >= 0 && !canEditEntity(existing)) {
-      toast.warning('系统模板为只读，无法编辑');
+      toast.warning(i18n.global.t('toast.templateReadOnly'));
       return null;
     }
     const next = normalizeEntityConstraints({
@@ -599,7 +601,7 @@ class PrintDesignerElement extends HTMLElement {
     if (index >= 0) {
       this.templateStore.templates[index] = next;
     } else {
-      this.templateStore.templates.unshift(next);
+      this.templateStore.templates.push(next);
     }
     if (options.setCurrent) {
       this.templateStore.currentTemplateId = id;
@@ -623,7 +625,7 @@ class PrintDesignerElement extends HTMLElement {
         const targetIndex = this.templateStore.templates.findIndex((t) => t.id === requestPayload.id);
         const updated = normalizeEntityConstraints({ ...merged, id: remoteId });
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
-        else this.templateStore.templates.unshift(updated);
+        else this.templateStore.templates.push(updated);
         (this.templateStore as any).templateDetailCache = (this.templateStore as any).templateDetailCache || {};
         (this.templateStore as any).templateDetailCache[remoteId] = {
           ...((this.templateStore as any).templateDetailCache[remoteId] || {}),
@@ -637,7 +639,7 @@ class PrintDesignerElement extends HTMLElement {
         return remoteId;
       } catch (e) {
         console.error('Failed to upsert template', e);
-        toast.error('Failed to upsert template');
+        toast.error(i18n.global.t('toast.templateUpsertFailed'));
         return next.id;
       }
     }
@@ -680,7 +682,7 @@ class PrintDesignerElement extends HTMLElement {
     if (!this.templateStore) return;
     const existing = this.templateStore.templates.find(t => t.id === id);
     if (existing && !canDeleteEntity(existing)) {
-      toast.warning('System template cannot be deleted');
+      toast.warning(i18n.global.t('toast.templateDeleteNotAllowed'));
       return;
     }
     if (options.confirm !== false) {
@@ -719,7 +721,7 @@ class PrintDesignerElement extends HTMLElement {
     const index = this.designerStore.customElements.findIndex((el) => el.id === id);
     const existing = index >= 0 ? this.designerStore.customElements[index] : {};
     if (index >= 0 && !canEditEntity(existing)) {
-      toast.warning('系统自定义元素为只读，无法编辑');
+      toast.warning(i18n.global.t('toast.customElementReadOnly'));
       return null;
     }
     const next = normalizeEntityConstraints({ ...existing, ...customElement, id, name: customElement.name, element: cloneDeep(customElement.element) });
@@ -758,7 +760,7 @@ class PrintDesignerElement extends HTMLElement {
         return remoteId;
       } catch (e) {
         console.error('Failed to upsert custom element', e);
-        toast.error('Failed to upsert custom element');
+        toast.error(i18n.global.t('toast.customElementUpsertFailed'));
         return next.id;
       }
     }
@@ -782,7 +784,7 @@ class PrintDesignerElement extends HTMLElement {
     if (!this.designerStore) return;
     const existing = this.designerStore.customElements.find(e => e.id === id);
     if (existing && !canDeleteEntity(existing)) {
-      toast.warning('System custom element cannot be deleted');
+      toast.warning(i18n.global.t('toast.customElementDeleteNotAllowed'));
       return;
     }
     if (options.confirm !== false) {
@@ -833,6 +835,26 @@ class PrintDesignerElement extends HTMLElement {
   clearCustomElementContextMenu() {
     if (!this.designerStore) return;
     this.designerStore.setCustomElementContextMenuConfig(null);
+  }
+
+  setTemplateModalForm(config: DesignerTemplateModalFormConfig) {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateModalFormConfig(config || null);
+  }
+
+  clearTemplateModalForm() {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateModalFormConfig(null);
+  }
+
+  setTemplateTagResolver(resolver: DesignerTemplateTagResolver) {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateTagResolver(typeof resolver === 'function' ? resolver : null);
+  }
+
+  clearTemplateTagResolver() {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateTagResolver(null);
   }
 }
 

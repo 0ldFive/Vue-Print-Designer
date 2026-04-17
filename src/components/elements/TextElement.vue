@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import { normalizeVariableKey } from '@/utils/variables';
@@ -9,6 +9,9 @@ const props = defineProps<{
 }>();
 
 const store = useDesignerStore();
+const isInlineEditing = ref(false);
+const editingValue = ref('');
+const editorRef = ref<HTMLTextAreaElement | null>(null);
 
 const resolvedText = computed(() => {
   const variable = props.element.variable || '';
@@ -24,6 +27,66 @@ const resolvedText = computed(() => {
 
   return props.element.variable || props.element.content;
 });
+
+const canInlineEdit = computed(() => {
+  return store.isTemplateEditable && !props.element.locked;
+});
+
+const justifyContent = computed(() => {
+  const verticalAlign = props.element.style.verticalAlign;
+  if (verticalAlign === 'middle') return 'center';
+  if (verticalAlign === 'bottom') return 'flex-end';
+  return 'flex-start';
+});
+
+const startInlineEdit = async (event: MouseEvent) => {
+  if (!canInlineEdit.value) return;
+  const wrapper = (event.currentTarget as HTMLElement | null)?.closest('.element-wrapper');
+  if (wrapper?.getAttribute('data-read-only') === 'true') return;
+  if (store.selectedElementId !== props.element.id && !store.selectedElementIds.includes(props.element.id)) return;
+
+  event.stopPropagation();
+  editingValue.value = props.element.content || '';
+  isInlineEditing.value = true;
+  await nextTick();
+  editorRef.value?.focus();
+  editorRef.value?.select();
+};
+
+const commitInlineEdit = () => {
+  if (!isInlineEditing.value) return;
+  isInlineEditing.value = false;
+  if (editingValue.value !== (props.element.content || '')) {
+    store.updateElement(props.element.id, { content: editingValue.value });
+  }
+};
+
+const cancelInlineEdit = () => {
+  if (!isInlineEditing.value) return;
+  isInlineEditing.value = false;
+  editingValue.value = props.element.content || '';
+};
+
+const handleEditorKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    cancelInlineEdit();
+    return;
+  }
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    commitInlineEdit();
+  }
+};
+
+watch(
+  () => store.selectedElementId,
+  (id) => {
+    if (id !== props.element.id) {
+      commitInlineEdit();
+    }
+  }
+);
 </script>
 
 <script lang="ts">
@@ -59,6 +122,18 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             { label: 'properties.option.left', value: 'left' },
             { label: 'properties.option.center', value: 'center' },
             { label: 'properties.option.right', value: 'right' }
+          ]
+        },
+        {
+          label: 'properties.label.verticalAlign',
+          type: 'select',
+          target: 'style',
+          key: 'verticalAlign',
+          options: [
+            { label: 'properties.option.default', value: '' },
+            { label: 'properties.option.top', value: 'top' },
+            { label: 'properties.option.middle', value: 'middle' },
+            { label: 'properties.option.bottom', value: 'bottom' }
           ]
         },
         {
@@ -109,7 +184,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden" :style="{
+  <div class="w-full h-full overflow-hidden" @dblclick="startInlineEdit" :style="{
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent,
     fontSize: `${element.style.fontSize}px`,
     fontFamily: element.style.fontFamily,
     fontWeight: element.style.fontWeight,
@@ -117,9 +195,29 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     textAlign: element.style.textAlign,
     textDecoration: element.style.textDecoration,
     color: element.style.color,
-    padding: `${element.style.padding}px`,
+    padding: `${element.style.padding || 0}px`,
     writingMode: element.style.writingMode as any || 'horizontal-tb',
+    whiteSpace: 'pre-wrap'
   }">
-    {{ resolvedText }}
+    <textarea
+      v-if="isInlineEditing"
+      ref="editorRef"
+      v-model="editingValue"
+      class="w-full h-full resize-none bg-transparent outline-none"
+      :style="{
+        fontSize: `${element.style.fontSize}px`,
+        fontFamily: element.style.fontFamily,
+        fontWeight: element.style.fontWeight,
+        fontStyle: element.style.fontStyle,
+        textAlign: element.style.textAlign,
+        color: element.style.color,
+        padding: `${element.style.padding || 0}px`
+      }"
+      @mousedown.stop
+      @click.stop
+      @blur="commitInlineEdit"
+      @keydown="handleEditorKeydown"
+    />
+    <template v-else>{{ resolvedText }}</template>
   </div>
 </template>

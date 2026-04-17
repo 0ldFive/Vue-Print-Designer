@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
-import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem } from '@/types';
+import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem, type TemplateModalFormConfig, type TemplateModalField, type TemplateListTagResolver } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { toast } from '../utils/toast';
 import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
 import { useTemplateStore } from './templates';
+import i18n from '../locales';
 
 const defaultWatermark: WatermarkSettings = {
   enabled: false,
@@ -111,6 +112,39 @@ const normalizeContextMenuConfig = (config: ListContextMenuConfig | null | undef
   };
 };
 
+const normalizeTemplateModalFields = (fields: TemplateModalField[] | undefined): TemplateModalField[] | undefined => {
+  if (!Array.isArray(fields)) return undefined;
+  const normalized = fields
+    .filter((field) => field && typeof field.key === 'string' && field.key && typeof field.type === 'string')
+    .map((field) => ({
+      ...field,
+      options: Array.isArray(field.options)
+        ? field.options.filter(opt => opt && typeof opt.label === 'string')
+        : undefined
+    }));
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const normalizeTemplateModalFormConfig = (config: TemplateModalFormConfig | null | undefined): TemplateModalFormConfig | null => {
+  if (!config || typeof config !== 'object') return null;
+  const next: TemplateModalFormConfig = {};
+  (['create', 'rename', 'copy'] as const).forEach((mode) => {
+    const item = config[mode];
+    if (!item || typeof item !== 'object') return;
+    const fields = normalizeTemplateModalFields(item.fields);
+    const initialValues = item.initialValues && typeof item.initialValues === 'object'
+      ? { ...item.initialValues }
+      : undefined;
+    if (fields || initialValues) {
+      next[mode] = {
+        ...(fields ? { fields } : {}),
+        ...(initialValues ? { initialValues } : {})
+      };
+    }
+  });
+  return Object.keys(next).length > 0 ? next : null;
+};
+
 export const useDesignerStore = defineStore('designer', {
   state: (): DesignerState => ({
     unit: (localStorage.getItem('print-designer-unit') as 'mm' | 'px' | 'pt' | 'in' | 'cm') || 'mm',
@@ -122,6 +156,8 @@ export const useDesignerStore = defineStore('designer', {
     customElementDetailCache: {} as Record<string, any>,
     templateContextMenuConfig: null,
     customElementContextMenuConfig: null,
+    templateModalFormConfig: null,
+    templateTagResolver: null,
     contextMenuEventEmitter: null,
     testData: {},
     editingCustomElementId: null,
@@ -174,6 +210,12 @@ export const useDesignerStore = defineStore('designer', {
     },
     setCustomElementContextMenuConfig(config: ListContextMenuConfig | null) {
       this.customElementContextMenuConfig = normalizeContextMenuConfig(config);
+    },
+    setTemplateModalFormConfig(config: TemplateModalFormConfig | null) {
+      this.templateModalFormConfig = normalizeTemplateModalFormConfig(config);
+    },
+    setTemplateTagResolver(resolver: TemplateListTagResolver | null) {
+      this.templateTagResolver = typeof resolver === 'function' ? resolver : null;
     },
     setClientUrl(url: string) {
       this.clientUrl = url;
@@ -354,7 +396,7 @@ export const useDesignerStore = defineStore('designer', {
       if (!element) return false;
 
       if (!canEditEntity(template)) {
-        toast.warning('系统自定义元素为只读，无法编辑');
+        toast.warning(i18n.global.t('toast.customElementReadOnly'));
         return false;
       }
 
@@ -1746,7 +1788,7 @@ export const useDesignerStore = defineStore('designer', {
       const el = this.customElements.find(el => el.id === id);
       if (!el) return;
       if (!canCopyEntity(el)) {
-        toast.warning('System custom element does not allow copy');
+        toast.warning(i18n.global.t('toast.customElementCopyNotAllowed'));
         return;
       }
       const cachedElement = this.customElementDetailCache[id];
@@ -1761,7 +1803,19 @@ export const useDesignerStore = defineStore('designer', {
         ...source,
         id: uuidv4(),
         name: `${source.name} Copy`,
-        element: cloneDeep(source.element)
+        element: cloneDeep(source.element),
+        // A copied custom element should become a normal editable entity by default.
+        system: false,
+        editable: true,
+        deletable: true,
+        copyable: true,
+        permissions: {
+          ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
+          system: false,
+          editable: true,
+          deletable: true,
+          copyable: true
+        }
       }) as CustomElementTemplate;
       if (mode === 'remote') {
         try {
@@ -1778,7 +1832,7 @@ export const useDesignerStore = defineStore('designer', {
           await this.loadCustomElements();
         } catch (e) {
           console.error('Failed to copy custom element', e);
-          toast.error('Failed to copy custom element');
+          toast.error(i18n.global.t('toast.customElementCopyFailed'));
         }
       } else {
         this.customElements.push(template);
@@ -1807,7 +1861,7 @@ export const useDesignerStore = defineStore('designer', {
           await this.loadCustomElements();
         } catch (e) {
           console.error('Failed to add custom element', e);
-          toast.error('Failed to add custom element');
+          toast.error(i18n.global.t('toast.customElementAddFailed'));
         }
       } else {
         this.customElements.push(template);
@@ -1818,7 +1872,7 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const existing = this.customElements.find(el => el.id === id);
       if (existing && !canDeleteEntity(existing)) {
-        toast.warning('System custom element cannot be deleted');
+        toast.warning(i18n.global.t('toast.customElementDeleteNotAllowed'));
         return;
       }
       const index = this.customElements.findIndex(el => el.id === id);
@@ -1832,7 +1886,7 @@ export const useDesignerStore = defineStore('designer', {
             await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to remove custom element', e);
-            toast.error('Failed to remove custom element');
+            toast.error(i18n.global.t('toast.customElementRemoveFailed'));
           }
           return;
         }
@@ -1844,7 +1898,7 @@ export const useDesignerStore = defineStore('designer', {
       const template = this.customElements.find(el => el.id === id);
       if (template) {
         if (!canEditEntity(template)) {
-          toast.warning('系统自定义元素为只读，无法编辑');
+          toast.warning(i18n.global.t('toast.customElementReadOnly'));
           return;
         }
         template.name = newName;
@@ -1864,7 +1918,7 @@ export const useDesignerStore = defineStore('designer', {
             this.customElementDetailCache[id] = { ...(this.customElementDetailCache[id] || {}), ...payload };
           } catch (e) {
             console.error('Failed to rename custom element', e);
-            toast.error('Failed to rename custom element');
+            toast.error(i18n.global.t('toast.customElementRenameFailed'));
           }
           return;
         }

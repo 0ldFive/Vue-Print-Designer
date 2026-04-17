@@ -42,6 +42,7 @@ export interface ElementStyle {
   fontWeight?: string;
   fontStyle?: string;
   textAlign?: 'left' | 'center' | 'right';
+  verticalAlign?: 'top' | 'middle' | 'bottom';
   textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
   color?: string;
   backgroundColor?: string;
@@ -166,6 +167,45 @@ export interface ListContextMenuConfig {
   items: ListContextMenuItem[];
 }
 
+export type TemplateModalMode = 'create' | 'rename' | 'copy';
+export type TemplateModalFieldType = 'input' | 'number' | 'textarea' | 'select' | 'radio' | 'date' | 'datetime';
+
+export interface TemplateModalFieldOption {
+  label: string;
+  value: string | number;
+}
+
+export interface TemplateModalField {
+  key: string;
+  label?: string;
+  type: TemplateModalFieldType;
+  required?: boolean;
+  placeholder?: string;
+  options?: TemplateModalFieldOption[];
+  min?: number;
+  max?: number;
+  step?: number;
+  rows?: number;
+}
+
+export interface TemplateModalConfigItem {
+  fields?: TemplateModalField[];
+  initialValues?: Record<string, any>;
+}
+
+export interface TemplateModalFormConfig {
+  create?: TemplateModalConfigItem;
+  rename?: TemplateModalConfigItem;
+  copy?: TemplateModalConfigItem;
+}
+
+export interface TemplateListTag {
+  label: string;
+  color?: string;
+}
+
+export type TemplateListTagResolver = (template: any) => TemplateListTag[] | null | undefined;
+
 export interface CustomElementEditSnapshot {
   pages: Page[];
   historyPast: Page[][];
@@ -202,6 +242,8 @@ export interface DesignerState {
   customElementDetailCache: Record<string, any>;
   templateContextMenuConfig?: ListContextMenuConfig | null;
   customElementContextMenuConfig?: ListContextMenuConfig | null;
+  templateModalFormConfig?: TemplateModalFormConfig | null;
+  templateTagResolver?: TemplateListTagResolver | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
   testData: Record<string, any>;
   branding: BrandingSettings;

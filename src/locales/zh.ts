@@ -244,6 +244,7 @@ export default {
       fontSize: '字号',
       color: '颜色',
       textAlign: '对齐方式',
+      verticalAlign: '垂直对齐',
       fontFamily: '字体',
       fontWeight: '字重',
       borderStyle: '边框样式',
@@ -322,6 +323,7 @@ export default {
       yes: '是',
       no: '否',
       top: '顶部',
+      middle: '居中',
       bottom: '底部',
       before: '之前',
       after: '之后',
@@ -539,5 +541,23 @@ export default {
   input: {
     title: '输入',
     placeholder: '请输入...'
+  },
+  toast: {
+    templateReadOnly: '系统模板为只读，无法编辑',
+    templateCopyNotAllowed: '系统模板不允许复制',
+    templateDeleteNotAllowed: '系统模板无法删除',
+    templateSaveFailed: '保存模板失败',
+    templateDeleteFailed: '删除模板失败',
+    templateRenameFailed: '重命名模板失败',
+    templateCopyFailed: '复制模板失败',
+    templateUpsertFailed: '保存模板失败',
+    customElementReadOnly: '系统自定义元素为只读，无法编辑',
+    customElementCopyNotAllowed: '系统自定义元素不允许复制',
+    customElementDeleteNotAllowed: '系统自定义元素无法删除',
+    customElementCopyFailed: '复制自定义元素失败',
+    customElementAddFailed: '新增自定义元素失败',
+    customElementRemoveFailed: '删除自定义元素失败',
+    customElementRenameFailed: '重命名自定义元素失败',
+    customElementUpsertFailed: '保存自定义元素失败'
   }
 }

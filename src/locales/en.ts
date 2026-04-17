@@ -244,6 +244,7 @@ export default {
       fontSize: 'Font Size',
       color: 'Color',
       textAlign: 'Text Align',
+      verticalAlign: 'Vertical Align',
       fontFamily: 'Font Family',
       fontWeight: 'Font Weight',
       borderStyle: 'Border Style',
@@ -322,6 +323,7 @@ export default {
       yes: 'Yes',
       no: 'No',
       top: 'Top',
+      middle: 'Middle',
       bottom: 'Bottom',
       before: 'Before',
       after: 'After',
@@ -532,5 +534,23 @@ export default {
   input: {
     title: 'Input',
     placeholder: 'Enter value...'
+  },
+  toast: {
+    templateReadOnly: 'System template is read-only and cannot be edited.',
+    templateCopyNotAllowed: 'System template cannot be copied.',
+    templateDeleteNotAllowed: 'System template cannot be deleted.',
+    templateSaveFailed: 'Failed to save template.',
+    templateDeleteFailed: 'Failed to delete template.',
+    templateRenameFailed: 'Failed to rename template.',
+    templateCopyFailed: 'Failed to copy template.',
+    templateUpsertFailed: 'Failed to save template.',
+    customElementReadOnly: 'System custom element is read-only and cannot be edited.',
+    customElementCopyNotAllowed: 'System custom element cannot be copied.',
+    customElementDeleteNotAllowed: 'System custom element cannot be deleted.',
+    customElementCopyFailed: 'Failed to copy custom element.',
+    customElementAddFailed: 'Failed to add custom element.',
+    customElementRemoveFailed: 'Failed to remove custom element.',
+    customElementRenameFailed: 'Failed to rename custom element.',
+    customElementUpsertFailed: 'Failed to save custom element.'
   }
 }

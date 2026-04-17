@@ -1,9 +1,55 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
+import { useDesignerStore } from '@/stores/designer';
 
-defineProps<{
+const props = defineProps<{
   element: PrintElement;
 }>();
+
+const { t } = useI18n();
+const store = useDesignerStore();
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const canSelectFile = () => {
+  if (!store.isTemplateEditable || props.element.locked) return false;
+  if (store.selectedElementId !== props.element.id && !store.selectedElementIds.includes(props.element.id)) return false;
+  return true;
+};
+
+const handleDblClick = (event: MouseEvent) => {
+  if (!canSelectFile()) return;
+  const wrapper = (event.currentTarget as HTMLElement | null)?.closest('.element-wrapper');
+  if (wrapper?.getAttribute('data-read-only') === 'true') return;
+  event.stopPropagation();
+  fileInputRef.value?.click();
+};
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    window.alert(t('properties.image.sizeError'));
+    target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = e.target?.result as string;
+    if (result) {
+      store.updateElement(props.element.id, { content: result });
+    }
+  };
+  reader.onerror = () => {
+    window.alert(t('properties.image.readError'));
+  };
+  reader.readAsDataURL(file);
+  target.value = '';
+};
 </script>
 
 <script lang="ts">
@@ -37,7 +83,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden bg-gray-50 flex items-center justify-center">
+  <div class="w-full h-full overflow-hidden flex items-center justify-center" @dblclick="handleDblClick">
     <img 
       v-if="element.content" 
       :src="element.content" 
@@ -45,5 +91,12 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       alt="Element"
     />
     <span v-else class="text-gray-400 text-xs">No Image</span>
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      @change="handleFileChange"
+    />
   </div>
 </template>

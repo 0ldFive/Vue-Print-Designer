@@ -176,7 +176,7 @@ const handleGlobalClick = (e: MouseEvent) => {
 
 const handleRename = (item: CustomElementTemplate) => {
   if (!canEditEntity(item)) {
-    toast.warning('系统自定义元素为只读，无法编辑');
+    toast.warning(t('toast.customElementReadOnly'));
     return;
   }
   activeMenuId.value = null;
@@ -193,7 +193,7 @@ const onRenameSave = (newName: string) => {
 
 const handleCopy = (item: CustomElementTemplate) => {
   if (!canCopyEntity(item)) {
-    toast.warning('System custom element does not allow copy');
+    toast.warning(t('toast.customElementCopyNotAllowed'));
     return;
   }
   activeMenuId.value = null;
@@ -202,7 +202,7 @@ const handleCopy = (item: CustomElementTemplate) => {
 
 const handleDelete = async (item: CustomElementTemplate) => {
   if (!canDeleteEntity(item)) {
-    toast.warning('System custom element cannot be deleted');
+    toast.warning(t('toast.customElementDeleteNotAllowed'));
     return;
   }
   activeMenuId.value = null;
@@ -214,7 +214,7 @@ const handleDelete = async (item: CustomElementTemplate) => {
 
 const handleEditElement = async (item: CustomElementTemplate) => {
   if (!canEditEntity(item)) {
-    toast.warning('系统自定义元素为只读，无法编辑');
+    toast.warning(t('toast.customElementReadOnly'));
     return;
   }
   activeMenuId.value = null;

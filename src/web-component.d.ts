@@ -3,7 +3,8 @@ import type {
   DesignerPrintRequest,
   DesignerPrintDefaults,
   DesignerListContextMenuConfig,
-  DesignerListContextMenuItem
+  DesignerListContextMenuItem,
+  DesignerTemplateTagResolver
 } from './web-component';
 import type {
   LocalPrinterInfo,
@@ -72,6 +73,8 @@ export interface PrintDesignerElement extends HTMLElement {
   clearTemplateContextMenu(): void;
   setCustomElementContextMenu(config: DesignerListContextMenuConfig | DesignerListContextMenuItem[]): void;
   clearCustomElementContextMenu(): void;
+  setTemplateTagResolver(resolver: DesignerTemplateTagResolver): void;
+  clearTemplateTagResolver(): void;
 
   setCrudMode(mode: 'local' | 'remote'): void;
   setCrudEndpoints(endpoints: CrudEndpoints, options?: { baseUrl?: string; headers?: Record<string, string> }): void;

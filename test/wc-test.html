@@ -37,11 +37,13 @@
       <button id="btn-refresh-templates">刷新模版列表 (refreshTemplates)</button>
       <button id="btn-refresh-elements">刷新自定义元素 (refreshCustomElements)</button>
       <button id="btn-delete-template">测试带 Confirm 删除模版 (deleteTemplate)</button>
+      <button id="btn-modal-cases-guide">查看 Modal 用例步骤</button>
       <button id="btn-seed-permission-templates">注入权限模板</button>
       <button id="btn-load-readonly-template">加载只读模板</button>
       <button id="btn-try-upsert-readonly">测试只读模板更新拦截</button>
       <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
       <button id="btn-load-editable-template">加载可编辑模板</button>
+      <button id="btn-seed-tag-association-templates">注入标签强关联模板</button>
       <button id="btn-test-toast-success">测试 Toast (Success)</button>
       <button id="btn-test-toast-error">测试 Toast (Error)</button>
     </div>
@@ -100,6 +102,83 @@
           }
         ]
       });
+
+      // 测试：3. 通过 API 直接配置新建/重命名/复制 modal 的自定义表单
+      designer.setTemplateModalForm({
+        create: {
+          fields: [
+            { key: 'name', label: '名称', type: 'input', required: true, placeholder: '请输入名称' },
+            {
+              key: 'category',
+              label: '分类',
+              type: 'select',
+              required: true,
+              options: [
+                { label: '标准', value: 'standard' },
+                { label: '发货', value: 'shipment' },
+                { label: '财务', value: 'finance' }
+              ]
+            },
+            {
+              key: 'scope',
+              label: '可见范围',
+              type: 'radio',
+              required: true,
+              options: [
+                { label: '私有', value: 'private' },
+                { label: '团队', value: 'team' }
+              ]
+            },
+            { key: 'priority', label: '优先级', type: 'number', min: 1, max: 99, step: 1 },
+            { key: 'remark', label: '备注', type: 'textarea', rows: 3, placeholder: '可选，测试 textarea' },
+            { key: 'effectiveDate', label: '生效日期', type: 'date' },
+            { key: 'publishAt', label: '发布时间', type: 'datetime' }
+          ],
+          initialValues: {
+            category: 'standard',
+            scope: 'private',
+            priority: 1,
+            remark: ''
+          }
+        },
+        rename: {
+          fields: [
+            { key: 'name', label: '名称', type: 'input', required: true, placeholder: '请输入名称' },
+            {
+              key: 'scope',
+              label: '可见范围',
+              type: 'radio',
+              required: true,
+              options: [
+                { label: '私有', value: 'private' },
+                { label: '团队', value: 'team' }
+              ]
+            },
+            { key: 'effectiveDate', label: '生效日期', type: 'date' }
+          ]
+        },
+        copy: {
+          fields: [
+            { key: 'name', label: '名称', type: 'input', required: true, placeholder: '请输入名称' },
+            {
+              key: 'category',
+              label: '分类',
+              type: 'select',
+              required: true,
+              options: [
+                { label: '标准', value: 'standard' },
+                { label: '发货', value: 'shipment' }
+              ]
+            },
+            { key: 'priority', label: '优先级', type: 'number', min: 1, max: 99, step: 1 },
+            { key: 'publishAt', label: '发布时间', type: 'datetime' }
+          ],
+          initialValues: {
+            category: 'standard',
+            priority: 1
+          }
+        }
+      });
     };
 
     // 监听设计器加载完成
@@ -118,6 +197,17 @@
       const list = await designer.refreshTemplates();
       console.log('刷新模版列表:', list);
       alert(`刷新完成，当前共有 ${list.length} 个模版`);
+    });
+
+    document.getElementById('btn-modal-cases-guide').addEventListener('click', () => {
+      alert([
+        'Modal 用例测试步骤：',
+        '1) 先点击“注入权限模板”。',
+        '2) 打开顶部模板下拉，点击“新建” -> 验证 input/select/radio/number/textarea/date/datetime 是否显示。',
+        '3) 在某个可编辑模板右侧菜单点“重命名” -> 验证同样字段及保存逻辑。',
+        '4) 在某个可复制模板右侧菜单点“复制” -> 验证同样字段及复制后模板是否置顶并自动切换。',
+        '5) name 为空时确认按钮应不可点。'
+      ].join('\n'));
     });
 
     document.getElementById('btn-refresh-elements').addEventListener('click', async () => {
@@ -187,6 +277,51 @@
     document.getElementById('btn-load-editable-template').addEventListener('click', () => {
       const ok = designer.loadTemplate('tpl-editable-demo');
       alert(ok ? '已加载可编辑模板，可正常编辑' : '加载失败，请先点击“注入权限模板”');
+    });
+
+    document.getElementById('btn-seed-tag-association-templates').addEventListener('click', () => {
+      const templateByKey = {
+        id: 'tpl-tag-by-key',
+        name: '标签强关联(按 key)',
+        tags: ['tagA', 'tagB', 'tagC'],
+        ext: {
+          templateTags: [
+            { key: 'tagA', label: '白名单', color: 'white' },
+            { key: 'tagB', label: '紧急', color: 'red' },
+            { key: 'tagC', label: '蓝色通道', color: 'blue' }
+          ]
+        },
+        data: {
+          pages: [{ id: 'page-tag-by-key', elements: [] }]
+        }
+      };
+
+      const templateByIndex = {
+        id: 'tpl-tag-by-index',
+        name: '标签强关联(按下标)',
+        tags: ['tagX', 'tagY'],
+        ext: {
+          templateTags: [
+            { label: '索引一', color: 'green' },
+            { label: '索引二', color: 'orange' }
+          ]
+        },
+        data: {
+          pages: [{ id: 'page-tag-by-index', elements: [] }]
+        }
+      };
+
+      designer.setTemplateTagResolver(null);
+      designer.setTemplates([templateByKey, templateByIndex], {
+        currentTemplateId: templateByKey.id
+      });
+
+      alert([
+        '已注入 2 个标签强关联模板。',
+        '请打开顶部模板下拉查看标签：',
+        '1) 标签强关联(按 key): 通过 key 匹配 tags -> ext.templateTags',
+        '2) 标签强关联(按下标): 未提供 key 时按数组下标关联'
+      ].join('\n'));
     });
 
     document.getElementById('btn-try-upsert-readonly').addEventListener('click', async () => {

@@ -5,7 +5,7 @@ import { uiConfirm } from '@/utils/confirm';
 import { toast } from '@/utils/toast';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
-import type { ListContextMenuItem } from '@/types';
+import type { ListContextMenuItem, TemplateModalConfigItem, TemplateModalField, TemplateListTag } from '@/types';
 import { canCopyEntity, canDeleteEntity, canEditEntity } from '@/utils/entityConstraints';
 
 import ChevronDown from '~icons/material-symbols/expand-more';
@@ -35,8 +35,9 @@ const menuPosition = ref<Record<string, string>>({});
 
 // Modal State
 const showModal = ref(false);
-const modalMode = ref<'create' | 'rename'>('create');
+const modalMode = ref<'create' | 'rename' | 'copy'>('create');
 const modalInitialName = ref('');
+const modalInitialValues = ref<Record<string, any>>({});
 const targetTemplateId = ref<string | null>(null);
 
 const showTestDataModal = ref(false);
@@ -46,6 +47,54 @@ const testDataAllowedKeys = ref<string[]>([]);
 
 type TemplateMenuActionKey = 'testData' | 'rename' | 'copy' | 'delete';
 type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
+type ModalSavePayload = string | Record<string, any>;
+const maxVisibleTemplateTags = 2;
+
+const getModalConfigItem = (mode: 'create' | 'rename' | 'copy'): TemplateModalConfigItem | null => {
+  return designerStore.templateModalFormConfig?.[mode] || null;
+};
+
+const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'rename' | 'copy') => {
+  if (!templateId) return {};
+  const template = store.templates.find(item => item.id === templateId);
+  const fromTemplate = template?.ext?.templateModalForm?.[mode];
+  if (fromTemplate && typeof fromTemplate === 'object') return { ...fromTemplate };
+  const fromCache = store.templateDetailCache?.[templateId]?.ext?.templateModalForm?.[mode];
+  if (fromCache && typeof fromCache === 'object') return { ...fromCache };
+  return {};
+};
+
+const buildModalInitialValues = (name: string, mode: 'create' | 'rename' | 'copy', templateId: string | null = null) => {
+  const configItem = getModalConfigItem(mode);
+  const configInitialValues = configItem?.initialValues && typeof configItem.initialValues === 'object'
+    ? { ...configItem.initialValues }
+    : {};
+  const savedValues = getTemplateModalSavedValues(templateId, mode);
+  const initialValues = {
+    ...configInitialValues,
+    ...savedValues
+  };
+  if (!Object.prototype.hasOwnProperty.call(initialValues, 'name')) {
+    initialValues.name = name;
+  }
+  return initialValues;
+};
+
+const modalFields = computed<TemplateModalField[] | undefined>(() => {
+  return getModalConfigItem(modalMode.value)?.fields;
+});
+
+const resolveModalName = (payload: ModalSavePayload) => {
+  if (typeof payload === 'string') return payload.trim();
+  return String(payload?.name ?? '').trim();
+};
+
+const resolveModalExtraValues = (payload: ModalSavePayload): Record<string, any> | undefined => {
+  if (!payload || typeof payload === 'string') return undefined;
+  const values = { ...payload };
+  delete values.name;
+  return Object.keys(values).length > 0 ? values : undefined;
+};
 
 const resolveIconFromIconField = (icon: string | undefined) => {
   if (!icon) return null;
@@ -53,6 +102,181 @@ const resolveIconFromIconField = (icon: string | undefined) => {
   const isIconifyName = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9-]+$/i.test(icon);
   if (!isIconifyName) return null;
   return `https://api.iconify.design/${encodeURIComponent(icon)}.svg`;
+};
+
+const normalizeTagColor = (rawColor: string | undefined) => {
+  const color = (rawColor || '').trim().toLowerCase();
+  if (color === 'red' || color === '#ff4d4f' || color === '红色' || color === '红') {
+    return { backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' };
+  }
+  if (color === 'white' || color === '#ffffff' || color === '白色' || color === '白') {
+    return { backgroundColor: '#ffffff', color: '#374151', borderColor: '#d1d5db' };
+  }
+  if (color === 'blue' || color === '#3b82f6' || color === '蓝色' || color === '蓝') {
+    return { backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' };
+  }
+  if (color === 'green' || color === '#22c55e' || color === '绿色' || color === '绿') {
+    return { backgroundColor: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' };
+  }
+  if (color === 'orange' || color === '#f97316' || color === '橙色' || color === '橙') {
+    return { backgroundColor: '#fff7ed', color: '#c2410c', borderColor: '#fed7aa' };
+  }
+  if (color) {
+    return { backgroundColor: color, color: '#ffffff', borderColor: color };
+  }
+  return { backgroundColor: '#f3f4f6', color: '#4b5563', borderColor: '#e5e7eb' };
+};
+
+const toTemplateTag = (value: any): TemplateListTag | null => {
+  if (typeof value === 'string') {
+    const label = value.trim();
+    return label ? { label } : null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const label = String(value.label ?? value.name ?? value.text ?? '').trim();
+  if (!label) return null;
+  const color = typeof value.color === 'string'
+    ? value.color
+    : (typeof value.tagColor === 'string' ? value.tagColor : undefined);
+  return { label, color };
+};
+
+const normalizeTemplateTags = (input: any): TemplateListTag[] => {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input.map(toTemplateTag).filter((tag): tag is TemplateListTag => Boolean(tag));
+  }
+  if (typeof input === 'string') {
+    const segments = input.split(/[,|，]/g).map(item => item.trim()).filter(Boolean);
+    const source = segments.length > 1 ? segments : [input.trim()];
+    return source.map(toTemplateTag).filter((tag): tag is TemplateListTag => Boolean(tag));
+  }
+  const one = toTemplateTag(input);
+  return one ? [one] : [];
+};
+
+type TemplateTagDetail = {
+  key?: string;
+  label?: string;
+  color?: string;
+};
+
+const toTagCode = (value: any): string | null => {
+  if (typeof value === 'string' || typeof value === 'number') {
+    const code = String(value).trim();
+    return code || null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const code = String(value.key ?? value.code ?? value.value ?? value.id ?? value.label ?? value.name ?? value.text ?? '').trim();
+  return code || null;
+};
+
+const normalizeTagCodes = (input: any): string[] => {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input.map(toTagCode).filter((code): code is string => Boolean(code));
+  }
+  if (typeof input === 'string') {
+    const segments = input.split(/[,|，]/g).map(item => item.trim()).filter(Boolean);
+    if (segments.length > 1) return segments;
+  }
+  const one = toTagCode(input);
+  return one ? [one] : [];
+};
+
+const toTemplateTagDetail = (value: any): TemplateTagDetail | null => {
+  if (typeof value === 'string') {
+    const label = value.trim();
+    return label ? { label } : null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const key = String(value.key ?? value.code ?? value.value ?? value.id ?? '').trim() || undefined;
+  const label = String(value.label ?? value.name ?? value.text ?? '').trim() || undefined;
+  const color = typeof value.color === 'string'
+    ? value.color
+    : (typeof value.tagColor === 'string' ? value.tagColor : undefined);
+  return key || label || color ? { key, label, color } : null;
+};
+
+const normalizeTemplateTagDetails = (input: any): TemplateTagDetail[] => {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input.map(toTemplateTagDetail).filter((detail): detail is TemplateTagDetail => Boolean(detail));
+  }
+  const one = toTemplateTagDetail(input);
+  return one ? [one] : [];
+};
+
+const buildAssociatedTemplateTags = (template: Template): TemplateListTag[] | null => {
+  const codes = normalizeTagCodes(template.tags);
+  const details = normalizeTemplateTagDetails(template.ext?.templateTags);
+  if (!codes.length || !details.length) return null;
+
+  const detailByKey = new Map<string, TemplateTagDetail>();
+  details.forEach((detail) => {
+    if (!detail.key) return;
+    detailByKey.set(detail.key, detail);
+  });
+
+  const associatedTags: Array<TemplateListTag | null> = codes.map((code, index) => {
+      const detail = detailByKey.get(code) || details[index];
+      const label = (detail?.label || code || '').trim();
+      if (!label) return null;
+      return detail?.color ? { label, color: detail.color } : { label };
+    });
+
+  return associatedTags.filter((tag): tag is TemplateListTag => tag !== null);
+};
+
+const getTemplateTags = (template: Template): TemplateListTag[] => {
+  const resolver = designerStore.templateTagResolver;
+  const associated = buildAssociatedTemplateTags(template);
+  const resolvedByData = associated || [
+    ...normalizeTemplateTags(template.tags),
+    ...normalizeTemplateTags(template.templateTags),
+    ...normalizeTemplateTags(template.ext?.tags),
+    ...normalizeTemplateTags(template.ext?.templateTags)
+  ];
+
+  let resolvedByResolver: TemplateListTag[] = [];
+  if (typeof resolver === 'function') {
+    try {
+      resolvedByResolver = normalizeTemplateTags(resolver(template));
+    } catch (error) {
+      console.error('Template tag resolver failed', error);
+    }
+  }
+
+  const merged = [...resolvedByData, ...resolvedByResolver];
+  const deduped: TemplateListTag[] = [];
+  const seen = new Set<string>();
+  merged.forEach((tag) => {
+    const key = `${tag.label}__${tag.color || ''}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    deduped.push(tag);
+  });
+  return deduped;
+};
+
+const templateTagDisplayMap = computed(() => {
+  const map: Record<string, { visible: TemplateListTag[]; overflow: number }> = {};
+  store.templates.forEach((template) => {
+    const tags = getTemplateTags(template);
+    map[template.id] = {
+      visible: tags.slice(0, maxVisibleTemplateTags),
+      overflow: tags.length > maxVisibleTemplateTags ? tags.length - maxVisibleTemplateTags : 0
+    };
+  });
+  return map;
+});
+
+const getVisibleTemplateTags = (template: Template) => {
+  return templateTagDisplayMap.value[template.id]?.visible || [];
+};
+
+const getTemplateTagOverflow = (template: Template) => {
+  return templateTagDisplayMap.value[template.id]?.overflow || 0;
 };
 
 onMounted(async () => {
@@ -155,35 +379,42 @@ const handleCreate = () => {
   activeMenuId.value = null;
   modalMode.value = 'create';
   modalInitialName.value = '';
+  modalInitialValues.value = buildModalInitialValues('', 'create');
   showModal.value = true;
   isOpen.value = false;
 };
 
 const handleEdit = (template: Template) => {
   if (!canEditEntity(template)) {
-    toast.warning('系统模板为只读，无法编辑');
+    toast.warning(t('toast.templateReadOnly'));
     return;
   }
   activeMenuId.value = null;
   modalMode.value = 'rename';
   targetTemplateId.value = template.id;
   modalInitialName.value = template.name;
+  modalInitialValues.value = buildModalInitialValues(template.name, 'rename', template.id);
   showModal.value = true;
   isOpen.value = false; // Close dropdown? Or keep open? Close is better.
 };
 
 const handleCopy = (template: Template) => {
   if (!canCopyEntity(template)) {
-    toast.warning('System template does not allow copy');
+    toast.warning(t('toast.templateCopyNotAllowed'));
     return;
   }
-  store.copyTemplate(template.id);
+  modalMode.value = 'copy';
+  targetTemplateId.value = template.id;
+  modalInitialName.value = `${template.name} Copy`;
+  modalInitialValues.value = buildModalInitialValues(`${template.name} Copy`, 'copy', template.id);
+  showModal.value = true;
+  isOpen.value = false;
   activeMenuId.value = null;
 };
 
 const handleDelete = async (template: Template) => {
   if (!canDeleteEntity(template)) {
-    toast.warning('System template cannot be deleted');
+    toast.warning(t('toast.templateDeleteNotAllowed'));
     return;
   }
   const confirmed = await uiConfirm.show(t('template.confirmDelete', { name: template.name }));
@@ -346,7 +577,10 @@ const handleTestDataClose = () => {
   }
 };
 
-const handleModalSave = (name: string) => {
+const handleModalSave = (payload: ModalSavePayload) => {
+  const name = resolveModalName(payload);
+  const extraValues = resolveModalExtraValues(payload);
+  if (!name) return;
   if (modalMode.value === 'create') {
     // Auto-save current template before creating new one
     if (store.currentTemplateId) {
@@ -359,9 +593,11 @@ const handleModalSave = (name: string) => {
     // Reset canvas before creating new template
     const designerStore = useDesignerStore(); // Ensure we have access to designer store
     designerStore.resetCanvas();
-    store.createTemplate(name);
+    store.createTemplate(name, undefined, extraValues);
   } else if (modalMode.value === 'rename' && targetTemplateId.value) {
-    store.renameTemplate(targetTemplateId.value, name);
+    store.renameTemplate(targetTemplateId.value, name, extraValues);
+  } else if (modalMode.value === 'copy' && targetTemplateId.value) {
+    store.copyTemplate(targetTemplateId.value, name, extraValues);
   }
 };
 </script>
@@ -395,6 +631,20 @@ const handleModalSave = (name: string) => {
              <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
                <div class="w-1.5 h-1.5 rounded-full bg-blue-500" v-if="store.currentTemplateId === t.id"></div>
              </div>
+             <span
+               v-for="tag in getVisibleTemplateTags(t)"
+               :key="`${t.id}-${tag.label}-${tag.color || ''}`"
+               class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0"
+               :style="normalizeTagColor(tag.color)"
+             >
+               {{ tag.label }}
+             </span>
+             <span
+               v-if="getTemplateTagOverflow(t) > 0"
+               class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0 bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+             >
+               +{{ getTemplateTagOverflow(t) }}
+             </span>
              <span class="text-sm text-gray-700 dark:text-gray-200 truncate" :class="{'font-medium text-blue-600 dark:text-blue-400': store.currentTemplateId === t.id}">{{ t.name }}</span>
           </div>
           
@@ -451,7 +701,9 @@ const handleModalSave = (name: string) => {
     <InputModal 
       :show="showModal"
       :initial-value="modalInitialName"
-      :title="modalMode === 'create' ? t('template.new') : t('template.rename')"
+      :initial-values="modalInitialValues"
+      :fields="modalFields"
+      :title="modalMode === 'create' ? t('template.new') : (modalMode === 'rename' ? t('template.rename') : t('common.copy'))"
       @close="showModal = false"
       @save="handleModalSave"
     />

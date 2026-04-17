@@ -23,6 +23,8 @@
   - [15. Set Language (setLanguage)](#15-set-language-setlanguage)
   - [16. Configure Client and Cloud Print Links (setLinks)](#16-configure-client-and-cloud-print-links-setlinks)
   - [17. Configure Extension Menu (setContextMenu)](#17-configure-extension-menu-setcontextmenu)
+  - [18. Configure Template Modal Custom Form (setTemplateModalForm)](#18-configure-template-modal-custom-form-settemplatemodalform)
+  - [19. Configure Template List Tag Extension (setTemplateTagResolver)](#19-configure-template-list-tag-extension-settemplatetagresolver)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
@@ -70,6 +72,10 @@
 | `clearTemplateContextMenu()` | Restore default template list extension menu |
 | `setCustomElementContextMenu(config)` | Configure custom element list extension menu |
 | `clearCustomElementContextMenu()` | Restore default custom element list extension menu |
+| `setTemplateModalForm(config)` | Configure custom forms for create/rename/copy template modals |
+| `clearTemplateModalForm()` | Clear template modal custom form configuration |
+| `setTemplateTagResolver(resolver)` | Configure template list tag resolver |
+| `clearTemplateTagResolver()` | Clear template list tag resolver |
 
 ## Quick Start
 
@@ -462,17 +468,35 @@ Description: Save or update a custom element.
 ```ts
 const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
 ```
+Permission behavior (read-only custom element):
+- If target element has `editable=false`, update is blocked and `upsertCustomElement` returns `null`.
+- If target element is editable, method returns element ID.
 
 #### 5) Delete Custom Element (deleteCustomElement)
 Description: Delete a specific custom element by ID.
 ```ts
 el.deleteCustomElement('element-id')
 ```
+Permission behavior (protected custom element):
+- If target element has `deletable=false`, delete is blocked and element remains in list.
 
 #### 6) Overwrite Custom Element List (setCustomElements)
 Description: Overwrite the locally stored custom element list directly.
 ```ts
 el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
+```
+
+#### 7) Custom Element Permission Fields (Recommended)
+Description: You can attach permission fields on each custom element object.
+```ts
+{
+  id: 'el_system',
+  name: 'System Element',
+  editable: false,   // read-only
+  deletable: false,  // protected from delete
+  copyable: true,    // whether copy is allowed
+  element: { /* element data */ }
+}
 ```
 
 ### 13. Set CRUD Mode (setCrudMode)
@@ -715,6 +739,129 @@ For `setCustomElementContextMenu` (Custom Element List):
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
 
+### 18. Configure Template Modal Custom Form (setTemplateModalForm)
+
+Description: Configure custom form structure and default values for template `create / rename / copy` modals.
+
+```ts
+el.setTemplateModalForm({
+  create: {
+    fields: [
+      { key: 'name', label: 'Name', type: 'input', required: true, placeholder: 'Enter template name' },
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Standard', value: 'standard' },
+          { label: 'Shipment', value: 'shipment' }
+        ]
+      },
+      {
+        key: 'scope',
+        label: 'Visibility',
+        type: 'radio',
+        options: [
+          { label: 'Private', value: 'private' },
+          { label: 'Team', value: 'team' }
+        ]
+      },
+      { key: 'priority', label: 'Priority', type: 'number', min: 1, max: 99, step: 1 },
+      { key: 'remark', label: 'Remark', type: 'textarea', rows: 3 },
+      { key: 'effectiveDate', label: 'Effective Date', type: 'date' },
+      { key: 'publishAt', label: 'Publish Time', type: 'datetime' }
+    ],
+    initialValues: {
+      category: 'standard',
+      scope: 'private',
+      priority: 1
+    }
+  },
+  rename: {
+    fields: [
+      { key: 'name', label: 'Name', type: 'input', required: true },
+      { key: 'scope', label: 'Visibility', type: 'radio', options: [{ label: 'Private', value: 'private' }, { label: 'Team', value: 'team' }] }
+    ]
+  },
+  copy: {
+    fields: [
+      { key: 'name', label: 'Name', type: 'input', required: true },
+      { key: 'category', label: 'Category', type: 'select', options: [{ label: 'Standard', value: 'standard' }] }
+    ]
+  }
+})
+
+// Clear config and fallback to default single-input modal
+el.clearTemplateModalForm()
+```
+
+Parameter contract:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `config.create/rename/copy` | `TemplateModalConfigItem` | No | Config for create/rename/copy modal |
+| `item.fields` | `TemplateModalField[]` | No | Field list; fallback to default input if empty |
+| `item.initialValues` | `Record<string, any>` | No | Default initial values (used for create or as fallback for echo) |
+| `field.key` | `string` | Yes | Unique field key |
+| `field.type` | `'input' \| 'number' \| 'textarea' \| 'select' \| 'radio' \| 'date' \| 'datetime'` | Yes | Field type |
+| `field.options` | `Array<{label:string,value:string\|number}>` | Conditionally | Required for `select/radio` |
+
+Behavior notes:
+
+- `name` is still the primary template name field and is used as the name argument for `create/rename/copy`.
+- Other fields are sent back as "extended form values" and stored under `ext.templateModalForm` (see Backend API Specifications).
+- When opening `rename/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
+- `create` uses `initialValues` by default; when not configured, component default behavior applies.
+
+### 19. Configure Template List Tag Extension (setTemplateTagResolver)
+
+Description: Customize tags displayed before each template name in the template list. Example: `[tagA](white) [tagB](red) xxx template`.
+Tag parsing is based on fields returned in each template item from the list API (`GET /api/print/templates`).
+
+```ts
+// 1) Inject a tag resolver (based on each list-item object)
+el.setTemplateTagResolver((template) => {
+  // `template` is one item from the list API response
+  const tags = template.ext?.bizTags || []
+  return tags.map((item) => ({
+    label: item.name,
+    color: item.color // e.g. 'white' | 'red' | '#ff4d4f'
+  }))
+})
+
+// 2) Clear resolver (fallback to built-in fields only)
+el.clearTemplateTagResolver()
+```
+
+Parameter contract:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `resolver` | `(template:any) => Array<{label:string;color?:string}>` | Yes | Tag resolver; return `null/undefined/[]` to indicate no tags |
+| `tag.label` | `string` | Yes | Tag text |
+| `tag.color` | `string` | No | Tag color, accepts keyword or CSS color value |
+
+Default field sources (works even without resolver):
+
+- `template.tags`
+- `template.templateTags`
+- `template.ext.tags`
+- `template.ext.templateTags`
+
+Forced association rule (`template.tags` + `template.ext.templateTags`):
+
+- When both exist, the component enters "forced association" mode instead of simple concatenation.
+- It first matches by `key/code/value/id` against values in `tags`.
+- If no matchable key is provided, it falls back to index-based pairing.
+- Rendered text/color is taken from `ext.templateTags` (`label/color`); if no `label` matches, it falls back to the original `tags` value.
+
+Color behavior:
+
+- Built-in semantic colors: `white/red/blue/green/orange` (Chinese aliases like `白色/红色` are also supported).
+- CSS color values are also supported (for example `#ff4d4f`, `rgb(220,38,38)`).
+- If `color` is not provided, a default gray tag style is used.
+
 ## Events
 
 ```ts
@@ -788,7 +935,18 @@ Response:
 
 ```json
 [
-  { "id": "tpl_1", "name": "A4 Template", "updatedAt": 1700000000000 }
+  {
+    "id": "tpl_1",
+    "name": "A4 Template",
+    "tags": ["tagA", "tagB"],
+    "ext": {
+      "templateTags": [
+        { "label": "Whitelist", "color": "white" },
+        { "label": "Urgent", "color": "red" }
+      ]
+    },
+    "updatedAt": 1700000000000
+  }
 ]
 ```
 
@@ -817,9 +975,40 @@ Request:
 {
   "id": "tpl_1",
   "name": "A4 Template",
-  "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } }
+  "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } },
+  "ext": {
+    "templateModalForm": {
+      "create": { "category": "standard", "scope": "private", "priority": 1 },
+      "rename": { "scope": "team" },
+      "copy": { "category": "shipment", "priority": 2 },
+      "lastMode": "copy",
+      "updatedAt": 1700000000000
+    }
+  }
 }
 ```
+
+**3.1) Template ext Round-Trip and Load Contract (Custom Form)**
+
+- To ensure custom form values can be echoed after save, backend should persist and return the `ext` field in template objects as-is.
+- Recommended path: `ext.templateModalForm.{create|rename|copy}` where each value stores the latest submitted extended form values for that mode (excluding `name`).
+- `GET /templates/{id}` should return the latest `ext.templateModalForm`; frontend uses it for `rename/copy` modal echo.
+- Returning `ext` in `GET /templates` list response is optional but recommended to reduce first-open differences.
+- If backend does not return `ext`, frontend still works and falls back to `setTemplateModalForm(...).initialValues`.
+
+**3.2) Template Tag Round-Trip Contract (Template List Tags)**
+
+- Template list tag parsing is based on each item returned by `GET /api/print/templates`.
+- If you want business tags to appear in template list rows, backend should return at least one of these fields in each list item:
+  - `template.tags`
+  - `template.templateTags`
+  - `template.ext.tags`
+  - `template.ext.templateTags`
+- When both `template.tags` and `template.ext.templateTags` are returned, frontend enforces association (key match first, then index fallback).
+- Recommended `template.ext.templateTags` item shape: `{ "key": "tagA", "label": "Whitelist", "color": "white" }`.
+- Recommended tag item shape: `{ "label": "tagA", "color": "white" }`.
+- String arrays are also accepted (for example `["tagA", "tagB"]`), rendered with default styles.
+- If `setTemplateTagResolver` is also used, frontend merges "default field tags + resolver tags" and de-duplicates by `label+color`.
 
 **4) Delete template**
 
@@ -919,7 +1108,16 @@ Response:
   "pageSpacingY": 32,
   "unit": "mm",
   "watermark": { "enabled": false, "text": "", "angle": -30, "color": "#000000", "opacity": 0.1, "size": 24, "density": 160 },
-  "testData": { "orderNo": "A001" }
+  "testData": { "orderNo": "A001" },
+  "ext": {
+    "templateModalForm": {
+      "create": { "category": "standard", "scope": "private", "priority": 1 },
+      "rename": { "scope": "team" },
+      "copy": { "category": "shipment", "priority": 2 },
+      "lastMode": "copy",
+      "updatedAt": 1700000000000
+    }
+  }
 }
 ```
 
