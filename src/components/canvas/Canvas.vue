@@ -35,6 +35,7 @@ const marginRight = computed(() => store.pageSpacingX || 0);
 const marginTop = computed(() => store.pageSpacingY || 0);
 const marginBottom = computed(() => store.pageSpacingY || 0);
 const canvasSize = computed(() => store.canvasSize);
+const isTemplateEditable = computed(() => store.isTemplateEditable);
 
 // Header/Footer Dragging
 const isDraggingLine = ref(false);
@@ -42,6 +43,7 @@ const draggingLineType = ref<'header' | 'footer' | null>(null);
 const draggingPageElement = ref<HTMLElement | null>(null);
 
 const handleLineMouseDown = (e: MouseEvent, type: 'header' | 'footer') => {
+  if (!store.isTemplateEditable) return;
   e.preventDefault();
   e.stopPropagation();
   
@@ -192,6 +194,7 @@ const getRenderableElements = (elements: Array<PrintElement | null | undefined>)
 
 const handleDrop = (event: DragEvent, pageIndex: number) => {
   event.preventDefault();
+  if (!store.isTemplateEditable) return;
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
 
@@ -426,6 +429,7 @@ const handleBackgroundClick = (e: MouseEvent) => {
 
 // Box selection handlers
 const handlePageMouseDown = (e: MouseEvent, pageIndex: number) => {
+  if (!store.isTemplateEditable) return;
   // Only left click and when not Ctrl pressed
   if (e.button !== 0 || e.ctrlKey || e.metaKey) return;
 
@@ -582,31 +586,35 @@ const getGlobalElements = () => {
     <div v-for="(page, index) in pages" :key="page.id" class="relative group">
       <div class="absolute top-0 -right-12 flex flex-col gap-2 z-10">
         <button 
-          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :title="t('canvas.addPage')"
+          :disabled="!isTemplateEditable"
           @click="store.addPage()"
         >
           <AddIcon />
         </button>
         <button 
-          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :title="t('canvas.copyPage')"
+          :disabled="!isTemplateEditable"
           @click="store.copyPage(index)"
         >
           <CopyIcon />
         </button>
         <button 
           v-if="store.copiedPage"
-          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :title="t('canvas.pastePage')"
+          :disabled="!isTemplateEditable"
           @click="store.pastePage(index)"
         >
           <PasteIcon />
         </button>
         <button 
           v-if="index > 0"
-          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :title="t('canvas.deletePage')"
+          :disabled="!isTemplateEditable"
           @click="store.removePage(index)"
         >
           <DeleteIcon />
@@ -640,7 +648,7 @@ const getGlobalElements = () => {
         <div 
           data-print-exclude="true"
           class="absolute left-0 w-full z-20 group flex flex-col justify-center items-center"
-          :class="index === 0 ? 'cursor-row-resize' : 'cursor-default'"
+          :class="index === 0 && isTemplateEditable ? 'cursor-row-resize' : 'cursor-default'"
           :style="{ 
             top: `${store.headerHeight + marginTop}px`, 
             left: `${marginLeft}px`,
@@ -669,7 +677,7 @@ const getGlobalElements = () => {
         <div 
           data-print-exclude="true"
           class="absolute left-0 w-full z-20 group flex flex-col justify-center items-center"
-          :class="index === 0 ? 'cursor-row-resize' : 'cursor-default'"
+          :class="index === 0 && isTemplateEditable ? 'cursor-row-resize' : 'cursor-default'"
           :style="{ 
             bottom: `${store.footerHeight + marginBottom}px`,
             left: `${marginLeft}px`,
@@ -717,6 +725,7 @@ const getGlobalElements = () => {
         :is-selected="store.selectedElementId === element.id || store.selectedElementIds.includes(element.id)"
         :zoom="zoom"
         :page-index="index"
+        :read-only="!isTemplateEditable"
       >
         <component :is="getComponent(element.type)" :element="element" :page-index="index" :total-pages="pages.length" />
       </ElementWrapper>

@@ -126,6 +126,17 @@ export interface CustomElementTemplate {
   name: string;
   element: PrintElement;
   testData?: Record<string, any>;
+  system?: boolean;
+  editable?: boolean;
+  deletable?: boolean;
+  copyable?: boolean;
+  permissions?: {
+    system?: boolean;
+    editable?: boolean;
+    deletable?: boolean;
+    copyable?: boolean;
+  };
+  ext?: Record<string, any>;
 }
 
 export type ListContextMenuMode = 'replace' | 'append';

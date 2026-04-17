@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { uiConfirm } from '@/utils/confirm';
+import { toast } from '@/utils/toast';
 import { useDesignerStore } from '@/stores/designer';
 import Type from '~icons/material-symbols/text-fields';
 import Numbers from '~icons/material-symbols/numbers';
@@ -19,6 +20,7 @@ import Edit from '~icons/material-symbols/edit';
 import Copy from '~icons/material-symbols/content-copy';
 import DataObject from '~icons/material-symbols/data-object';
 import { ElementType, type CustomElementTemplate, type ListContextMenuItem } from '@/types';
+import { canCopyEntity, canDeleteEntity, canEditEntity } from '@/utils/entityConstraints';
 import InputModal from '@/components/common/InputModal.vue';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import { buildTestDataFromElement, elementSupportsVariables } from '@/utils/variables';
@@ -173,6 +175,10 @@ const handleGlobalClick = (e: MouseEvent) => {
 };
 
 const handleRename = (item: CustomElementTemplate) => {
+  if (!canEditEntity(item)) {
+    toast.warning('系统自定义元素为只读，无法编辑');
+    return;
+  }
   activeMenuId.value = null;
   renameTargetId.value = item.id;
   renameInitialName.value = item.name;
@@ -186,11 +192,19 @@ const onRenameSave = (newName: string) => {
 };
 
 const handleCopy = (item: CustomElementTemplate) => {
+  if (!canCopyEntity(item)) {
+    toast.warning('System custom element does not allow copy');
+    return;
+  }
   activeMenuId.value = null;
   store.copyCustomElement(item.id);
 };
 
 const handleDelete = async (item: CustomElementTemplate) => {
+  if (!canDeleteEntity(item)) {
+    toast.warning('System custom element cannot be deleted');
+    return;
+  }
   activeMenuId.value = null;
   const confirmed = await uiConfirm.show(t('sidebar.confirmDelete', { name: item.name }));
   if (confirmed) {
@@ -199,6 +213,10 @@ const handleDelete = async (item: CustomElementTemplate) => {
 };
 
 const handleEditElement = async (item: CustomElementTemplate) => {
+  if (!canEditEntity(item)) {
+    toast.warning('系统自定义元素为只读，无法编辑');
+    return;
+  }
   activeMenuId.value = null;
 
   if (store.editingCustomElementId === item.id) return;
@@ -230,11 +248,11 @@ const handleTestData = (item: CustomElementTemplate) => {
 };
 
 const defaultCustomMenuItems = computed<CustomMenuItemView[]>(() => ([
-  { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit },
+  { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject, hidden: ({ item }) => !supportsTestData(item as CustomElementTemplate) },
-  { key: 'rename', actionKey: 'rename', label: t('sidebar.rename'), iconComponent: Edit },
-  { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy },
-  { key: 'delete', actionKey: 'delete', label: t('sidebar.delete'), iconComponent: Delete, danger: true }
+  { key: 'rename', actionKey: 'rename', label: t('sidebar.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
+  { key: 'delete', actionKey: 'delete', label: t('sidebar.delete'), iconComponent: Delete, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
 ]));
 
 const mergeCustomMenuItems = (defaults: CustomMenuItemView[], custom: CustomMenuItemView[], mode: 'replace' | 'append') => {

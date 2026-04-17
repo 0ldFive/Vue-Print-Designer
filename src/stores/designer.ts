@@ -4,6 +4,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { toast } from '../utils/toast';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
+import { useTemplateStore } from './templates';
 
 const defaultWatermark: WatermarkSettings = {
   enabled: false,
@@ -351,19 +353,24 @@ export const useDesignerStore = defineStore('designer', {
       const element = this.selectedElement || this.pages[0]?.elements[0];
       if (!element) return false;
 
+      if (!canEditEntity(template)) {
+        toast.warning('系统自定义元素为只读，无法编辑');
+        return false;
+      }
+
       template.element = cloneDeep(element);
       
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
         try {
           const cachedTemplate = this.customElementDetailCache[template.id];
-          const payload = {
+          const payload = normalizeEntityConstraints({
             ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
             ...template,
             id: template.id,
             name: template.name,
             element: cloneDeep(template.element)
-          };
+          });
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
           await (fetcher || fetch)(url, options);
@@ -383,11 +390,13 @@ export const useDesignerStore = defineStore('designer', {
       return true;
     },
     copyPage(index: number) {
+      if (!this.isTemplateEditable) return;
       const page = this.pages[index];
       if (!page) return;
       this.copiedPage = cloneDeep(page);
     },
     pastePage(targetIndex: number) {
+      if (!this.isTemplateEditable) return;
       if (!this.copiedPage) return;
 
       this.snapshot();
@@ -405,11 +414,13 @@ export const useDesignerStore = defineStore('designer', {
       this.currentPageIndex = targetIndex + 1;
     },
     addPage() {
+      if (!this.isTemplateEditable) return;
       this.snapshot();
       this.pages.push({ id: uuidv4(), elements: [] });
       this.currentPageIndex = this.pages.length - 1;
     },
     removePage(index: number) {
+      if (!this.isTemplateEditable) return;
       if (this.pages.length <= 1) return;
       this.snapshot();
       this.pages.splice(index, 1);
@@ -457,6 +468,7 @@ export const useDesignerStore = defineStore('designer', {
       this.tableSelection = null;
     },
     mergeSelectedCells() {
+      if (!this.isTemplateEditable) return;
       if (!this.tableSelection || this.tableSelection.cells.length < 2) return;
 
       const { elementId, cells } = this.tableSelection;
@@ -544,6 +556,7 @@ export const useDesignerStore = defineStore('designer', {
       this.tableSelection = null;
     },
     splitSelectedCells() {
+        if (!this.isTemplateEditable) return;
         if (!this.tableSelection || this.tableSelection.cells.length !== 1) return;
         
         const { elementId, cells } = this.tableSelection;
@@ -609,9 +622,11 @@ export const useDesignerStore = defineStore('designer', {
         this.tableSelection = null;
     },
     setHeaderHeight(height: number) {
+      if (!this.isTemplateEditable) return;
       this.headerHeight = height;
     },
     setFooterHeight(height: number) {
+      if (!this.isTemplateEditable) return;
       this.footerHeight = height;
     },
     setShowHeaderLine(show: boolean) {
@@ -867,6 +882,7 @@ export const useDesignerStore = defineStore('designer', {
       return { x, y, highlightedGuideId, highlightedEdge };
     },
     moveElementWithSnap(id: string, x: number, y: number, createSnapshot: boolean = true, constrain: boolean = true) {
+      if (!this.isTemplateEditable) return;
       for (let i = 0; i < this.pages.length; i++) {
         const page = this.pages[i];
         const index = page.elements.findIndex(e => e.id === id);
@@ -882,6 +898,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     moveSelectedElements(primaryId: string, x: number, y: number, createSnapshot: boolean = true, constrain: boolean = true) {
+      if (!this.isTemplateEditable) return;
       if (createSnapshot) {
         this.snapshot();
       }
@@ -995,6 +1012,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     nudgeSelectedElements(dx: number, dy: number) {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
       
       // Filter out locked elements
@@ -1087,6 +1105,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     addElement(element: Omit<PrintElement, 'id'>, pageIndex?: number) {
+      if (!this.isTemplateEditable) return;
       this.snapshot();
       const newElement = { ...element, id: uuidv4() };
       const targetPageIdx = pageIndex !== undefined && pageIndex >= 0 && pageIndex < this.pages.length 
@@ -1097,6 +1116,7 @@ export const useDesignerStore = defineStore('designer', {
       this.currentPageIndex = targetPageIdx;
     },
     moveElementToPage(id: string, targetPageIndex: number, x: number, y: number) {
+       if (!this.isTemplateEditable) return;
        this.snapshot();
        let sourcePageIndex = -1;
        let elementIndex = -1;
@@ -1155,6 +1175,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     moveElementsLayer(ids: string[], mode: LayerMoveMode) {
+      if (!this.isTemplateEditable) return;
       if (!ids || ids.length === 0) return;
 
       const idSet = new Set(ids);
@@ -1205,6 +1226,7 @@ export const useDesignerStore = defineStore('designer', {
       this.moveElementsLayer(ids, 'backward');
     },
     updateElement(id: string, updates: Partial<PrintElement>, createSnapshot: boolean = true) {
+      if (!this.isTemplateEditable) return;
       if (createSnapshot) {
         this.snapshot();
       }
@@ -1221,6 +1243,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     removeElement(id: string) {
+      if (!this.isTemplateEditable) return;
       // Check if locked
       for (const page of this.pages) {
         const el = page.elements.find(e => e.id === id);
@@ -1313,6 +1336,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     removeSelectedElements() {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
 
       // Filter out locked elements
@@ -1341,6 +1365,7 @@ export const useDesignerStore = defineStore('designer', {
       this.tableSelection = null;
     },
     alignSelectedElements(type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
 
       // Filter out locked elements
@@ -1403,6 +1428,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     resizeSelectedElements(dw: number, dh: number) {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
       
       const targetIds = this.selectedElementIds.filter(id => {
@@ -1436,6 +1462,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     updateSelectedElementsStyle(style: Partial<any>) {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
       
       // Check if any selected element is locked
@@ -1477,6 +1504,7 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     toggleLock() {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
       this.snapshot();
 
@@ -1501,6 +1529,7 @@ export const useDesignerStore = defineStore('designer', {
       this.zoom = zoom;
     },
     setCanvasSize(width: number, height: number) {
+      if (!this.isTemplateEditable) return;
       this.snapshot();
       this.canvasSize = { width, height };
     },
@@ -1508,6 +1537,7 @@ export const useDesignerStore = defineStore('designer', {
       this.showGrid = show;
     },
     deletePage(index: number) {
+      if (!this.isTemplateEditable) return;
       if (this.pages.length > 1) {
         this.snapshot();
         this.pages.splice(index, 1);
@@ -1532,11 +1562,13 @@ export const useDesignerStore = defineStore('designer', {
       this.clipboard = elements;
     },
     cut() {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length === 0) return;
       this.copy();
       this.removeSelectedElements();
     },
     paste(position?: { x: number, y: number, pageIndex: number }) {
+      if (!this.isTemplateEditable) return;
       if (this.clipboard.length === 0) return;
       
       this.snapshot();
@@ -1598,6 +1630,7 @@ export const useDesignerStore = defineStore('designer', {
       this.setSelection(newIds);
     },
     paginateTable(elementId: string) {
+      if (!this.isTemplateEditable) return;
       this.snapshot();
       // 1. Find Element and Page
       let pageIndex = -1;
@@ -1672,6 +1705,7 @@ export const useDesignerStore = defineStore('designer', {
       this.paginateTable(newElement.id);
     },
     groupSelectedElements() {
+      if (!this.isTemplateEditable) return;
       if (this.selectedElementIds.length < 2) return;
       console.log('Group selected elements:', this.selectedElementIds);
       // TODO: Implement grouping logic
@@ -1699,10 +1733,9 @@ export const useDesignerStore = defineStore('designer', {
               name: el.name,
               element: el.element ? cloneDeep(el.element) : cloneDeep(cached?.element || existing?.element || {})
             };
-            this.customElementDetailCache[el.id] = merged;
-            return {
-              ...merged
-            };
+            const normalized = normalizeEntityConstraints(merged);
+            this.customElementDetailCache[el.id] = normalized;
+            return normalized as CustomElementTemplate;
           });
       } catch (e) {
         console.error('Failed to load custom elements', e);
@@ -1712,6 +1745,10 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const el = this.customElements.find(el => el.id === id);
       if (!el) return;
+      if (!canCopyEntity(el)) {
+        toast.warning('System custom element does not allow copy');
+        return;
+      }
       const cachedElement = this.customElementDetailCache[id];
       const source: any = mode === 'remote'
         ? {
@@ -1720,12 +1757,12 @@ export const useDesignerStore = defineStore('designer', {
             element: (el as any).element || cachedElement?.element
           }
         : el;
-      const template: CustomElementTemplate = {
+      const template: CustomElementTemplate = normalizeEntityConstraints({
         ...source,
         id: uuidv4(),
         name: `${source.name} Copy`,
         element: cloneDeep(source.element)
-      };
+      }) as CustomElementTemplate;
       if (mode === 'remote') {
         try {
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
@@ -1750,11 +1787,11 @@ export const useDesignerStore = defineStore('designer', {
     },
     async addCustomElement(name: string, element: PrintElement) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
-      const template: CustomElementTemplate = {
+      const template: CustomElementTemplate = normalizeEntityConstraints({
         id: uuidv4(),
         name,
         element: cloneDeep(element)
-      };
+      }) as CustomElementTemplate;
       if (mode === 'remote') {
         try {
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
@@ -1779,6 +1816,11 @@ export const useDesignerStore = defineStore('designer', {
     },
     async removeCustomElement(id: string) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const existing = this.customElements.find(el => el.id === id);
+      if (existing && !canDeleteEntity(existing)) {
+        toast.warning('System custom element cannot be deleted');
+        return;
+      }
       const index = this.customElements.findIndex(el => el.id === id);
       if (index !== -1) {
         this.customElements.splice(index, 1);
@@ -1801,17 +1843,21 @@ export const useDesignerStore = defineStore('designer', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const template = this.customElements.find(el => el.id === id);
       if (template) {
+        if (!canEditEntity(template)) {
+          toast.warning('系统自定义元素为只读，无法编辑');
+          return;
+        }
         template.name = newName;
         if (mode === 'remote') {
           try {
             const cachedTemplate = this.customElementDetailCache[id];
-            const payload = {
+            const payload = normalizeEntityConstraints({
               ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
               ...template,
               id: template.id,
               name: newName,
               element: cloneDeep(template.element)
-            };
+            });
             const url = buildEndpoint(endpoints.customElements?.upsert, '');
             const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
@@ -1832,6 +1878,14 @@ export const useDesignerStore = defineStore('designer', {
     }
   },
   getters: {
+    isTemplateEditable: (state) => {
+      if (state.editingCustomElementId) return true;
+      const templateStore = useTemplateStore();
+      if (!templateStore.currentTemplateId) return true;
+      const template = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
+      if (!template) return true;
+      return canEditEntity(template);
+    },
     selectedElement: (state) => {
       if (!state.selectedElementId) return null;
       for (const page of state.pages) {

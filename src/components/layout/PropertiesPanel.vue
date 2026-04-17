@@ -30,6 +30,7 @@ const store = useDesignerStore();
 const element = computed(() => store.selectedElement);
 const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
 const isLocked = computed(() => element.value?.locked || false);
+const isEditingDisabled = computed(() => isLocked.value || !store.isTemplateEditable);
 const showCustomElementModal = ref(false);
 const customElementInitialName = ref('');
 
@@ -366,7 +367,8 @@ const handleFocusOut = (e: FocusEvent) => {
       </div>
       <button
         @click="handleDeleteSelected"
-        class="w-full py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors text-sm font-medium"
+        :disabled="!store.isTemplateEditable"
+        class="w-full py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ t('properties.deleteSelected') }}
       </button>
@@ -396,28 +398,28 @@ const handleFocusOut = (e: FocusEvent) => {
             <PropertyInput 
               :label="`${t('properties.label.x')} (${unitLabel})`" 
               type="number" 
-              :disabled="isLocked"
+              :disabled="isEditingDisabled"
               :value="pxToUnit(element.x, unit)" 
               @update:value="(v) => handleChange('x', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
               :label="`${t('properties.label.y')} (${unitLabel})`" 
               type="number" 
-              :disabled="isLocked"
+              :disabled="isEditingDisabled"
               :value="pxToUnit(element.y, unit)" 
               @update:value="(v) => handleChange('y', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
               :label="`${t('properties.label.width')} (${unitLabel})`" 
               type="number" 
-              :disabled="isLocked"
+              :disabled="isEditingDisabled"
               :value="pxToUnit(element.width, unit)" 
               @update:value="(v) => handleChange('width', unitToPx(Number(v), unit))" 
             />
             <PropertyInput 
               :label="`${t('properties.label.height')} (${unitLabel})`" 
               type="number" 
-              :disabled="isLocked"
+              :disabled="isEditingDisabled"
               :value="pxToUnit(element.height, unit)" 
               @update:value="(v) => handleChange('height', unitToPx(Number(v), unit))" 
             />
@@ -429,7 +431,7 @@ const handleFocusOut = (e: FocusEvent) => {
           <PropertyInput
             :label="t('properties.label.zIndex')"
             type="number"
-            :disabled="isLocked"
+            :disabled="isEditingDisabled"
             :min="1"
             :step="1"
             :value="currentZIndex"
@@ -438,28 +440,28 @@ const handleFocusOut = (e: FocusEvent) => {
           <div class="grid grid-cols-2 gap-3">
             <button
               @click="handleLayerMove('forward')"
-              :disabled="isLocked || !canMoveLayerUp"
+              :disabled="isEditingDisabled || !canMoveLayerUp"
               class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.moveUp') }}
             </button>
             <button
               @click="handleLayerMove('backward')"
-              :disabled="isLocked || !canMoveLayerDown"
+              :disabled="isEditingDisabled || !canMoveLayerDown"
               class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.moveDown') }}
             </button>
             <button
               @click="handleLayerMove('front')"
-              :disabled="isLocked || !canMoveLayerUp"
+              :disabled="isEditingDisabled || !canMoveLayerUp"
               class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.bringToFront') }}
             </button>
             <button
               @click="handleLayerMove('back')"
-              :disabled="isLocked || !canMoveLayerDown"
+              :disabled="isEditingDisabled || !canMoveLayerDown"
               class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.sendToBack') }}
@@ -472,7 +474,7 @@ const handleFocusOut = (e: FocusEvent) => {
           <PropertyInput
             :label="t('properties.label.repeatPerPage')"
             type="switch"
-            :disabled="isLocked"
+            :disabled="isEditingDisabled"
             :value="element.repeatPerPage || false"
             @update:value="(v) => handleChange('repeatPerPage', Boolean(v))"
           />
@@ -484,14 +486,14 @@ const handleFocusOut = (e: FocusEvent) => {
           <div class="grid grid-cols-2 gap-3">
             <button
               @click="store.mergeSelectedCells()"
-              :disabled="!canMergeCells || isLocked"
+              :disabled="!canMergeCells || isEditingDisabled"
               class="w-full py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-200 dark:disabled:border-gray-700"
             >
               {{ t('properties.action.mergeCells') }}
             </button>
             <button
               @click="store.splitSelectedCells()"
-              :disabled="!canSplitCells || isLocked"
+              :disabled="!canSplitCells || isEditingDisabled"
               class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('properties.action.splitCells') }}
@@ -509,7 +511,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <div v-if="field.type === 'action'">
                   <button
                     @click="handleFieldAction(field)"
-                    :disabled="isLocked"
+                    :disabled="isEditingDisabled"
                     class="w-full py-2 bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-700"
                   >
                     {{ t(field.label) }}
@@ -524,7 +526,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   :min="getFieldMin(field)"
                   :max="getFieldMax(field)"
                   :step="getFieldStep(field)"
-                  :disabled="isLocked"
+                  :disabled="isEditingDisabled"
                   :placeholder="field.placeholder ? (field.placeholder.startsWith('properties.') ? t(field.placeholder) : field.placeholder) : ''"
                   :value="getFieldDisplayValue(field)"
                   @update:value="(v) => handleFieldChange(field, toFieldValue(field, v))"
@@ -535,7 +537,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   v-else-if="field.type === 'select'"
                   :label="t(field.label)"
                   :options="(field.options || []).map(o => ({ ...o, label: t(o.label) }))"
-                  :disabled="isLocked"
+                  :disabled="isEditingDisabled"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -544,7 +546,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <PropertyColor
                   v-else-if="field.type === 'color'"
                   :label="t(field.label)"
-                  :disabled="isLocked"
+                  :disabled="isEditingDisabled"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
                 />
@@ -553,7 +555,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <PropertyImage
                   v-else-if="field.type === 'image'"
                   :label="t(field.label)"
-                  :disabled="isLocked"
+                  :disabled="isEditingDisabled"
                   :placeholder="field.placeholder ? (field.placeholder.startsWith('properties.') ? t(field.placeholder) : field.placeholder) : undefined"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
@@ -564,7 +566,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   v-else-if="field.type === 'code'"
                   :label="t(field.label)"
                   :language="field.language || 'javascript'"
-                  :disabled="isLocked"
+                  :disabled="isEditingDisabled"
                   :value="getCodeValue(field)"
                   @update:value="(v) => handleCodeChange(field, v)"
                 />
@@ -574,7 +576,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">{{ t(field.label) }}</label>
                   <textarea
                     :placeholder="field.placeholder ? (field.placeholder.startsWith('properties.') ? t(field.placeholder) : field.placeholder) : ''"
-                    :disabled="isLocked"
+                    :disabled="isEditingDisabled"
                     :value="['data', 'columns', 'footerData'].includes(field.key!) ? JSON.stringify((element as any)[field.key!], null, 2) : getFieldValue(field)"
                     @change="['data', 'columns', 'footerData'].includes(field.key!) ? handleDataJsonChange(field.key!, $event) : handleFieldChange(field, ( $event.target as HTMLTextAreaElement ).value)"
                     class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:border-blue-500 outline-none h-24 resize-y font-mono disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
@@ -590,7 +592,7 @@ const handleFocusOut = (e: FocusEvent) => {
           <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.appearance') }}</h3>
           <PropertyColor 
             :label="t('properties.label.backgroundColor')" 
-            :disabled="isLocked"
+            :disabled="isEditingDisabled"
             :value="element.style.backgroundColor || '#ffffff'" 
             @update:value="(v) => handleStyleChange('backgroundColor', v)" 
           />
@@ -632,7 +634,7 @@ const handleFocusOut = (e: FocusEvent) => {
 
           <button
             @click="handleDeleteSelected"
-            :disabled="isLocked"
+            :disabled="isEditingDisabled"
             class="w-full py-2 bg-white text-red-600 rounded border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
           >
             <Delete class="w-4 h-4" />

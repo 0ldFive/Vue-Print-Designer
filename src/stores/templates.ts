@@ -4,12 +4,25 @@ import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from './designer';
 import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
 
 export interface Template {
   id: string;
   name: string;
   data: any;
   updatedAt: number;
+  system?: boolean;
+  editable?: boolean;
+  deletable?: boolean;
+  copyable?: boolean;
+  permissions?: {
+    system?: boolean;
+    editable?: boolean;
+    deletable?: boolean;
+    copyable?: boolean;
+  };
+  ext?: Record<string, any>;
+  [key: string]: any;
 }
 
 const sanitizeElement = (element: any) => {
@@ -74,10 +87,9 @@ export const useTemplateStore = defineStore('templates', {
                 data: t.data ? sanitizeTemplateData(t.data) : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
                 updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now()
               };
-              this.templateDetailCache[t.id] = merged;
-              return {
-                ...merged
-              };
+              const normalized = normalizeEntityConstraints(merged);
+              this.templateDetailCache[t.id] = normalized;
+              return normalized as Template;
             })
             .sort((a: Template, b: Template) => b.updatedAt - a.updatedAt);
           return;
@@ -97,14 +109,14 @@ export const useTemplateStore = defineStore('templates', {
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
             .map((t: any) => {
               const existing = this.templates.find(e => e.id === t.id);
-              return {
+              return normalizeEntityConstraints({
                 ...existing,
                 ...t,
                 id: t.id,
                 name: t.name,
                 data: t.data ? sanitizeTemplateData(t.data) : (existing?.data || sanitizeTemplateData(undefined)),
                 updatedAt: t.updatedAt || existing?.updatedAt || Date.now()
-              };
+              }) as Template;
             });
           this.templates.sort((a: Template, b: Template) => b.updatedAt - a.updatedAt);
         } catch (e) {
@@ -126,6 +138,10 @@ export const useTemplateStore = defineStore('templates', {
       // Capture current ID synchronously to prevent race conditions if template changes during async save
       const targetId = this.currentTemplateId;
       const existingTemplate = targetId ? this.templates.find(t => t.id === targetId) : undefined;
+      if (targetId && existingTemplate && !canEditEntity(existingTemplate)) {
+        toast.warning('系统模板为只读，无法编辑');
+        return;
+      }
       
       const data = {
         ...(existingTemplate?.data || {}),
@@ -153,7 +169,7 @@ export const useTemplateStore = defineStore('templates', {
         if (mode === 'remote') {
           try {
             const upsertBase: any = targetId ? (this.templateDetailCache[targetId] || existingTemplate || {}) : {};
-            const payload = {
+            const payload = normalizeEntityConstraints({
               ...upsertBase,
               id: targetId || uuidv4(),
               name,
@@ -162,14 +178,14 @@ export const useTemplateStore = defineStore('templates', {
                 ...data
               },
               updatedAt: Date.now()
-            };
+            });
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
             const id = result?.id || payload.id;
             const index = this.templates.findIndex(t => t.id === id);
-            const next = { ...payload, ...(result && typeof result === 'object' ? result : {}), id } as Template;
+            const next = normalizeEntityConstraints({ ...payload, ...(result && typeof result === 'object' ? result : {}), id }) as Template;
             if (index >= 0) this.templates[index] = next;
             else this.templates.unshift(next);
             this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...next };
@@ -194,12 +210,12 @@ export const useTemplateStore = defineStore('templates', {
         if (targetId) {
           const idx = this.templates.findIndex(t => t.id === targetId);
           if (idx >= 0) {
-            this.templates[idx] = {
+            this.templates[idx] = normalizeEntityConstraints({
               ...this.templates[idx],
               name,
               data,
               updatedAt: Date.now()
-            };
+            }) as Template;
           }
         } else {
           this.createTemplate(name, data);
@@ -225,12 +241,12 @@ export const useTemplateStore = defineStore('templates', {
       };
       const newData = sanitizeTemplateData(nextData);
       
-      const newTemplate: Template = {
+      const newTemplate: Template = normalizeEntityConstraints({
         id: uuidv4(),
         name,
         data: newData,
         updatedAt: Date.now()
-      };
+      }) as Template;
 
       if (mode === 'remote') {
         try {
@@ -259,6 +275,11 @@ export const useTemplateStore = defineStore('templates', {
 
     async deleteTemplate(id: string) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const existing = this.templates.find(t => t.id === id);
+      if (existing && !canDeleteEntity(existing)) {
+        toast.warning('System template cannot be deleted');
+        return;
+      }
       this.templates = this.templates.filter(t => t.id !== id);
       delete this.templateDetailCache[id];
       if (this.currentTemplateId === id) {
@@ -282,19 +303,23 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const t = this.templates.find(t => t.id === id);
       if (t) {
+        if (!canEditEntity(t)) {
+          toast.warning('系统模板为只读，无法编辑');
+          return;
+        }
         t.name = newName;
         t.updatedAt = Date.now();
         if (mode === 'remote') {
           try {
             const cachedTemplate = this.templateDetailCache[id];
-            const payload = {
+            const payload = normalizeEntityConstraints({
               ...(cachedTemplate && typeof cachedTemplate === 'object' ? cachedTemplate : {}),
               ...t,
               id: t.id,
               name: newName,
               data: t.data || cachedTemplate?.data || {},
               updatedAt: t.updatedAt
-            };
+            });
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
@@ -315,6 +340,10 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const t = this.templates.find(t => t.id === id);
       if (t) {
+        if (!canCopyEntity(t)) {
+          toast.warning('System template does not allow copy');
+          return;
+        }
         const cachedTemplate = this.templateDetailCache[id];
         const source: any = mode === 'remote'
           ? {
@@ -323,13 +352,26 @@ export const useTemplateStore = defineStore('templates', {
               data: t.data || cachedTemplate?.data
             }
           : t;
-        const newTemplate: Template = {
+        const newTemplate: Template = normalizeEntityConstraints({
           ...source,
           id: uuidv4(),
           name: `${source.name} Copy`,
           data: sanitizeTemplateData(JSON.parse(JSON.stringify(source.data))),
-          updatedAt: Date.now()
-        };
+          updatedAt: Date.now(),
+          // A copied template should be a normal editable template by default,
+          // instead of inheriting source read-only/system flags.
+          system: false,
+          editable: true,
+          deletable: true,
+          copyable: true,
+          permissions: {
+            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
+            system: false,
+            editable: true,
+            deletable: true,
+            copyable: true
+          }
+        }) as Template;
         if (mode === 'remote') {
           try {
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -397,9 +439,9 @@ export const useTemplateStore = defineStore('templates', {
           
           const existingIndex = this.templates.findIndex(item => item.id === currentId);
           if (existingIndex >= 0) {
-            this.templates[existingIndex] = { ...this.templates[existingIndex], ...t, data };
+            this.templates[existingIndex] = normalizeEntityConstraints({ ...this.templates[existingIndex], ...t, data }) as Template;
           } else {
-            this.templates.push({ ...t, id: currentId, data });
+            this.templates.push(normalizeEntityConstraints({ ...t, id: currentId, data }) as Template);
           }
           return;
         } catch (e) {

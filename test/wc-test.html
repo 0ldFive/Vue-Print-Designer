@@ -37,6 +37,11 @@
       <button id="btn-refresh-templates">刷新模版列表 (refreshTemplates)</button>
       <button id="btn-refresh-elements">刷新自定义元素 (refreshCustomElements)</button>
       <button id="btn-delete-template">测试带 Confirm 删除模版 (deleteTemplate)</button>
+      <button id="btn-seed-permission-templates">注入权限模板</button>
+      <button id="btn-load-readonly-template">加载只读模板</button>
+      <button id="btn-try-upsert-readonly">测试只读模板更新拦截</button>
+      <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
+      <button id="btn-load-editable-template">加载可编辑模板</button>
       <button id="btn-test-toast-success">测试 Toast (Success)</button>
       <button id="btn-test-toast-error">测试 Toast (Error)</button>
     </div>
@@ -131,6 +136,75 @@
       } else {
         alert('当前没有模版可删除');
       }
+    });
+
+    document.getElementById('btn-seed-permission-templates').addEventListener('click', async () => {
+      const readonlyTemplate = {
+        id: 'tpl-readonly-system',
+        name: '系统只读模板',
+        editable: false,
+        deletable: false,
+        copyable: true,
+        data: {
+          pages: [
+            {
+              id: 'page-readonly',
+              elements: []
+            }
+          ]
+        }
+      };
+
+      const editableTemplate = {
+        id: 'tpl-editable-demo',
+        name: '可编辑模板',
+        editable: true,
+        deletable: true,
+        copyable: true,
+        data: {
+          pages: [
+            {
+              id: 'page-editable',
+              elements: []
+            }
+          ]
+        }
+      };
+
+      designer.setTemplates([readonlyTemplate, editableTemplate], {
+        currentTemplateId: readonlyTemplate.id
+      });
+      const list = designer.getTemplates({ includeData: true });
+      console.log('已注入权限模板:', list);
+      alert('已注入 1 个只读模板 + 1 个可编辑模板，并默认加载只读模板');
+    });
+
+    document.getElementById('btn-load-readonly-template').addEventListener('click', () => {
+      const ok = designer.loadTemplate('tpl-readonly-system');
+      alert(ok ? '已加载只读模板，可尝试拖拽/属性编辑验证 UI 禁用' : '加载失败，请先点击“注入权限模板”');
+    });
+
+    document.getElementById('btn-load-editable-template').addEventListener('click', () => {
+      const ok = designer.loadTemplate('tpl-editable-demo');
+      alert(ok ? '已加载可编辑模板，可正常编辑' : '加载失败，请先点击“注入权限模板”');
+    });
+
+    document.getElementById('btn-try-upsert-readonly').addEventListener('click', async () => {
+      const result = await designer.upsertTemplate({
+        id: 'tpl-readonly-system',
+        name: '尝试修改只读模板名称'
+      });
+      const passed = result === null;
+      console.log('只读模板 upsert 结果:', result, 'passed=', passed);
+      alert(passed ? 'PASS: 只读模板更新被拦截（返回 null）' : `FAIL: 预期返回 null，实际为 ${String(result)}`);
+    });
+
+    document.getElementById('btn-try-delete-readonly').addEventListener('click', async () => {
+      await designer.deleteTemplate('tpl-readonly-system', { confirm: false });
+      const stillExists = designer.getTemplate('tpl-readonly-system');
+      const passed = Boolean(stillExists);
+      console.log('只读模板 delete 后是否仍存在:', passed);
+      alert(passed ? 'PASS: 只读模板删除被拦截（模板仍存在）' : 'FAIL: 只读模板被删除了');
     });
 
     document.getElementById('btn-test-toast-success').addEventListener('click', () => {

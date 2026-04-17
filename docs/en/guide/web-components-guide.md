@@ -49,10 +49,12 @@
 | `loadTemplateData(data)` | Load template data |
 | `getTemplateData()` | Get current template data |
 | `getTemplates()` | Get template list |
+| `refreshTemplates()` | Refresh template list |
 | `getTemplate(id)` | Get template details |
 | `upsertTemplate(template)` | Create/Update template |
 | `deleteTemplate(id)` | Delete template |
 | `getCustomElements()` | Get custom element list |
+| `refreshCustomElements()` | Refresh custom element list |
 | `getCustomElement(id)` | Get custom element details |
 | `upsertCustomElement(element)` | Create/Update custom element |
 | `deleteCustomElement(id)` | Delete custom element |
@@ -395,12 +397,17 @@ Description: Save or update template data. It acts as a create operation if no `
 const id = await el.upsertTemplate({ name: 'A4 Template', data: { pages: [] } }, { setCurrent: true })
 ```
 Parameter `options.setCurrent` (`boolean`): Whether to automatically set it as the current canvas template after saving.
+Permission behavior (read-only template):
+- If target template has `editable=false`, update is blocked and `upsertTemplate` returns `null`.
+- If target template is editable, method returns template ID.
 
 #### 5) Delete Template (deleteTemplate)
 Description: Delete a specific template by ID.
 ```ts
-el.deleteTemplate('template-id')
+await el.deleteTemplate('template-id')
 ```
+Permission behavior (protected template):
+- If target template has `deletable=false`, delete is blocked and template remains in list.
 
 #### 6) Overwrite Template List (setTemplates)
 Description: Overwrite the locally stored template list directly.
@@ -413,6 +420,19 @@ Parameter `options.currentTemplateId` (`string`): Optional, set the currently ac
 Description: Load the corresponding template data into the current designer canvas by ID.
 ```ts
 el.loadTemplate('template-id')
+```
+
+#### 8) Template Permission Fields (Recommended)
+Description: You can attach permission fields on each template object.
+```ts
+{
+  id: 'tpl_system',
+  name: 'System Template',
+  editable: false,   // read-only in designer
+  deletable: false,  // protected from delete
+  copyable: true,    // whether copy is allowed
+  data: { pages: [] }
+}
 ```
 
 ### 12. Custom Elements CRUD Operations
@@ -927,3 +947,5 @@ Response:
 - Web Components works with Vue 2, Vue 3, React, Angular, and vanilla.
 - Local/cloud printing requires connection configuration.
 - If you use Shadow DOM, ensure `print-designer.css` is loaded.
+- When current template has `editable=false`, designer enters template-level read-only mode (drag/resize/property edit/page operations are disabled).
+- Permission checks run in both UI and Store/API layers to prevent bypass via external method calls.

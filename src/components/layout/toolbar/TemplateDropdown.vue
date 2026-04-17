@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted, computed, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { uiConfirm } from '@/utils/confirm';
+import { toast } from '@/utils/toast';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
 import type { ListContextMenuItem } from '@/types';
+import { canCopyEntity, canDeleteEntity, canEditEntity } from '@/utils/entityConstraints';
 
 import ChevronDown from '~icons/material-symbols/expand-more';
 import MoreVert from '~icons/material-symbols/more-vert';
@@ -158,6 +160,10 @@ const handleCreate = () => {
 };
 
 const handleEdit = (template: Template) => {
+  if (!canEditEntity(template)) {
+    toast.warning('系统模板为只读，无法编辑');
+    return;
+  }
   activeMenuId.value = null;
   modalMode.value = 'rename';
   targetTemplateId.value = template.id;
@@ -167,11 +173,19 @@ const handleEdit = (template: Template) => {
 };
 
 const handleCopy = (template: Template) => {
+  if (!canCopyEntity(template)) {
+    toast.warning('System template does not allow copy');
+    return;
+  }
   store.copyTemplate(template.id);
   activeMenuId.value = null;
 };
 
 const handleDelete = async (template: Template) => {
+  if (!canDeleteEntity(template)) {
+    toast.warning('System template cannot be deleted');
+    return;
+  }
   const confirmed = await uiConfirm.show(t('template.confirmDelete', { name: template.name }));
   if (confirmed) {
     await store.deleteTemplate(template.id);
@@ -202,9 +216,9 @@ const handleTestData = (template: Template) => {
 
 const defaultTemplateMenuItems = computed<TemplateMenuItemView[]>(() => ([
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject },
-  { key: 'rename', actionKey: 'rename', label: t('common.rename'), iconComponent: Edit },
-  { key: 'copy', actionKey: 'copy', label: t('common.copy'), iconComponent: Copy },
-  { key: 'delete', actionKey: 'delete', label: t('common.delete'), iconComponent: Trash2, danger: true }
+  { key: 'rename', actionKey: 'rename', label: t('common.rename'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'copy', actionKey: 'copy', label: t('common.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
+  { key: 'delete', actionKey: 'delete', label: t('common.delete'), iconComponent: Trash2, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
 ]));
 
 const mergeTemplateMenuItems = (defaults: TemplateMenuItemView[], custom: TemplateMenuItemView[], mode: 'replace' | 'append') => {

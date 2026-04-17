@@ -220,7 +220,7 @@ const isLocked = computed(() => {
 });
 
 const isFontControlsDisabled = computed(() => {
-  return !store.selectedElementId || isLocked.value || store.selectedElement?.type === ElementType.IMAGE;
+  return !store.selectedElementId || isLocked.value || store.selectedElement?.type === ElementType.IMAGE || !store.isTemplateEditable;
 });
 
 const toggleBold = () => {
@@ -514,7 +514,7 @@ onUnmounted(() => {
       
       <button 
         @click="resetRotation" 
-        :disabled="isLocked || !store.selectedElementId"
+        :disabled="isLocked || !store.selectedElementId || !store.isTemplateEditable"
         class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :title="t('editor.resetRotation')"
       >
@@ -526,28 +526,28 @@ onUnmounted(() => {
 
     <!-- Alignment -->
     <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignLeft')">
+      <button @click="store.alignSelectedElements('left')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignLeft')">
         <AlignLeft class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignCenter')">
+      <button @click="store.alignSelectedElements('center')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignCenter')">
         <AlignCenterHorizontal class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignRight')">
+      <button @click="store.alignSelectedElements('right')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignRight')">
         <AlignRight class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignTop')">
+      <button @click="store.alignSelectedElements('top')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignTop')">
         <AlignStartVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignMiddle')">
+      <button @click="store.alignSelectedElements('middle')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignMiddle')">
         <AlignCenterVertical class="w-4 h-4" />
       </button>
-      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignBottom')">
+      <button @click="store.alignSelectedElements('bottom')" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.alignBottom')">
         <AlignEndVertical class="w-4 h-4" />
       </button>
       <template v-if="store.selectedElementIds.length > 1">
         <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-        <button @click="store.groupSelectedElements()" :disabled="isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.group')">
+        <button @click="store.groupSelectedElements()" :disabled="isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('editor.group')">
           <Group class="w-4 h-4" />
         </button>
       </template>
@@ -564,18 +564,18 @@ onUnmounted(() => {
         <Redo2 class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.copy') + ' (' + formatShortcut(['Ctrl', 'C']) + ')'">
+      <button @click="store.copy()" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.copy') + ' (' + formatShortcut(['Ctrl', 'C']) + ')'">
         <Copy class="w-4 h-4" />
       </button>
-      <button @click="store.paste()" :disabled="store.clipboard.length === 0" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.paste') + ' (' + formatShortcut(['Ctrl', 'V']) + ')'">
+      <button @click="store.paste()" :disabled="store.clipboard.length === 0 || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.paste') + ' (' + formatShortcut(['Ctrl', 'V']) + ')'">
         <ClipboardPaste class="w-4 h-4" />
       </button>
       <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-      <button @click="store.toggleLock()" :disabled="!store.selectedElementId" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="(isLocked ? t('editor.unlock') : t('editor.lock')) + ' (' + formatShortcut(['Ctrl', 'L']) + ')'">
+      <button @click="store.toggleLock()" :disabled="!store.selectedElementId || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="(isLocked ? t('editor.unlock') : t('editor.lock')) + ' (' + formatShortcut(['Ctrl', 'L']) + ')'">
         <Unlock v-if="isLocked" class="w-4 h-4 text-red-500" />
         <Lock v-else class="w-4 h-4" />
       </button>
-      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.delete') + ' (' + formatShortcut(['Del']) + ')'">
+      <button @click="store.removeSelectedElements()" :disabled="!store.selectedElementId || isLocked || !store.isTemplateEditable" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed" :title="t('common.delete') + ' (' + formatShortcut(['Del']) + ')'">
         <Trash2 class="w-4 h-4" />
       </button>
     </div>

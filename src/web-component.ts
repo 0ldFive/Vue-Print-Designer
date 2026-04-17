@@ -23,6 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
 import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem } from './types';
+import { canDeleteEntity, canEditEntity, normalizeEntityConstraints } from './utils/entityConstraints';
 
 loader.config({
   'vs/nls': {
@@ -583,14 +584,18 @@ class PrintDesignerElement extends HTMLElement {
     const id = template.id || uuidv4();
     const index = this.templateStore.templates.findIndex((t) => t.id === id);
     const existing = index >= 0 ? this.templateStore.templates[index] : {};
-    const next = {
+    if (index >= 0 && !canEditEntity(existing)) {
+      toast.warning('系统模板为只读，无法编辑');
+      return null;
+    }
+    const next = normalizeEntityConstraints({
       ...existing,
       ...template,
       id,
       name: template.name,
       data: template.data || this.templateStore.templates[index]?.data || {},
       updatedAt: template.updatedAt || Date.now()
-    };
+    });
     if (index >= 0) {
       this.templateStore.templates[index] = next;
     } else {
@@ -602,13 +607,13 @@ class PrintDesignerElement extends HTMLElement {
     if (mode === 'remote') {
       try {
         const cachedTemplate = (this.templateStore as any).templateDetailCache?.[id] || {};
-        const requestPayload = {
+        const requestPayload = normalizeEntityConstraints({
           ...cachedTemplate,
           ...next,
           id: next.id,
           name: next.name,
           data: next.data || cachedTemplate.data || {}
-        };
+        });
         const url = buildEndpoint(endpoints.templates?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
@@ -616,7 +621,7 @@ class PrintDesignerElement extends HTMLElement {
         const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
         const remoteId = merged.id || requestPayload.id;
         const targetIndex = this.templateStore.templates.findIndex((t) => t.id === requestPayload.id);
-        const updated = { ...merged, id: remoteId };
+        const updated = normalizeEntityConstraints({ ...merged, id: remoteId });
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
         else this.templateStore.templates.unshift(updated);
         (this.templateStore as any).templateDetailCache = (this.templateStore as any).templateDetailCache || {};
@@ -646,7 +651,7 @@ class PrintDesignerElement extends HTMLElement {
     const { mode } = getCrudConfig();
     this.templateStore.templates = templates
       .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string')
-      .map((t) => ({
+      .map((t) => normalizeEntityConstraints({
         ...t,
         id: t.id,
         name: t.name,
@@ -673,6 +678,11 @@ class PrintDesignerElement extends HTMLElement {
 
   async deleteTemplate(id: string, options: { confirm?: boolean } = {}) {
     if (!this.templateStore) return;
+    const existing = this.templateStore.templates.find(t => t.id === id);
+    if (existing && !canDeleteEntity(existing)) {
+      toast.warning('System template cannot be deleted');
+      return;
+    }
     if (options.confirm !== false) {
       const tpl = this.templateStore.templates.find(t => t.id === id);
       if (tpl && !await uiConfirm.show(`Are you sure you want to delete template "${tpl.name}"?`)) return;
@@ -708,7 +718,11 @@ class PrintDesignerElement extends HTMLElement {
     const id = customElement.id || uuidv4();
     const index = this.designerStore.customElements.findIndex((el) => el.id === id);
     const existing = index >= 0 ? this.designerStore.customElements[index] : {};
-    const next = { ...existing, ...customElement, id, name: customElement.name, element: cloneDeep(customElement.element) };
+    if (index >= 0 && !canEditEntity(existing)) {
+      toast.warning('系统自定义元素为只读，无法编辑');
+      return null;
+    }
+    const next = normalizeEntityConstraints({ ...existing, ...customElement, id, name: customElement.name, element: cloneDeep(customElement.element) });
     if (index >= 0) {
       this.designerStore.customElements.splice(index, 1, next);
     } else {
@@ -717,13 +731,13 @@ class PrintDesignerElement extends HTMLElement {
     if (mode === 'remote') {
       try {
         const cachedCustomElement = (this.designerStore as any).customElementDetailCache?.[id] || {};
-        const requestPayload = {
+        const requestPayload = normalizeEntityConstraints({
           ...cachedCustomElement,
           ...next,
           id: next.id,
           name: next.name,
           element: cloneDeep(next.element || cachedCustomElement.element || {})
-        };
+        });
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
@@ -731,7 +745,7 @@ class PrintDesignerElement extends HTMLElement {
         const merged = { ...requestPayload, ...(result && typeof result === 'object' ? result : {}) };
         const remoteId = merged.id || requestPayload.id;
         const targetIndex = this.designerStore.customElements.findIndex((el) => el.id === requestPayload.id);
-        const updated = { ...merged, id: remoteId };
+        const updated = normalizeEntityConstraints({ ...merged, id: remoteId });
         if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
         else this.designerStore.customElements.push(updated);
         (this.designerStore as any).customElementDetailCache = (this.designerStore as any).customElementDetailCache || {};
@@ -758,7 +772,7 @@ class PrintDesignerElement extends HTMLElement {
     const { mode } = getCrudConfig();
     this.designerStore.customElements = customElements
       .filter((el) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
-      .map((el) => ({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
+      .map((el) => normalizeEntityConstraints({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
     if (mode !== 'remote') {
       this.designerStore.saveCustomElements();
     }
@@ -766,6 +780,11 @@ class PrintDesignerElement extends HTMLElement {
 
   async deleteCustomElement(id: string, options: { confirm?: boolean } = {}) {
     if (!this.designerStore) return;
+    const existing = this.designerStore.customElements.find(e => e.id === id);
+    if (existing && !canDeleteEntity(existing)) {
+      toast.warning('System custom element cannot be deleted');
+      return;
+    }
     if (options.confirm !== false) {
       const el = this.designerStore.customElements.find(e => e.id === id);
       if (el && !await uiConfirm.show(`Are you sure you want to delete custom element "${el.name}"?`)) return;
