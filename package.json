@@ -1,7 +1,7 @@
 {
   "name": "vue-print-designer",
   "private": false,
-  "version": "1.0.69",
+  "version": "1.0.7",
   "license": "AGPL-3.0-only",
   "type": "module",
   "main": "dist/print-designer.umd.js",

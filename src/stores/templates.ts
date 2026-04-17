@@ -93,6 +93,7 @@ const applyModalExtraValues = (
     ...templateLike,
     ext: {
       ...ext,
+      ...(modeData || {}),
       templateModalForm: {
         ...templateModalForm,
         ...(modeData ? { [mode]: modeData } : {}),

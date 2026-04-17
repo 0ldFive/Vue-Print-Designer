@@ -57,19 +57,39 @@ const getModalConfigItem = (mode: 'create' | 'edit' | 'copy'): TemplateModalConf
 const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'edit' | 'copy') => {
   if (!templateId) return {};
   const template = store.templates.find(item => item.id === templateId);
-  const extForm = template?.ext?.templateModalForm || {};
-  const cacheForm = store.templateDetailCache?.[templateId]?.ext?.templateModalForm || {};
+  
+  const ext = template?.ext || {};
+  const cacheExt = store.templateDetailCache?.[templateId]?.ext || {};
+  
+  // Base ext values (prefer cache which is more detailed from fetchTemplateDetail)
+  const baseExt = { ...ext, ...cacheExt };
+  
+  const extForm = ext.templateModalForm || {};
+  const cacheForm = cacheExt.templateModalForm || {};
+  
+  let modeValues = {};
   
   // Use current mode's values if available
-  if (extForm[mode] && typeof extForm[mode] === 'object') return { ...extForm[mode] };
-  if (cacheForm[mode] && typeof cacheForm[mode] === 'object') return { ...cacheForm[mode] };
+  if (extForm[mode] && typeof extForm[mode] === 'object') {
+    modeValues = { ...extForm[mode] };
+  } else if (cacheForm[mode] && typeof cacheForm[mode] === 'object') {
+    modeValues = { ...cacheForm[mode] };
+  } else {
+    // Fallback to the last saved mode's values
+    const lastMode = extForm.lastMode || cacheForm.lastMode;
+    if (lastMode && extForm[lastMode] && typeof extForm[lastMode] === 'object') {
+      modeValues = { ...extForm[lastMode] };
+    } else if (lastMode && cacheForm[lastMode] && typeof cacheForm[lastMode] === 'object') {
+      modeValues = { ...cacheForm[lastMode] };
+    }
+  }
   
-  // Fallback to the last saved mode's values
-  const lastMode = extForm.lastMode || cacheForm.lastMode;
-  if (lastMode && extForm[lastMode] && typeof extForm[lastMode] === 'object') return { ...extForm[lastMode] };
-  if (lastMode && cacheForm[lastMode] && typeof cacheForm[lastMode] === 'object') return { ...cacheForm[lastMode] };
+  // Combine base ext with mode values, but exclude internal ext fields
+  const finalValues = { ...baseExt, ...modeValues };
+  delete finalValues.templateModalForm;
+  delete finalValues.templateTags;
   
-  return {};
+  return finalValues;
 };
 
 const buildModalInitialValues = (name: string, mode: 'create' | 'edit' | 'copy', templateId: string | null = null) => {
