@@ -200,11 +200,10 @@ export interface TemplateModalFormConfig {
 }
 
 export interface TemplateListTag {
+  key?: string;
   label: string;
   color?: string;
 }
-
-export type TemplateListTagResolver = (template: any) => TemplateListTag[] | null | undefined;
 
 export interface CustomElementEditSnapshot {
   pages: Page[];
@@ -243,7 +242,6 @@ export interface DesignerState {
   templateContextMenuConfig?: ListContextMenuConfig | null;
   customElementContextMenuConfig?: ListContextMenuConfig | null;
   templateModalFormConfig?: TemplateModalFormConfig | null;
-  templateTagResolver?: TemplateListTagResolver | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
   testData: Record<string, any>;
   branding: BrandingSettings;

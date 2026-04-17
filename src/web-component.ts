@@ -22,7 +22,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
-import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig, TemplateListTagResolver } from './types';
+import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig } from './types';
 import { canDeleteEntity, canEditEntity, normalizeEntityConstraints } from './utils/entityConstraints';
 
 loader.config({
@@ -80,7 +80,6 @@ export interface DesignerListContextMenuConfig {
   items: DesignerListContextMenuItem[];
 }
 export type DesignerTemplateModalFormConfig = TemplateModalFormConfig;
-export type DesignerTemplateTagResolver = TemplateListTagResolver;
 
 import { toast } from './utils/toast';
 import { uiConfirm } from './utils/confirm';
@@ -904,16 +903,6 @@ class PrintDesignerElement extends HTMLElement {
   clearTemplateModalForm() {
     if (!this.designerStore) return;
     this.designerStore.setTemplateModalFormConfig(null);
-  }
-
-  setTemplateTagResolver(resolver: DesignerTemplateTagResolver) {
-    if (!this.designerStore) return;
-    this.designerStore.setTemplateTagResolver(typeof resolver === 'function' ? resolver : null);
-  }
-
-  clearTemplateTagResolver() {
-    if (!this.designerStore) return;
-    this.designerStore.setTemplateTagResolver(null);
   }
 }
 

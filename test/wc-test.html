@@ -44,7 +44,7 @@
       <button id="btn-try-upsert-readonly">测试只读模板更新拦截</button>
       <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
       <button id="btn-load-editable-template">加载可编辑模板</button>
-      <button id="btn-seed-tag-association-templates">注入标签强关联模板</button>
+      <button id="btn-seed-tag-templates">注入带标签模板</button>
       <button id="btn-test-toast-success">测试 Toast (Success)</button>
       <button id="btn-test-toast-error">测试 Toast (Error)</button>
     </div>
@@ -333,48 +333,30 @@
       alert(ok ? '已加载可编辑模板，可正常编辑' : '加载失败，请先点击“注入权限模板”');
     });
 
-    document.getElementById('btn-seed-tag-association-templates').addEventListener('click', () => {
-      const templateByKey = {
-        id: 'tpl-tag-by-key',
-        name: '标签强关联(按 key)',
-        tags: ['tagA', 'tagB', 'tagC'],
+    document.getElementById('btn-seed-tag-templates').addEventListener('click', () => {
+      const templateTagsOnly = {
+        id: 'tpl-tag-only',
+        name: '模板标签展示',
         ext: {
           templateTags: [
-            { key: 'tagA', label: '白名单', color: 'white' },
-            { key: 'tagB', label: '紧急', color: 'red' },
-            { key: 'tagC', label: '蓝色通道', color: 'blue' }
+            { key: 'system', label: '系统', color: 'blue' },
+            { key: 'whitelist', label: '白名单', color: 'white' },
+            { key: 'urgent', label: '紧急', color: 'red' }
           ]
         },
         data: {
-          pages: [{ id: 'page-tag-by-key', elements: [] }]
+          pages: [{ id: 'page-tag-only', elements: [] }]
         }
       };
 
-      const templateByIndex = {
-        id: 'tpl-tag-by-index',
-        name: '标签强关联(按下标)',
-        tags: ['tagX', 'tagY'],
-        ext: {
-          templateTags: [
-            { label: '索引一', color: 'green' },
-            { label: '索引二', color: 'orange' }
-          ]
-        },
-        data: {
-          pages: [{ id: 'page-tag-by-index', elements: [] }]
-        }
-      };
-
-      designer.setTemplateTagResolver(null);
-      designer.setTemplates([templateByKey, templateByIndex], {
-        currentTemplateId: templateByKey.id
+      designer.setTemplates([templateTagsOnly], {
+        currentTemplateId: templateTagsOnly.id
       });
 
       alert([
-        '已注入 2 个标签强关联模板。',
+        '已注入 1 个带标签的模板。',
         '请打开顶部模板下拉查看标签：',
-        '1) 标签强关联(按 key): 通过 key 匹配 tags -> ext.templateTags',
-        '2) 标签强关联(按下标): 未提供 key 时按数组下标关联'
+        '直接读取 ext.templateTags 显示对应的系统、白名单和紧急标签。'
       ].join('\n'));
     });
 

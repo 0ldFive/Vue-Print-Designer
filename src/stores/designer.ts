@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
-import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem, type TemplateModalFormConfig, type TemplateModalField, type TemplateListTagResolver } from '@/types';
+import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem, type TemplateModalFormConfig, type TemplateModalField } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { toast } from '../utils/toast';
 import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
@@ -157,7 +157,6 @@ export const useDesignerStore = defineStore('designer', {
     templateContextMenuConfig: null,
     customElementContextMenuConfig: null,
     templateModalFormConfig: null,
-    templateTagResolver: null,
     contextMenuEventEmitter: null,
     testData: {},
     editingCustomElementId: null,
@@ -213,9 +212,6 @@ export const useDesignerStore = defineStore('designer', {
     },
     setTemplateModalFormConfig(config: TemplateModalFormConfig | null) {
       this.templateModalFormConfig = normalizeTemplateModalFormConfig(config);
-    },
-    setTemplateTagResolver(resolver: TemplateListTagResolver | null) {
-      this.templateTagResolver = typeof resolver === 'function' ? resolver : null;
     },
     setClientUrl(url: string) {
       this.clientUrl = url;

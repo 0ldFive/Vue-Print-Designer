@@ -127,136 +127,21 @@ const normalizeTagColor = (rawColor: string | undefined) => {
   return { backgroundColor: '#f3f4f6', color: '#4b5563', borderColor: '#e5e7eb' };
 };
 
-const toTemplateTag = (value: any): TemplateListTag | null => {
-  if (typeof value === 'string') {
-    const label = value.trim();
-    return label ? { label } : null;
-  }
-  if (!value || typeof value !== 'object') return null;
-  const label = String(value.label ?? value.name ?? value.text ?? '').trim();
-  if (!label) return null;
-  const color = typeof value.color === 'string'
-    ? value.color
-    : (typeof value.tagColor === 'string' ? value.tagColor : undefined);
-  return { label, color };
-};
-
-const normalizeTemplateTags = (input: any): TemplateListTag[] => {
-  if (!input) return [];
-  if (Array.isArray(input)) {
-    return input.map(toTemplateTag).filter((tag): tag is TemplateListTag => Boolean(tag));
-  }
-  if (typeof input === 'string') {
-    const segments = input.split(/[,|，]/g).map(item => item.trim()).filter(Boolean);
-    const source = segments.length > 1 ? segments : [input.trim()];
-    return source.map(toTemplateTag).filter((tag): tag is TemplateListTag => Boolean(tag));
-  }
-  const one = toTemplateTag(input);
-  return one ? [one] : [];
-};
-
-type TemplateTagDetail = {
-  key?: string;
-  label?: string;
-  color?: string;
-};
-
-const toTagCode = (value: any): string | null => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    const code = String(value).trim();
-    return code || null;
-  }
-  if (!value || typeof value !== 'object') return null;
-  const code = String(value.key ?? value.code ?? value.value ?? value.id ?? value.label ?? value.name ?? value.text ?? '').trim();
-  return code || null;
-};
-
-const normalizeTagCodes = (input: any): string[] => {
-  if (!input) return [];
-  if (Array.isArray(input)) {
-    return input.map(toTagCode).filter((code): code is string => Boolean(code));
-  }
-  if (typeof input === 'string') {
-    const segments = input.split(/[,|，]/g).map(item => item.trim()).filter(Boolean);
-    if (segments.length > 1) return segments;
-  }
-  const one = toTagCode(input);
-  return one ? [one] : [];
-};
-
-const toTemplateTagDetail = (value: any): TemplateTagDetail | null => {
-  if (typeof value === 'string') {
-    const label = value.trim();
-    return label ? { label } : null;
-  }
-  if (!value || typeof value !== 'object') return null;
-  const key = String(value.key ?? value.code ?? value.value ?? value.id ?? '').trim() || undefined;
-  const label = String(value.label ?? value.name ?? value.text ?? '').trim() || undefined;
-  const color = typeof value.color === 'string'
-    ? value.color
-    : (typeof value.tagColor === 'string' ? value.tagColor : undefined);
-  return key || label || color ? { key, label, color } : null;
-};
-
-const normalizeTemplateTagDetails = (input: any): TemplateTagDetail[] => {
-  if (!input) return [];
-  if (Array.isArray(input)) {
-    return input.map(toTemplateTagDetail).filter((detail): detail is TemplateTagDetail => Boolean(detail));
-  }
-  const one = toTemplateTagDetail(input);
-  return one ? [one] : [];
-};
-
-const buildAssociatedTemplateTags = (template: Template): TemplateListTag[] | null => {
-  const codes = normalizeTagCodes(template.tags);
-  const details = normalizeTemplateTagDetails(template.ext?.templateTags);
-  if (!codes.length || !details.length) return null;
-
-  const detailByKey = new Map<string, TemplateTagDetail>();
-  details.forEach((detail) => {
-    if (!detail.key) return;
-    detailByKey.set(detail.key, detail);
-  });
-
-  const associatedTags: Array<TemplateListTag | null> = codes.map((code, index) => {
-      const detail = detailByKey.get(code) || details[index];
-      const label = (detail?.label || code || '').trim();
-      if (!label) return null;
-      return detail?.color ? { label, color: detail.color } : { label };
-    });
-
-  return associatedTags.filter((tag): tag is TemplateListTag => tag !== null);
-};
-
 const getTemplateTags = (template: Template): TemplateListTag[] => {
-  const resolver = designerStore.templateTagResolver;
-  const associated = buildAssociatedTemplateTags(template);
-  const resolvedByData = associated || [
-    ...normalizeTemplateTags(template.tags),
-    ...normalizeTemplateTags(template.templateTags),
-    ...normalizeTemplateTags(template.ext?.tags),
-    ...normalizeTemplateTags(template.ext?.templateTags)
-  ];
-
-  let resolvedByResolver: TemplateListTag[] = [];
-  if (typeof resolver === 'function') {
-    try {
-      resolvedByResolver = normalizeTemplateTags(resolver(template));
-    } catch (error) {
-      console.error('Template tag resolver failed', error);
-    }
-  }
-
-  const merged = [...resolvedByData, ...resolvedByResolver];
-  const deduped: TemplateListTag[] = [];
-  const seen = new Set<string>();
-  merged.forEach((tag) => {
-    const key = `${tag.label}__${tag.color || ''}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    deduped.push(tag);
-  });
-  return deduped;
+  const tags = template.ext?.templateTags;
+  if (!Array.isArray(tags)) return [];
+  
+  return tags.map((tag): TemplateListTag | null => {
+    if (!tag || typeof tag !== 'object') return null;
+    const label = String(tag.label ?? '').trim();
+    if (!label) return null;
+    
+    return {
+      key: tag.key ? String(tag.key) : undefined,
+      label,
+      color: tag.color ? String(tag.color) : undefined
+    };
+  }).filter((tag): tag is TemplateListTag => tag !== null);
 };
 
 const templateTagDisplayMap = computed(() => {

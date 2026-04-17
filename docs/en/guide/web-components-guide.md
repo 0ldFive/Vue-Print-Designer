@@ -74,8 +74,6 @@
 | `clearCustomElementContextMenu()` | Restore default custom element list extension menu |
 | `setTemplateModalForm(config)` | Configure custom forms for create/edit/copy template modals |
 | `clearTemplateModalForm()` | Clear template modal custom form configuration |
-| `setTemplateTagResolver(resolver)` | Configure template list tag resolver |
-| `clearTemplateTagResolver()` | Clear template list tag resolver |
 
 ## Quick Start
 
@@ -809,54 +807,6 @@ Behavior notes:
 - When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
 - `create` uses `initialValues` by default; when not configured, component default behavior applies.
 
-### 19. Configure Template List Tag Extension (setTemplateTagResolver)
-
-Description: Customize tags displayed before each template name in the template list. Example: `[tagA](white) [tagB](red) xxx template`.
-Tag parsing is based on fields returned in each template item from the list API (`GET /api/print/templates`).
-
-```ts
-// 1) Inject a tag resolver (based on each list-item object)
-el.setTemplateTagResolver((template) => {
-  // `template` is one item from the list API response
-  const tags = template.ext?.bizTags || []
-  return tags.map((item) => ({
-    label: item.name,
-    color: item.color // e.g. 'white' | 'red' | '#ff4d4f'
-  }))
-})
-
-// 2) Clear resolver (fallback to built-in fields only)
-el.clearTemplateTagResolver()
-```
-
-Parameter contract:
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `resolver` | `(template:any) => Array<{label:string;color?:string}>` | Yes | Tag resolver; return `null/undefined/[]` to indicate no tags |
-| `tag.label` | `string` | Yes | Tag text |
-| `tag.color` | `string` | No | Tag color, accepts keyword or CSS color value |
-
-Default field sources (works even without resolver):
-
-- `template.tags`
-- `template.templateTags`
-- `template.ext.tags`
-- `template.ext.templateTags`
-
-Forced association rule (`template.tags` + `template.ext.templateTags`):
-
-- When both exist, the component enters "forced association" mode instead of simple concatenation.
-- It first matches by `key/code/value/id` against values in `tags`.
-- If no matchable key is provided, it falls back to index-based pairing.
-- Rendered text/color is taken from `ext.templateTags` (`label/color`); if no `label` matches, it falls back to the original `tags` value.
-
-Color behavior:
-
-- Built-in semantic colors: `white/red/blue/green/orange` (Chinese aliases like `白色/红色` are also supported).
-- CSS color values are also supported (for example `#ff4d4f`, `rgb(220,38,38)`).
-- If `color` is not provided, a default gray tag style is used.
-
 ## Events
 
 ```ts
@@ -936,11 +886,9 @@ Response:
   {
     "id": "tpl_1",
     "name": "A4 Template",
-    "tags": ["tagA", "tagB"],
     "ext": {
       "templateTags": [
-        { "label": "Whitelist", "color": "white" },
-        { "label": "Urgent", "color": "red" }
+        { "key": "system", "label": "System", "color": "blue" }
       ]
     },
     "updatedAt": 1700000000000
@@ -995,19 +943,16 @@ Request:
 - If backend does not return `ext`, frontend still works and falls back to `setTemplateModalForm(...).initialValues`.
 - Convention: All template extension parameters must be placed inside the `ext` object. Appending custom parameters to the root level of the template is no longer supported.
 
-**3.2) Template Tag Round-Trip Contract (Template List Tags)**
+**3.2) Template Tag Data Return Guidelines (Template List Tags)**
 
-- Template list tag parsing is based on each item returned by `GET /api/print/templates`.
-- If you want business tags to appear in template list rows, backend should return at least one of these fields in each list item:
-  - `template.tags`
-  - `template.templateTags`
-  - `template.ext.tags`
-  - `template.ext.templateTags`
-- When both `template.tags` and `template.ext.templateTags` are returned, frontend enforces association (key match first, then index fallback).
-- Recommended `template.ext.templateTags` item shape: `{ "key": "tagA", "label": "Whitelist", "color": "white" }`.
-- Recommended tag item shape: `{ "label": "tagA", "color": "white" }`.
-- String arrays are also accepted (for example `["tagA", "tagB"]`), rendered with default styles.
-- If `setTemplateTagResolver` is also used, frontend merges "default field tags + resolver tags" and de-duplicates by `label+color`.
+- The template list tags directly read `template.ext.templateTags`.
+- If you want to display business tags in the template list, please provide the following structure in the `ext` field returned by the backend:
+  ```json
+  "templateTags": [
+    { "key": "system", "label": "System", "color": "blue" }
+  ]
+  ```
+- Color Rules: Supports built-in semantic colors (`white/red/blue/green/orange`) or CSS color values. When no color is passed, the default gray style will be used.
 
 **4) Delete template**
 
