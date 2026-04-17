@@ -84,13 +84,17 @@ export const useTemplateStore = defineStore('templates', {
           const list = Array.isArray(parsed) ? parsed : [];
           this.templates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
-            .map((t: any) => ({
-              ...t,
-              id: t.id,
-              name: t.name,
-              data: sanitizeTemplateData(t.data),
-              updatedAt: t.updatedAt || Date.now()
-            }));
+            .map((t: any) => {
+              const existing = this.templates.find(e => e.id === t.id);
+              return {
+                ...existing,
+                ...t,
+                id: t.id,
+                name: t.name,
+                data: t.data ? sanitizeTemplateData(t.data) : (existing?.data || sanitizeTemplateData(undefined)),
+                updatedAt: t.updatedAt || existing?.updatedAt || Date.now()
+              };
+            });
           this.templates.sort((a: Template, b: Template) => b.updatedAt - a.updatedAt);
         } catch (e) {
           console.error('Failed to parse templates', e);

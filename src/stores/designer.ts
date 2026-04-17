@@ -1677,8 +1677,17 @@ export const useDesignerStore = defineStore('designer', {
         const data = await res.json();
         const list = Array.isArray(data) ? data : data?.customElements || [];
         this.customElements = list
-          .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
-          .map((el: any) => ({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
+          .filter((el: any) => el && typeof el.id === 'string' && typeof el.name === 'string' && (el.element || this.customElements.some(e => e.id === el.id)))
+          .map((el: any) => {
+            const existing = this.customElements.find(e => e.id === el.id);
+            return {
+              ...existing,
+              ...el,
+              id: el.id,
+              name: el.name,
+              element: el.element ? cloneDeep(el.element) : cloneDeep(existing?.element || {})
+            };
+          });
       } catch (e) {
         console.error('Failed to load custom elements', e);
       }
