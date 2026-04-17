@@ -5,6 +5,18 @@ export interface EntityPermissions {
   copyable: boolean;
 }
 
+const cloneDeep = <T>(obj: T): T => {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(cloneDeep) as any;
+  const cloned: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = cloneDeep((obj as any)[key]);
+    }
+  }
+  return cloned;
+};
+
 const isRecord = (value: unknown): value is Record<string, any> => {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 };
@@ -101,3 +113,52 @@ export const normalizeEntityConstraints = <T extends Record<string, any>>(entity
 export const canEditEntity = (entity: unknown) => resolveEntityPermissions(entity).editable;
 export const canDeleteEntity = (entity: unknown) => resolveEntityPermissions(entity).deletable;
 export const canCopyEntity = (entity: unknown) => resolveEntityPermissions(entity).copyable;
+
+export const normalizeModalExtraValues = (values?: Record<string, any>) => {
+  if (!values || !isRecord(values)) return undefined;
+  
+  const normalized: Record<string, any> = {};
+  for (const key in values) {
+    if (Object.prototype.hasOwnProperty.call(values, key)) {
+      normalized[key] = cloneDeep(values[key]);
+    }
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+};
+
+export const applyModalExtraValues = <T extends Record<string, any>>(
+  templateLike: T,
+  mode: 'create' | 'edit' | 'copy',
+  values?: Record<string, any>
+): T => {
+  const normalized = normalizeModalExtraValues(values);
+  const ext = templateLike.ext && isRecord(templateLike.ext) ? templateLike.ext : {};
+  const templateModalForm = ext.templateModalForm && isRecord(ext.templateModalForm)
+    ? ext.templateModalForm
+    : {};
+
+  const lastMode = templateModalForm.lastMode;
+  let modeData = normalized;
+
+  if (!modeData) {
+    if (templateModalForm[mode]) {
+      modeData = templateModalForm[mode];
+    } else if (lastMode && templateModalForm[lastMode]) {
+      modeData = templateModalForm[lastMode];
+    }
+  }
+
+  return {
+    ...templateLike,
+    ext: {
+      ...ext,
+      ...(modeData || {}),
+      templateModalForm: {
+        ...templateModalForm,
+        ...(modeData ? { [mode]: modeData } : {}),
+        lastMode: mode,
+        updatedAt: Date.now()
+      }
+    }
+  };
+};

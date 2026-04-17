@@ -139,15 +139,39 @@ const copyId = () => {
   }
 };
 
+const customElementInitialValues = ref<Record<string, any>>({});
+const customElementModalFields = computed(() => {
+  return store.customElementModalFormConfig?.create?.fields;
+});
+
 const handleSaveCustom = () => {
   if (!element.value) return;
   customElementInitialName.value = element.value.type;
+  
+  const configItem = store.customElementModalFormConfig?.create;
+  customElementInitialValues.value = configItem?.initialValues || {};
+  
   showCustomElementModal.value = true;
 };
 
-const onSaveCustomElement = (name: string) => {
-  if (element.value && name) {
-    store.addCustomElement(name, element.value);
+const onSaveCustomElement = (payload: string | Record<string, any>) => {
+  if (element.value) {
+    let name = '';
+    let extraValues: Record<string, any> | undefined = undefined;
+
+    if (typeof payload === 'string') {
+      name = payload;
+    } else {
+      name = payload.name;
+      const { name: _, ...rest } = payload;
+      if (Object.keys(rest).length > 0) {
+        extraValues = rest;
+      }
+    }
+
+    if (name) {
+      store.addCustomElement(name, element.value, extraValues);
+    }
   }
 };
 
@@ -659,6 +683,8 @@ const handleFocusOut = (e: FocusEvent) => {
   <InputModal
     :show="showCustomElementModal"
     :initial-value="customElementInitialName"
+    :initial-values="customElementInitialValues"
+    :fields="customElementModalFields"
     :title="t('properties.action.saveCustomModal')"
     :placeholder="t('sidebar.enterNamePlaceholder')"
     @close="showCustomElementModal = false"

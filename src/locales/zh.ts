@@ -150,7 +150,7 @@ export default {
     circle: '圆形',
     noCustomElements: '暂无自定义元素',
     moreOptions: '更多选项',
-    editElement: '编辑元素',
+    editElement: '设计元素',
     edit: '编辑',
     copy: '复制',
     delete: '删除',

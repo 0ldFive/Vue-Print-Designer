@@ -17,6 +17,7 @@ import Star from '~icons/material-symbols/star';
 import Delete from '~icons/material-symbols/delete';
 import MoreVert from '~icons/material-symbols/more-vert';
 import Edit from '~icons/material-symbols/edit';
+import Palette from '~icons/material-symbols/palette';
 import Copy from '~icons/material-symbols/content-copy';
 import DataObject from '~icons/material-symbols/data-object';
 import { ElementType, type CustomElementTemplate, type ListContextMenuItem } from '@/types';
@@ -37,8 +38,13 @@ const menuPosition = ref<Record<string, string>>({});
 
 // Modal state
 const showEditModal = ref(false);
+const editModalMode = ref<'edit' | 'copy'>('edit');
 const editTargetId = ref<string | null>(null);
 const editInitialName = ref('');
+const editInitialValues = ref<Record<string, any>>({});
+const editModalFields = computed(() => {
+  return store.customElementModalFormConfig?.[editModalMode.value]?.fields;
+});
 
 const showTestDataModal = ref(false);
 const testDataContent = ref('');
@@ -174,20 +180,77 @@ const handleGlobalClick = (e: MouseEvent) => {
   }
 };
 
+const getCustomElementModalSavedValues = (templateId: string, mode: 'edit' | 'copy') => {
+  if (!templateId) return {};
+  const cacheExt = store.customElementDetailCache[templateId]?.ext || {};
+  const listExt = store.customElements.find(t => t.id === templateId)?.ext || {};
+  const ext = { ...listExt, ...cacheExt };
+  const extForm = ext.templateModalForm || {};
+  const cacheForm = cacheExt.templateModalForm || {};
+  
+  const savedValues = { ...extForm[mode], ...cacheForm[mode] };
+  
+  if (Object.keys(savedValues).length === 0) {
+    const lastMode = cacheForm.lastMode || extForm.lastMode;
+    if (lastMode && (extForm[lastMode] || cacheForm[lastMode])) {
+      return { ...extForm[lastMode], ...cacheForm[lastMode] };
+    }
+  }
+  return savedValues;
+};
+
+const buildCustomElementModalInitialValues = (template: CustomElementTemplate, mode: 'edit' | 'copy') => {
+  const configItem = store.customElementModalFormConfig?.[mode];
+  if (!configItem) return {};
+  
+  const defaultValues = configItem.initialValues || {};
+  const savedValues = getCustomElementModalSavedValues(template.id, mode);
+  
+  const finalValues = {
+    ...defaultValues,
+    ...savedValues,
+    ...template.ext
+  };
+  
+  delete finalValues.templateModalForm;
+  return finalValues;
+};
+
 const handleEdit = (item: CustomElementTemplate) => {
   if (!canEditEntity(item)) {
     toast.warning(t('toast.customElementReadOnly'));
     return;
   }
   activeMenuId.value = null;
+  editModalMode.value = 'edit';
   editTargetId.value = item.id;
   editInitialName.value = item.name;
+  editInitialValues.value = buildCustomElementModalInitialValues(item, 'edit');
   showEditModal.value = true;
 };
 
-const onEditSave = (newName: string) => {
-  if (editTargetId.value && newName) {
-    store.editCustomElement(editTargetId.value, newName);
+const onEditSave = (payload: string | Record<string, any>) => {
+  if (editTargetId.value) {
+    let newName = '';
+    let extraValues: Record<string, any> | undefined = undefined;
+
+    if (typeof payload === 'string') {
+      newName = payload;
+    } else {
+      newName = payload.name;
+      const { name, ...rest } = payload;
+      if (Object.keys(rest).length > 0) {
+        extraValues = rest;
+      }
+    }
+    
+    if (newName) {
+      if (editModalMode.value === 'edit') {
+        store.editCustomElement(editTargetId.value, newName, extraValues);
+      } else if (editModalMode.value === 'copy') {
+        store.copyCustomElement(editTargetId.value, { ...extraValues, name: newName });
+      }
+    }
   }
 };
 
@@ -197,7 +260,11 @@ const handleCopy = (item: CustomElementTemplate) => {
     return;
   }
   activeMenuId.value = null;
-  store.copyCustomElement(item.id);
+  editModalMode.value = 'copy';
+  editTargetId.value = item.id;
+  editInitialName.value = `${item.name} Copy`;
+  editInitialValues.value = buildCustomElementModalInitialValues(item, 'copy');
+  showEditModal.value = true;
 };
 
 const handleDelete = async (item: CustomElementTemplate) => {
@@ -248,7 +315,7 @@ const handleTestData = (item: CustomElementTemplate) => {
 };
 
 const defaultCustomMenuItems = computed<CustomMenuItemView[]>(() => ([
-  { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
+  { key: 'editElement', actionKey: 'editElement', label: t('sidebar.editElement'), iconComponent: Palette, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject, hidden: ({ item }) => !supportsTestData(item as CustomElementTemplate) },
   { key: 'edit', actionKey: 'edit', label: t('sidebar.edit'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'copy', actionKey: 'copy', label: t('sidebar.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
@@ -501,7 +568,9 @@ onUnmounted(() => {
     <InputModal
       :show="showEditModal"
       :initial-value="editInitialName"
-      :title="t('sidebar.editModalTitle')"
+      :initial-values="editInitialValues"
+      :fields="editModalFields"
+      :title="editModalMode === 'edit' ? t('sidebar.editModalTitle') : t('common.copy')"
       :placeholder="t('sidebar.enterNamePlaceholder')"
       @close="showEditModal = false"
       @save="onEditSave"

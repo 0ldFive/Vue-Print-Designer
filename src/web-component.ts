@@ -904,6 +904,16 @@ class PrintDesignerElement extends HTMLElement {
     if (!this.designerStore) return;
     this.designerStore.setTemplateModalFormConfig(null);
   }
+
+  setCustomElementModalForm(config: DesignerTemplateModalFormConfig) {
+    if (!this.designerStore) return;
+    this.designerStore.setCustomElementModalFormConfig(config || null);
+  }
+
+  clearCustomElementModalForm() {
+    if (!this.designerStore) return;
+    this.designerStore.setCustomElementModalFormConfig(null);
+  }
 }
 
 const elementName = 'print-designer';

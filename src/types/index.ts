@@ -242,6 +242,7 @@ export interface DesignerState {
   templateContextMenuConfig?: ListContextMenuConfig | null;
   customElementContextMenuConfig?: ListContextMenuConfig | null;
   templateModalFormConfig?: TemplateModalFormConfig | null;
+  customElementModalFormConfig?: TemplateModalFormConfig | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
   testData: Record<string, any>;
   branding: BrandingSettings;

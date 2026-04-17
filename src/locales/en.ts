@@ -150,7 +150,7 @@ export default {
     circle: 'Circle',
     noCustomElements: 'No custom elements saved yet.',
     moreOptions: 'More options',
-    editElement: 'Edit Element',
+    editElement: 'Design Element',
     edit: 'Edit',
     copy: 'Copy',
     delete: 'Delete',

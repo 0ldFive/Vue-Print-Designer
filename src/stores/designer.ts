@@ -4,7 +4,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem, type TemplateModalFormConfig, type TemplateModalField } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { toast } from '../utils/toast';
-import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues } from '../utils/entityConstraints';
 import { useTemplateStore } from './templates';
 import i18n from '../locales';
 
@@ -154,10 +154,11 @@ export const useDesignerStore = defineStore('designer', {
     currentPageIndex: 0,
     customElements: JSON.parse(localStorage.getItem('print-designer-custom-elements') || '[]'),
     customElementDetailCache: {} as Record<string, any>,
-    templateContextMenuConfig: null,
-    customElementContextMenuConfig: null,
-    templateModalFormConfig: null,
-    contextMenuEventEmitter: null,
+    templateContextMenuConfig: null as ListContextMenuConfig | null,
+    customElementContextMenuConfig: null as ListContextMenuConfig | null,
+    templateModalFormConfig: null as TemplateModalFormConfig | null,
+    customElementModalFormConfig: null as TemplateModalFormConfig | null,
+    contextMenuEventEmitter: null as ((eventName: string, detail: Record<string, any>) => void) | null,
     testData: {},
     editingCustomElementId: null,
     customElementEditSnapshot: null,
@@ -212,6 +213,9 @@ export const useDesignerStore = defineStore('designer', {
     },
     setTemplateModalFormConfig(config: TemplateModalFormConfig | null) {
       this.templateModalFormConfig = normalizeTemplateModalFormConfig(config);
+    },
+    setCustomElementModalFormConfig(config: TemplateModalFormConfig | null) {
+      this.customElementModalFormConfig = normalizeTemplateModalFormConfig(config);
     },
     setClientUrl(url: string) {
       this.clientUrl = url;
@@ -1800,7 +1804,7 @@ export const useDesignerStore = defineStore('designer', {
         console.error('Failed to load custom elements', e);
       }
     },
-    async copyCustomElement(id: string) {
+    async copyCustomElement(id: string, extraValues?: Record<string, any>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const el = this.customElements.find(el => el.id === id);
       if (!el) return;
@@ -1818,25 +1822,38 @@ export const useDesignerStore = defineStore('designer', {
             ext: { ...(cachedElement?.ext || {}), ...(el.ext || {}) }
           }
         : el;
-      const template: CustomElementTemplate = normalizeEntityConstraints({
-        id: uuidv4(),
-        name: `${source.name} Copy`,
-        element: cloneDeep(source.element),
-        testData: cloneDeep(source.testData),
-        ext: source.ext,
-        // A copied custom element should become a normal editable entity by default.
-        system: false,
-        editable: true,
-        deletable: true,
-        copyable: true,
-        permissions: {
-          ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
+        
+      let targetName = `${source.name} Copy`;
+      if (extraValues && extraValues.name) {
+        targetName = extraValues.name;
+        delete extraValues.name;
+      }
+        
+      const templateBase = applyModalExtraValues(
+        {
+          id: uuidv4(),
+          name: targetName,
+          element: cloneDeep(source.element),
+          testData: cloneDeep(source.testData),
+          ext: source.ext,
+          // A copied custom element should become a normal editable entity by default.
           system: false,
           editable: true,
           deletable: true,
-          copyable: true
-        }
-      }) as CustomElementTemplate;
+          copyable: true,
+          permissions: {
+            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
+            system: false,
+            editable: true,
+            deletable: true,
+            copyable: true
+          }
+        },
+        'copy',
+        extraValues
+      );
+      
+      const template: CustomElementTemplate = normalizeEntityConstraints(templateBase) as CustomElementTemplate;
       if (mode === 'remote') {
         try {
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
@@ -1873,37 +1890,45 @@ export const useDesignerStore = defineStore('designer', {
         this.saveCustomElements();
       }
     },
-    async addCustomElement(name: string, element: PrintElement) {
+    async addCustomElement(name: string, element: PrintElement, extraValues?: Record<string, any>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
-      const template: CustomElementTemplate = normalizeEntityConstraints({
-        id: uuidv4(),
-        name,
-        element: cloneDeep(element)
-      }) as CustomElementTemplate;
+      const template = applyModalExtraValues(
+        {
+          id: uuidv4(),
+          name,
+          element: cloneDeep(element),
+          ext: {}
+        },
+        'create',
+        extraValues
+      ) as CustomElementTemplate;
+      
+      const payloadTemplate = normalizeEntityConstraints(template) as CustomElementTemplate;
+      
       if (mode === 'remote') {
         try {
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
-          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, template);
+          const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payloadTemplate);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
           if (result && typeof result === 'object') {
             if (result.ext) {
-              template.ext = { ...(template.ext || {}), ...result.ext };
+              payloadTemplate.ext = { ...(payloadTemplate.ext || {}), ...result.ext };
             }
           }
-          template.id = result?.id || template.id;
-          const cached = this.customElementDetailCache[template.id];
-          this.customElementDetailCache[template.id] = normalizeEntityConstraints({
-            id: template.id,
-            name: template.name,
-            element: cloneDeep(template.element || cached?.element || {}),
-            testData: template.testData || cached?.testData,
-            system: template.system ?? cached?.system,
-            editable: template.editable ?? cached?.editable,
-            deletable: template.deletable ?? cached?.deletable,
-            copyable: template.copyable ?? cached?.copyable,
-            permissions: template.permissions ?? cached?.permissions,
-            ext: { ...(cached?.ext || {}), ...(template.ext || {}) }
+          payloadTemplate.id = result?.id || payloadTemplate.id;
+          const cached = this.customElementDetailCache[payloadTemplate.id];
+          this.customElementDetailCache[payloadTemplate.id] = normalizeEntityConstraints({
+            id: payloadTemplate.id,
+            name: payloadTemplate.name,
+            element: cloneDeep(payloadTemplate.element || cached?.element || {}),
+            testData: payloadTemplate.testData || cached?.testData,
+            system: payloadTemplate.system ?? cached?.system,
+            editable: payloadTemplate.editable ?? cached?.editable,
+            deletable: payloadTemplate.deletable ?? cached?.deletable,
+            copyable: payloadTemplate.copyable ?? cached?.copyable,
+            permissions: payloadTemplate.permissions ?? cached?.permissions,
+            ext: { ...(cached?.ext || {}), ...(payloadTemplate.ext || {}) }
           }) as CustomElementTemplate;
           
           await this.loadCustomElements();
@@ -1912,7 +1937,7 @@ export const useDesignerStore = defineStore('designer', {
           toast.error(i18n.global.t('toast.customElementAddFailed'));
         }
       } else {
-        this.customElements.push(template);
+        this.customElements.push(payloadTemplate);
         this.saveCustomElements();
       }
     },
@@ -1941,7 +1966,7 @@ export const useDesignerStore = defineStore('designer', {
         this.saveCustomElements();
       }
     },
-    async editCustomElement(id: string, newName: string) {
+    async editCustomElement(id: string, newName: string, extraValues?: Record<string, any>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const template = this.customElements.find(el => el.id === id);
       if (template) {
@@ -1950,9 +1975,21 @@ export const useDesignerStore = defineStore('designer', {
           return;
         }
         template.name = newName;
+        const cachedTemplate = this.customElementDetailCache[id];
+        
+        const mergedTemplate = applyModalExtraValues(
+          {
+            ...template,
+            ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
+          },
+          'edit',
+          extraValues
+        );
+        
+        template.ext = mergedTemplate.ext;
+
         if (mode === 'remote') {
           try {
-            const cachedTemplate = this.customElementDetailCache[id];
             const payload = normalizeEntityConstraints({
               id: template.id,
               name: newName,
@@ -1963,8 +2000,8 @@ export const useDesignerStore = defineStore('designer', {
               deletable: template.deletable ?? cachedTemplate?.deletable,
               copyable: template.copyable ?? cachedTemplate?.copyable,
               permissions: template.permissions ?? cachedTemplate?.permissions,
-              ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
-            });
+              ext: mergedTemplate.ext
+            }) as CustomElementTemplate;
             const url = buildEndpoint(endpoints.customElements?.upsert, '');
             const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);

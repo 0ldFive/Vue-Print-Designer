@@ -4,7 +4,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from './designer';
 import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
-import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints } from '../utils/entityConstraints';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues } from '../utils/entityConstraints';
 import i18n from '../locales';
 
 export interface Template {
@@ -57,52 +57,6 @@ const sanitizeTemplateData = (data: any) => {
   };
 };
 
-const normalizeModalExtraValues = (values?: Record<string, any>) => {
-  if (!values || typeof values !== 'object' || Array.isArray(values)) return null;
-  const payload: Record<string, any> = {};
-  Object.keys(values).forEach((key) => {
-    if (!key) return;
-    payload[key] = values[key];
-  });
-  return Object.keys(payload).length > 0 ? cloneDeep(payload) : null;
-};
-
-const applyModalExtraValues = (
-  templateLike: Record<string, any>,
-  mode: 'create' | 'edit' | 'copy',
-  values?: Record<string, any>
-) => {
-  const normalized = normalizeModalExtraValues(values);
-  const ext = templateLike.ext && typeof templateLike.ext === 'object' ? templateLike.ext : {};
-  const templateModalForm = ext.templateModalForm && typeof ext.templateModalForm === 'object'
-    ? ext.templateModalForm
-    : {};
-
-  const lastMode = templateModalForm.lastMode;
-  let modeData = normalized;
-
-  if (!modeData) {
-    if (templateModalForm[mode]) {
-      modeData = templateModalForm[mode];
-    } else if (lastMode && templateModalForm[lastMode]) {
-      modeData = templateModalForm[lastMode];
-    }
-  }
-
-  return {
-    ...templateLike,
-    ext: {
-      ...ext,
-      ...(modeData || {}),
-      templateModalForm: {
-        ...templateModalForm,
-        ...(modeData ? { [mode]: modeData } : {}),
-        lastMode: mode,
-        updatedAt: Date.now()
-      }
-    }
-  };
-};
 
 export const useTemplateStore = defineStore('templates', {
   state: () => ({
@@ -126,17 +80,20 @@ export const useTemplateStore = defineStore('templates', {
           const data = sanitizeTemplateData(t.data);
           
           const currentId = t.id || id;
+          const existingTemplate = this.templates.find(item => item.id === currentId);
+          const cachedTemplate = this.templateDetailCache[currentId];
+          
           const detail = {
             id: currentId,
-            name: t.name || '',
+            name: t.name || existingTemplate?.name || cachedTemplate?.name || '',
             data,
-            updatedAt: t.updatedAt || Date.now(),
-            system: t.system,
-            editable: t.editable,
-            deletable: t.deletable,
-            copyable: t.copyable,
-            permissions: t.permissions,
-            ext: t.ext || {}
+            updatedAt: t.updatedAt || cachedTemplate?.updatedAt || existingTemplate?.updatedAt || Date.now(),
+            system: t.system ?? cachedTemplate?.system ?? existingTemplate?.system,
+            editable: t.editable ?? cachedTemplate?.editable ?? existingTemplate?.editable,
+            deletable: t.deletable ?? cachedTemplate?.deletable ?? existingTemplate?.deletable,
+            copyable: t.copyable ?? cachedTemplate?.copyable ?? existingTemplate?.copyable,
+            permissions: t.permissions ?? cachedTemplate?.permissions ?? existingTemplate?.permissions,
+            ext: { ...(existingTemplate?.ext || {}), ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
           };
           const normalized = normalizeEntityConstraints(detail);
           this.templateDetailCache[currentId] = normalized;
@@ -277,7 +234,7 @@ export const useTemplateStore = defineStore('templates', {
               deletable: upsertBase?.deletable,
               copyable: upsertBase?.copyable,
               permissions: upsertBase?.permissions,
-              ext: upsertBase?.ext || {}
+              ext: { ...(existingTemplate?.ext || {}), ...(upsertBase?.ext || {}) }
             });
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
