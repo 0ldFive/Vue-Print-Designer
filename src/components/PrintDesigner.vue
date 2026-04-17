@@ -119,6 +119,7 @@ onMounted(() => {
       () => store.showMinimap
     ],
     () => {
+      if (templateStore.isLoading) return;
       debouncedAutoSave();
     },
     { deep: true }
@@ -126,6 +127,7 @@ onMounted(() => {
 });
 
 const debouncedAutoSave = debounce(() => {
+  if (templateStore.isLoading) return;
   if (store.editingCustomElementId) return;
   if (autoSave.value && templateStore.currentTemplateId && !templateStore.isSaving) {
     const currentTemplate = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);

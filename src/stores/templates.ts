@@ -110,6 +110,7 @@ export const useTemplateStore = defineStore('templates', {
     templateDetailCache: {} as Record<string, any>,
     currentTemplateId: null as string | null,
     isSaving: false,
+    isLoading: false,
   }),
   actions: {
     async fetchTemplateDetail(id: string) {
@@ -541,15 +542,84 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async loadTemplate(id: string) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
-      if (mode === 'remote') {
-        try {
-          const detail = await this.fetchTemplateDetail(id);
-          if (!detail) return;
-          const t = detail;
+      this.isLoading = true;
+      try {
+        const { mode, endpoints, headers, fetcher } = getCrudConfig();
+        if (mode === 'remote') {
+          try {
+            const detail = await this.fetchTemplateDetail(id);
+            if (!detail) return;
+            const t = detail;
+            const designerStore = useDesignerStore();
+            designerStore.resetCanvas();
+            const data = t.data;
+            if (data.pages.length > 0) designerStore.pages = data.pages;
+            if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
+            if (data.guides) designerStore.guides = data.guides;
+            if (data.zoom !== undefined) designerStore.zoom = data.zoom;
+            if (data.showGrid !== undefined) designerStore.showGrid = data.showGrid;
+            if (data.headerHeight !== undefined) designerStore.headerHeight = data.headerHeight;
+            if (data.footerHeight !== undefined) designerStore.footerHeight = data.footerHeight;
+            if (data.showHeaderLine !== undefined) designerStore.showHeaderLine = data.showHeaderLine;
+            if (data.showFooterLine !== undefined) designerStore.showFooterLine = data.showFooterLine;
+            if (data.showMinimap !== undefined) designerStore.showMinimap = data.showMinimap;
+            if (data.canvasBackground !== undefined) designerStore.canvasBackground = data.canvasBackground;
+            if (data.pageSpacingX !== undefined) designerStore.pageSpacingX = data.pageSpacingX;
+            if (data.pageSpacingY !== undefined) designerStore.pageSpacingY = data.pageSpacingY;
+            if (data.unit !== undefined) designerStore.unit = data.unit;
+            if (data.watermark !== undefined) designerStore.watermark = data.watermark;
+            designerStore.testData = data.testData || {};
+            designerStore.selectedElementId = null;
+            designerStore.selectedGuideId = null;
+            designerStore.historyPast = [];
+            designerStore.historyFuture = [];
+            const currentId = t.id || id;
+            this.currentTemplateId = currentId;
+            
+            const existingIndex = this.templates.findIndex(item => item.id === currentId);
+            if (existingIndex >= 0) {
+              this.templates[existingIndex] = normalizeEntityConstraints({
+                id: currentId,
+                name: t.name || this.templates[existingIndex].name,
+                data,
+                updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,
+                system: t.system ?? this.templates[existingIndex].system,
+                editable: t.editable ?? this.templates[existingIndex].editable,
+                deletable: t.deletable ?? this.templates[existingIndex].deletable,
+                copyable: t.copyable ?? this.templates[existingIndex].copyable,
+                permissions: t.permissions ?? this.templates[existingIndex].permissions,
+                ext: { ...(this.templates[existingIndex].ext || {}), ...(t.ext || {}) }
+              }) as Template;
+            } else {
+              this.templates.push(normalizeEntityConstraints({
+                id: currentId,
+                name: t.name || '',
+                data,
+                updatedAt: t.updatedAt || Date.now(),
+                system: t.system,
+                editable: t.editable,
+                deletable: t.deletable,
+                copyable: t.copyable,
+                permissions: t.permissions,
+                ext: t.ext || {}
+              }) as Template);
+            }
+            return;
+          } catch (e) {
+            console.error('Failed to load template', e);
+            return;
+          }
+        }
+        const t = this.templates.find(t => t.id === id);
+        if (t) {
           const designerStore = useDesignerStore();
+          
+          // Reset canvas to defaults first to avoid inheriting settings from previous template
           designerStore.resetCanvas();
-          const data = t.data;
+          
+          const data = sanitizeTemplateData(t.data);
+          
+          // Restore state
           if (data.pages.length > 0) designerStore.pages = data.pages;
           if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
           if (data.guides) designerStore.guides = data.guides;
@@ -566,81 +636,19 @@ export const useTemplateStore = defineStore('templates', {
           if (data.unit !== undefined) designerStore.unit = data.unit;
           if (data.watermark !== undefined) designerStore.watermark = data.watermark;
           designerStore.testData = data.testData || {};
+          
+          // Reset selection and history
           designerStore.selectedElementId = null;
           designerStore.selectedGuideId = null;
           designerStore.historyPast = [];
           designerStore.historyFuture = [];
-          const currentId = t.id || id;
-          this.currentTemplateId = currentId;
           
-          const existingIndex = this.templates.findIndex(item => item.id === currentId);
-          if (existingIndex >= 0) {
-            this.templates[existingIndex] = normalizeEntityConstraints({
-              id: currentId,
-              name: t.name || this.templates[existingIndex].name,
-              data,
-              updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,
-              system: t.system ?? this.templates[existingIndex].system,
-              editable: t.editable ?? this.templates[existingIndex].editable,
-              deletable: t.deletable ?? this.templates[existingIndex].deletable,
-              copyable: t.copyable ?? this.templates[existingIndex].copyable,
-              permissions: t.permissions ?? this.templates[existingIndex].permissions,
-              ext: { ...(this.templates[existingIndex].ext || {}), ...(t.ext || {}) }
-            }) as Template;
-          } else {
-            this.templates.push(normalizeEntityConstraints({
-              id: currentId,
-              name: t.name || '',
-              data,
-              updatedAt: t.updatedAt || Date.now(),
-              system: t.system,
-              editable: t.editable,
-              deletable: t.deletable,
-              copyable: t.copyable,
-              permissions: t.permissions,
-              ext: t.ext || {}
-            }) as Template);
-          }
-          return;
-        } catch (e) {
-          console.error('Failed to load template', e);
-          return;
+          this.currentTemplateId = t.id || id;
         }
-      }
-      const t = this.templates.find(t => t.id === id);
-      if (t) {
-        const designerStore = useDesignerStore();
-        
-        // Reset canvas to defaults first to avoid inheriting settings from previous template
-        designerStore.resetCanvas();
-        
-        const data = sanitizeTemplateData(t.data);
-        
-        // Restore state
-        if (data.pages.length > 0) designerStore.pages = data.pages;
-        if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
-        if (data.guides) designerStore.guides = data.guides;
-        if (data.zoom !== undefined) designerStore.zoom = data.zoom;
-        if (data.showGrid !== undefined) designerStore.showGrid = data.showGrid;
-        if (data.headerHeight !== undefined) designerStore.headerHeight = data.headerHeight;
-        if (data.footerHeight !== undefined) designerStore.footerHeight = data.footerHeight;
-        if (data.showHeaderLine !== undefined) designerStore.showHeaderLine = data.showHeaderLine;
-        if (data.showFooterLine !== undefined) designerStore.showFooterLine = data.showFooterLine;
-        if (data.showMinimap !== undefined) designerStore.showMinimap = data.showMinimap;
-        if (data.canvasBackground !== undefined) designerStore.canvasBackground = data.canvasBackground;
-        if (data.pageSpacingX !== undefined) designerStore.pageSpacingX = data.pageSpacingX;
-        if (data.pageSpacingY !== undefined) designerStore.pageSpacingY = data.pageSpacingY;
-        if (data.unit !== undefined) designerStore.unit = data.unit;
-        if (data.watermark !== undefined) designerStore.watermark = data.watermark;
-        designerStore.testData = data.testData || {};
-        
-        // Reset selection and history
-        designerStore.selectedElementId = null;
-        designerStore.selectedGuideId = null;
-        designerStore.historyPast = [];
-        designerStore.historyFuture = [];
-        
-        this.currentTemplateId = id;
+      } finally {
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 100);
       }
     }
   }
