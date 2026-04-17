@@ -370,39 +370,46 @@ el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data })
 ### 11. Templates CRUD Operations
 
 #### 1) Get Template List (getTemplates)
-Description: Get the current local or cloud template list.
+
 ```ts
 const list = el.getTemplates({ includeData: false })
 ```
 Parameter `options.includeData` (`boolean`): Whether to include detailed template data in the list. Default is `false`.
 
-#### 2) Get Template Details (getTemplate)
+#### 2) Refresh Template List (refreshTemplates)
+
+```ts
+const list = await el.refreshTemplates({ includeData: false })
+```
+Parameter `options.includeData` (`boolean`): Whether to include detailed template data in the list. Default is `false`.
+
+#### 3) Get Template Details (getTemplate)
 Description: Get detailed data of a template by ID.
 ```ts
 const detail = el.getTemplate('template-id')
 ```
 
-#### 3) Create or Update Template (upsertTemplate)
+#### 4) Create or Update Template (upsertTemplate)
 Description: Save or update template data. It acts as a create operation if no `id` is provided, otherwise it's an update.
 ```ts
 const id = await el.upsertTemplate({ name: 'A4 Template', data: { pages: [] } }, { setCurrent: true })
 ```
 Parameter `options.setCurrent` (`boolean`): Whether to automatically set it as the current canvas template after saving.
 
-#### 4) Delete Template (deleteTemplate)
+#### 5) Delete Template (deleteTemplate)
 Description: Delete a specific template by ID.
 ```ts
 el.deleteTemplate('template-id')
 ```
 
-#### 5) Overwrite Template List (setTemplates)
+#### 6) Overwrite Template List (setTemplates)
 Description: Overwrite the locally stored template list directly.
 ```ts
 el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
 ```
 Parameter `options.currentTemplateId` (`string`): Optional, set the currently active template ID after overwriting.
 
-#### 6) Load Template to Canvas (loadTemplate)
+#### 7) Load Template to Canvas (loadTemplate)
 Description: Load the corresponding template data into the current designer canvas by ID.
 ```ts
 el.loadTemplate('template-id')
@@ -411,31 +418,38 @@ el.loadTemplate('template-id')
 ### 12. Custom Elements CRUD Operations
 
 #### 1) Get Custom Element List (getCustomElements)
-Description: Get the current local or cloud custom element list.
+
 ```ts
 const list = el.getCustomElements({ includeElement: false })
 ```
 Parameter `options.includeElement` (`boolean`): Whether to include detailed element configuration data in the list. Default is `false`.
 
-#### 2) Get Custom Element Details (getCustomElement)
+#### 2) Refresh Custom Element List (refreshCustomElements)
+
+```ts
+const list = await el.refreshCustomElements({ includeElement: false })
+```
+Parameter `options.includeElement` (`boolean`): Whether to include detailed element configuration data in the list. Default is `false`.
+
+#### 3) Get Custom Element Details (getCustomElement)
 Description: Get detailed data of a custom element by ID.
 ```ts
 const detail = el.getCustomElement('element-id')
 ```
 
-#### 3) Create or Update Custom Element (upsertCustomElement)
+#### 4) Create or Update Custom Element (upsertCustomElement)
 Description: Save or update a custom element.
 ```ts
 const id = await el.upsertCustomElement({ name: 'Barcode', element: { /* element data */ } })
 ```
 
-#### 4) Delete Custom Element (deleteCustomElement)
+#### 5) Delete Custom Element (deleteCustomElement)
 Description: Delete a specific custom element by ID.
 ```ts
 el.deleteCustomElement('element-id')
 ```
 
-#### 5) Overwrite Custom Element List (setCustomElements)
+#### 6) Overwrite Custom Element List (setCustomElements)
 Description: Overwrite the locally stored custom element list directly.
 ```ts
 el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])

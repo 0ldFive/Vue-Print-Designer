@@ -11,15 +11,35 @@
       padding: 0;
       height: 100vh;
       background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+    }
+    .test-actions {
+      padding: 10px;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      gap: 10px;
+    }
+    .test-actions button {
+      padding: 5px 10px;
+      cursor: pointer;
     }
     print-designer {
       display: block;
       width: 100%;
-      height: 100%;
+      flex: 1;
     }
   </style>
 </head>
 <body>
+  <div class="test-actions">
+      <button id="btn-refresh-templates">刷新模版列表 (refreshTemplates)</button>
+      <button id="btn-refresh-elements">刷新自定义元素 (refreshCustomElements)</button>
+      <button id="btn-delete-template">测试带 Confirm 删除模版 (deleteTemplate)</button>
+      <button id="btn-test-toast-success">测试 Toast (Success)</button>
+      <button id="btn-test-toast-error">测试 Toast (Error)</button>
+    </div>
   <!-- 加载设计器组件 -->
   <print-designer></print-designer>
 
@@ -87,6 +107,42 @@
     designer.addEventListener('custom-element-sync', (e) => {
       console.log('触发自定义元素同步事件:', e.detail);
       alert(`触发自定义元素同步事件：${e.detail.item.name}`);
+    });
+
+    document.getElementById('btn-refresh-templates').addEventListener('click', async () => {
+      const list = await designer.refreshTemplates();
+      console.log('刷新模版列表:', list);
+      alert(`刷新完成，当前共有 ${list.length} 个模版`);
+    });
+
+    document.getElementById('btn-refresh-elements').addEventListener('click', async () => {
+      const list = await designer.refreshCustomElements();
+      console.log('刷新自定义元素:', list);
+      alert(`刷新完成，当前共有 ${list.length} 个自定义元素`);
+    });
+
+    document.getElementById('btn-delete-template').addEventListener('click', async () => {
+      const list = designer.getTemplates();
+      if (list.length > 0) {
+        await designer.deleteTemplate(list[0].id); // 等待弹窗和删除完成
+        // 删除后可以自动刷新一下列表
+        const updated = await designer.refreshTemplates();
+        console.log('删除后剩余模版数:', updated.length);
+      } else {
+        alert('当前没有模版可删除');
+      }
+    });
+
+    document.getElementById('btn-test-toast-success').addEventListener('click', () => {
+      if (designer._showTestToast) {
+        designer._showTestToast('success', '保存成功！模板已更新。');
+      }
+    });
+
+    document.getElementById('btn-test-toast-error').addEventListener('click', () => {
+      if (designer._showTestToast) {
+        designer._showTestToast('error', '远程接口调用失败：网络异常');
+      }
     });
 
     // 注册组件（如果内部未自动注册）

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { uiConfirm } from '@/utils/confirm';
 import { useDesignerStore } from '@/stores/designer';
 import { useTemplateStore } from '@/stores/templates';
 import { useAutoSave } from '@/composables/useAutoSave';
@@ -153,8 +154,8 @@ const handleSaveCustomEditAs = (name: string) => {
   store.cancelCustomElementEdit();
 };
 
-const handleExitCustomEdit = () => {
-  if (!confirm(t('sidebar.confirmExitEdit'))) {
+const handleExitCustomEdit = async () => {
+  if (!await uiConfirm.show(t('sidebar.confirmExitEdit'))) {
     return;
   }
   store.cancelCustomElementEdit();

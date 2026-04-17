@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { uiConfirm } from '@/utils/confirm';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
 import type { ListContextMenuItem } from '@/types';
@@ -170,9 +171,10 @@ const handleCopy = (template: Template) => {
   activeMenuId.value = null;
 };
 
-const handleDelete = (template: Template) => {
-  if (confirm(t('template.confirmDelete', { name: template.name }))) {
-    store.deleteTemplate(template.id);
+const handleDelete = async (template: Template) => {
+  const confirmed = await uiConfirm.show(t('template.confirmDelete', { name: template.name }));
+  if (confirmed) {
+    await store.deleteTemplate(template.id);
     // Auto-select first template if current one was deleted
     if (!store.currentTemplateId && store.templates.length > 0) {
       store.loadTemplate(store.templates[0].id);

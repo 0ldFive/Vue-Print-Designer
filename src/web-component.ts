@@ -79,6 +79,9 @@ export interface DesignerListContextMenuConfig {
   items: DesignerListContextMenuItem[];
 }
 
+import { toast } from './utils/toast';
+import { uiConfirm } from './utils/confirm';
+
 class PrintDesignerElement extends HTMLElement {
   private app: ReturnType<typeof createApp> | null = null;
   private printApi: ReturnType<typeof usePrint> | null = null;
@@ -556,6 +559,23 @@ class PrintDesignerElement extends HTMLElement {
     return template ? cloneDeep(template) : null;
   }
 
+  async refreshTemplates(options: { includeData?: boolean } = {}) {
+    if (!this.templateStore) return [];
+    await this.templateStore.loadTemplates();
+    return this.getTemplates(options);
+  }
+
+  async refreshCustomElements(options: { includeElement?: boolean } = {}) {
+    if (!this.designerStore) return [];
+    await this.designerStore.loadCustomElements();
+    return this.getCustomElements(options);
+  }
+
+  // ==== Test Helpers ====
+  _showTestToast(type: 'success' | 'error' | 'info' | 'warning', msg: string) {
+    toast.show(msg, type);
+  }
+
   async upsertTemplate(template: { id?: string; name: string; data?: any; updatedAt?: number; [key: string]: any }, options: { setCurrent?: boolean } = {}) {
     if (!this.templateStore) return null;
     if (!template || typeof template.name !== 'string') return null;
@@ -594,9 +614,12 @@ class PrintDesignerElement extends HTMLElement {
         if (this.templateStore.currentTemplateId === next.id) {
           this.templateStore.currentTemplateId = remoteId;
         }
+        
+        await this.templateStore.loadTemplates();
         return remoteId;
       } catch (e) {
         console.error('Failed to upsert template', e);
+        toast.error('Failed to upsert template');
         return next.id;
       }
     }
@@ -607,6 +630,7 @@ class PrintDesignerElement extends HTMLElement {
   setTemplates(templates: Array<{ id: string; name: string; data?: any; updatedAt?: number; [key: string]: any }>, options: { currentTemplateId?: string } = {}) {
     if (!this.templateStore) return;
     if (!Array.isArray(templates)) return;
+    const { mode } = getCrudConfig();
     this.templateStore.templates = templates
       .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string')
       .map((t) => ({
@@ -629,12 +653,18 @@ class PrintDesignerElement extends HTMLElement {
         this.templateStore.loadTemplate(targetId);
       }
     }
-    this.templateStore.saveToLocalStorage();
+    if (mode !== 'remote') {
+      this.templateStore.saveToLocalStorage();
+    }
   }
 
-  deleteTemplate(id: string) {
+  async deleteTemplate(id: string, options: { confirm?: boolean } = {}) {
     if (!this.templateStore) return;
-    this.templateStore.deleteTemplate(id);
+    if (options.confirm !== false) {
+      const tpl = this.templateStore.templates.find(t => t.id === id);
+      if (tpl && !await uiConfirm.show(`Are you sure you want to delete template "${tpl.name}"?`)) return;
+    }
+    await this.templateStore.deleteTemplate(id);
   }
 
   loadTemplate(id: string) {
@@ -683,9 +713,12 @@ class PrintDesignerElement extends HTMLElement {
         const updated = { ...merged, id: remoteId };
         if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
         else this.designerStore.customElements.push(updated);
+        
+        await this.designerStore.loadCustomElements();
         return remoteId;
       } catch (e) {
         console.error('Failed to upsert custom element', e);
+        toast.error('Failed to upsert custom element');
         return next.id;
       }
     }
@@ -696,15 +729,22 @@ class PrintDesignerElement extends HTMLElement {
   setCustomElements(customElements: Array<{ id: string; name: string; element: any; [key: string]: any }>) {
     if (!this.designerStore) return;
     if (!Array.isArray(customElements)) return;
+    const { mode } = getCrudConfig();
     this.designerStore.customElements = customElements
       .filter((el) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
       .map((el) => ({ ...el, id: el.id, name: el.name, element: cloneDeep(el.element) }));
-    this.designerStore.saveCustomElements();
+    if (mode !== 'remote') {
+      this.designerStore.saveCustomElements();
+    }
   }
 
-  deleteCustomElement(id: string) {
+  async deleteCustomElement(id: string, options: { confirm?: boolean } = {}) {
     if (!this.designerStore) return;
-    this.designerStore.removeCustomElement(id);
+    if (options.confirm !== false) {
+      const el = this.designerStore.customElements.find(e => e.id === id);
+      if (el && !await uiConfirm.show(`Are you sure you want to delete custom element "${el.name}"?`)) return;
+    }
+    await this.designerStore.removeCustomElement(id);
   }
 
   private normalizeListContextMenuConfig(

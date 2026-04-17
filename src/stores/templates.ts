@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from './designer';
+import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 
 export interface Template {
@@ -71,6 +72,8 @@ export const useTemplateStore = defineStore('templates', {
           return;
         } catch (e) {
           console.error('Failed to load templates', e);
+          this.templates = [];
+          return;
         }
       }
 
@@ -97,6 +100,8 @@ export const useTemplateStore = defineStore('templates', {
     },
     
     saveToLocalStorage() {
+      const { mode } = getCrudConfig();
+      if (mode === 'remote') return;
       localStorage.setItem('print-designer-templates', JSON.stringify(this.templates));
     },
 
@@ -131,39 +136,50 @@ export const useTemplateStore = defineStore('templates', {
       this.isSaving = true;
       try {
         if (mode === 'remote') {
-          const payload = {
-            ...existingTemplate,
-            id: targetId || uuidv4(),
-            name,
-            data,
-            updatedAt: Date.now()
-          };
-          const url = buildEndpoint(endpoints.templates?.upsert, '');
-          const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
-          const res = await (fetcher || fetch)(url, options);
-          const result = await res.json();
-          const id = result?.id || payload.id;
-          const index = this.templates.findIndex(t => t.id === id);
-          const next = { ...payload, ...(result && typeof result === 'object' ? result : {}), id } as Template;
-          if (index >= 0) this.templates[index] = next;
-          else this.templates.unshift(next);
-          
-          // Only update currentTemplateId if we were creating a new template (no targetId)
-          // or if the user hasn't switched to another template yet
-          if (!targetId || this.currentTemplateId === targetId) {
-            this.currentTemplateId = id;
+          try {
+            const payload = {
+              ...existingTemplate,
+              id: targetId || uuidv4(),
+              name,
+              data,
+              updatedAt: Date.now()
+            };
+            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
+            const res = await (fetcher || fetch)(url, options);
+            const result = await res.json();
+            const id = result?.id || payload.id;
+            const index = this.templates.findIndex(t => t.id === id);
+            const next = { ...payload, ...(result && typeof result === 'object' ? result : {}), id } as Template;
+            if (index >= 0) this.templates[index] = next;
+            else this.templates.unshift(next);
+            
+            // Only update currentTemplateId if we were creating a new template (no targetId)
+            // or if the user hasn't switched to another template yet
+            if (!targetId || this.currentTemplateId === targetId) {
+              this.currentTemplateId = id;
+            }
+            
+            // Auto refresh list from remote
+            await this.loadTemplates();
+            
+            return;
+          } catch (e) {
+            console.error('Failed to save template', e);
+            toast.error('Failed to save template');
+            throw e; // rethrow to let caller know
           }
-          return;
         }
 
         if (targetId) {
-          const index = this.templates.findIndex(t => t.id === targetId);
-          if (index !== -1) {
-            this.templates[index].data = data;
-            this.templates[index].name = name;
-            this.templates[index].updatedAt = Date.now();
-          } else {
-            this.createTemplate(name, data);
+          const idx = this.templates.findIndex(t => t.id === targetId);
+          if (idx >= 0) {
+            this.templates[idx] = {
+              ...this.templates[idx],
+              name,
+              data,
+              updatedAt: Date.now()
+            };
           }
         } else {
           this.createTemplate(name, data);
@@ -207,16 +223,17 @@ export const useTemplateStore = defineStore('templates', {
           }
           const id = result?.id || newTemplate.id;
           newTemplate.id = id;
+          
+          await this.loadTemplates();
         } catch (e) {
           console.error('Failed to create template', e);
         }
-      }
-
-      this.templates.unshift(newTemplate);
-      this.currentTemplateId = newTemplate.id;
-      if (mode !== 'remote') {
+      } else {
+        this.templates.unshift(newTemplate);
         this.saveToLocalStorage();
       }
+
+      this.currentTemplateId = newTemplate.id;
     },
 
     async deleteTemplate(id: string) {
@@ -232,6 +249,7 @@ export const useTemplateStore = defineStore('templates', {
           await (fetcher || fetch)(url, options);
         } catch (e) {
           console.error('Failed to delete template', e);
+          toast.error('Failed to delete template');
         }
         return;
       }
@@ -249,8 +267,11 @@ export const useTemplateStore = defineStore('templates', {
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, t);
             await (fetcher || fetch)(url, options);
+            
+            await this.loadTemplates();
           } catch (e) {
             console.error('Failed to rename template', e);
+            toast.error('Failed to rename template');
           }
           return;
         }
@@ -279,12 +300,14 @@ export const useTemplateStore = defineStore('templates', {
               Object.assign(newTemplate, result);
             }
             newTemplate.id = result?.id || newTemplate.id;
+            
+            await this.loadTemplates();
           } catch (e) {
             console.error('Failed to copy template', e);
+            toast.error('Failed to copy template');
           }
-        }
-        this.templates.unshift(newTemplate);
-        if (mode !== 'remote') {
+        } else {
+          this.templates.unshift(newTemplate);
           this.saveToLocalStorage();
         }
       }

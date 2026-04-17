@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
+import { toast } from '../utils/toast';
 
 const defaultWatermark: WatermarkSettings = {
   enabled: false,
@@ -1702,12 +1703,14 @@ export const useDesignerStore = defineStore('designer', {
             Object.assign(template, result);
           }
           template.id = result?.id || template.id;
+          
+          await this.loadCustomElements();
         } catch (e) {
           console.error('Failed to copy custom element', e);
+          toast.error('Failed to copy custom element');
         }
-      }
-      this.customElements.push(template);
-      if (mode !== 'remote') {
+      } else {
+        this.customElements.push(template);
         this.saveCustomElements();
       }
     },
@@ -1728,12 +1731,14 @@ export const useDesignerStore = defineStore('designer', {
             Object.assign(template, result);
           }
           template.id = result?.id || template.id;
+          
+          await this.loadCustomElements();
         } catch (e) {
           console.error('Failed to add custom element', e);
+          toast.error('Failed to add custom element');
         }
-      }
-      this.customElements.push(template);
-      if (mode !== 'remote') {
+      } else {
+        this.customElements.push(template);
         this.saveCustomElements();
       }
     },
@@ -1749,6 +1754,7 @@ export const useDesignerStore = defineStore('designer', {
             await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to remove custom element', e);
+            toast.error('Failed to remove custom element');
           }
           return;
         }
@@ -1767,6 +1773,7 @@ export const useDesignerStore = defineStore('designer', {
             await (fetcher || fetch)(url, options);
           } catch (e) {
             console.error('Failed to rename custom element', e);
+            toast.error('Failed to rename custom element');
           }
           return;
         }
@@ -1774,6 +1781,8 @@ export const useDesignerStore = defineStore('designer', {
       }
     },
     saveCustomElements() {
+      const { mode } = getCrudConfig();
+      if (mode === 'remote') return;
       localStorage.setItem('print-designer-custom-elements', JSON.stringify(this.customElements));
     }
   },

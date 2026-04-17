@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { uiConfirm } from '@/utils/confirm';
 import { useDesignerStore } from '@/stores/designer';
 import Type from '~icons/material-symbols/text-fields';
 import Numbers from '~icons/material-symbols/numbers';
@@ -189,14 +190,15 @@ const handleCopy = (item: CustomElementTemplate) => {
   store.copyCustomElement(item.id);
 };
 
-const handleDelete = (item: CustomElementTemplate) => {
+const handleDelete = async (item: CustomElementTemplate) => {
   activeMenuId.value = null;
-  if (confirm(t('sidebar.confirmDelete', { name: item.name }))) {
-    store.removeCustomElement(item.id);
+  const confirmed = await uiConfirm.show(t('sidebar.confirmDelete', { name: item.name }));
+  if (confirmed) {
+    await store.removeCustomElement(item.id);
   }
 };
 
-const handleEditElement = (item: CustomElementTemplate) => {
+const handleEditElement = async (item: CustomElementTemplate) => {
   activeMenuId.value = null;
 
   if (store.editingCustomElementId === item.id) return;
@@ -204,7 +206,7 @@ const handleEditElement = (item: CustomElementTemplate) => {
   if (store.editingCustomElementId && store.editingCustomElementId !== item.id) {
     const current = store.customElements.find(el => el.id === store.editingCustomElementId);
     const currentName = current ? current.name : '';
-    if (!confirm(t('sidebar.confirmSwitchEdit', { name: currentName }))) {
+    if (!await uiConfirm.show(t('sidebar.confirmSwitchEdit', { name: currentName }))) {
       return;
     }
     store.cancelCustomElementEdit();
