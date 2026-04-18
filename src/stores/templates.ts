@@ -309,14 +309,22 @@ export const useTemplateStore = defineStore('templates', {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const designerStore = useDesignerStore();
       const nextData = data || {
-        pages: designerStore.pages,
-        canvasSize: designerStore.canvasSize,
+        pages: cloneDeep(designerStore.pages),
+        canvasSize: cloneDeep(designerStore.canvasSize),
         pageSpacingX: designerStore.pageSpacingX,
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
-        watermark: designerStore.watermark,
+        watermark: cloneDeep(designerStore.watermark),
         testData: cloneDeep(designerStore.testData || {}),
-        // ... capture current state if data not provided
+        guides: cloneDeep(designerStore.guides),
+        zoom: designerStore.zoom,
+        showGrid: designerStore.showGrid,
+        headerHeight: designerStore.headerHeight,
+        footerHeight: designerStore.footerHeight,
+        showHeaderLine: designerStore.showHeaderLine,
+        showFooterLine: designerStore.showFooterLine,
+        showMinimap: designerStore.showMinimap,
+        canvasBackground: designerStore.canvasBackground,
       };
       const newData = sanitizeTemplateData(nextData);
       
@@ -525,9 +533,9 @@ export const useTemplateStore = defineStore('templates', {
             const designerStore = useDesignerStore();
             designerStore.resetCanvas();
             const data = t.data;
-            if (data.pages.length > 0) designerStore.pages = data.pages;
-            if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
-            if (data.guides) designerStore.guides = data.guides;
+            if (data.pages && data.pages.length > 0) designerStore.pages = cloneDeep(data.pages);
+            if (data.canvasSize) designerStore.canvasSize = cloneDeep(data.canvasSize);
+            if (data.guides) designerStore.guides = cloneDeep(data.guides);
             if (data.zoom !== undefined) designerStore.zoom = data.zoom;
             if (data.showGrid !== undefined) designerStore.showGrid = data.showGrid;
             if (data.headerHeight !== undefined) designerStore.headerHeight = data.headerHeight;
@@ -539,8 +547,8 @@ export const useTemplateStore = defineStore('templates', {
             if (data.pageSpacingX !== undefined) designerStore.pageSpacingX = data.pageSpacingX;
             if (data.pageSpacingY !== undefined) designerStore.pageSpacingY = data.pageSpacingY;
             if (data.unit !== undefined) designerStore.unit = data.unit;
-            if (data.watermark !== undefined) designerStore.watermark = data.watermark;
-            designerStore.testData = data.testData || {};
+            if (data.watermark !== undefined) designerStore.watermark = cloneDeep(data.watermark);
+            designerStore.testData = cloneDeep(data.testData || {});
             designerStore.selectedElementId = null;
             designerStore.selectedGuideId = null;
             designerStore.historyPast = [];
@@ -584,9 +592,9 @@ export const useTemplateStore = defineStore('templates', {
           const data = sanitizeTemplateData(t.data);
           
           // Restore state
-          if (data.pages.length > 0) designerStore.pages = data.pages;
-          if (data.canvasSize) designerStore.canvasSize = data.canvasSize;
-          if (data.guides) designerStore.guides = data.guides;
+          if (data.pages && data.pages.length > 0) designerStore.pages = cloneDeep(data.pages);
+          if (data.canvasSize) designerStore.canvasSize = cloneDeep(data.canvasSize);
+          if (data.guides) designerStore.guides = cloneDeep(data.guides);
           if (data.zoom !== undefined) designerStore.zoom = data.zoom;
           if (data.showGrid !== undefined) designerStore.showGrid = data.showGrid;
           if (data.headerHeight !== undefined) designerStore.headerHeight = data.headerHeight;
@@ -598,8 +606,8 @@ export const useTemplateStore = defineStore('templates', {
           if (data.pageSpacingX !== undefined) designerStore.pageSpacingX = data.pageSpacingX;
           if (data.pageSpacingY !== undefined) designerStore.pageSpacingY = data.pageSpacingY;
           if (data.unit !== undefined) designerStore.unit = data.unit;
-          if (data.watermark !== undefined) designerStore.watermark = data.watermark;
-          designerStore.testData = data.testData || {};
+          if (data.watermark !== undefined) designerStore.watermark = cloneDeep(data.watermark);
+          designerStore.testData = cloneDeep(data.testData || {});
           
           // Reset selection and history
           designerStore.selectedElementId = null;

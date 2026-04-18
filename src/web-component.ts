@@ -467,10 +467,10 @@ class PrintDesignerElement extends HTMLElement {
     if (!data) return false;
     this.designerStore.resetCanvas();
     if (Array.isArray(data.pages) && data.pages.length > 0) {
-      this.designerStore.pages = data.pages;
+      this.designerStore.pages = cloneDeep(data.pages);
     }
-    if (data.canvasSize) this.designerStore.canvasSize = data.canvasSize;
-    if (data.guides) this.designerStore.guides = data.guides;
+    if (data.canvasSize) this.designerStore.canvasSize = cloneDeep(data.canvasSize);
+    if (data.guides) this.designerStore.guides = cloneDeep(data.guides);
     if (data.zoom !== undefined) this.designerStore.zoom = data.zoom;
     if (data.showGrid !== undefined) this.designerStore.showGrid = data.showGrid;
     if (data.headerHeight !== undefined) this.designerStore.headerHeight = data.headerHeight;
@@ -482,8 +482,8 @@ class PrintDesignerElement extends HTMLElement {
     if (data.pageSpacingX !== undefined) this.designerStore.pageSpacingX = data.pageSpacingX;
     if (data.pageSpacingY !== undefined) this.designerStore.pageSpacingY = data.pageSpacingY;
     if (data.unit !== undefined) this.designerStore.unit = data.unit;
-    if (data.watermark !== undefined) this.designerStore.watermark = data.watermark;
-    this.designerStore.testData = data.testData || {};
+    if (data.watermark !== undefined) this.designerStore.watermark = cloneDeep(data.watermark);
+    this.designerStore.testData = cloneDeep(data.testData || {});
     this.designerStore.selectedElementId = null;
     this.designerStore.selectedGuideId = null;
     this.designerStore.historyPast = [];
