@@ -4,7 +4,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from './designer';
 import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
-import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues } from '../utils/entityConstraints';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues, mergeExt } from '../utils/entityConstraints';
 import i18n from '../locales';
 
 export interface Template {
@@ -93,7 +93,7 @@ export const useTemplateStore = defineStore('templates', {
             deletable: t.deletable ?? cachedTemplate?.deletable ?? existingTemplate?.deletable,
             copyable: t.copyable ?? cachedTemplate?.copyable ?? existingTemplate?.copyable,
             permissions: t.permissions ?? cachedTemplate?.permissions ?? existingTemplate?.permissions,
-            ext: { ...(existingTemplate?.ext || {}), ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
+            ext: mergeExt(existingTemplate?.ext, cachedTemplate?.ext, t.ext)
           };
           const normalized = normalizeEntityConstraints(detail);
           this.templateDetailCache[currentId] = normalized;
@@ -135,7 +135,7 @@ export const useTemplateStore = defineStore('templates', {
                 deletable: t.deletable ?? cached?.deletable ?? existing?.deletable,
                 copyable: t.copyable ?? cached?.copyable ?? existing?.copyable,
                 permissions: t.permissions ?? cached?.permissions ?? existing?.permissions,
-                ext: { ...(existing?.ext || {}), ...(cached?.ext || {}), ...(t.ext || {}) }
+                ext: mergeExt(existing?.ext, cached?.ext, t.ext)
               };
               const normalized = normalizeEntityConstraints(merged);
               this.templateDetailCache[t.id] = normalized;
@@ -168,7 +168,7 @@ export const useTemplateStore = defineStore('templates', {
                 deletable: t.deletable ?? existing?.deletable,
                 copyable: t.copyable ?? existing?.copyable,
                 permissions: t.permissions ?? existing?.permissions,
-                ext: { ...(existing?.ext || {}), ...(t.ext || {}) }
+                ext: mergeExt(existing?.ext, t.ext)
               }) as Template;
             });
         } catch (e) {
@@ -234,7 +234,7 @@ export const useTemplateStore = defineStore('templates', {
               deletable: upsertBase?.deletable,
               copyable: upsertBase?.copyable,
               permissions: upsertBase?.permissions,
-              ext: { ...(existingTemplate?.ext || {}), ...(upsertBase?.ext || {}) }
+              ext: mergeExt(existingTemplate?.ext, upsertBase?.ext)
             });
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
@@ -243,7 +243,7 @@ export const useTemplateStore = defineStore('templates', {
             const id = result?.id || payload.id;
             const index = this.templates.findIndex(t => t.id === id);
             const resultExt = result && typeof result === 'object' && result.ext ? result.ext : {};
-            const next = normalizeEntityConstraints({ ...payload, ext: { ...payload.ext, ...resultExt }, id }) as Template;
+            const next = normalizeEntityConstraints({ ...payload, ext: mergeExt(payload.ext, resultExt), id }) as Template;
             if (index >= 0) this.templates[index] = next;
             else this.templates.push(next);
             this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...next };
@@ -331,7 +331,7 @@ export const useTemplateStore = defineStore('templates', {
             deletable: newTemplate.deletable ?? cached?.deletable,
             copyable: newTemplate.copyable ?? cached?.copyable,
             permissions: newTemplate.permissions ?? cached?.permissions,
-            ext: { ...(cached?.ext || {}), ...(newTemplate.ext || {}) }
+            ext: mergeExt(cached?.ext, newTemplate.ext)
           });
           
           await this.loadTemplates();
@@ -399,7 +399,7 @@ export const useTemplateStore = defineStore('templates', {
               deletable: t.deletable ?? cachedTemplate?.deletable,
               copyable: t.copyable ?? cachedTemplate?.copyable,
               permissions: t.permissions ?? cachedTemplate?.permissions,
-              ext: { ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
+              ext: mergeExt(cachedTemplate?.ext, t.ext)
             }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -432,7 +432,7 @@ export const useTemplateStore = defineStore('templates', {
               id: t.id,
               name: t.name,
               data: t.data || cachedTemplate?.data,
-              ext: { ...(cachedTemplate?.ext || {}), ...(t.ext || {}) }
+              ext: mergeExt(cachedTemplate?.ext, t.ext)
             }
           : t;
         const newTemplateBase = applyModalExtraValues({
@@ -479,7 +479,7 @@ export const useTemplateStore = defineStore('templates', {
                 deletable: newTemplate.deletable ?? cached?.deletable,
                 copyable: newTemplate.copyable ?? cached?.copyable,
                 permissions: newTemplate.permissions ?? cached?.permissions,
-                ext: { ...(cached?.ext || {}), ...(newTemplate.ext || {}) }
+                ext: mergeExt(cached?.ext, newTemplate.ext)
               });
             
             await this.loadTemplates();
@@ -545,7 +545,7 @@ export const useTemplateStore = defineStore('templates', {
                 deletable: t.deletable ?? this.templates[existingIndex].deletable,
                 copyable: t.copyable ?? this.templates[existingIndex].copyable,
                 permissions: t.permissions ?? this.templates[existingIndex].permissions,
-                ext: { ...(this.templates[existingIndex].ext || {}), ...(t.ext || {}) }
+                ext: mergeExt(this.templates[existingIndex].ext, t.ext)
               }) as Template;
             } else {
               this.templates.push(normalizeEntityConstraints({

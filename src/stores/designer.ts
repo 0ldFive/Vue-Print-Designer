@@ -4,7 +4,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { type DesignerState, type PrintElement, type Page, type Guide, ElementType, type CustomElementTemplate, type WatermarkSettings, type CustomElementEditSnapshot, type BrandingSettings, type ListContextMenuConfig, type ListContextMenuItem, type TemplateModalFormConfig, type TemplateModalField } from '@/types';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { toast } from '../utils/toast';
-import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues } from '../utils/entityConstraints';
+import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues, mergeExt } from '../utils/entityConstraints';
 import { useTemplateStore } from './templates';
 import i18n from '../locales';
 
@@ -416,7 +416,7 @@ export const useDesignerStore = defineStore('designer', {
             deletable: template.deletable ?? cachedTemplate?.deletable,
             copyable: template.copyable ?? cachedTemplate?.copyable,
             permissions: template.permissions ?? cachedTemplate?.permissions,
-            ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
+            ext: mergeExt(cachedTemplate?.ext, template.ext)
           });
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
@@ -432,7 +432,7 @@ export const useDesignerStore = defineStore('designer', {
             deletable: payload.deletable ?? cached?.deletable,
             copyable: payload.copyable ?? cached?.copyable,
             permissions: payload.permissions ?? cached?.permissions,
-            ext: { ...(cached?.ext || {}), ...(payload.ext || {}) }
+            ext: mergeExt(cached?.ext, payload.ext)
           }) as CustomElementTemplate;
         } catch (e) {
           console.error('Failed to commit custom element edit', e);
@@ -1794,7 +1794,7 @@ export const useDesignerStore = defineStore('designer', {
               deletable: el.deletable ?? cached?.deletable ?? existing?.deletable,
               copyable: el.copyable ?? cached?.copyable ?? existing?.copyable,
               permissions: el.permissions ?? cached?.permissions ?? existing?.permissions,
-              ext: { ...(existing?.ext || {}), ...(cached?.ext || {}), ...(el.ext || {}) }
+              ext: mergeExt(existing?.ext, cached?.ext, el.ext)
             };
             const normalized = normalizeEntityConstraints(merged);
             this.customElementDetailCache[el.id] = normalized;
@@ -1819,7 +1819,7 @@ export const useDesignerStore = defineStore('designer', {
             name: el.name,
             element: (el as any).element || cachedElement?.element,
             testData: (el as any).testData || cachedElement?.testData,
-            ext: { ...(cachedElement?.ext || {}), ...(el.ext || {}) }
+            ext: mergeExt(cachedElement?.ext, el.ext)
           }
         : el;
         
@@ -1877,7 +1877,7 @@ export const useDesignerStore = defineStore('designer', {
             deletable: template.deletable ?? cached?.deletable,
             copyable: template.copyable ?? cached?.copyable,
             permissions: template.permissions ?? cached?.permissions,
-            ext: { ...(cached?.ext || {}), ...(template.ext || {}) }
+            ext: mergeExt(cached?.ext, template.ext)
           }) as CustomElementTemplate;
           
           await this.loadCustomElements();
@@ -1928,7 +1928,7 @@ export const useDesignerStore = defineStore('designer', {
             deletable: payloadTemplate.deletable ?? cached?.deletable,
             copyable: payloadTemplate.copyable ?? cached?.copyable,
             permissions: payloadTemplate.permissions ?? cached?.permissions,
-            ext: { ...(cached?.ext || {}), ...(payloadTemplate.ext || {}) }
+            ext: mergeExt(cached?.ext, payloadTemplate.ext)
           }) as CustomElementTemplate;
           
           await this.loadCustomElements();
@@ -1980,7 +1980,7 @@ export const useDesignerStore = defineStore('designer', {
         const mergedTemplate = applyModalExtraValues(
           {
             ...template,
-            ext: { ...(cachedTemplate?.ext || {}), ...(template.ext || {}) }
+            ext: mergeExt(cachedTemplate?.ext, template.ext)
           },
           'edit',
           extraValues
@@ -2016,7 +2016,7 @@ export const useDesignerStore = defineStore('designer', {
               deletable: payload.deletable ?? cached?.deletable,
               copyable: payload.copyable ?? cached?.copyable,
               permissions: payload.permissions ?? cached?.permissions,
-              ext: { ...(cached?.ext || {}), ...(payload.ext || {}) }
+              ext: mergeExt(cached?.ext, payload.ext)
             }) as CustomElementTemplate;
           } catch (e) {
             console.error('Failed to edit custom element', e);

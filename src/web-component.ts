@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
 import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig } from './types';
-import { canDeleteEntity, canEditEntity, normalizeEntityConstraints } from './utils/entityConstraints';
+import { canDeleteEntity, canEditEntity, normalizeEntityConstraints, mergeExt } from './utils/entityConstraints';
 
 loader.config({
   'vs/nls': {
@@ -599,7 +599,7 @@ class PrintDesignerElement extends HTMLElement {
       deletable: template.deletable ?? existing?.deletable,
       copyable: template.copyable ?? existing?.copyable,
       permissions: template.permissions ?? existing?.permissions,
-      ext: { ...(existing?.ext || {}), ...(template.ext || {}) }
+      ext: mergeExt(existing?.ext, template.ext)
     });
     if (index >= 0) {
       this.templateStore.templates[index] = next;
@@ -622,7 +622,7 @@ class PrintDesignerElement extends HTMLElement {
           deletable: next.deletable ?? cachedTemplate.deletable,
           copyable: next.copyable ?? cachedTemplate.copyable,
           permissions: next.permissions ?? cachedTemplate.permissions,
-          ext: { ...(cachedTemplate.ext || {}), ...(next.ext || {}) }
+          ext: mergeExt(cachedTemplate.ext, next.ext)
         });
         const url = buildEndpoint(endpoints.templates?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
@@ -756,7 +756,7 @@ class PrintDesignerElement extends HTMLElement {
       deletable: customElement.deletable ?? existing?.deletable,
       copyable: customElement.copyable ?? existing?.copyable,
       permissions: customElement.permissions ?? existing?.permissions,
-      ext: { ...(existing?.ext || {}), ...(customElement.ext || {}) }
+      ext: mergeExt(existing?.ext, customElement.ext)
     });
     if (index >= 0) {
       this.designerStore.customElements.splice(index, 1, next);
@@ -776,7 +776,7 @@ class PrintDesignerElement extends HTMLElement {
           deletable: next.deletable ?? cachedCustomElement.deletable,
           copyable: next.copyable ?? cachedCustomElement.copyable,
           permissions: next.permissions ?? cachedCustomElement.permissions,
-          ext: { ...(cachedCustomElement.ext || {}), ...(next.ext || {}) }
+          ext: mergeExt(cachedCustomElement.ext, next.ext)
         });
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, requestPayload);

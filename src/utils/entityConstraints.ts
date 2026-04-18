@@ -1,3 +1,5 @@
+import merge from 'lodash/merge';
+
 export interface EntityPermissions {
   system: boolean;
   editable: boolean;
@@ -19,6 +21,10 @@ const cloneDeep = <T>(obj: T): T => {
 
 const isRecord = (value: unknown): value is Record<string, any> => {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+};
+
+export const mergeExt = (...exts: (Record<string, any> | undefined | null)[]): Record<string, any> => {
+  return merge({}, ...exts.filter(isRecord));
 };
 
 const readBool = (value: unknown): boolean | undefined => {
@@ -152,7 +158,6 @@ export const applyModalExtraValues = <T extends Record<string, any>>(
     ...templateLike,
     ext: {
       ...ext,
-      ...(modeData || {}),
       templateModalForm: {
         ...templateModalForm,
         ...(modeData ? { [mode]: modeData } : {}),
