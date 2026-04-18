@@ -883,13 +883,21 @@ When integrating with the designer's cloud CRUD capabilities, your backend servi
 Ordering rule (Remote CRUD): the frontend renders the template list strictly in the order returned by this API, and no longer reorders by `updatedAt` or copy actions on the client side.  
 So the backend must return a **stable, business-expected** order (e.g. `displayOrder ASC, id ASC`), otherwise the visible order will change with API responses.
 
-Response:
+**Request:**
+No request body.
+
+**Response:**
 
 ```json
 [
   {
     "id": "tpl_1",
     "name": "A4 Template",
+    "permissions": {
+      "editable": true,
+      "deletable": true,
+      "copyable": true
+    },
     "ext": {
       "templateTags": [
         { "key": "system", "label": "System", "color": "blue" }
@@ -904,12 +912,20 @@ Response:
 
 `GET /api/print/templates/{id}`
 
-Response:
+**Request:**
+URL path parameter `id` is the unique identifier of the template. No request body.
+
+**Response:**
 
 ```json
 {
   "id": "tpl_1",
   "name": "A4 Template",
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
   "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } },
   "updatedAt": 1700000000000
 }
@@ -919,13 +935,36 @@ Response:
 
 `POST /api/print/templates`
 
-Request:
+**Request:**
 
 ```json
 {
   "id": "tpl_1",
   "name": "A4 Template",
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
   "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } },
+  "ext": {
+    "templateModalForm": {
+      "create": { "category": "standard", "scope": "private", "priority": 1 },
+      "edit": { "scope": "team" },
+      "copy": { "category": "shipment", "priority": 2 },
+      "lastMode": "copy",
+      "updatedAt": 1700000000000
+    }
+  }
+}
+```
+
+**Response:**
+The frontend will read the `id` (to get the real ID when creating) and `ext` (to merge extended data appended by the backend) from the response.
+
+```json
+{
+  "id": "tpl_1",
   "ext": {
     "templateModalForm": {
       "create": { "category": "standard", "scope": "private", "priority": 1 },
@@ -962,7 +1001,10 @@ Request:
 
 `DELETE /api/print/templates/{id}`
 
-Response:
+**Request:**
+URL path parameter `id` is the unique identifier of the template to be deleted. No request body.
+
+**Response:**
 
 ```json
 { "success": true }
@@ -974,13 +1016,21 @@ Response:
 
 Note: To ensure custom elements are visible in the left list and can be edited directly, each item in this list response must include the `element` field. Returning only `id/name` will be filtered out by the frontend.
 
-Response:
+**Request:**
+No request body.
+
+**Response:**
 
 ```json
 [
   {
     "id": "ce_1",
     "name": "Barcode Element",
+    "permissions": {
+      "editable": true,
+      "deletable": true,
+      "copyable": true
+    },
     "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
     "ext": {
       "customField": "value"
@@ -994,12 +1044,20 @@ Response:
 
 `GET /api/print/custom-elements/{id}`
 
-Response:
+**Request:**
+URL path parameter `id` is the unique identifier of the custom element. No request body.
+
+**Response:**
 
 ```json
 {
   "id": "ce_1",
   "name": "Barcode Element",
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
   "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
   "ext": {
     "customField": "value"
@@ -1012,13 +1070,30 @@ Response:
 
 `POST /api/print/custom-elements`
 
-Request:
+**Request:**
 
 ```json
 {
   "id": "ce_1",
   "name": "Barcode Element",
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
   "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
+  "ext": {
+    "customField": "value"
+  }
+}
+```
+
+**Response:**
+The frontend will read the `id` (to get the real ID when creating) and `ext` (to merge extended data appended by the backend) from the response.
+
+```json
+{
+  "id": "ce_1",
   "ext": {
     "customField": "value"
   }
@@ -1031,7 +1106,10 @@ Request:
 
 `DELETE /api/print/custom-elements/{id}`
 
-Response:
+**Request:**
+URL path parameter `id` is the unique identifier of the element to be deleted. No request body.
+
+**Response:**
 
 ```json
 { "success": true }
