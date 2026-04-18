@@ -132,7 +132,7 @@ const debouncedAutoSave = debounce(() => {
   if (autoSave.value && templateStore.currentTemplateId && !templateStore.isSaving) {
     const currentTemplate = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
     if (currentTemplate && canEditEntity(currentTemplate)) {
-      templateStore.saveCurrentTemplate(currentTemplate.name);
+      templateStore.saveCurrentTemplate(currentTemplate.name, true);
     }
   }
 }, 1000);

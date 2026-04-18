@@ -188,14 +188,16 @@ export const useTemplateStore = defineStore('templates', {
       localStorage.setItem('print-designer-templates', JSON.stringify(this.templates));
     },
 
-    async saveCurrentTemplate(name: string) {
+    async saveCurrentTemplate(name: string, isAutoSave = false) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const designerStore = useDesignerStore();
       // Capture current ID synchronously to prevent race conditions if template changes during async save
       const targetId = this.currentTemplateId;
       const existingTemplate = targetId ? this.templates.find(t => t.id === targetId) : undefined;
       if (targetId && existingTemplate && !canEditEntity(existingTemplate)) {
-        toast.warning(i18n.global.t('toast.templateReadOnly'));
+        if (!isAutoSave) {
+          toast.warning(i18n.global.t('toast.templateReadOnly'));
+        }
         return;
       }
       
@@ -229,7 +231,7 @@ export const useTemplateStore = defineStore('templates', {
       }
 
       this.isSaving = true;
-      if (mode === 'remote') {
+      if (mode === 'remote' && !isAutoSave) {
         this.isLoading = true;
       }
       try {
@@ -266,13 +268,17 @@ export const useTemplateStore = defineStore('templates', {
               this.currentTemplateId = id;
             }
             
-            // Auto refresh list from remote
-            await this.loadTemplates();
+            // Auto refresh list from remote only if it's not an auto-save
+            if (!isAutoSave) {
+              await this.loadTemplates();
+            }
             
             return;
           } catch (e) {
             console.error('Failed to save template', e);
-            toast.error(i18n.global.t('toast.templateSaveFailed'));
+            if (!isAutoSave) {
+              toast.error(i18n.global.t('toast.templateSaveFailed'));
+            }
             throw e; // rethrow to let caller know
           }
         }
@@ -293,7 +299,7 @@ export const useTemplateStore = defineStore('templates', {
         this.saveToLocalStorage();
       } finally {
         this.isSaving = false;
-        if (mode === 'remote') {
+        if (mode === 'remote' && !isAutoSave) {
           this.isLoading = false;
         }
       }
