@@ -583,11 +583,6 @@ class PrintDesignerElement extends HTMLElement {
     return this.getCustomElements(options);
   }
 
-  // ==== Test Helpers ====
-  _showTestToast(type: 'success' | 'error' | 'info' | 'warning', msg: string) {
-    toast.show(msg, type);
-  }
-
   async upsertTemplate(template: { id?: string; name: string; data?: any; updatedAt?: number; [key: string]: any }, options: { setCurrent?: boolean } = {}) {
     if (!this.templateStore) return null;
     if (!template || typeof template.name !== 'string') return null;

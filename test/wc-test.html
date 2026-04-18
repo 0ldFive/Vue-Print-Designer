@@ -45,8 +45,6 @@
       <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
       <button id="btn-load-editable-template">加载可编辑模板</button>
       <button id="btn-seed-tag-templates">注入带标签模板</button>
-      <button id="btn-test-toast-success">测试 Toast (Success)</button>
-      <button id="btn-test-toast-error">测试 Toast (Error)</button>
       <button id="btn-test-global-loading">测试全局 Loading</button>
     </div>
   <!-- 加载设计器组件 -->
@@ -377,18 +375,6 @@
       const passed = Boolean(stillExists);
       console.log('只读模板 delete 后是否仍存在:', passed);
       alert(passed ? 'PASS: 只读模板删除被拦截（模板仍存在）' : 'FAIL: 只读模板被删除了');
-    });
-
-    document.getElementById('btn-test-toast-success').addEventListener('click', () => {
-      if (designer._showTestToast) {
-        designer._showTestToast('success', '保存成功！模板已更新。');
-      }
-    });
-
-    document.getElementById('btn-test-toast-error').addEventListener('click', () => {
-      if (designer._showTestToast) {
-        designer._showTestToast('error', '远程接口调用失败：网络异常');
-      }
     });
 
     document.getElementById('btn-test-global-loading').addEventListener('click', async () => {
