@@ -38,6 +38,8 @@
 | `print(request)` | Execute print |
 | `export(request)` | Export PDF/Images |
 | `setPrintDefaults(payload)` | Set default print options |
+| `getPrintQuality()` | Get current print quality |
+| `setPrintQuality(quality)` | Set print quality |
 | `fetchLocalPrinters()` | Get local printer list |
 | `fetchLocalPrinterCaps(printer)` | Get local printer capabilities |
 | `fetchRemoteClients()` | Get remote print client list |
@@ -54,11 +56,14 @@
 | `refreshTemplates()` | Refresh template list |
 | `getTemplate(id)` | Get template details |
 | `upsertTemplate(template)` | Create/Update template |
+| `setTemplates(templates)` | Set template list directly |
 | `deleteTemplate(id)` | Delete template |
+| `loadTemplate(id)` | Load specific template |
 | `getCustomElements()` | Get custom element list |
 | `refreshCustomElements()` | Refresh custom element list |
 | `getCustomElement(id)` | Get custom element details |
 | `upsertCustomElement(element)` | Create/Update custom element |
+| `setCustomElements(elements)` | Set custom element list directly |
 | `deleteCustomElement(id)` | Delete custom element |
 | `setCrudMode(mode)` | Set CRUD mode (local/remote) |
 | `setCrudEndpoints(endpoints)` | Set remote API endpoints |
@@ -74,6 +79,8 @@
 | `clearCustomElementContextMenu()` | Restore default custom element list extension menu |
 | `setTemplateModalForm(config)` | Configure custom forms for create/edit/copy template modals |
 | `clearTemplateModalForm()` | Clear template modal custom form configuration |
+| `setCustomElementModalForm(config)` | Configure custom forms for create/edit custom element modals |
+| `clearCustomElementModalForm()` | Clear custom element modal custom form configuration |
 
 ## Quick Start
 
