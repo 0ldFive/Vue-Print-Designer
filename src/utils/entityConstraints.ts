@@ -1,4 +1,4 @@
-import merge from 'lodash/merge';
+import mergeWith from 'lodash/mergeWith';
 
 export interface EntityPermissions {
   system: boolean;
@@ -24,7 +24,11 @@ const isRecord = (value: unknown): value is Record<string, any> => {
 };
 
 export const mergeExt = (...exts: (Record<string, any> | undefined | null)[]): Record<string, any> => {
-  return merge({}, ...exts.filter(isRecord));
+  return mergeWith({}, ...exts.filter(isRecord), (objValue: any, srcValue: any) => {
+    if (Array.isArray(srcValue)) {
+      return srcValue;
+    }
+  });
 };
 
 const readBool = (value: unknown): boolean | undefined => {

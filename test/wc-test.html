@@ -47,6 +47,7 @@
       <button id="btn-seed-tag-templates">注入带标签模板</button>
       <button id="btn-test-toast-success">测试 Toast (Success)</button>
       <button id="btn-test-toast-error">测试 Toast (Error)</button>
+      <button id="btn-test-global-loading">测试全局 Loading</button>
     </div>
   <!-- 加载设计器组件 -->
   <print-designer></print-designer>
@@ -387,6 +388,15 @@
     document.getElementById('btn-test-toast-error').addEventListener('click', () => {
       if (designer._showTestToast) {
         designer._showTestToast('error', '远程接口调用失败：网络异常');
+      }
+    });
+
+    document.getElementById('btn-test-global-loading').addEventListener('click', async () => {
+      if (designer._setGlobalLoading) {
+        designer._setGlobalLoading(true);
+        setTimeout(() => {
+          designer._setGlobalLoading(false);
+        }, 3000);
       }
     });
 

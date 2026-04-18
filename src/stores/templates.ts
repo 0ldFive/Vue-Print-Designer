@@ -72,6 +72,7 @@ export const useTemplateStore = defineStore('templates', {
     async fetchTemplateDetail(id: string) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
+        this.isLoading = true;
         try {
           const url = buildEndpoint(endpoints.templates?.get, id);
           const options = buildFetchOptions(endpoints.templates?.get, 'GET', headers);
@@ -99,6 +100,8 @@ export const useTemplateStore = defineStore('templates', {
         } catch (e) {
           console.error('Failed to fetch template detail', e);
           return null;
+        } finally {
+          this.isLoading = false;
         }
       } else {
         const t = this.templates.find(item => item.id === id);
@@ -112,6 +115,7 @@ export const useTemplateStore = defineStore('templates', {
     async loadTemplates() {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       if (mode === 'remote') {
+        this.isLoading = true;
         try {
           const url = buildEndpoint(endpoints.templates?.list, '');
           const options = buildFetchOptions(endpoints.templates?.list, 'GET', headers);
@@ -144,6 +148,8 @@ export const useTemplateStore = defineStore('templates', {
           console.error('Failed to load templates', e);
           this.templates = [];
           return;
+        } finally {
+          this.isLoading = false;
         }
       }
 
@@ -223,6 +229,9 @@ export const useTemplateStore = defineStore('templates', {
       }
 
       this.isSaving = true;
+      if (mode === 'remote') {
+        this.isLoading = true;
+      }
       try {
         if (mode === 'remote') {
           try {
@@ -284,6 +293,9 @@ export const useTemplateStore = defineStore('templates', {
         this.saveToLocalStorage();
       } finally {
         this.isSaving = false;
+        if (mode === 'remote') {
+          this.isLoading = false;
+        }
       }
     },
 
@@ -311,6 +323,7 @@ export const useTemplateStore = defineStore('templates', {
       const newTemplate: Template = normalizeEntityConstraints(templateBase) as Template;
 
       if (mode === 'remote') {
+        this.isLoading = true;
         try {
           const url = buildEndpoint(endpoints.templates?.upsert, '');
           const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
@@ -336,6 +349,8 @@ export const useTemplateStore = defineStore('templates', {
           await this.loadTemplates();
         } catch (e) {
           console.error('Failed to create template', e);
+        } finally {
+          this.isLoading = false;
         }
       } else {
         this.templates.push(newTemplate);
@@ -358,6 +373,7 @@ export const useTemplateStore = defineStore('templates', {
         this.currentTemplateId = null;
       }
       if (mode === 'remote') {
+        this.isLoading = true;
         try {
           const url = buildEndpoint(endpoints.templates?.delete, id);
           const options = buildFetchOptions(endpoints.templates?.delete, 'DELETE', headers);
@@ -366,6 +382,8 @@ export const useTemplateStore = defineStore('templates', {
         } catch (e) {
           console.error('Failed to delete template', e);
           toast.error(i18n.global.t('toast.templateDeleteFailed'));
+        } finally {
+          this.isLoading = false;
         }
         return;
       }
@@ -387,6 +405,7 @@ export const useTemplateStore = defineStore('templates', {
           Object.assign(t, nextTemplate);
         }
         if (mode === 'remote') {
+          this.isLoading = true;
           try {
             const cachedTemplate = this.templateDetailCache[id];
             const payloadBase = applyModalExtraValues({
@@ -408,6 +427,8 @@ export const useTemplateStore = defineStore('templates', {
           } catch (e) {
             console.error('Failed to edit template', e);
             toast.error(i18n.global.t('toast.templateEditFailed'));
+          } finally {
+            this.isLoading = false;
           }
           return;
         }
@@ -446,6 +467,7 @@ export const useTemplateStore = defineStore('templates', {
         }, 'copy', extraValues);
         const newTemplate: Template = normalizeEntityConstraints(newTemplateBase) as Template;
         if (mode === 'remote') {
+          this.isLoading = true;
           try {
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
@@ -473,6 +495,8 @@ export const useTemplateStore = defineStore('templates', {
           } catch (e) {
             console.error('Failed to copy template', e);
             toast.error(i18n.global.t('toast.templateCopyFailed'));
+          } finally {
+            this.isLoading = false;
           }
         } else {
           this.templates.unshift(newTemplate);

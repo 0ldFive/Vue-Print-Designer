@@ -892,6 +892,18 @@ class PrintDesignerElement extends HTMLElement {
     if (!this.designerStore) return;
     this.designerStore.setCustomElementModalFormConfig(null);
   }
+
+  // Testing hooks
+  _showTestToast(type: 'success' | 'error' | 'warning' | 'info', message: string) {
+    if (toast[type]) {
+      toast[type](message);
+    }
+  }
+
+  _setGlobalLoading(isLoading: boolean) {
+    if (!this.templateStore) return;
+    this.templateStore.isLoading = isLoading;
+  }
 }
 
 const elementName = 'print-designer';

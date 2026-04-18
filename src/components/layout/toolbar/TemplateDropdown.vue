@@ -87,7 +87,7 @@ const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' |
   // Combine base ext with mode values, but exclude internal ext fields
   const finalValues = { ...baseExt, ...modeValues };
   delete finalValues.templateModalForm;
-  delete finalValues.templateTags;
+  // delete finalValues.templateTags; // keep templateTags
   
   return finalValues;
 };
