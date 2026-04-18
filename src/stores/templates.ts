@@ -221,7 +221,7 @@ export const useTemplateStore = defineStore('templates', {
         if (mode === 'remote') {
           try {
             const upsertBase: any = targetId ? (this.templateDetailCache[targetId] || existingTemplate || {}) : {};
-            const payload = normalizeEntityConstraints({
+            const payloadBase = {
               id: targetId || uuidv4(),
               name,
               data: {
@@ -235,7 +235,8 @@ export const useTemplateStore = defineStore('templates', {
               copyable: upsertBase?.copyable,
               permissions: upsertBase?.permissions,
               ext: mergeExt(existingTemplate?.ext, upsertBase?.ext)
-            });
+            };
+            const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, targetId ? 'edit' : 'create'));
             const url = buildEndpoint(endpoints.templates?.upsert, '');
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             const res = await (fetcher || fetch)(url, options);

@@ -406,7 +406,7 @@ export const useDesignerStore = defineStore('designer', {
       if (mode === 'remote') {
         try {
           const cachedTemplate = this.customElementDetailCache[template.id];
-          const payload = normalizeEntityConstraints({
+          const payloadBase = {
             id: template.id,
             name: template.name,
             element: cloneDeep(template.element),
@@ -417,7 +417,8 @@ export const useDesignerStore = defineStore('designer', {
             copyable: template.copyable ?? cachedTemplate?.copyable,
             permissions: template.permissions ?? cachedTemplate?.permissions,
             ext: mergeExt(cachedTemplate?.ext, template.ext)
-          });
+          };
+          const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, 'edit'));
           const url = buildEndpoint(endpoints.customElements?.upsert, '');
           const options = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, payload);
           await (fetcher || fetch)(url, options);
