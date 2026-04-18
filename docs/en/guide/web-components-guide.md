@@ -269,7 +269,29 @@ Parameters:
 | `localPrintOptions` | `PrintOptions` | No | Local print options |
 | `remotePrintOptions` | `PrintOptions` | No | Remote print options |
 
-### 4. Get Printers and Clients (fetchPrinters)
+### 4. Print Quality Settings (getPrintQuality/setPrintQuality)
+
+Description: Get or set the print and export rendering quality.
+**Note**: You must call `setPrintQuality` **before** calling `print` or `export` methods for the settings to take effect.
+
+```ts
+// Get current print quality
+const quality = el.getPrintQuality()
+
+// Set print quality ('fast', 'normal', 'high', 'ultra')
+el.setPrintQuality('high')
+
+// Call print or export after setting the quality
+await el.export({ type: 'pdf' })
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `quality` | `string` | Yes | The print quality tier (`'fast'`, `'normal'`, `'high'`, `'ultra'`) |
+
+### 5. Get Printers and Clients (fetchPrinters)
 
 Description: query printers, printer capabilities, and clients for local/remote print modes.
 

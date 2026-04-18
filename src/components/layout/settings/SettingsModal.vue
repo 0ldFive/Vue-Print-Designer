@@ -32,6 +32,7 @@ const {
   printMode,
   silentPrint,
   exportImageMerged,
+  printQuality,
   localSettings,
   remoteSettings,
   localStatus,
@@ -500,6 +501,29 @@ onUnmounted(() => {
                   </button>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">{{ t('settings.autoSaveDesc') }}</p>
+              </div>
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="mb-2 font-medium text-gray-900">{{ t('settings.printQuality') }}</div>
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="printQuality === 'fast' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="fast" v-model="printQuality" />
+                    <span>{{ t('settings.printQualityFast') }}</span>
+                  </label>
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="printQuality === 'normal' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="normal" v-model="printQuality" />
+                    <span>{{ t('settings.printQualityNormal') }}</span>
+                  </label>
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="printQuality === 'high' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="high" v-model="printQuality" />
+                    <span>{{ t('settings.printQualityHigh') }}</span>
+                  </label>
+                  <label class="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer" :class="printQuality === 'ultra' ? 'border-blue-600 text-blue-700' : 'border-gray-300'">
+                    <input type="radio" value="ultra" v-model="printQuality" />
+                    <span>{{ t('settings.printQualityUltra') }}</span>
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ t('settings.printQualityDesc') }}</p>
               </div>
 
               <div class="border-t border-gray-200 pt-4">

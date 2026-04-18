@@ -1083,6 +1083,16 @@ export const usePrint = () => {
     const linkParents = monacoLinks.map(link => link.parentNode);
     monacoLinks.forEach(link => link.parentNode?.removeChild(link));
 
+    const printSettings = usePrintSettings();
+    const printQualityStr = printSettings?.printQuality?.value ?? 'normal';
+    
+    let printQualityScale = 1;
+    let jpegQuality = 0.8;
+    if (printQualityStr === 'fast') { printQualityScale = 0.5; jpegQuality = 0.6; }
+    else if (printQualityStr === 'normal') { printQualityScale = 1; jpegQuality = 0.8; }
+    else if (printQualityStr === 'high') { printQualityScale = 1.5; jpegQuality = 0.9; }
+    else if (printQualityStr === 'ultra') { printQualityScale = 2; jpegQuality = 1.0; }
+
     try {
         const generatePageImage = async (page: HTMLElement) => {
             const domToImageModule = await import('dom-to-image-more');
@@ -1097,7 +1107,7 @@ export const usePrint = () => {
                     }
                     return true;
                 },
-                scale: 1.5, // Reduce scale slightly for performance (2 -> 1.5)
+                scale: printQualityScale,
                 width: width,
                 height: height,
                 useCORS: true,
@@ -1106,13 +1116,13 @@ export const usePrint = () => {
 
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                (ctx as any).mozImageSmoothingEnabled = false;
-                (ctx as any).webkitImageSmoothingEnabled = false;
-                (ctx as any).msImageSmoothingEnabled = false;
-                ctx.imageSmoothingEnabled = false;
+                (ctx as any).mozImageSmoothingEnabled = true;
+                (ctx as any).webkitImageSmoothingEnabled = true;
+                (ctx as any).msImageSmoothingEnabled = true;
+                ctx.imageSmoothingEnabled = true;
             }
 
-            return canvas.toDataURL('image/jpeg', 0.5);
+            return canvas.toDataURL('image/jpeg', jpegQuality);
         };
 
         // Process pages in batches to avoid freezing the browser

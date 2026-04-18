@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, ref, nextTick, computed } from 'vue';
+import { onMounted, watch, ref, nextTick, computed, inject } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import { normalizeVariableKey } from '@/utils/variables';
@@ -9,6 +9,7 @@ const props = defineProps<{
 }>();
 
 const store = useDesignerStore();
+const registerRenderTask = inject<((task: Promise<void>) => void) | null>('registerRenderTask', null);
 
 const barcodeRef = ref<HTMLImageElement | null>(null);
 
@@ -56,11 +57,13 @@ const renderBarcode = async () => {
 };
 
 onMounted(() => {
-    nextTick(renderBarcode);
+    const task = nextTick().then(renderBarcode);
+    if (registerRenderTask) registerRenderTask(task);
 });
 
 watch(() => [props.element.content, props.element.variable, props.element.style, store.isExporting, store.testData], () => {
-    nextTick(renderBarcode);
+    const task = nextTick().then(renderBarcode);
+    if (registerRenderTask) registerRenderTask(task);
 }, { deep: true });
 </script>
 

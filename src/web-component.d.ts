@@ -49,6 +49,8 @@ export interface PrintDesignerElement extends HTMLElement {
   setTheme(theme: string): void;
   setDesignerFont(fontFamily: string, options?: { persist?: boolean }): void;
   setLanguage(lang: 'zh' | 'en'): void;
+  getPrintQuality(): 'fast' | 'normal' | 'high' | 'ultra';
+  setPrintQuality(quality: 'fast' | 'normal' | 'high' | 'ultra'): void;
 
   getVariables(): Record<string, any>;
   setVariables(vars: Record<string, any>, options?: { merge?: boolean }): void;

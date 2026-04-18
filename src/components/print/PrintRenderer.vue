@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, provide } from 'vue';
 import cloneDeep from 'lodash/cloneDeep';
 import { useDesignerStore } from '@/stores/designer';
 import Canvas from '@/components/canvas/Canvas.vue';
@@ -13,6 +13,12 @@ const root = ref<HTMLElement | null>(null);
 const store = useDesignerStore();
 const token = props.token || new URLSearchParams(window.location.search).get('printToken') || '';
 const origin = window.location.origin;
+
+// Registry for async render tasks (like QRCode, Barcode)
+const renderTasks = ref<Promise<void>[]>([]);
+provide('registerRenderTask', (task: Promise<void>) => {
+  renderTasks.value.push(task);
+});
 
 const getDoc = () => root.value?.ownerDocument || document;
 const getWin = () => getDoc().defaultView || window;
@@ -88,7 +94,12 @@ const applyPayload = async (payload: any) => {
   const doc = getDoc();
   doc.body.classList.add('exporting');
 
+  // Reset render tasks before nextTick
+  renderTasks.value = [];
+
   await nextTick();
+  // Wait for async rendering components like QRCode and Barcode which registered their tasks
+  await Promise.all(renderTasks.value);
   await waitForFonts();
   await waitForImages();
   requestAnimationFrame(() => {

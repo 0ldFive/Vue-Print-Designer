@@ -108,7 +108,8 @@ export const buildFetchOptions = (
   
   const options: RequestInit = {
     method,
-    headers: defaultHeaders
+    headers: defaultHeaders,
+    cache: 'no-store' // Prevent browser caching for list and details
   };
 
   if (isBodyMethod) {

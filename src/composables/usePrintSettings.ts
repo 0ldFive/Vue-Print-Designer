@@ -68,10 +68,13 @@ export interface LocalPrinterCaps {
   colorSupported?: boolean;
 }
 
+export type PrintQuality = 'fast' | 'normal' | 'high' | 'ultra';
+
 interface PrintSettingsState {
   printMode: ReturnType<typeof ref<PrintMode>>;
   silentPrint: ReturnType<typeof ref<boolean>>;
   exportImageMerged: ReturnType<typeof ref<boolean>>;
+  printQuality: ReturnType<typeof ref<PrintQuality>>;
   localSettings: LocalConnectionSettings;
   remoteSettings: RemoteConnectionSettings;
   localStatus: ReturnType<typeof ref<ConnectionStatus>>;
@@ -108,6 +111,7 @@ const storageKeys = {
   preferredPrintMode: 'print-designer-preferred-print-mode',
   silentPrint: 'print-designer-silent-print',
   exportImageMerged: 'print-designer-export-image-merged',
+  printQuality: 'print-designer-print-quality',
   localSettings: 'print-designer-local-settings',
   remoteSettings: 'print-designer-remote-settings',
   localPrintOptions: 'print-designer-local-print-options',
@@ -248,6 +252,13 @@ const createState = (): PrintSettingsState => {
   const printMode = ref<PrintMode>(storedPreferred || (localStorage.getItem(storageKeys.printMode) as PrintMode) || 'browser');
   const silentPrint = ref(localStorage.getItem(storageKeys.silentPrint) === 'true');
   const exportImageMerged = ref(localStorage.getItem(storageKeys.exportImageMerged) !== 'false');
+  const printQualityStr = localStorage.getItem(storageKeys.printQuality) as string | null;
+  const validQualities: PrintQuality[] = ['fast', 'normal', 'high', 'ultra'];
+  const defaultQuality: PrintQuality = (printQualityStr && validQualities.includes(printQualityStr as PrintQuality)) 
+    ? (printQualityStr as PrintQuality) 
+    : 'normal';
+
+  const printQuality = ref<PrintQuality>(defaultQuality);
 
   const localSettings = reactive(loadJson(storageKeys.localSettings, defaultLocalSettings));
   if (!localSettings.wsAddress) {
@@ -331,6 +342,10 @@ const createState = (): PrintSettingsState => {
 
   watch(exportImageMerged, (value) => {
     localStorage.setItem(storageKeys.exportImageMerged, String(value));
+  });
+
+  watch(printQuality, (value) => {
+    localStorage.setItem(storageKeys.printQuality, value.toString());
   });
 
   watch(localSettings, (value) => {
@@ -861,6 +876,7 @@ const createState = (): PrintSettingsState => {
     printMode,
     silentPrint,
     exportImageMerged,
+    printQuality,
     localSettings,
     remoteSettings,
     localStatus,

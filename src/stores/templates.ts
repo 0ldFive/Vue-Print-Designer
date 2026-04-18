@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
+import { toRaw } from 'vue';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import { useDesignerStore } from './designer';
@@ -134,7 +135,8 @@ export const useTemplateStore = defineStore('templates', {
               this.templateDetailCache[t.id] = normalized;
               return normalized as Template;
             });
-          if (!isEqual(this.templates, newTemplates)) {
+          const rawTemplates = cloneDeep(toRaw(this.templates));
+          if (!isEqual(rawTemplates, newTemplates)) {
             this.templates = newTemplates;
           }
           return;
@@ -163,7 +165,8 @@ export const useTemplateStore = defineStore('templates', {
                 ext: mergeExt(existing?.ext, t.ext)
               }) as Template;
             });
-          if (!isEqual(this.templates, newTemplates)) {
+          const rawTemplates = cloneDeep(toRaw(this.templates));
+          if (!isEqual(rawTemplates, newTemplates)) {
             this.templates = newTemplates;
           }
         } catch (e) {
@@ -389,7 +392,8 @@ export const useTemplateStore = defineStore('templates', {
             const payloadBase = applyModalExtraValues({
               id: t.id,
               name: newName,
-              data: t.data || cachedTemplate?.data || {},
+              // If t.data only contains empty pages, try to use cached data instead
+              data: (t.data && t.data.pages && t.data.pages.length > 0) ? t.data : (cachedTemplate?.data || t.data || {}),
               updatedAt: t.updatedAt,
               permissions: t.permissions ?? cachedTemplate?.permissions,
               ext: mergeExt(cachedTemplate?.ext, t.ext)
