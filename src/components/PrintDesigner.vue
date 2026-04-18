@@ -126,13 +126,19 @@ onMounted(() => {
   );
 });
 
-const debouncedAutoSave = debounce(() => {
+const debouncedAutoSave = debounce(async () => {
   if (templateStore.isLoading) return;
   if (store.editingCustomElementId) return;
-  if (autoSave.value && templateStore.currentTemplateId && !templateStore.isSaving) {
+  if (autoSave.value && templateStore.currentTemplateId) {
     const currentTemplate = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
     if (currentTemplate && canEditEntity(currentTemplate)) {
-      templateStore.saveCurrentTemplate(currentTemplate.name, true);
+      if (templateStore.isSaving) {
+        // If already saving, we must not drop this save.
+        // Schedule another check shortly after.
+        setTimeout(() => debouncedAutoSave(), 500);
+        return;
+      }
+      await templateStore.saveCurrentTemplate(currentTemplate.name, true);
     }
   }
 }, 1000);

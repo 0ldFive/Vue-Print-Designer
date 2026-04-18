@@ -548,9 +548,9 @@ class PrintDesignerElement extends HTMLElement {
     }
   }
 
-  setCrudEndpoints(endpoints: CrudEndpoints, options: { baseUrl?: string; headers?: Record<string, string> } = {}) {
+  setCrudEndpoints(endpoints: CrudEndpoints, options: { baseUrl?: string; headers?: Record<string, string>; fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> } = {}) {
     const finalBaseUrl = options.baseUrl !== undefined ? options.baseUrl : endpoints.baseUrl;
-    setCrudConfig({ endpoints: { ...endpoints, baseUrl: finalBaseUrl }, headers: options.headers });
+    setCrudConfig({ endpoints: { ...endpoints, baseUrl: finalBaseUrl }, headers: options.headers, fetcher: options.fetcher });
   }
 
   getTemplates(options: { includeData?: boolean } = {}) {

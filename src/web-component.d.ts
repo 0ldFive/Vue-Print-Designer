@@ -79,7 +79,7 @@ export interface PrintDesignerElement extends HTMLElement {
   clearTemplateTagResolver(): void;
 
   setCrudMode(mode: 'local' | 'remote'): void;
-  setCrudEndpoints(endpoints: CrudEndpoints, options?: { baseUrl?: string; headers?: Record<string, string> }): void;
+  setCrudEndpoints(endpoints: CrudEndpoints, options?: { baseUrl?: string; headers?: Record<string, string>; fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> }): void;
 }
 
 declare global {

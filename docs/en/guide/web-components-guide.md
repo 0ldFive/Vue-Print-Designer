@@ -24,7 +24,8 @@
   - [16. Configure Client and Cloud Print Links (setLinks)](#16-configure-client-and-cloud-print-links-setlinks)
   - [17. Configure Extension Menu (setContextMenu)](#17-configure-extension-menu-setcontextmenu)
   - [18. Configure Template Modal Custom Form (setTemplateModalForm)](#18-configure-template-modal-custom-form-settemplatemodalform)
-  - [19. Configure Template List Tag Extension (setTemplateTagResolver)](#19-configure-template-list-tag-extension-settemplatetagresolver)
+  - [19. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#19-configure-custom-element-modal-custom-form-setcustomelementmodalform)
+  - [20. Configure Template List Tag Extension (setTemplateTagResolver)](#20-configure-template-list-tag-extension-settemplatetagresolver)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
@@ -839,6 +840,31 @@ Behavior notes:
 - Other fields are sent back as "extended form values" and stored under `ext.templateModalForm` (see Backend API Specifications).
 - When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
 - `create` uses `initialValues` by default; when not configured, component default behavior applies.
+
+### 19. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
+
+Description: Used to configure the custom form structure and default values for the custom element "Create / Rename" modals.
+
+```ts
+el.setCustomElementModalForm({
+  create: {
+    fields: [
+      { key: 'name', label: 'Name', type: 'input', required: true, placeholder: 'Please enter name' },
+      { key: 'category', label: 'Category', type: 'select', options: [{ label: 'Barcode', value: 'barcode' }] }
+    ]
+  },
+  edit: {
+    fields: [
+      { key: 'name', label: 'Name', type: 'input', required: true }
+    ]
+  }
+})
+
+// Clear configuration, restore default single input box modal
+el.clearCustomElementModalForm()
+```
+
+### 20. Configure Template List Tag Extension (setTemplateTagResolver)
 
 ## Events
 

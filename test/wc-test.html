@@ -46,6 +46,7 @@
       <button id="btn-load-editable-template">加载可编辑模板</button>
       <button id="btn-seed-tag-templates">注入带标签模板</button>
       <button id="btn-test-global-loading">测试全局 Loading</button>
+      <button id="btn-test-remote-autosave">测试远程防抖自动保存</button>
     </div>
   <!-- 加载设计器组件 -->
   <print-designer></print-designer>
@@ -384,6 +385,68 @@
           designer._setGlobalLoading(false);
         }, 3000);
       }
+    });
+
+    document.getElementById('btn-test-remote-autosave').addEventListener('click', async () => {
+      // Override fetcher to simulate slow network requests for testing debounce behavior
+      const mockFetcher = async (url, options) => {
+        console.log(`[Mock Fetcher] Intercepted request to ${url}`, options);
+        
+        // Simulate network delay (e.g., 800ms)
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        if (options.method === 'POST') {
+          // Mock upsert response
+          const body = JSON.parse(options.body);
+          return {
+            json: async () => ({ ...body, id: body.id || 'new-mock-id', updatedAt: Date.now() })
+          };
+        } else if (options.method === 'GET') {
+          if (url.includes('custom-elements')) {
+            return {
+              json: async () => ([])
+            };
+          }
+          if (url.includes('templates/tpl-remote-1')) {
+            return {
+              json: async () => ({ id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } })
+            };
+          }
+          // Mock list response
+          return {
+            json: async () => ([
+              { id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } }
+            ])
+          };
+        }
+        
+        return { json: async () => ({}) };
+      };
+
+      // Setup mock remote endpoints for testing auto-save FIRST, before switching mode
+      designer.setCrudEndpoints({
+        baseUrl: 'https://mock.api',
+        templates: {
+          list: '/templates',
+          upsert: '/templates',
+          get: '/templates/{id}',
+          delete: '/templates/{id}'
+        },
+        customElements: {
+          list: '/custom-elements',
+          upsert: '/custom-elements',
+          get: '/custom-elements/{id}',
+          delete: '/custom-elements/{id}'
+        }
+      }, { fetcher: mockFetcher });
+
+      designer.setCrudMode('remote');
+
+      // Load a template to edit
+      await designer.refreshTemplates();
+      designer.loadTemplate('tpl-remote-1');
+      
+      alert('已开启模拟的远程 CRUD 模式 (带有 800ms 延迟)。\n请在设计器中快速拖拽元素或修改属性，观察控制台 Network 模拟日志，验证在 isSaving=true 时自动保存是否能成功延迟触发而不会丢失数据。');
     });
 
     // 注册组件（如果内部未自动注册）
