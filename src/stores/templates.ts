@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
+import isEqual from 'lodash/isEqual';
 import { useDesignerStore } from './designer';
 import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
@@ -116,7 +117,7 @@ export const useTemplateStore = defineStore('templates', {
           const res = await (fetcher || fetch)(url, options);
           const data = await res.json();
           const list = Array.isArray(data) ? data : data?.templates || [];
-          this.templates = list
+          const newTemplates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
             .map((t: any) => {
               const existing = this.templates.find(e => e.id === t.id);
@@ -133,6 +134,9 @@ export const useTemplateStore = defineStore('templates', {
               this.templateDetailCache[t.id] = normalized;
               return normalized as Template;
             });
+          if (!isEqual(this.templates, newTemplates)) {
+            this.templates = newTemplates;
+          }
           return;
         } catch (e) {
           console.error('Failed to load templates', e);
@@ -146,7 +150,7 @@ export const useTemplateStore = defineStore('templates', {
         try {
           const parsed = JSON.parse(stored);
           const list = Array.isArray(parsed) ? parsed : [];
-          this.templates = list
+          const newTemplates = list
             .filter((t: any) => t && typeof t.id === 'string' && typeof t.name === 'string')
             .map((t: any) => {
               const existing = this.templates.find(e => e.id === t.id);
@@ -159,6 +163,9 @@ export const useTemplateStore = defineStore('templates', {
                 ext: mergeExt(existing?.ext, t.ext)
               }) as Template;
             });
+          if (!isEqual(this.templates, newTemplates)) {
+            this.templates = newTemplates;
+          }
         } catch (e) {
           console.error('Failed to parse templates', e);
           this.templates = [];
@@ -203,6 +210,14 @@ export const useTemplateStore = defineStore('templates', {
         testData: cloneDeep(designerStore.testData || {}),
         // Add other necessary state here
       };
+
+      if (targetId && existingTemplate) {
+        const oldData = sanitizeTemplateData(existingTemplate.data || {});
+        const newData = sanitizeTemplateData(data);
+        if (existingTemplate.name === name && isEqual(oldData, newData)) {
+          return; // No changes, skip saving to prevent unnecessary updatedAt changes
+        }
+      }
 
       this.isSaving = true;
       try {
