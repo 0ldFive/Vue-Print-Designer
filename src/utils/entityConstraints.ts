@@ -62,10 +62,6 @@ export const extractStandardTemplateFields = (entity: any) => {
     data: entity.data,
     updatedAt: entity.updatedAt,
   };
-  if (entity.system !== undefined) standard.system = entity.system;
-  if (entity.editable !== undefined) standard.editable = entity.editable;
-  if (entity.deletable !== undefined) standard.deletable = entity.deletable;
-  if (entity.copyable !== undefined) standard.copyable = entity.copyable;
   if (entity.permissions !== undefined) standard.permissions = entity.permissions;
   if (entity.ext !== undefined) standard.ext = entity.ext;
   return standard;
@@ -79,10 +75,6 @@ export const extractStandardCustomElementFields = (entity: any) => {
     element: entity.element,
     testData: entity.testData,
   };
-  if (entity.system !== undefined) standard.system = entity.system;
-  if (entity.editable !== undefined) standard.editable = entity.editable;
-  if (entity.deletable !== undefined) standard.deletable = entity.deletable;
-  if (entity.copyable !== undefined) standard.copyable = entity.copyable;
   if (entity.permissions !== undefined) standard.permissions = entity.permissions;
   if (entity.ext !== undefined) standard.ext = entity.ext;
   return standard;
@@ -96,10 +88,6 @@ export const normalizeEntityConstraints = <T extends Record<string, any>>(entity
   const standard: any = {
     id: entity.id,
     name: entity.name,
-    system: permissions.system,
-    editable: permissions.editable,
-    deletable: permissions.deletable,
-    copyable: permissions.copyable,
     ext: normalizedExt,
     permissions: {
       ...(isRecord(entity.permissions) ? entity.permissions : {}),

@@ -87,12 +87,7 @@ export const useTemplateStore = defineStore('templates', {
             id: currentId,
             name: t.name || existingTemplate?.name || cachedTemplate?.name || '',
             data,
-            updatedAt: t.updatedAt || cachedTemplate?.updatedAt || existingTemplate?.updatedAt || Date.now(),
-            system: t.system ?? cachedTemplate?.system ?? existingTemplate?.system,
-            editable: t.editable ?? cachedTemplate?.editable ?? existingTemplate?.editable,
-            deletable: t.deletable ?? cachedTemplate?.deletable ?? existingTemplate?.deletable,
-            copyable: t.copyable ?? cachedTemplate?.copyable ?? existingTemplate?.copyable,
-            permissions: t.permissions ?? cachedTemplate?.permissions ?? existingTemplate?.permissions,
+            updatedAt: t.updatedAt || cachedTemplate?.updatedAt || existingTemplate?.updatedAt || Date.now(),            permissions: t.permissions ?? cachedTemplate?.permissions ?? existingTemplate?.permissions,
             ext: mergeExt(existingTemplate?.ext, cachedTemplate?.ext, t.ext)
           };
           const normalized = normalizeEntityConstraints(detail);
@@ -129,12 +124,7 @@ export const useTemplateStore = defineStore('templates', {
                 id: t.id,
                 name: t.name,
                 data: t.data ? sanitizeTemplateData(t.data) : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
-                updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now(),
-                system: t.system ?? cached?.system ?? existing?.system,
-                editable: t.editable ?? cached?.editable ?? existing?.editable,
-                deletable: t.deletable ?? cached?.deletable ?? existing?.deletable,
-                copyable: t.copyable ?? cached?.copyable ?? existing?.copyable,
-                permissions: t.permissions ?? cached?.permissions ?? existing?.permissions,
+                updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now(),                permissions: t.permissions ?? cached?.permissions ?? existing?.permissions,
                 ext: mergeExt(existing?.ext, cached?.ext, t.ext)
               };
               const normalized = normalizeEntityConstraints(merged);
@@ -162,12 +152,7 @@ export const useTemplateStore = defineStore('templates', {
                 id: t.id,
                 name: t.name,
                 data: t.data ? sanitizeTemplateData(t.data) : (existing?.data || sanitizeTemplateData(undefined)),
-                updatedAt: t.updatedAt || existing?.updatedAt || Date.now(),
-                system: t.system ?? existing?.system,
-                editable: t.editable ?? existing?.editable,
-                deletable: t.deletable ?? existing?.deletable,
-                copyable: t.copyable ?? existing?.copyable,
-                permissions: t.permissions ?? existing?.permissions,
+                updatedAt: t.updatedAt || existing?.updatedAt || Date.now(),                permissions: t.permissions ?? existing?.permissions,
                 ext: mergeExt(existing?.ext, t.ext)
               }) as Template;
             });
@@ -228,12 +213,7 @@ export const useTemplateStore = defineStore('templates', {
                 ...(upsertBase?.data || {}),
                 ...data
               },
-              updatedAt: Date.now(),
-              system: upsertBase?.system,
-              editable: upsertBase?.editable,
-              deletable: upsertBase?.deletable,
-              copyable: upsertBase?.copyable,
-              permissions: upsertBase?.permissions,
+              updatedAt: Date.now(),              permissions: upsertBase?.permissions,
               ext: mergeExt(existingTemplate?.ext, upsertBase?.ext)
             };
             const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, targetId ? 'edit' : 'create'));
@@ -326,12 +306,7 @@ export const useTemplateStore = defineStore('templates', {
             id: newTemplate.id,
             name: newTemplate.name,
             data: newTemplate.data || cached?.data,
-            updatedAt: newTemplate.updatedAt || cached?.updatedAt,
-            system: newTemplate.system ?? cached?.system,
-            editable: newTemplate.editable ?? cached?.editable,
-            deletable: newTemplate.deletable ?? cached?.deletable,
-            copyable: newTemplate.copyable ?? cached?.copyable,
-            permissions: newTemplate.permissions ?? cached?.permissions,
+            updatedAt: newTemplate.updatedAt || cached?.updatedAt,            permissions: newTemplate.permissions ?? cached?.permissions,
             ext: mergeExt(cached?.ext, newTemplate.ext)
           });
           
@@ -394,12 +369,7 @@ export const useTemplateStore = defineStore('templates', {
               id: t.id,
               name: newName,
               data: t.data || cachedTemplate?.data || {},
-              updatedAt: t.updatedAt,
-              system: t.system ?? cachedTemplate?.system,
-              editable: t.editable ?? cachedTemplate?.editable,
-              deletable: t.deletable ?? cachedTemplate?.deletable,
-              copyable: t.copyable ?? cachedTemplate?.copyable,
-              permissions: t.permissions ?? cachedTemplate?.permissions,
+              updatedAt: t.updatedAt,              permissions: t.permissions ?? cachedTemplate?.permissions,
               ext: mergeExt(cachedTemplate?.ext, t.ext)
             }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
@@ -443,18 +413,8 @@ export const useTemplateStore = defineStore('templates', {
           updatedAt: Date.now(),
           ext: source.ext,
           // A copied template should be a normal editable template by default,
-          // instead of inheriting source read-only/system flags.
-          system: false,
-          editable: true,
-          deletable: true,
-          copyable: true,
-          permissions: {
-            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
-            system: false,
-            editable: true,
-            deletable: true,
-            copyable: true
-          }
+          // instead of inheriting source read-only/system flags.          permissions: {
+            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),          }
         }, 'copy', extraValues);
         const newTemplate: Template = normalizeEntityConstraints(newTemplateBase) as Template;
         if (mode === 'remote') {
@@ -474,12 +434,7 @@ export const useTemplateStore = defineStore('templates', {
                 id: newTemplate.id,
                 name: newTemplate.name,
                 data: newTemplate.data || cached?.data,
-                updatedAt: newTemplate.updatedAt || cached?.updatedAt,
-                system: newTemplate.system ?? cached?.system,
-                editable: newTemplate.editable ?? cached?.editable,
-                deletable: newTemplate.deletable ?? cached?.deletable,
-                copyable: newTemplate.copyable ?? cached?.copyable,
-                permissions: newTemplate.permissions ?? cached?.permissions,
+                updatedAt: newTemplate.updatedAt || cached?.updatedAt,                permissions: newTemplate.permissions ?? cached?.permissions,
                 ext: mergeExt(cached?.ext, newTemplate.ext)
               });
             
@@ -540,12 +495,7 @@ export const useTemplateStore = defineStore('templates', {
                 id: currentId,
                 name: t.name || this.templates[existingIndex].name,
                 data,
-                updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,
-                system: t.system ?? this.templates[existingIndex].system,
-                editable: t.editable ?? this.templates[existingIndex].editable,
-                deletable: t.deletable ?? this.templates[existingIndex].deletable,
-                copyable: t.copyable ?? this.templates[existingIndex].copyable,
-                permissions: t.permissions ?? this.templates[existingIndex].permissions,
+                updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,                permissions: t.permissions ?? this.templates[existingIndex].permissions,
                 ext: mergeExt(this.templates[existingIndex].ext, t.ext)
               }) as Template;
             } else {
@@ -553,12 +503,7 @@ export const useTemplateStore = defineStore('templates', {
                 id: currentId,
                 name: t.name || '',
                 data,
-                updatedAt: t.updatedAt || Date.now(),
-                system: t.system,
-                editable: t.editable,
-                deletable: t.deletable,
-                copyable: t.copyable,
-                permissions: t.permissions,
+                updatedAt: t.updatedAt || Date.now(),                permissions: t.permissions,
                 ext: t.ext || {}
               }) as Template);
             }

@@ -410,12 +410,7 @@ export const useDesignerStore = defineStore('designer', {
             id: template.id,
             name: template.name,
             element: cloneDeep(template.element),
-            testData: template.testData,
-            system: template.system ?? cachedTemplate?.system,
-            editable: template.editable ?? cachedTemplate?.editable,
-            deletable: template.deletable ?? cachedTemplate?.deletable,
-            copyable: template.copyable ?? cachedTemplate?.copyable,
-            permissions: template.permissions ?? cachedTemplate?.permissions,
+            testData: template.testData,            permissions: template.permissions ?? cachedTemplate?.permissions,
             ext: mergeExt(cachedTemplate?.ext, template.ext)
           };
           const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, 'edit'));
@@ -427,12 +422,7 @@ export const useDesignerStore = defineStore('designer', {
             id: payload.id,
             name: payload.name,
             element: cloneDeep(payload.element || cached?.element || {}),
-            testData: payload.testData || cached?.testData,
-            system: payload.system ?? cached?.system,
-            editable: payload.editable ?? cached?.editable,
-            deletable: payload.deletable ?? cached?.deletable,
-            copyable: payload.copyable ?? cached?.copyable,
-            permissions: payload.permissions ?? cached?.permissions,
+            testData: payload.testData || cached?.testData,            permissions: payload.permissions ?? cached?.permissions,
             ext: mergeExt(cached?.ext, payload.ext)
           }) as CustomElementTemplate;
         } catch (e) {
@@ -1789,12 +1779,7 @@ export const useDesignerStore = defineStore('designer', {
               id: el.id,
               name: el.name,
               element: el.element ? cloneDeep(el.element) : cloneDeep(cached?.element || existing?.element || {}),
-              testData: el.testData || cached?.testData || existing?.testData,
-              system: el.system ?? cached?.system ?? existing?.system,
-              editable: el.editable ?? cached?.editable ?? existing?.editable,
-              deletable: el.deletable ?? cached?.deletable ?? existing?.deletable,
-              copyable: el.copyable ?? cached?.copyable ?? existing?.copyable,
-              permissions: el.permissions ?? cached?.permissions ?? existing?.permissions,
+              testData: el.testData || cached?.testData || existing?.testData,              permissions: el.permissions ?? cached?.permissions ?? existing?.permissions,
               ext: mergeExt(existing?.ext, cached?.ext, el.ext)
             };
             const normalized = normalizeEntityConstraints(merged);
@@ -1837,18 +1822,8 @@ export const useDesignerStore = defineStore('designer', {
           element: cloneDeep(source.element),
           testData: cloneDeep(source.testData),
           ext: source.ext,
-          // A copied custom element should become a normal editable entity by default.
-          system: false,
-          editable: true,
-          deletable: true,
-          copyable: true,
-          permissions: {
-            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),
-            system: false,
-            editable: true,
-            deletable: true,
-            copyable: true
-          }
+          // A copied custom element should become a normal editable entity by default.          permissions: {
+            ...(source.permissions && typeof source.permissions === 'object' ? source.permissions : {}),          }
         },
         'copy',
         extraValues
@@ -1872,12 +1847,7 @@ export const useDesignerStore = defineStore('designer', {
             id: template.id,
             name: template.name,
             element: cloneDeep(template.element || cached?.element || {}),
-            testData: template.testData || cached?.testData,
-            system: template.system ?? cached?.system,
-            editable: template.editable ?? cached?.editable,
-            deletable: template.deletable ?? cached?.deletable,
-            copyable: template.copyable ?? cached?.copyable,
-            permissions: template.permissions ?? cached?.permissions,
+            testData: template.testData || cached?.testData,            permissions: template.permissions ?? cached?.permissions,
             ext: mergeExt(cached?.ext, template.ext)
           }) as CustomElementTemplate;
           
@@ -1923,12 +1893,7 @@ export const useDesignerStore = defineStore('designer', {
             id: payloadTemplate.id,
             name: payloadTemplate.name,
             element: cloneDeep(payloadTemplate.element || cached?.element || {}),
-            testData: payloadTemplate.testData || cached?.testData,
-            system: payloadTemplate.system ?? cached?.system,
-            editable: payloadTemplate.editable ?? cached?.editable,
-            deletable: payloadTemplate.deletable ?? cached?.deletable,
-            copyable: payloadTemplate.copyable ?? cached?.copyable,
-            permissions: payloadTemplate.permissions ?? cached?.permissions,
+            testData: payloadTemplate.testData || cached?.testData,            permissions: payloadTemplate.permissions ?? cached?.permissions,
             ext: mergeExt(cached?.ext, payloadTemplate.ext)
           }) as CustomElementTemplate;
           
@@ -1995,12 +1960,7 @@ export const useDesignerStore = defineStore('designer', {
               id: template.id,
               name: newName,
               element: cloneDeep(template.element),
-              testData: template.testData,
-              system: template.system ?? cachedTemplate?.system,
-              editable: template.editable ?? cachedTemplate?.editable,
-              deletable: template.deletable ?? cachedTemplate?.deletable,
-              copyable: template.copyable ?? cachedTemplate?.copyable,
-              permissions: template.permissions ?? cachedTemplate?.permissions,
+              testData: template.testData,              permissions: template.permissions ?? cachedTemplate?.permissions,
               ext: mergedTemplate.ext
             }) as CustomElementTemplate;
             const url = buildEndpoint(endpoints.customElements?.upsert, '');
@@ -2011,12 +1971,7 @@ export const useDesignerStore = defineStore('designer', {
               id: payload.id,
               name: payload.name,
               element: cloneDeep(payload.element || cached?.element || {}),
-              testData: payload.testData || cached?.testData,
-              system: payload.system ?? cached?.system,
-              editable: payload.editable ?? cached?.editable,
-              deletable: payload.deletable ?? cached?.deletable,
-              copyable: payload.copyable ?? cached?.copyable,
-              permissions: payload.permissions ?? cached?.permissions,
+              testData: payload.testData || cached?.testData,              permissions: payload.permissions ?? cached?.permissions,
               ext: mergeExt(cached?.ext, payload.ext)
             }) as CustomElementTemplate;
           } catch (e) {

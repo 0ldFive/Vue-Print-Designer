@@ -593,12 +593,7 @@ class PrintDesignerElement extends HTMLElement {
       id,
       name: template.name,
       data: template.data || this.templateStore.templates[index]?.data || {},
-      updatedAt: template.updatedAt || Date.now(),
-      system: template.system ?? existing?.system,
-      editable: template.editable ?? existing?.editable,
-      deletable: template.deletable ?? existing?.deletable,
-      copyable: template.copyable ?? existing?.copyable,
-      permissions: template.permissions ?? existing?.permissions,
+      updatedAt: template.updatedAt || Date.now(),      permissions: template.permissions ?? existing?.permissions,
       ext: mergeExt(existing?.ext, template.ext)
     });
     if (index >= 0) {
@@ -616,12 +611,7 @@ class PrintDesignerElement extends HTMLElement {
           id: next.id,
           name: next.name,
           data: next.data || cachedTemplate.data || {},
-          updatedAt: next.updatedAt || cachedTemplate.updatedAt,
-          system: next.system ?? cachedTemplate.system,
-          editable: next.editable ?? cachedTemplate.editable,
-          deletable: next.deletable ?? cachedTemplate.deletable,
-          copyable: next.copyable ?? cachedTemplate.copyable,
-          permissions: next.permissions ?? cachedTemplate.permissions,
+          updatedAt: next.updatedAt || cachedTemplate.updatedAt,          permissions: next.permissions ?? cachedTemplate.permissions,
           ext: mergeExt(cachedTemplate.ext, next.ext)
         });
         const url = buildEndpoint(endpoints.templates?.upsert || '');
@@ -636,12 +626,7 @@ class PrintDesignerElement extends HTMLElement {
           id: remoteId,
           name: resultObj.name || requestPayload.name,
           data: resultObj.data || requestPayload.data,
-          updatedAt: resultObj.updatedAt || requestPayload.updatedAt,
-          system: resultObj.system ?? requestPayload.system,
-          editable: resultObj.editable ?? requestPayload.editable,
-          deletable: resultObj.deletable ?? requestPayload.deletable,
-          copyable: resultObj.copyable ?? requestPayload.copyable,
-          permissions: resultObj.permissions ?? requestPayload.permissions,
+          updatedAt: resultObj.updatedAt || requestPayload.updatedAt,          permissions: resultObj.permissions ?? requestPayload.permissions,
           ext: mergedExt
         });
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
@@ -674,12 +659,7 @@ class PrintDesignerElement extends HTMLElement {
         id: t.id,
         name: t.name,
         data: t.data || {},
-        updatedAt: t.updatedAt || Date.now(),
-        system: t.system,
-        editable: t.editable,
-        deletable: t.deletable,
-        copyable: t.copyable,
-        permissions: t.permissions,
+        updatedAt: t.updatedAt || Date.now(),        permissions: t.permissions,
         ext: t.ext || {}
       }));
     let targetId = options.currentTemplateId || this.templateStore.currentTemplateId;
@@ -750,12 +730,7 @@ class PrintDesignerElement extends HTMLElement {
       id,
       name: customElement.name,
       element: cloneDeep(customElement.element),
-      testData: customElement.testData,
-      system: customElement.system ?? existing?.system,
-      editable: customElement.editable ?? existing?.editable,
-      deletable: customElement.deletable ?? existing?.deletable,
-      copyable: customElement.copyable ?? existing?.copyable,
-      permissions: customElement.permissions ?? existing?.permissions,
+      testData: customElement.testData,      permissions: customElement.permissions ?? existing?.permissions,
       ext: mergeExt(existing?.ext, customElement.ext)
     });
     if (index >= 0) {
@@ -770,12 +745,7 @@ class PrintDesignerElement extends HTMLElement {
           id: next.id,
           name: next.name,
           element: cloneDeep(next.element || cachedCustomElement.element || {}),
-          testData: next.testData || cachedCustomElement.testData,
-          system: next.system ?? cachedCustomElement.system,
-          editable: next.editable ?? cachedCustomElement.editable,
-          deletable: next.deletable ?? cachedCustomElement.deletable,
-          copyable: next.copyable ?? cachedCustomElement.copyable,
-          permissions: next.permissions ?? cachedCustomElement.permissions,
+          testData: next.testData || cachedCustomElement.testData,          permissions: next.permissions ?? cachedCustomElement.permissions,
           ext: mergeExt(cachedCustomElement.ext, next.ext)
         });
         const url = buildEndpoint(endpoints.customElements?.upsert || '');
@@ -790,12 +760,7 @@ class PrintDesignerElement extends HTMLElement {
           id: remoteId,
           name: resultObj.name || requestPayload.name,
           element: cloneDeep(resultObj.element || requestPayload.element),
-          testData: resultObj.testData || requestPayload.testData,
-          system: resultObj.system ?? requestPayload.system,
-          editable: resultObj.editable ?? requestPayload.editable,
-          deletable: resultObj.deletable ?? requestPayload.deletable,
-          copyable: resultObj.copyable ?? requestPayload.copyable,
-          permissions: resultObj.permissions ?? requestPayload.permissions,
+          testData: resultObj.testData || requestPayload.testData,          permissions: resultObj.permissions ?? requestPayload.permissions,
           ext: mergedExt
         });
         if (targetIndex >= 0) this.designerStore.customElements.splice(targetIndex, 1, updated);
@@ -825,12 +790,7 @@ class PrintDesignerElement extends HTMLElement {
         id: el.id,
         name: el.name,
         element: cloneDeep(el.element),
-        testData: el.testData,
-        system: el.system,
-        editable: el.editable,
-        deletable: el.deletable,
-        copyable: el.copyable,
-        permissions: el.permissions,
+        testData: el.testData,        permissions: el.permissions,
         ext: el.ext || {}
       }));
     if (mode !== 'remote') {

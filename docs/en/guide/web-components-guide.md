@@ -426,15 +426,17 @@ Description: Load the corresponding template data into the current designer canv
 el.loadTemplate('template-id')
 ```
 
-#### 8) Template Permission Fields (Recommended)
-Description: You can attach permission fields on each template object.
+#### 8) Template Permissions Configuration (permissions)
+Description: You can configure the following fields within the `permissions` object of the template to control operations in the designer.
 ```ts
 {
   id: 'tpl_system',
   name: 'System Template',
-  editable: false,   // read-only in designer
-  deletable: false,  // protected from delete
-  copyable: true,    // whether copy is allowed
+  permissions: {
+    editable: false,   // read-only in designer
+    deletable: false,  // protected from delete
+    copyable: true,    // whether copy is allowed
+  },
   data: { pages: [] }
 }
 ```
@@ -484,15 +486,17 @@ Description: Overwrite the locally stored custom element list directly.
 el.setCustomElements([{ id: 'c1', name: 'C1', element: { /* element data */ } }])
 ```
 
-#### 7) Custom Element Permission Fields (Recommended)
-Description: You can attach permission fields on each custom element object.
+#### 7) Custom Element Permissions Configuration (permissions)
+Description: You can configure the following fields within the `permissions` object of the custom element to control operations in the designer.
 ```ts
 {
   id: 'el_system',
   name: 'System Element',
-  editable: false,   // read-only
-  deletable: false,  // protected from delete
-  copyable: true,    // whether copy is allowed
+  permissions: {
+    editable: false,   // read-only
+    deletable: false,  // protected from delete
+    copyable: true,    // whether copy is allowed
+  },
   element: { /* element data */ }
 }
 ```
