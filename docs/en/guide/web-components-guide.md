@@ -30,10 +30,11 @@
   - [22. Configure Template Modal Custom Form (setTemplateModalForm)](#22-configure-template-modal-custom-form-settemplatemodalform)
   - [23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#23-configure-custom-element-modal-custom-form-setcustomelementmodalform)
   - [24. Configure Template List Tag Extension (setTemplateTagResolver)](#24-configure-template-list-tag-extension-settemplatetagresolver)
+- [Backend API Specifications](#backend-api-specifications)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
-- [Backend API Specifications](#backend-api-specifications)
+- [Template and Custom Element JSON Examples](#template-and-custom-element-json-examples)
 - [Notes](#notes)
 
 ## API Index
@@ -910,148 +911,6 @@ el.clearCustomElementModalForm()
 
 ### 24. Configure Template List Tag Extension (setTemplateTagResolver)
 
-## Events
-
-```ts
-el.addEventListener('ready', () => {})
-el.addEventListener('print', (e) => {})
-el.addEventListener('printed', (e) => {})
-el.addEventListener('export', (e) => {})
-el.addEventListener('exported', (e) => {
-  const blob = e.detail?.blob
-})
-el.addEventListener('error', (e) => {
-  console.error(e.detail?.scope, e.detail?.error)
-})
-```
-
-Event details:
-
-| Event | Description | detail |
-| --- | --- | --- |
-| `ready` | Component ready | None |
-| `print` | Printing started | `{ request }` |
-| `printed` | Printing finished | `{ request }` |
-| `export` | Export started | `{ request }` |
-| `exported` | Export finished | `{ request, blob? }` |
-| `error` | Print/export failed | `{ scope, error }` |
-
-## PrintOptions
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `printer` | `string` | Yes | Printer name |
-| `jobName` | `string` | No | Job name |
-| `copies` | `number` | No | Copies |
-| `intervalMs` | `number` | No | Interval (ms) |
-| `pageRange` | `string` | No | Page range (e.g. `1-2,5`) |
-| `pageSet` | `'' \| 'odd' \| 'even'` | No | Odd/even pages |
-| `scale` | `'' \| 'noscale' \| 'shrink' \| 'fit'` | No | Scale mode |
-| `orientation` | `'' \| 'portrait' \| 'landscape'` | No | Orientation |
-| `colorMode` | `'' \| 'color' \| 'monochrome'` | No | Color mode |
-| `sidesMode` | `'' \| 'simplex' \| 'duplex' \| 'duplexshort' \| 'duplexlong'` | No | Duplex mode |
-| `paperSize` | `string` | No | Paper size |
-| `trayBin` | `string` | No | Tray/bin |
-
-## Common Scenarios
-
-In actual projects, integration is typically divided into three core scenarios: **Global Initialization**, **Designer Page**, and **Business Print Page**. Below is the standard API calling order and explanation.
-
-### Scenario 1: Global Initialization (Recommended in Entry File)
-
-If you use cloud storage or need uniform styling, it's recommended to configure endpoints and branding during project initialization.
-
-```ts
-const el = document.querySelector('print-designer') as any
-
-// 1. Set branding and language
-el.setBranding({ title: 'Enterprise Print Center', showTitle: true })
-el.setLanguage('en')
-
-// 2. Configure CRUD endpoints for cloud templates and custom elements
-el.setCrudMode('remote')
-el.setCrudEndpoints({
-  baseUrl: 'https://api.your-domain.com',
-  templates: {
-    list: '/print/templates',
-    get: '/print/templates/{id}',
-    upsert: '/print/templates',
-    delete: '/print/templates/{id}'
-  }
-}, {
-  headers: { Authorization: 'Bearer your-token' }
-})
-
-// 3. Set default print options (e.g., default to silent print)
-el.setPrintDefaults({
-  printMode: 'local',
-  silentPrint: true
-})
-```
-
-### Scenario 2: Designer Page (Creating or Editing Templates)
-
-On pages dedicated to template design, the focus is on loading templates and setting test data for preview.
-
-```ts
-const el = document.querySelector('print-designer') as any
-
-// 1. If editing an existing template, load it by ID (relies on CRUD endpoints from Scenario 1)
-await el.loadTemplate('tpl_123')
-
-// 2. Set test data so users can preview variable rendering during design
-el.setTestData({ 
-  orderNo: 'TEST-0001', 
-  customerName: 'John Doe',
-  items: [{ name: 'Product A', qty: 2 }]
-})
-
-// 3. (Optional) Configure custom form to control the modal when users click "Save"
-el.setTemplateModalForm({
-  edit: {
-    fields: [
-      { key: 'name', label: 'Template Name', type: 'input', required: true },
-      { key: 'remark', label: 'Remark', type: 'textarea' }
-    ]
-  }
-})
-
-// 4. User completes the design in the UI and clicks save (internally calls the upsert API)
-```
-
-### Scenario 3: Business Page Print / Export (Actual Business Operation)
-
-On specific business pages (like order details), you usually just silently load the template, fill in real data, and execute printing without showing the designer UI.
-
-```ts
-const el = document.querySelector('print-designer') as any
-
-// 1. Load target template (can be pre-fetched JSON or loaded by ID)
-await el.loadTemplate('tpl_123')
-// Or: el.loadTemplateData(templateJsonData)
-
-// 2. Inject real business variable data (takes priority over test data)
-el.setVariables({
-  orderNo: 'REAL-20231025-001',
-  customerName: 'Acme Corp',
-  items: [
-    { name: 'Real Product A', qty: 10 },
-    { name: 'Real Product B', qty: 5 }
-  ]
-})
-
-// 3. Set print quality (Optional, affects image clarity)
-el.setPrintQuality('high')
-
-// 4. Execute Print or Export PDF
-// Execute silent print (using the 'local' mode configured in Scenario 1)
-await el.print()
-
-// Or export as PDF Blob and handle it yourself (e.g., upload to server)
-const pdfBlob = await el.export({ type: 'pdfBlob' })
-console.log('Generated PDF size:', pdfBlob.size)
-```
-
 ## Backend API Specifications
 
 When integrating with the designer's cloud CRUD capabilities, your backend services **MUST strictly adhere** to the following data structure specifications:
@@ -1293,6 +1152,148 @@ URL path parameter `id` is the unique identifier of the element to be deleted. N
 
 ```json
 { "success": true }
+```
+
+## Events
+
+```ts
+el.addEventListener('ready', () => {})
+el.addEventListener('print', (e) => {})
+el.addEventListener('printed', (e) => {})
+el.addEventListener('export', (e) => {})
+el.addEventListener('exported', (e) => {
+  const blob = e.detail?.blob
+})
+el.addEventListener('error', (e) => {
+  console.error(e.detail?.scope, e.detail?.error)
+})
+```
+
+Event details:
+
+| Event | Description | detail |
+| --- | --- | --- |
+| `ready` | Component ready | None |
+| `print` | Printing started | `{ request }` |
+| `printed` | Printing finished | `{ request }` |
+| `export` | Export started | `{ request }` |
+| `exported` | Export finished | `{ request, blob? }` |
+| `error` | Print/export failed | `{ scope, error }` |
+
+## PrintOptions
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `printer` | `string` | Yes | Printer name |
+| `jobName` | `string` | No | Job name |
+| `copies` | `number` | No | Copies |
+| `intervalMs` | `number` | No | Interval (ms) |
+| `pageRange` | `string` | No | Page range (e.g. `1-2,5`) |
+| `pageSet` | `'' \| 'odd' \| 'even'` | No | Odd/even pages |
+| `scale` | `'' \| 'noscale' \| 'shrink' \| 'fit'` | No | Scale mode |
+| `orientation` | `'' \| 'portrait' \| 'landscape'` | No | Orientation |
+| `colorMode` | `'' \| 'color' \| 'monochrome'` | No | Color mode |
+| `sidesMode` | `'' \| 'simplex' \| 'duplex' \| 'duplexshort' \| 'duplexlong'` | No | Duplex mode |
+| `paperSize` | `string` | No | Paper size |
+| `trayBin` | `string` | No | Tray/bin |
+
+## Common Scenarios
+
+In actual projects, integration is typically divided into three core scenarios: **Global Initialization**, **Designer Page**, and **Business Print Page**. Below is the standard API calling order and explanation.
+
+### Scenario 1: Global Initialization (Recommended in Entry File)
+
+If you use cloud storage or need uniform styling, it's recommended to configure endpoints and branding during project initialization.
+
+```ts
+const el = document.querySelector('print-designer') as any
+
+// 1. Set branding and language
+el.setBranding({ title: 'Enterprise Print Center', showTitle: true })
+el.setLanguage('en')
+
+// 2. Configure CRUD endpoints for cloud templates and custom elements
+el.setCrudMode('remote')
+el.setCrudEndpoints({
+  baseUrl: 'https://api.your-domain.com',
+  templates: {
+    list: '/print/templates',
+    get: '/print/templates/{id}',
+    upsert: '/print/templates',
+    delete: '/print/templates/{id}'
+  }
+}, {
+  headers: { Authorization: 'Bearer your-token' }
+})
+
+// 3. Set default print options (e.g., default to silent print)
+el.setPrintDefaults({
+  printMode: 'local',
+  silentPrint: true
+})
+```
+
+### Scenario 2: Designer Page (Creating or Editing Templates)
+
+On pages dedicated to template design, the focus is on loading templates and setting test data for preview.
+
+```ts
+const el = document.querySelector('print-designer') as any
+
+// 1. If editing an existing template, load it by ID (relies on CRUD endpoints from Scenario 1)
+await el.loadTemplate('tpl_123')
+
+// 2. Set test data so users can preview variable rendering during design
+el.setTestData({ 
+  orderNo: 'TEST-0001', 
+  customerName: 'John Doe',
+  items: [{ name: 'Product A', qty: 2 }]
+})
+
+// 3. (Optional) Configure custom form to control the modal when users click "Save"
+el.setTemplateModalForm({
+  edit: {
+    fields: [
+      { key: 'name', label: 'Template Name', type: 'input', required: true },
+      { key: 'remark', label: 'Remark', type: 'textarea' }
+    ]
+  }
+})
+
+// 4. User completes the design in the UI and clicks save (internally calls the upsert API)
+```
+
+### Scenario 3: Business Page Print / Export (Actual Business Operation)
+
+On specific business pages (like order details), you usually just silently load the template, fill in real data, and execute printing without showing the designer UI.
+
+```ts
+const el = document.querySelector('print-designer') as any
+
+// 1. Load target template (can be pre-fetched JSON or loaded by ID)
+await el.loadTemplate('tpl_123')
+// Or: el.loadTemplateData(templateJsonData)
+
+// 2. Inject real business variable data (takes priority over test data)
+el.setVariables({
+  orderNo: 'REAL-20231025-001',
+  customerName: 'Acme Corp',
+  items: [
+    { name: 'Real Product A', qty: 10 },
+    { name: 'Real Product B', qty: 5 }
+  ]
+})
+
+// 3. Set print quality (Optional, affects image clarity)
+el.setPrintQuality('high')
+
+// 4. Execute Print or Export PDF
+// Execute silent print (using the 'local' mode configured in Scenario 1)
+await el.print()
+
+// Or export as PDF Blob and handle it yourself (e.g., upload to server)
+const pdfBlob = await el.export({ type: 'pdfBlob' })
+console.log('Generated PDF size:', pdfBlob.size)
 ```
 
 ## Template and Custom Element JSON Examples
