@@ -52,8 +52,13 @@ export interface PrintDesignerElement extends HTMLElement {
   getPrintQuality(): 'fast' | 'normal' | 'high' | 'ultra';
   setPrintQuality(quality: 'fast' | 'normal' | 'high' | 'ultra'): void;
 
+  getTestData(): Record<string, any>;
+  setTestData(data: Record<string, any>, options?: { merge?: boolean }): Promise<void>;
+
   getVariables(): Record<string, any>;
-  setVariables(vars: Record<string, any>, options?: { merge?: boolean }): void;
+  setVariables(data: Record<string, any>, options?: { merge?: boolean }): Promise<void>;
+
+  getTemplateVariables(): Record<string, any>;
 
   getTemplateData(): any;
   loadTemplateData(data: any): boolean;

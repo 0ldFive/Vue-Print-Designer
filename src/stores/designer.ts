@@ -160,6 +160,7 @@ export const useDesignerStore = defineStore('designer', {
     customElementModalFormConfig: null as TemplateModalFormConfig | null,
     contextMenuEventEmitter: null as ((eventName: string, detail: Record<string, any>) => void) | null,
     testData: {},
+    variables: {},
     editingCustomElementId: null,
     customElementEditSnapshot: null,
     selectedElementId: null,
@@ -275,6 +276,7 @@ export const useDesignerStore = defineStore('designer', {
       this.pages = [{ id: uuidv4(), elements: [] }];
       this.currentPageIndex = 0;
       this.testData = {};
+      this.variables = {};
       this.selectedElementId = null;
       this.selectedElementIds = [];
       this.selectedGuideId = null;

@@ -10,45 +10,235 @@
       margin: 0;
       padding: 0;
       height: 100vh;
+      overflow: hidden;
       background-color: #f5f5f5;
       display: flex;
       flex-direction: column;
     }
-    .test-actions {
-      padding: 10px;
-      background: #fff;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      gap: 10px;
-    }
-    .test-actions button {
-      padding: 5px 10px;
-      cursor: pointer;
-    }
     print-designer {
       display: block;
       width: 100%;
+      height: 100%;
       flex: 1;
+    }
+    
+    /* 悬浮按钮样式 */
+    .floating-action-btn {
+      position: fixed;
+      right: 30px;
+      bottom: 30px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: #1890ff;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+      cursor: grab;
+      z-index: 9999;
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .floating-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(24, 144, 255, 0.5);
+      background-color: #40a9ff;
+    }
+    .floating-action-btn.dragging {
+      transition: none;
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(24, 144, 255, 0.6);
+      cursor: grabbing;
+    }
+    
+    /* 模态框样式 */
+    .test-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.45);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    .test-modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .test-modal-content {
+      background: white;
+      border-radius: 8px;
+      width: 640px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+      transform: scale(0.8);
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
+    .test-modal-overlay.active .test-modal-content {
+      transform: scale(1);
+    }
+    .test-modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .test-modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    .test-modal-close {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #999;
+    }
+    .test-modal-close:hover {
+      color: #333;
+    }
+    .test-modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    .test-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .test-btn-group-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin: 0 0 4px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .test-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .test-modal-body button {
+      padding: 8px 12px;
+      border: 1px solid #d9d9d9;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+    .test-modal-body button:hover {
+      color: #1890ff;
+      border-color: #1890ff;
+    }
+    .test-btn-api {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+      font-family: monospace;
+      transition: all 0.3s;
+    }
+    .test-modal-body button:hover .test-btn-api {
+      color: #69c0ff;
     }
   </style>
 </head>
 <body>
-  <div class="test-actions">
-      <button id="btn-refresh-templates">刷新模版列表 (refreshTemplates)</button>
-      <button id="btn-refresh-elements">刷新自定义元素 (refreshCustomElements)</button>
-      <button id="btn-delete-template">测试带 Confirm 删除模版 (deleteTemplate)</button>
-      <button id="btn-modal-cases-guide">查看 Modal 用例步骤</button>
-      <button id="btn-seed-permission-templates">注入权限模板</button>
-      <button id="btn-load-readonly-template">加载只读模板</button>
-      <button id="btn-test-paper-settings-readonly">测试页面设置只读模式</button>
-      <button id="btn-try-upsert-readonly">测试只读模板更新拦截</button>
-      <button id="btn-try-delete-readonly">测试只读模板删除拦截</button>
-      <button id="btn-load-editable-template">加载可编辑模板</button>
-      <button id="btn-seed-tag-templates">注入带标签模板</button>
-      <button id="btn-test-global-loading">测试全局 Loading</button>
-      <button id="btn-test-remote-autosave">测试远程防抖自动保存</button>
-      <button id="btn-test-preview-html">测试获取 HTML 预览 (getPreviewHtml)</button>
+  <!-- 浮动操作按钮 -->
+  <div class="floating-action-btn" id="btn-floating-test" title="打开测试面板">
+    <i class="fa-solid fa-flask"></i>
+  </div>
+
+  <!-- 测试弹窗 -->
+  <div class="test-modal-overlay" id="test-modal">
+    <div class="test-modal-content">
+      <div class="test-modal-header">
+        <h3>全功能测试面板</h3>
+        <button class="test-modal-close" id="btn-close-test-modal"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <div class="test-modal-body">
+        
+        <div class="test-btn-group">
+          <h4 class="test-btn-group-title">模板与元素管理</h4>
+          <div class="test-btn-grid">
+            <button id="btn-refresh-templates" title="API: refreshTemplates()">刷新模版列表<span class="test-btn-api">refreshTemplates()</span></button>
+            <button id="btn-refresh-elements" title="API: refreshCustomElements()">刷新自定义元素<span class="test-btn-api">refreshCustomElements()</span></button>
+            <button id="btn-delete-template" title="API: getTemplates() / deleteTemplate()">带 Confirm 删除模版<span class="test-btn-api">deleteTemplate()</span></button>
+            <button id="btn-modal-cases-guide">查看 Modal 用例步骤</button>
+          </div>
+        </div>
+
+        <div class="test-btn-group">
+          <h4 class="test-btn-group-title">权限与只读模式测试</h4>
+          <div class="test-btn-grid">
+            <button id="btn-seed-permission-templates" title="API: setTemplates() / getTemplates()">注入权限模板<span class="test-btn-api">setTemplates()</span></button>
+            <button id="btn-load-readonly-template" title="API: loadTemplate()">加载只读模板<span class="test-btn-api">loadTemplate()</span></button>
+            <button id="btn-test-paper-settings-readonly" title="API: getTemplate() / loadTemplate()">测试页面设置只读模式<span class="test-btn-api">getTemplate()</span></button>
+            <button id="btn-try-upsert-readonly" title="API: upsertTemplate()">测试只读模板更新拦截<span class="test-btn-api">upsertTemplate()</span></button>
+            <button id="btn-try-delete-readonly" title="API: deleteTemplate()">测试只读模板删除拦截<span class="test-btn-api">deleteTemplate()</span></button>
+            <button id="btn-load-editable-template" title="API: loadTemplate()">加载可编辑模板<span class="test-btn-api">loadTemplate()</span></button>
+            <button id="btn-seed-tag-templates" title="API: setTemplates()">注入带标签模板<span class="test-btn-api">setTemplates()</span></button>
+          </div>
+        </div>
+
+        <div class="test-btn-group">
+          <h4 class="test-btn-group-title">功能与导出测试</h4>
+          <div class="test-btn-grid">
+            <button id="btn-test-global-loading">测试全局 Loading</button>
+            <button id="btn-test-remote-autosave" title="API: setCrudEndpoints() / setCrudMode() / refreshTemplates()">测试远程防抖自动保存<span class="test-btn-api">setCrudMode('remote')</span></button>
+            <button id="btn-test-preview-html" title="API: getPreviewHtml()">测试获取 HTML 预览<span class="test-btn-api">getPreviewHtml()</span></button>
+          </div>
+        </div>
+
+        <div class="test-btn-group">
+          <h4 class="test-btn-group-title">业务数据与变量测试</h4>
+          <div class="test-btn-grid">
+            <button id="btn-test-get-test-data" title="API: getTestData()">获取测试数据<span class="test-btn-api">getTestData()</span></button>
+            <button id="btn-test-get-vars" title="API: getVariables()">获取变量数据<span class="test-btn-api">getVariables()</span></button>
+            <button id="btn-test-template-vars" title="API: getTemplateVariables()">提取模板变量<span class="test-btn-api">getTemplateVariables()</span></button>
+          </div>
+          <div style="margin-top: 10px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
+            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">模拟注入业务变量 (setVariables)：</label>
+            <textarea id="txt-inject-vars" rows="3" style="width: 100%; box-sizing: border-box; padding: 5px; font-family: monospace; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">{
+  "orderNo": "TEST-2023-001"
+}</textarea>
+            <button id="btn-test-set-vars" title="API: setVariables()" style="width: 100%; background: #e6f7ff; border-color: #91d5ff; color: #096dd9;">注入以上变量数据<span class="test-btn-api" style="color: #69c0ff; margin-top: 2px;">setVariables()</span></button>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
+
   <!-- 加载设计器组件 -->
   <print-designer></print-designer>
 
@@ -67,6 +257,10 @@
       console.log('Designer is ready!');
 
       // 测试：1. 设置模版列表自定义菜单
+      // API: setTemplateContextMenu(config)
+      // 说明: 用于向左侧面板的“模板列表”中每个模板项的右键/更多操作菜单中添加自定义项。
+      // config 支持 mode ('append' | 'replace') 和 items 数组。
+      // items 可配置 actionKey (内置动作) 或 eventName (触发自定义事件)。
       designer.setTemplateContextMenu({
         mode: 'append',
         items: [
@@ -87,6 +281,8 @@
       });
 
       // 测试：2. 设置自定义元素列表自定义菜单
+      // API: setCustomElementContextMenu(config)
+      // 说明: 向左侧面板“自定义元素”列表项的菜单中追加自定义操作。
       designer.setCustomElementContextMenu({
         mode: 'append',
         items: [
@@ -106,6 +302,9 @@
       });
 
       // 测试：3. 通过 API 直接配置新建/重命名/复制 modal 的自定义表单
+      // API: setTemplateModalForm(config)
+      // 说明: 全局配置模板的“新建(create)”、“重命名/编辑(edit)”和“复制(copy)”弹窗的表单项。
+      // 如果模板自身有 `ext.templateModalForm`，则会覆盖全局配置。
       designer.setTemplateModalForm({
         create: {
           fields: [
@@ -196,6 +395,9 @@
     });
 
     document.getElementById('btn-refresh-templates').addEventListener('click', async () => {
+      // API: refreshTemplates()
+      // 说明: 强制刷新模板列表。如果在 remote 模式下，会调用 templates.list 接口。
+      // 返回值: Promise<Template[]> 包含刷新后的模板列表。
       const list = await designer.refreshTemplates();
       console.log('刷新模版列表:', list);
       alert(`刷新完成，当前共有 ${list.length} 个模版`);
@@ -213,14 +415,23 @@
     });
 
     document.getElementById('btn-refresh-elements').addEventListener('click', async () => {
+      // API: refreshCustomElements()
+      // 说明: 强制刷新自定义元素列表。
+      // 返回值: Promise<CustomElementTemplate[]>
       const list = await designer.refreshCustomElements();
       console.log('刷新自定义元素:', list);
       alert(`刷新完成，当前共有 ${list.length} 个自定义元素`);
     });
 
     document.getElementById('btn-delete-template').addEventListener('click', async () => {
+      // API: getTemplates(options?)
+      // 说明: 获取当前内存中的模板列表。
+      // 参数: options.includeData (boolean) 是否包含模板具体数据。
       const list = designer.getTemplates();
       if (list.length > 0) {
+        // API: deleteTemplate(id, options?)
+        // 说明: 删除指定 ID 的模板。
+        // 参数: id (string) 模板ID，options.confirm (boolean) 是否显示二次确认弹窗（默认true）。
         await designer.deleteTemplate(list[0].id); // 等待弹窗和删除完成
         // 删除后可以自动刷新一下列表
         const updated = await designer.refreshTemplates();
@@ -234,9 +445,11 @@
       const readonlyTemplate = {
         id: 'tpl-readonly-system',
         name: '系统只读模板',
-        editable: false,
-        deletable: false,
-        copyable: true,
+        permissions: {
+          editable: false,
+          deletable: false,
+          copyable: true,
+        },
         data: {
           testData: { message: '这是只读模板的测试数据' },
           pages: [
@@ -251,9 +464,11 @@
       const editableTemplate = {
         id: 'tpl-editable-demo',
         name: '可编辑模板',
-        editable: true,
-        deletable: true,
-        copyable: true,
+        permissions: {
+          editable: true,
+          deletable: true,
+          copyable: true,
+        },
         data: {
           testData: { message: '这是可编辑模板的测试数据' },
           pages: [
@@ -265,21 +480,31 @@
         }
       };
 
+      // API: setTemplates(templates, options?)
+      // 说明: 覆盖当前内存中的模板列表。通常用于 initial 数据注入。
+      // 参数: templates 数组；options.currentTemplateId 用于指定加载哪个模板。
       designer.setTemplates([readonlyTemplate, editableTemplate], {
         currentTemplateId: readonlyTemplate.id
       });
+      // API: getTemplates(options)
+      // options.includeData = true 会返回包含页面元素 data 详情的数据，否则为了性能默认只返回基本信息。
       const list = designer.getTemplates({ includeData: true });
       console.log('已注入权限模板:', list);
       alert('已注入 1 个只读模板 + 1 个可编辑模板，并默认加载只读模板。\n可以点击顶部模板下拉，查看非当前模板的“测试数据”是否能正确加载和保存。');
     });
 
     document.getElementById('btn-load-readonly-template').addEventListener('click', () => {
+      // API: loadTemplate(id)
+      // 说明: 根据 ID 切换并加载画布显示的模板。
+      // 返回值: (boolean) 是否加载成功（如果 ID 不存在则为 false）。
       const ok = designer.loadTemplate('tpl-readonly-system');
       alert(ok ? '已加载只读模板，可尝试拖拽/属性编辑验证 UI 禁用' : '加载失败，请先点击“注入权限模板”');
     });
 
     document.getElementById('btn-test-paper-settings-readonly').addEventListener('click', async () => {
       const ensureReadonlyTemplate = () => {
+        // API: getTemplate(id)
+        // 说明: 获取指定 ID 的模板数据
         const readonly = designer.getTemplate('tpl-readonly-system');
         const editable = designer.getTemplate('tpl-editable-demo');
         if (readonly && editable) return;
@@ -287,17 +512,21 @@
           {
             id: 'tpl-readonly-system',
             name: '系统只读模板',
-            editable: false,
-            deletable: false,
-            copyable: true,
+            permissions: {
+              editable: false,
+              deletable: false,
+              copyable: true,
+            },
             data: { pages: [{ id: 'page-readonly', elements: [] }] }
           },
           {
             id: 'tpl-editable-demo',
             name: '可编辑模板',
-            editable: true,
-            deletable: true,
-            copyable: true,
+            permissions: {
+              editable: true,
+              deletable: true,
+              copyable: true,
+            },
             data: { pages: [{ id: 'page-editable', elements: [] }] }
           }
         ], { currentTemplateId: 'tpl-readonly-system' });
@@ -316,8 +545,11 @@
       const triggerButtons = Array.from(root.querySelectorAll('button[title="页面设置"],button[title="Paper Settings"]'));
       const allDisabled = triggerButtons.length > 0 && triggerButtons.every(btn => btn.disabled);
 
-      // 尝试点击入口，确认不会展开页面设置面板
-      triggerButtons[0]?.click();
+      // 如果按钮被禁用，那么点击就不会触发面板展开
+      if (triggerButtons.length > 0 && !triggerButtons[0].disabled) {
+        triggerButtons[0].click();
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 80));
       const panel = root.querySelector('div.absolute.top-full.left-0.mt-2.w-64');
       const panelBlocked = !panel;
@@ -364,6 +596,9 @@
     });
 
     document.getElementById('btn-try-upsert-readonly').addEventListener('click', async () => {
+      // API: upsertTemplate(payload)
+      // 说明: 更新或插入模板数据。如果模板标记为不可编辑，此操作应被拦截并返回 null。
+      // 返回值: Promise<Template | null>
       const result = await designer.upsertTemplate({
         id: 'tpl-readonly-system',
         name: '尝试修改只读模板名称'
@@ -446,7 +681,10 @@
         return { json: async () => ({}) };
       };
 
-      // Setup mock remote endpoints for testing auto-save FIRST, before switching mode
+      // API: setCrudEndpoints(config, options?)
+      // 说明: 配置远端 CRUD 接口地址，仅在 setCrudMode('remote') 时生效。
+      // config 包含 baseUrl, templates (list/upsert/get/delete 等 url 模板) 和 customElements。
+      // options.fetcher 允许传入自定义的 fetch 函数，常用于拦截、添加 header 或 mock。
       designer.setCrudEndpoints({
         baseUrl: 'https://mock.api',
         templates: {
@@ -463,6 +701,8 @@
         }
       }, { fetcher: mockFetcher });
 
+      // API: setCrudMode(mode)
+      // 说明: 切换增删改查模式。'local' 保存到本地 localStorage；'remote' 则通过 setCrudEndpoints 配置的接口与后端交互。
       designer.setCrudMode('remote');
 
       // Load a template to edit
@@ -474,6 +714,9 @@
 
     document.getElementById('btn-test-preview-html').addEventListener('click', async () => {
       try {
+        // API: getPreviewHtml(options?)
+        // 说明: 获取当前画布生成的 HTML 预览内容，包含依赖的 CSS 和元素渲染。
+        // 返回值: Promise<string> HTML 字符串
         const htmlStr = await designer.getPreviewHtml();
         console.log('Preview HTML Result:', htmlStr);
         // Open a new window to show the HTML
@@ -487,6 +730,164 @@
       } catch (err) {
         console.error('获取预览 HTML 失败:', err);
         alert('获取预览 HTML 失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-template-vars').addEventListener('click', () => {
+      try {
+        // API: getTemplateVariables()
+        // 说明: 提取当前模板画布中所有使用的绑定变量 key 和默认空值。
+        // 返回值: 包含所有变量 key 的对象，其值为对应类型的空值 (如 '', [], {})。
+        const vars = designer.getTemplateVariables();
+        console.log('Template Variables Result:', vars);
+        alert('提取的模板变量:\n' + JSON.stringify(vars, null, 2));
+      } catch (err) {
+        console.error('提取模板变量失败:', err);
+        alert('提取模板变量失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-get-test-data').addEventListener('click', () => {
+      try {
+        // API: getTestData()
+        // 说明: 获取当前模板的测试数据（通常用于设计时预览绑定变量）。
+        const data = designer.getTestData();
+        console.log('Current Test Data Result:', data);
+        alert('当前的测试数据:\n' + JSON.stringify(data, null, 2));
+      } catch (err) {
+        console.error('获取当前测试数据失败:', err);
+        alert('获取当前测试数据失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-get-vars').addEventListener('click', () => {
+      try {
+        // API: getVariables()
+        // 说明: 获取当前全局注入的实际业务变量数据（优先级高于测试数据）。
+        const data = designer.getVariables();
+        console.log('Current Variables Result:', data);
+        alert('当前的变量数据:\n' + JSON.stringify(data, null, 2));
+      } catch (err) {
+        console.error('获取当前变量数据失败:', err);
+        alert('获取当前变量数据失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-set-vars').addEventListener('click', async () => {
+      try {
+        const jsonStr = document.getElementById('txt-inject-vars').value;
+        const data = JSON.parse(jsonStr);
+        // API: setVariables(data, options?)
+        // 说明: 注入真实的业务数据，用于打印或预览。
+        // options.merge (boolean): 是否与现有变量合并（默认为 false 替换）。
+        await designer.setVariables(data, { merge: true });
+        console.log('注入变量数据成功:', data);
+        alert('变量注入成功！(开启了 merge 模式)\n这些数据只会在打印/导出时生效并覆盖测试数据，不会修改画布。您可以尝试点击控制台或者上方打印功能查看效果。');
+      } catch (err) {
+        console.error('注入变量数据失败:', err);
+        alert('JSON 解析失败或注入失败: ' + err.message);
+      }
+    });
+
+    // 浮动按钮与 Modal 的交互及拖拽逻辑
+    const floatingBtn = document.getElementById('btn-floating-test');
+    const testModal = document.getElementById('test-modal');
+    const btnCloseModal = document.getElementById('btn-close-test-modal');
+
+    let isDraggingBtn = false;
+    let hasBtnMoved = false;
+    let dragStartX = 0, dragStartY = 0;
+    let initialBtnLeft = 0, initialBtnTop = 0;
+
+    const onBtnDragStart = (e) => {
+      if (e.type === 'mousedown' && e.button !== 0) return; // 仅响应鼠标左键
+      
+      isDraggingBtn = true;
+      hasBtnMoved = false;
+      
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
+      dragStartX = clientX;
+      dragStartY = clientY;
+      
+      const rect = floatingBtn.getBoundingClientRect();
+      initialBtnLeft = rect.left;
+      initialBtnTop = rect.top;
+      
+      // 切换为 left/top 定位
+      floatingBtn.style.right = 'auto';
+      floatingBtn.style.bottom = 'auto';
+      floatingBtn.style.left = initialBtnLeft + 'px';
+      floatingBtn.style.top = initialBtnTop + 'px';
+      
+      floatingBtn.classList.add('dragging');
+    };
+
+    const onBtnDragMove = (e) => {
+      if (!isDraggingBtn) return;
+      
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
+      const dx = clientX - dragStartX;
+      const dy = clientY - dragStartY;
+      
+      // 移动超过 3px 认为是拖拽而不是点击
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasBtnMoved = true;
+      }
+      
+      if (hasBtnMoved) {
+        e.preventDefault(); // 防止页面滚动
+        let newLeft = initialBtnLeft + dx;
+        let newTop = initialBtnTop + dy;
+        
+        // 限制在屏幕范围内
+        const maxX = window.innerWidth - floatingBtn.offsetWidth;
+        const maxY = window.innerHeight - floatingBtn.offsetHeight;
+        
+        newLeft = Math.max(0, Math.min(newLeft, maxX));
+        newTop = Math.max(0, Math.min(newTop, maxY));
+        
+        floatingBtn.style.left = newLeft + 'px';
+        floatingBtn.style.top = newTop + 'px';
+      }
+    };
+
+    const onBtnDragEnd = () => {
+      if (!isDraggingBtn) return;
+      isDraggingBtn = false;
+      floatingBtn.classList.remove('dragging');
+    };
+
+    // 绑定拖拽事件
+    floatingBtn.addEventListener('mousedown', onBtnDragStart);
+    window.addEventListener('mousemove', onBtnDragMove, { passive: false });
+    window.addEventListener('mouseup', onBtnDragEnd);
+    
+    floatingBtn.addEventListener('touchstart', onBtnDragStart, { passive: false });
+    window.addEventListener('touchmove', onBtnDragMove, { passive: false });
+    window.addEventListener('touchend', onBtnDragEnd);
+
+    // 点击事件（拖拽结束后阻止点击）
+    floatingBtn.addEventListener('click', (e) => {
+      if (hasBtnMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      testModal.classList.add('active');
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      testModal.classList.remove('active');
+    });
+
+    // 点击 Modal 背景也可以关闭
+    testModal.addEventListener('click', (e) => {
+      if (e.target === testModal) {
+        testModal.classList.remove('active');
       }
     });
 

@@ -245,6 +245,7 @@ export interface DesignerState {
   customElementModalFormConfig?: TemplateModalFormConfig | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
   testData: Record<string, any>;
+  variables: Record<string, any>;
   branding: BrandingSettings;
   editingCustomElementId?: string | null;
   customElementEditSnapshot?: CustomElementEditSnapshot | null;

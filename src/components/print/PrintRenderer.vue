@@ -80,7 +80,8 @@ const applyPayload = async (payload: any) => {
     selectedElementId: null,
     selectedElementIds: [],
     guides: [],
-    testData: payload.testData || {}
+    testData: payload.testData || {},
+    variables: payload.variables || {}
   });
 
   if (payload.watermark) {

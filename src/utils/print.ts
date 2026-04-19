@@ -245,6 +245,7 @@ export const usePrint = () => {
     watermark: WatermarkSettings;
     unit: 'mm' | 'px' | 'pt' | 'in' | 'cm';
     testData: Record<string, any>;
+    variables: Record<string, any>;
   };
 
   const fallbackWatermark: WatermarkSettings = {
@@ -269,7 +270,8 @@ export const usePrint = () => {
     showFooterLine: store.showFooterLine,
     watermark: cloneDeep(store.watermark || fallbackWatermark),
     unit: store.unit || 'mm',
-    testData: cloneDeep(store.testData || {})
+    testData: cloneDeep(store.testData || {}),
+    variables: cloneDeep(store.variables || {})
   });
 
   const waitForMessage = (token: string, type: string, timeoutMs = 15000) => new Promise<any>((resolve, reject) => {

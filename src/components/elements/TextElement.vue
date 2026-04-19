@@ -16,7 +16,25 @@ const editorRef = ref<HTMLTextAreaElement | null>(null);
 const resolvedText = computed(() => {
   const variable = props.element.variable || '';
   if (store.isExporting && variable) {
-    const key = normalizeVariableKey(variable);
+      const key = normalizeVariableKey(variable);
+      if (key && (store as any).variables && Object.prototype.hasOwnProperty.call((store as any).variables, key)) {
+        const value = (store as any).variables[key];
+        if (value !== undefined && value !== null) {
+          return String(value);
+        }
+      }
+    
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  // 即使不是导出模式，只要有 testData 并且有匹配的 variable，就展示 testData
+  if (!store.isExporting && props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
     if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
       const value = store.testData[key];
       if (value !== undefined && value !== null) {

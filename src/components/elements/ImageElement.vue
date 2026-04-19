@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import { toast } from '@/utils/toast';
+import { normalizeVariableKey } from '@/utils/variables';
 
 const props = defineProps<{
   element: PrintElement;
@@ -12,6 +13,31 @@ const props = defineProps<{
 const { t } = useI18n();
 const store = useDesignerStore();
 const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const resolvedContent = computed(() => {
+  if (props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
+    
+    if (store.isExporting) {
+      const vars = (store as any).variables;
+      if (key && vars && Object.prototype.hasOwnProperty.call(vars, key)) {
+        const value = vars[key];
+        if (value !== undefined && value !== null) {
+          return String(value);
+        }
+      }
+    }
+    
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  return props.element.content;
+});
 
 const canSelectFile = () => {
   if (!store.isTemplateEditable || props.element.locked) return false;
@@ -61,7 +87,8 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       title: 'properties.section.imageSource',
       tab: 'properties',
       fields: [
-        { label: 'properties.label.imageSource', type: 'image', target: 'element', key: 'content' }
+        { label: 'properties.label.imageSource', type: 'image', target: 'element', key: 'content' },
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@imageVar' }
       ]
     },
     {
@@ -86,8 +113,8 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 <template>
   <div class="w-full h-full overflow-hidden flex items-center justify-center" @dblclick="handleDblClick">
     <img 
-      v-if="element.content" 
-      :src="element.content" 
+      v-if="resolvedContent" 
+      :src="resolvedContent" 
       class="w-full h-full object-contain pointer-events-none"
       alt="Element"
     />

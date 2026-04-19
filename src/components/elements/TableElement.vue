@@ -186,6 +186,19 @@ const processedData = computed(() => {
   if (store.isExporting && props.element.variable) {
     const key = normalizeVariableKey(props.element.variable);
     const testData = store.testData || {};
+    const variables = (store as any).variables || {};
+    
+    // First try variables, then testData
+    const tableData = key ? (variables[key] ?? testData[key]) : undefined;
+    if (Array.isArray(tableData)) {
+      data = cloneDeep(tableData);
+    }
+  }
+
+  // 即使不是导出模式，只要有 testData 并且有匹配的 variable，就展示 testData (表格不应用变量数据)
+  if (!store.isExporting && props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
+    const testData = store.testData || {};
     const tableData = key ? testData[key] : undefined;
     if (Array.isArray(tableData)) {
       data = cloneDeep(tableData);

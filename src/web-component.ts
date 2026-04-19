@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, nextTick } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
 import i18n, { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
@@ -24,6 +24,7 @@ import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOpt
 import { loader } from '@guolao/vue-monaco-editor';
 import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig } from './types';
 import { canDeleteEntity, canEditEntity, normalizeEntityConstraints, mergeExt } from './utils/entityConstraints';
+import { buildTestDataFromPages } from './utils/variables';
 
 loader.config({
   'vs/nls': {
@@ -435,18 +436,54 @@ class PrintDesignerElement extends HTMLElement {
     }
   }
 
-  getVariables() {
+  getTestData() {
     if (!this.designerStore) return {};
     return cloneDeep(this.designerStore.testData || {});
   }
 
-  setVariables(vars: Record<string, any>, options: { merge?: boolean } = {}) {
-    if (!this.designerStore || !vars || typeof vars !== 'object') return;
+  async setTestData(data: Record<string, any>, options: { merge?: boolean } = {}) {
+    if (!this.designerStore || !data || typeof data !== 'object') return;
     if (options.merge) {
-      this.designerStore.testData = { ...(this.designerStore.testData || {}), ...vars };
-      return;
+      this.designerStore.testData = { ...(this.designerStore.testData || {}), ...data };
+    } else {
+      this.designerStore.testData = data;
     }
-    this.designerStore.testData = vars;
+    await nextTick();
+  }
+
+  getVariables() {
+    if (!this.designerStore) return {};
+    return cloneDeep(this.designerStore.variables || {});
+  }
+
+  async setVariables(data: Record<string, any>, options: { merge?: boolean } = {}) {
+    if (!this.designerStore || !data || typeof data !== 'object') return;
+    if (options.merge) {
+      this.designerStore.variables = { ...(this.designerStore.variables || {}), ...data };
+    } else {
+      this.designerStore.variables = data;
+    }
+    await nextTick();
+  }
+
+  getTemplateVariables(): Record<string, any> {
+    if (!this.designerStore) return {};
+    const testData = buildTestDataFromPages(this.designerStore.pages, {});
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(testData)) {
+      if (Array.isArray(value)) {
+        result[key] = [];
+      } else if (typeof value === 'object' && value !== null) {
+        result[key] = {};
+      } else if (typeof value === 'number') {
+        result[key] = 0;
+      } else if (typeof value === 'boolean') {
+        result[key] = false;
+      } else {
+        result[key] = '';
+      }
+    }
+    return result;
   }
 
   getTemplateData() {

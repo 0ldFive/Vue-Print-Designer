@@ -17,6 +17,23 @@ const resolvedContent = computed(() => {
   const variable = props.element.variable || '';
   if (store.isExporting && variable) {
     const key = normalizeVariableKey(variable);
+    if (key && (store as any).variables && Object.prototype.hasOwnProperty.call((store as any).variables, key)) {
+      const value = (store as any).variables[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+      const value = store.testData[key];
+      if (value !== undefined && value !== null) {
+        return String(value);
+      }
+    }
+  }
+
+  // 即使不是导出模式，只要有 testData 并且有匹配的 variable，就展示 testData
+  if (!store.isExporting && props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
     if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
       const value = store.testData[key];
       if (value !== undefined && value !== null) {
@@ -52,7 +69,7 @@ onMounted(() => {
   if (registerRenderTask) registerRenderTask(task);
 });
 
-watch(() => [props.element.content, props.element.variable, props.element.style, store.isExporting, store.testData], () => {
+watch(() => [props.element.content, props.element.variable, props.element.style, store.isExporting, store.testData, (store as any).variables], () => {
   const task = nextTick().then(renderQR);
   if (registerRenderTask) registerRenderTask(task);
 }, { deep: true });
