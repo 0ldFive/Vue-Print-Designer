@@ -428,7 +428,7 @@ const handleTestDataClose = () => {
   }
 
   if (!parsed) {
-    alert(t('common.invalidJson'));
+    toast.error(t('common.invalidJson'));
     return;
   }
 
@@ -437,7 +437,7 @@ const handleTestDataClose = () => {
     const hasKeyDiff = inputKeys.length !== allowedKeys.size
       || inputKeys.some(key => !allowedKeys.has(key));
     if (hasKeyDiff) {
-      alert(t('common.testDataKeyChanged'));
+      toast.error(t('common.testDataKeyChanged'));
       return;
     }
   }

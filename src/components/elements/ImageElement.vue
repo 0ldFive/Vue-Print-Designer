@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
+import { toast } from '@/utils/toast';
 
 const props = defineProps<{
   element: PrintElement;
@@ -32,7 +33,7 @@ const handleFileChange = (event: Event) => {
   if (!file) return;
 
   if (file.size > 2 * 1024 * 1024) {
-    window.alert(t('properties.image.sizeError'));
+    toast.error(t('properties.image.sizeError'));
     target.value = '';
     return;
   }
@@ -45,7 +46,7 @@ const handleFileChange = (event: Event) => {
     }
   };
   reader.onerror = () => {
-    window.alert(t('properties.image.readError'));
+    toast.error(t('properties.image.readError'));
   };
   reader.readAsDataURL(file);
   target.value = '';

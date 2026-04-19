@@ -49,6 +49,7 @@ import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import cloneDeep from 'lodash/cloneDeep';
 import { useI18n } from 'vue-i18n';
 import { formatShortcut } from '@/utils/os';
+import { toast } from '@/utils/toast';
 import PrintDialog from '../PrintDialog.vue';
 
 const emit = defineEmits<{
@@ -113,7 +114,7 @@ const handleViewImageBlob = async () => {
       }
   } catch (e) {
       console.error(e);
-      alert('Failed to generate blob');
+      toast.error('Failed to generate blob');
   }
 };
 
@@ -132,7 +133,7 @@ const handleViewPdfBlob = async () => {
       }
   } catch (e) {
       console.error(e);
-      alert('Failed to generate PDF blob');
+      toast.error('Failed to generate PDF blob');
   }
 };
 
@@ -285,7 +286,7 @@ const handlePreview = async () => {
     showPreview.value = true;
   } catch (e) {
     console.error(e);
-    alert('Preview generation failed');
+    toast.error('Preview generation failed');
   }
 };
 

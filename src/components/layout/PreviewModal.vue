@@ -14,6 +14,7 @@ import ZoomOut from '~icons/material-symbols/zoom-out';
 import DataObject from '~icons/material-symbols/data-object';
 import CodeEditorModal from '@/components/common/CodeEditorModal.vue';
 import cloneDeep from 'lodash/cloneDeep';
+import { toast } from '@/utils/toast';
 
 const props = defineProps<{
   visible: boolean;
@@ -92,7 +93,7 @@ const handleViewImageBlob = async () => {
       }
   } catch (e) {
       console.error(e);
-      alert('Failed to generate blob');
+      toast.error('Failed to generate blob');
   }
 };
 
@@ -112,7 +113,7 @@ const handleViewPdfBlob = async () => {
       }
   } catch (e) {
       console.error(e);
-      alert('Failed to generate PDF blob');
+      toast.error('Failed to generate PDF blob');
   }
 };
 

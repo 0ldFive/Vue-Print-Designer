@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useDesignerStore } from '@/stores/designer';
 import { ElementType, type Page, type WatermarkSettings } from '@/types';
 import { usePrintSettings, type PrintMode, type PrintOptions } from '@/composables/usePrintSettings';
+import { toast } from '@/utils/toast';
 import i18n from '@/locales';
 import PrintRenderer from '@/components/print/PrintRenderer.vue';
 import baseStyles from '@/style.css?inline';
@@ -1201,7 +1202,7 @@ export const usePrint = () => {
         pdf.save(filename);
     } catch (error) {
         console.error('Export PDF failed', error);
-        alert('Export PDF failed');
+        toast.error('Export PDF failed');
     }
   };
 
@@ -1268,7 +1269,7 @@ export const usePrint = () => {
         });
     } catch (error) {
         console.error('Print failed', error);
-        alert('Print failed');
+        toast.error('Print failed');
     } finally {
         restoreViewport();
     }
@@ -1466,7 +1467,7 @@ export const usePrint = () => {
       }
     }
     if (!options.printer) {
-      alert('Printer is required');
+      toast.error('Printer is required');
       return;
     }
 
@@ -1481,7 +1482,7 @@ export const usePrint = () => {
       }
 
       if (!remoteSelectedClientId.value) {
-        alert('Client is required');
+        toast.error('Client is required');
         return;
       }
       const payload = buildPrintPayload(options, dataUrl);
@@ -1490,7 +1491,7 @@ export const usePrint = () => {
       await submitRemoteTask(payload);
     } catch (error) {
       console.error('Print failed', error);
-      alert('Print failed');
+      toast.error('Print failed');
     }
   };
 
@@ -1597,7 +1598,7 @@ export const usePrint = () => {
         }
     } catch (error) {
         console.error('Export Images failed', error);
-        alert('Export Images failed');
+        toast.error('Export Images failed');
     }
   };
 

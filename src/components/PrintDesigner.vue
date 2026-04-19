@@ -18,6 +18,7 @@ import Ruler from './layout/Ruler.vue';
 import Shortcuts from './layout/Shortcuts.vue';
 import Minimap from './layout/Minimap.vue';
 import InputModal from '@/components/common/InputModal.vue';
+import { toast } from '@/utils/toast';
 import Save from '~icons/material-symbols/save';
 import SaveAs from '~icons/material-symbols/save-as';
 import Logout from '~icons/material-symbols/logout';
@@ -146,7 +147,7 @@ const debouncedAutoSave = debounce(async () => {
 const handleSaveCustomEdit = () => {
   const ok = store.commitCustomElementEdit();
   if (!ok) {
-    alert(t('sidebar.editSaveFailed'));
+    toast.error(t('sidebar.editSaveFailed'));
     return;
   }
   store.cancelCustomElementEdit();
@@ -157,7 +158,7 @@ const handleSaveCustomEditAs = (name: string) => {
   if (!trimmed) return;
   const ok = store.saveCustomElementEditAs(trimmed);
   if (!ok) {
-    alert(t('sidebar.editSaveFailed'));
+    toast.error(t('sidebar.editSaveFailed'));
     return;
   }
   store.cancelCustomElementEdit();

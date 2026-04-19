@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
+import { toast } from '@/utils/toast';
 import { ElementType, type ElementPropertiesSchema, type PropertyField } from '@/types';
 import { elementPropertiesSchema as TextSchema } from '@/components/elements/TextElement.vue';
 import { elementPropertiesSchema as ImageSchema } from '@/components/elements/ImageElement.vue';
@@ -194,7 +195,7 @@ const handleDataJsonChange = (fieldKey: string, e: Event) => {
     const value = (e.target as HTMLTextAreaElement).value;
     handleChange(fieldKey, JSON.parse(value));
   } catch (err) {
-    window.alert('Invalid JSON');
+    toast.error('Invalid JSON');
   }
 };
 

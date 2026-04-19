@@ -1761,7 +1761,7 @@ export const useDesignerStore = defineStore('designer', {
       if (this.selectedElementIds.length < 2) return;
       console.log('Group selected elements:', this.selectedElementIds);
       // TODO: Implement grouping logic
-      alert('Grouping feature is under development');
+      toast.warning('Grouping feature is under development');
     },
     async loadCustomElements() {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
