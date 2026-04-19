@@ -232,6 +232,7 @@ export default {
     },
     label: {
       type: 'Type',
+      textAlign: 'Text Align',
       x: 'X',
       y: 'Y',
       width: 'Width',
@@ -239,10 +240,12 @@ export default {
       zIndex: 'Layer',
       content: 'Content',
       variable: 'Variable',
+      dataVariable: 'Data Variable',
+      columnsVariable: 'Columns Variable',
+      footerDataVariable: 'Footer Data Variable',
       writingMode: 'Writing Mode',
       fontSize: 'Font Size',
       color: 'Color',
-      textAlign: 'Text Align',
       verticalAlign: 'Vertical Align',
       fontFamily: 'Font Family',
       fontWeight: 'Font Weight',
@@ -352,6 +355,11 @@ export default {
       uploadTip: 'Max 2MB, converts to Base64',
       sizeError: 'Image size must be less than 2MB',
       readError: 'Failed to read file'
+    },
+    align: {
+      left: 'Align Left',
+      center: 'Align Center',
+      right: 'Align Right'
     }
   },
   shortcuts: {

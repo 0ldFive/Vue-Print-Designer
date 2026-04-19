@@ -63,6 +63,8 @@ export interface ElementStyle {
   footerColor?: string;
   headerFontSize?: number;
   footerFontSize?: number;
+  headerTextAlign?: 'left' | 'center' | 'right';
+  footerTextAlign?: 'left' | 'center' | 'right';
   writingMode?: 'horizontal-tb' | 'vertical-rl';
   // Barcode specific
   barcodeFormat?: string;
@@ -88,6 +90,8 @@ export interface PrintElement {
   height: number;
   content?: string; // For text/image url
   variable?: string;
+  columnsVariable?: string; // For table columns
+  footerDataVariable?: string; // For table footer data
   locked?: boolean;
   data?: any[]; // For table
   columns?: TableColumn[]; // For table

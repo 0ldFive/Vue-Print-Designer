@@ -201,6 +201,7 @@
           <h4 class="test-btn-group-title">权限与只读模式测试</h4>
           <div class="test-btn-grid">
             <button id="btn-seed-permission-templates" title="API: setTemplates() / getTemplates()">注入权限模板<span class="test-btn-api">setTemplates()</span></button>
+            <button id="btn-seed-table-vars-template" title="API: setTemplates() / setVariables()">注入表格变量模板<span class="test-btn-api">setTemplates()</span></button>
             <button id="btn-load-readonly-template" title="API: loadTemplate()">加载只读模板<span class="test-btn-api">loadTemplate()</span></button>
             <button id="btn-test-paper-settings-readonly" title="API: getTemplate() / loadTemplate()">测试页面设置只读模式<span class="test-btn-api">getTemplate()</span></button>
             <button id="btn-try-upsert-readonly" title="API: upsertTemplate()">测试只读模板更新拦截<span class="test-btn-api">upsertTemplate()</span></button>
@@ -491,6 +492,84 @@
       const list = designer.getTemplates({ includeData: true });
       console.log('已注入权限模板:', list);
       alert('已注入 1 个只读模板 + 1 个可编辑模板，并默认加载只读模板。\n可以点击顶部模板下拉，查看非当前模板的“测试数据”是否能正确加载和保存。');
+    });
+
+    document.getElementById('btn-seed-table-vars-template').addEventListener('click', async () => {
+      const tableVarsTemplate = {
+        id: 'tpl-table-vars',
+        name: '表格变量测试模板',
+        permissions: {
+          editable: true,
+          deletable: true,
+          copyable: true,
+        },
+        data: {
+          testData: {
+            // 测试环境的数据
+            tableCols: [
+              { field: 'id', header: 'ID (Test)', width: 60 },
+              { field: 'name', header: '名称 (Test)', width: 120 }
+            ],
+            tableData: [
+              { id: '1', name: '测试商品A' },
+              { id: '2', name: '测试商品B' }
+            ],
+            tableFooter: [
+              { name: { value: '合计(Test)' } }
+            ]
+          },
+          pages: [
+            {
+              id: 'page-table',
+              elements: [
+                {
+                  id: 'el-table-1',
+                  type: 'table',
+                  x: 20,
+                  y: 20,
+                  width: 300,
+                  height: 100,
+                  columnsVariable: '@tableCols',
+                  variable: '@tableData',
+                  footerDataVariable: '@tableFooter',
+                  showFooter: true,
+                  style: {
+                    fontSize: 12,
+                    color: '#000000',
+                    headerBackgroundColor: '#f3f4f6',
+                    headerColor: '#000000',
+                    footerBackgroundColor: '#f9fafb',
+                    footerColor: '#000000'
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      designer.setTemplates([tableVarsTemplate], {
+        currentTemplateId: tableVarsTemplate.id
+      });
+      
+      // 顺便把这套变量填到“模拟注入业务变量”的文本框里方便测试导出
+      const testVars = {
+        tableCols: [
+          { field: 'id', header: 'ID (变量)', width: 80 },
+          { field: 'name', header: '名称 (变量)', width: 150 },
+          { field: 'price', header: '价格 (变量)', width: 80 }
+        ],
+        tableData: [
+          { id: 'V001', name: '变量商品X', price: '10.00' },
+          { id: 'V002', name: '变量商品Y', price: '20.00' }
+        ],
+        tableFooter: [
+          { id: { value: '总计' }, price: { value: '30.00' } }
+        ]
+      };
+      document.getElementById('txt-inject-vars').value = JSON.stringify(testVars, null, 2);
+
+      alert('已注入表格变量模板，并默认加载。\n设计器中会显示 testData 的列、数据和表脚。\n如果点击下面的【注入以上变量数据】，打印/预览时将会使用新的动态列和数据。');
     });
 
     document.getElementById('btn-load-readonly-template').addEventListener('click', () => {

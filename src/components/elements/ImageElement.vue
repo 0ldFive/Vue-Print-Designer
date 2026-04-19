@@ -88,7 +88,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       tab: 'properties',
       fields: [
         { label: 'properties.label.imageSource', type: 'image', target: 'element', key: 'content' },
-        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@imageVar' }
+        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
       ]
     },
     {

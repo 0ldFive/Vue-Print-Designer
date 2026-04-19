@@ -45,18 +45,33 @@ export const buildTestDataFromElement = (
   const result: TestData = { ...existing };
   if (!elementSupportsVariables(element)) return result;
 
-  const rawVariable = element.variable || '';
-  const key = normalizeVariableKey(rawVariable);
-  if (!key) return result;
+  const extractVariable = (rawVar: string, type: 'text' | 'tableData' | 'tableColumns' | 'tableFooterData') => {
+    const key = normalizeVariableKey(rawVar);
+    if (!key) return;
+    if (Object.prototype.hasOwnProperty.call(result, key)) return;
 
-  if (Object.prototype.hasOwnProperty.call(result, key)) return result;
+    if (type === 'tableData') {
+      result[key] = buildTableSample(element);
+    } else if (type === 'tableColumns') {
+      result[key] = Array.isArray(element.columns) && element.columns.length > 0 ? cloneDeep(element.columns) : [];
+    } else if (type === 'tableFooterData') {
+      result[key] = Array.isArray(element.footerData) && element.footerData.length > 0 ? cloneDeep(element.footerData) : [];
+    } else {
+      result[key] = element.content ?? '';
+    }
+  };
+
+  extractVariable(element.variable || '', element.type === ElementType.TABLE ? 'tableData' : 'text');
 
   if (element.type === ElementType.TABLE) {
-    result[key] = buildTableSample(element);
-    return result;
+    if (element.columnsVariable) {
+      extractVariable(element.columnsVariable, 'tableColumns');
+    }
+    if (element.footerDataVariable) {
+      extractVariable(element.footerDataVariable, 'tableFooterData');
+    }
   }
 
-  result[key] = element.content ?? '';
   return result;
 };
 

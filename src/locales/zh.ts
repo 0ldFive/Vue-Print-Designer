@@ -231,6 +231,7 @@ export default {
       selectInstruction: '选择一个元素以编辑属性'
     },
     label: {
+      textAlign: '对齐方式',
       type: '类型',
       x: 'X',
       y: 'Y',
@@ -239,10 +240,12 @@ export default {
       zIndex: '层级',
       content: '内容',
       variable: '变量',
+      dataVariable: '数据变量',
+      columnsVariable: '列定义变量',
+      footerDataVariable: '表脚数据变量',
       writingMode: '书写模式',
       fontSize: '字号',
       color: '颜色',
-      textAlign: '对齐方式',
       verticalAlign: '垂直对齐',
       fontFamily: '字体',
       fontWeight: '字重',
@@ -352,6 +355,11 @@ export default {
       uploadTip: '最大 2MB，自动转换为 Base64',
       sizeError: '图片大小不能超过 2MB',
       readError: '读取文件失败'
+    },
+    align: {
+      left: '左对齐',
+      center: '居中对齐',
+      right: '右对齐'
     }
   },
   shortcuts: {

@@ -666,7 +666,12 @@ export const usePrint = () => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
 
         wrappers.forEach(wrapper => {
-          if (wrapper.hasAttribute('data-table-flow-id')) return;
+          // Skip tables that have already been paginated or are split chunks to avoid messing up their positions
+          if (wrapper.hasAttribute('data-table-flow-id')) {
+             if (wrapper.hasAttribute('data-table-paginated') || wrapper.hasAttribute('data-is-split-chunk')) {
+                 return;
+             }
+          }
           if (wrapper.getAttribute('data-repeat-per-page') === 'true') return;
 
           const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
@@ -727,6 +732,8 @@ export const usePrint = () => {
              // Find the wrapper using the data attribute we added
              const wrapper = table.closest('[data-print-wrapper]') as HTMLElement;
              if (!wrapper) return;
+             if (wrapper.parentElement !== page) return; // skip if moved to another page
+             if (wrapper.hasAttribute('data-table-paginated')) return; // already processed
              
              // Respect element-level auto paginate flag
              const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
@@ -780,6 +787,8 @@ export const usePrint = () => {
              // Add 1px tolerance for sub-pixel rendering issues
              if (tableRect.bottom <= limitBottom + 1) {
                  updatePageSums(table);
+                 wrapper.setAttribute('data-table-paginated', 'true');
+                 syncElementsBelowTables(); 
                  return;
              }
              
@@ -896,13 +905,50 @@ export const usePrint = () => {
                 }
                  
                  newPage.appendChild(newWrapper);
+                 wrapper.setAttribute('data-table-paginated', 'true');
+                 newWrapper.setAttribute('data-is-split-chunk', 'true');
+                 
+                 syncElementsBelowTables();
              } else {
                  updatePageSums(table);
+                 wrapper.setAttribute('data-table-paginated', 'true');
+                 syncElementsBelowTables();
              }
         });
     }
 
     syncElementsBelowTables();
+    
+    // Clean up any empty pages that might have been created during pagination shifts
+    pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+    const marginTop = store.pageSpacingY || 0;
+    const marginBottom = store.pageSpacingY || 0;
+    
+    // Iterate backwards so we can safely remove elements
+    // We never remove the very first page (i > 0)
+    for (let i = pages.length - 1; i > 0; i--) {
+        const page = pages[i];
+        const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
+        
+        const hasContent = wrappers.some(w => {
+            if (w.hasAttribute('data-table-flow-id')) return true;
+            
+            const isRepeatPerPage = w.getAttribute('data-repeat-per-page') === 'true';
+            if (isRepeatPerPage) return false;
+            
+            const top = parseFloat(w.style.top) || 0;
+            const isHeader = copyHeader && top < (headerHeight + marginTop);
+            const isFooter = copyFooter && top >= (pageHeight - footerHeight - marginBottom);
+            
+            if (isHeader || isFooter) return false;
+            
+            return true;
+        });
+        
+        if (!hasContent) {
+            page.remove();
+        }
+    }
     
     // Update all page positions
     pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];

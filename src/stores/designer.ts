@@ -6,6 +6,7 @@ import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudCo
 import { toast } from '../utils/toast';
 import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues, mergeExt } from '../utils/entityConstraints';
 import { useTemplateStore } from './templates';
+import { normalizeVariableKey } from '../utils/variables';
 import i18n from '../locales';
 
 const defaultWatermark: WatermarkSettings = {
@@ -543,18 +544,28 @@ export const useDesignerStore = defineStore('designer', {
         }
       }
 
-      if (!element || !element.columns) return;
+      if (!element) return;
       
       const targetDataKey = section === 'footer' ? 'footerData' : 'data';
-      if (!element[targetDataKey]) return;
 
       // Find bounds
       const rowIndices = cells.map(c => c.rowIndex);
       const minRow = Math.min(...rowIndices);
       const maxRow = Math.max(...rowIndices);
       
+      // Determine effective columns
+      let effectiveColumns = element.columns || [];
+      if (element.columnsVariable && this.testData) {
+        const key = normalizeVariableKey(element.columnsVariable);
+        if (key && Array.isArray(this.testData[key])) {
+          effectiveColumns = this.testData[key];
+        }
+      }
+
+      if (effectiveColumns.length === 0) return;
+
       // Map columns to indices to find min/max col
-      const colFields = element.columns.map(c => c.field);
+      const colFields = effectiveColumns.map(c => c.field);
       const colIndices = cells.map(c => colFields.indexOf(c.colField)).filter(i => i !== -1);
       
       if (colIndices.length !== cells.length) return; // Invalid columns
@@ -569,7 +580,12 @@ export const useDesignerStore = defineStore('designer', {
       this.snapshot();
 
       // Update data
-      const newData = cloneDeep(element[targetDataKey]);
+      const newData = cloneDeep(element[targetDataKey] || []);
+      
+      // Ensure rows exist up to maxRow
+      for (let r = 0; r <= maxRow; r++) {
+        if (!newData[r]) newData[r] = {};
+      }
       
       // Iterate through the bounding box
       for (let r = minRow; r <= maxRow; r++) {
@@ -577,16 +593,9 @@ export const useDesignerStore = defineStore('designer', {
           const field = colFields[c];
           const row = newData[r];
           
-          if (!row) continue;
-
           // Initialize cell object if it's just a value
           if (typeof row[field] !== 'object' || row[field] === null) {
-            row[field] = { value: row[field] };
-          } else if (!('value' in row[field])) {
-             // If it is object but maybe custom, ensure it has structure we expect or treat as value container?
-             // Actually existing logic checks 'value' in val. If not, it returns val.
-             // So we should normalize to { value: ..., rowSpan: 1, colSpan: 1 }
-             // But let's respect existing structure.
+            row[field] = { value: row[field] !== undefined ? row[field] : '' };
           }
 
           if (r === minRow && c === minColIdx) {
@@ -632,12 +641,11 @@ export const useDesignerStore = defineStore('designer', {
           }
         }
   
-        if (!element || !element.columns) return;
+        if (!element) return;
         
         const targetDataKey = section === 'footer' ? 'footerData' : 'data';
-        if (!element[targetDataKey]) return;
 
-        const row = element[targetDataKey][cell.rowIndex];
+        const row = element[targetDataKey]?.[cell.rowIndex];
         if (!row) return;
         
         const val = row[cell.colField];
@@ -649,13 +657,26 @@ export const useDesignerStore = defineStore('designer', {
         
         if (rowSpan <= 1 && colSpan <= 1) return;
         
+        // Determine effective columns
+        let effectiveColumns = element.columns || [];
+        if (element.columnsVariable && this.testData) {
+          const key = normalizeVariableKey(element.columnsVariable);
+          if (key && Array.isArray(this.testData[key])) {
+            effectiveColumns = this.testData[key];
+          }
+        }
+
+        if (effectiveColumns.length === 0) return;
+
         // Snapshot
         this.snapshot();
         
-        const newData = cloneDeep(element[targetDataKey]);
-        const colFields = element.columns.map(c => c.field);
+        const newData = cloneDeep(element[targetDataKey] || []);
+        const colFields = effectiveColumns.map(c => c.field);
         const startColIdx = colFields.indexOf(cell.colField);
         
+        if (startColIdx === -1) return;
+
         // Reset all cells in the range
         for (let r = cell.rowIndex; r < cell.rowIndex + rowSpan; r++) {
             for (let c = startColIdx; c < startColIdx + colSpan; c++) {

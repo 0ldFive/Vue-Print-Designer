@@ -136,23 +136,25 @@ const getIcon = (type: ElementType) => {
 
 ## Step 6: Configure Default Properties
 
-In `src/components/canvas/Canvas.vue`, configure the default dimensions and properties when the new element is dragged onto the canvas.
+In `src/utils/elementFactory.ts`, add the new element's default dimensions and properties to the `elementConfigRegistry`.
 
 ```typescript
-// src/components/canvas/Canvas.vue
+// src/utils/elementFactory.ts
 
-const widthMap: Partial<Record<ElementType, number>> = {
-  // ...
-  [ElementType.STAR]: 100, // [!code ++]
+export const elementConfigRegistry: Partial<Record<ElementType, ElementConfigGenerator>> = {
+  // ... existing elements configuration
+  
+  [ElementType.STAR]: (t) => ({ // [!code ++]
+    width: 100, // [!code ++]
+    height: 100, // [!code ++]
+    style: { // [!code ++]
+      backgroundColor: 'transparent', // [!code ++]
+      borderColor: '#000000' // [!code ++]
+    } // [!code ++]
+  }) // [!code ++]
 };
 
-const heightMap: Partial<Record<ElementType, number>> = {
-  // ...
-  [ElementType.STAR]: 100, // [!code ++]
-};
-
-// ...
-// Note: The newElement object construction logic typically uses widthMap/heightMap automatically
+// Note: The createNewElement function will automatically deep merge this with the base configuration
 ```
 
 After completing the above steps, restart the development server, and you will see the new "Star" element in the sidebar and be able to drag it onto the canvas for editing.

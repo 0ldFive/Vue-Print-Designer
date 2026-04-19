@@ -179,32 +179,130 @@ const isSelecting = ref(false);
 const startCell = ref<{ rowIndex: number; colField: string; section: 'body' | 'footer' } | null>(null);
 
 const processedData = computed(() => {
-  const cols = Array.isArray(props.element.columns) ? props.element.columns : [];
+  let cols = Array.isArray(props.element.columns) ? props.element.columns : [];
   let data = Array.isArray(props.element.data) ? props.element.data : [];
   let footerData = Array.isArray(props.element.footerData) ? props.element.footerData : [];
 
+  const testData = store.testData || {};
+  const variables = (store as any).variables || {};
+
+  // Data Variable
   if (store.isExporting && props.element.variable) {
     const key = normalizeVariableKey(props.element.variable);
-    const testData = store.testData || {};
-    const variables = (store as any).variables || {};
-    
-    // First try variables, then testData
     const tableData = key ? (variables[key] ?? testData[key]) : undefined;
     if (Array.isArray(tableData)) {
-      data = cloneDeep(tableData);
+      data = tableData.map((row, index) => {
+        // preserve rowSpan/colSpan from original data if available
+        const originalRow = Array.isArray(props.element.data) ? props.element.data[index] : undefined;
+        if (!originalRow) return cloneDeep(row);
+        
+        const mergedRow = cloneDeep(row);
+        Object.keys(originalRow).forEach(field => {
+          if (originalRow[field] && typeof originalRow[field] === 'object' && ('rowSpan' in originalRow[field] || 'colSpan' in originalRow[field])) {
+             if (mergedRow[field] === undefined) {
+                 mergedRow[field] = { value: '', rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else if (typeof mergedRow[field] !== 'object') {
+                 mergedRow[field] = { value: mergedRow[field], rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else {
+                 mergedRow[field].rowSpan = originalRow[field].rowSpan;
+                 mergedRow[field].colSpan = originalRow[field].colSpan;
+             }
+          }
+        });
+        return mergedRow;
+      });
+    }
+  } else if (!store.isExporting && props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
+    const tableData = key ? testData[key] : undefined;
+    if (Array.isArray(tableData)) {
+      data = tableData.map((row, index) => {
+        // preserve rowSpan/colSpan from original data if available
+        const originalRow = Array.isArray(props.element.data) ? props.element.data[index] : undefined;
+        if (!originalRow) return cloneDeep(row);
+        
+        const mergedRow = cloneDeep(row);
+        Object.keys(originalRow).forEach(field => {
+          if (originalRow[field] && typeof originalRow[field] === 'object' && ('rowSpan' in originalRow[field] || 'colSpan' in originalRow[field])) {
+             if (mergedRow[field] === undefined) {
+                 mergedRow[field] = { value: '', rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else if (typeof mergedRow[field] !== 'object') {
+                 mergedRow[field] = { value: mergedRow[field], rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else {
+                 mergedRow[field].rowSpan = originalRow[field].rowSpan;
+                 mergedRow[field].colSpan = originalRow[field].colSpan;
+             }
+          }
+        });
+        return mergedRow;
+      });
     }
   }
 
-  // 即使不是导出模式，只要有 testData 并且有匹配的 variable，就展示 testData (表格不应用变量数据)
-  if (!store.isExporting && props.element.variable) {
-    const key = normalizeVariableKey(props.element.variable);
-    const testData = store.testData || {};
-    const tableData = key ? testData[key] : undefined;
-    if (Array.isArray(tableData)) {
-      data = cloneDeep(tableData);
+  // Columns Variable
+  if (store.isExporting && props.element.columnsVariable) {
+    const key = normalizeVariableKey(props.element.columnsVariable);
+    const tableCols = key ? (variables[key] ?? testData[key]) : undefined;
+    if (Array.isArray(tableCols)) {
+      cols = cloneDeep(tableCols);
+    }
+  } else if (!store.isExporting && props.element.columnsVariable) {
+    const key = normalizeVariableKey(props.element.columnsVariable);
+    const tableCols = key ? testData[key] : undefined;
+    if (Array.isArray(tableCols)) {
+      cols = cloneDeep(tableCols);
     }
   }
-  
+
+  // Footer Data Variable
+  if (store.isExporting && props.element.footerDataVariable) {
+    const key = normalizeVariableKey(props.element.footerDataVariable);
+    const tableFooter = key ? (variables[key] ?? testData[key]) : undefined;
+    if (Array.isArray(tableFooter)) {
+      footerData = tableFooter.map((row, index) => {
+        const originalRow = Array.isArray(props.element.footerData) ? props.element.footerData[index] : undefined;
+        if (!originalRow) return cloneDeep(row);
+        const mergedRow = cloneDeep(row);
+        Object.keys(originalRow).forEach(field => {
+          if (originalRow[field] && typeof originalRow[field] === 'object' && ('rowSpan' in originalRow[field] || 'colSpan' in originalRow[field])) {
+             if (mergedRow[field] === undefined) {
+                 mergedRow[field] = { value: '', rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else if (typeof mergedRow[field] !== 'object') {
+                 mergedRow[field] = { value: mergedRow[field], rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else {
+                 mergedRow[field].rowSpan = originalRow[field].rowSpan;
+                 mergedRow[field].colSpan = originalRow[field].colSpan;
+             }
+          }
+        });
+        return mergedRow;
+      });
+    }
+  } else if (!store.isExporting && props.element.footerDataVariable) {
+    const key = normalizeVariableKey(props.element.footerDataVariable);
+    const tableFooter = key ? testData[key] : undefined;
+    if (Array.isArray(tableFooter)) {
+      footerData = tableFooter.map((row, index) => {
+        const originalRow = Array.isArray(props.element.footerData) ? props.element.footerData[index] : undefined;
+        if (!originalRow) return cloneDeep(row);
+        const mergedRow = cloneDeep(row);
+        Object.keys(originalRow).forEach(field => {
+          if (originalRow[field] && typeof originalRow[field] === 'object' && ('rowSpan' in originalRow[field] || 'colSpan' in originalRow[field])) {
+             if (mergedRow[field] === undefined) {
+                 mergedRow[field] = { value: '', rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else if (typeof mergedRow[field] !== 'object') {
+                 mergedRow[field] = { value: mergedRow[field], rowSpan: originalRow[field].rowSpan, colSpan: originalRow[field].colSpan };
+             } else {
+                 mergedRow[field].rowSpan = originalRow[field].rowSpan;
+                 mergedRow[field].colSpan = originalRow[field].colSpan;
+             }
+          }
+        });
+        return mergedRow;
+      });
+    }
+  }
+
   if (props.element.customScript) {
     try {
       const func = new Function('data', 'footerData', 'columns', 'type', props.element.customScript);
@@ -416,7 +514,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'properties.label.autoPaginate', type: 'switch', target: 'element', key: 'autoPaginate' },
         { label: 'properties.label.repeatFooter', type: 'switch', target: 'element', key: 'tfootRepeat' },
         { label: 'properties.label.showFooter', type: 'switch', target: 'element', key: 'showFooter' },
-        { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' },
+        { label: 'properties.label.columnsVariable', type: 'text', target: 'element', key: 'columnsVariable', placeholder: '@columnsVariable' },
+        { label: 'properties.label.dataVariable', type: 'text', target: 'element', key: 'variable', placeholder: '@dataVariable' },
+        { label: 'properties.label.footerDataVariable', type: 'text', target: 'element', key: 'footerDataVariable', placeholder: '@footerDataVariable' },
         { label: 'properties.label.columns', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: 'properties.label.columnsPlaceholder' },
         { label: 'properties.label.data', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: 'properties.label.dataPlaceholder' },
         { label: 'properties.label.footerData', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: 'properties.label.footerDataPlaceholder' },
@@ -437,7 +537,19 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       tab: 'style',
       fields: [
         { label: 'properties.label.backgroundColor', type: 'color', target: 'style', key: 'backgroundColor' },
-        { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'color' }
+        { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'color' },
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'fontSize', min: 8, max: 72, step: 1 },
+        { 
+          label: 'properties.label.textAlign', 
+          type: 'select', 
+          target: 'style', 
+          key: 'textAlign',
+          options: [
+            { label: 'properties.align.left', value: 'left' },
+            { label: 'properties.align.center', value: 'center' },
+            { label: 'properties.align.right', value: 'right' }
+          ]
+        }
       ]
     },
     {
@@ -446,7 +558,18 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       fields: [
         { label: 'properties.label.background', type: 'color', target: 'style', key: 'headerBackgroundColor' },
         { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'headerColor' },
-        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'headerFontSize', min: 8, max: 72, step: 1 }
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'headerFontSize', min: 8, max: 72, step: 1 },
+        { 
+          label: 'properties.label.textAlign', 
+          type: 'select', 
+          target: 'style', 
+          key: 'headerTextAlign',
+          options: [
+            { label: 'properties.align.left', value: 'left' },
+            { label: 'properties.align.center', value: 'center' },
+            { label: 'properties.align.right', value: 'right' }
+          ]
+        }
       ]
     },
     {
@@ -455,7 +578,18 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       fields: [
         { label: 'properties.label.background', type: 'color', target: 'style', key: 'footerBackgroundColor' },
         { label: 'properties.label.textColor', type: 'color', target: 'style', key: 'footerColor' },
-        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'footerFontSize', min: 8, max: 72, step: 1 }
+        { label: 'properties.label.fontSize', type: 'number', target: 'style', key: 'footerFontSize', min: 8, max: 72, step: 1 },
+        { 
+          label: 'properties.label.textAlign', 
+          type: 'select', 
+          target: 'style', 
+          key: 'footerTextAlign',
+          options: [
+            { label: 'properties.align.left', value: 'left' },
+            { label: 'properties.align.center', value: 'center' },
+            { label: 'properties.align.right', value: 'right' }
+          ]
+        }
       ]
     },
     {
@@ -485,7 +619,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           <th 
             v-for="(col, index) in processedData.columns" 
             :key="col.field"
-            class="p-1 text-left font-bold text-sm relative group select-none"
+            class="p-1 font-bold text-sm relative group select-none"
             :style="{ 
                ...cellStyle, 
                width: `${tempColumnWidths[col.field] || col.width}px`, 
@@ -493,6 +627,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                backgroundColor: element.style.headerBackgroundColor || '#f3f4f6',
               color: element.style.headerColor || '#000000',
               fontSize: element.style.headerFontSize ? `${element.style.headerFontSize}px` : undefined,
+              textAlign: element.style.headerTextAlign || 'left',
               cursor: store.selectedElementId === element.id ? 'pointer' : 'default'
             }"
             @dblclick="(e) => handleHeaderDblClick(e, index)"
@@ -515,12 +650,14 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           <template v-for="col in processedData.columns" :key="col.field">
              <td 
                v-if="shouldRenderCell(row, col.field)"
-               class="p-1 text-sm select-none"
+               class="p-1 select-none"
                :class="{ 'bg-blue-100 ring-1 ring-blue-400': isCellSelected(i, col.field) }"
                :style="{
                  ...cellStyle,
                  ...getCellStyle(row, col.field),
-                 height: element.style.rowHeight ? `${element.style.rowHeight}px` : undefined
+                 height: element.style.rowHeight ? `${element.style.rowHeight}px` : undefined,
+                 textAlign: element.style.textAlign || 'left',
+                 fontSize: element.style.fontSize ? `${element.style.fontSize}px` : undefined
                }"
                :rowspan="getRowSpan(row, col.field)"
                :colspan="getColSpan(row, col.field)"
@@ -566,6 +703,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   backgroundColor: element.style.footerBackgroundColor || '#f9fafb',
                  color: element.style.footerColor || '#000000',
                  fontSize: element.style.footerFontSize ? `${element.style.footerFontSize}px` : undefined,
+                 textAlign: element.style.footerTextAlign || 'left',
                  cursor: store.selectedElementId === element.id ? 'pointer' : 'default'
                }"
                :rowspan="getRowSpan(row, col.field)"
