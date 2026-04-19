@@ -8,24 +8,28 @@
   - [Initialization (Recommended)](#initialization-recommended)
   - [1. Execute Print (print)](#1-execute-print-print)
   - [2. Export PDF/Images (export)](#2-export-pdfimages-export)
-  - [3. Set Default Print Options (setPrintDefaults)](#3-set-default-print-options-setprintdefaults)
-  - [4. Get Printers and Clients (fetchPrinters)](#4-get-printers-and-clients-fetchprinters)
-  - [5. Set Branding Info (setBranding)](#5-set-branding-info-setbranding)
-  - [6. Set Brand Colors (setBrandVars)](#6-set-brand-colors-setbrandvars)
-  - [7. Set Theme (setTheme)](#7-set-theme-settheme)
-  - [8. Set Designer Font (setDesignerFont)](#8-set-designer-font-setdesignerfont)
-  - [9. Set and Get Variables (setVariables / getVariables)](#9-set-and-get-variables-setvariables--getvariables)
-  - [10. Get and Load Template Data (getTemplateData / loadTemplateData)](#10-get-and-load-template-data-gettemplatedata--loadtemplatedatadata)
-  - [11. Template CRUD Operations (getTemplates / getTemplate / upsertTemplate / deleteTemplate)](#11-template-crud-operations-gettemplates--gettemplate--upserttemplate--deletetemplate)
-  - [12. Custom Element CRUD Operations (getCustomElements / getCustomElement / upsertCustomElement / deleteCustomElement)](#12-custom-element-crud-operations-getcustomelements--getcustomelement--upsertcustomelement--deletecustomelement)
-  - [13. Set CRUD Mode (setCrudMode)](#13-set-crud-mode-setcrudmode)
-  - [14. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#14-configure-cloud-crud-endpoints-setcrudendpoints)
-  - [15. Set Language (setLanguage)](#15-set-language-setlanguage)
-  - [16. Configure Client and Cloud Print Links (setLinks)](#16-configure-client-and-cloud-print-links-setlinks)
-  - [17. Configure Extension Menu (setContextMenu)](#17-configure-extension-menu-setcontextmenu)
-  - [18. Configure Template Modal Custom Form (setTemplateModalForm)](#18-configure-template-modal-custom-form-settemplatemodalform)
-  - [19. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#19-configure-custom-element-modal-custom-form-setcustomelementmodalform)
-  - [20. Configure Template List Tag Extension (setTemplateTagResolver)](#20-configure-template-list-tag-extension-settemplatetagresolver)
+  - [3. Generate and Get HTML Preview Code (getPreviewHtml)](#3-generate-and-get-html-preview-code-getpreviewhtml)
+  - [4. Set Default Print Options (setPrintDefaults)](#4-set-default-print-options-setprintdefaults)
+  - [5. Print Quality Settings (getPrintQuality/setPrintQuality)](#5-print-quality-settings-getprintqualitysetprintquality)
+  - [6. Get Printers and Clients (fetchPrinters)](#6-get-printers-and-clients-fetchprinters)
+  - [7. Set Branding Info (setBranding)](#7-set-branding-info-setbranding)
+  - [8. Set Brand Colors (setBrandVars)](#8-set-brand-colors-setbrandvars)
+  - [9. Set Theme (setTheme)](#9-set-theme-settheme)
+  - [10. Set Designer Font (setDesignerFont)](#10-set-designer-font-setdesignerfont)
+  - [11. Set and Get Test Data (setTestData / getTestData)](#11-set-and-get-test-data-settestdata--gettestdata)
+  - [12. Set and Get Variables (setVariables / getVariables)](#12-set-and-get-variables-setvariables--getvariables)
+  - [13. Extract Template Variables (getTemplateVariables)](#13-extract-template-variables-gettemplatevariables)
+  - [14. Get and Load Template Data (getTemplateData / loadTemplateData)](#14-get-and-load-template-data-gettemplatedata--loadtemplatedatadata)
+  - [15. Template CRUD Operations](#15-template-crud-operations)
+  - [16. Custom Element CRUD Operations](#16-custom-element-crud-operations)
+  - [17. Set CRUD Mode (setCrudMode)](#17-set-crud-mode-setcrudmode)
+  - [18. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#18-configure-cloud-crud-endpoints-setcrudendpoints)
+  - [19. Set Language (setLanguage)](#19-set-language-setlanguage)
+  - [20. Configure Client and Cloud Print Links (setLinks)](#20-configure-client-and-cloud-print-links-setlinks)
+  - [21. Configure Extension Menu (setContextMenu)](#21-configure-extension-menu-setcontextmenu)
+  - [22. Configure Template Modal Custom Form (setTemplateModalForm)](#22-configure-template-modal-custom-form-settemplatemodalform)
+  - [23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#23-configure-custom-element-modal-custom-form-setcustomelementmodalform)
+  - [24. Configure Template List Tag Extension (setTemplateTagResolver)](#24-configure-template-list-tag-extension-settemplatetagresolver)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
@@ -38,6 +42,7 @@
 | --- | --- |
 | `print(request)` | Execute print |
 | `export(request)` | Export PDF/Images |
+| `getPreviewHtml()` | Generate and get HTML preview code |
 | `setPrintDefaults(payload)` | Set default print options |
 | `getPrintQuality()` | Get current print quality |
 | `setPrintQuality(quality)` | Set print quality |
@@ -49,8 +54,11 @@
 | `setBrandVars(vars)` | Set brand colors |
 | `setTheme(theme)` | Set theme (light/dark) |
 | `setDesignerFont(fontFamily)` | Set designer font |
+| `setTestData(data)` | Set test data |
+| `getTestData()` | Get test data |
 | `setVariables(vars)` | Set variable data |
 | `getVariables()` | Get variable data |
+| `getTemplateVariables()` | Extract used variables and generate default data structure |
 | `loadTemplateData(data)` | Load template data |
 | `getTemplateData()` | Get current template data |
 | `getTemplates()` | Get template list |
@@ -245,7 +253,18 @@ Parameters:
 | `filenamePrefix` | `string` | No | Image filename prefix |
 | `merged` | `boolean` | No | Merge images or not |
 
-### 3. Set Default Print Options (setPrintDefaults)
+### 3. Generate and Get HTML Preview Code (getPreviewHtml)
+
+Description: Get the current rendered HTML result string of the designer, which can be used for custom preview or rendering.
+
+```ts
+const htmlStr = await el.getPreviewHtml()
+console.log('Preview HTML:', htmlStr)
+```
+
+Returns: `Promise<string>` containing the complete generated HTML string (including styles and page elements).
+
+### 4. Set Default Print Options (setPrintDefaults)
 
 Description: set default print mode, connection settings, and print options.
 
@@ -277,7 +296,7 @@ Parameters:
 | `localPrintOptions` | `PrintOptions` | No | Local print options |
 | `remotePrintOptions` | `PrintOptions` | No | Remote print options |
 
-### 4. Print Quality Settings (getPrintQuality/setPrintQuality)
+### 5. Print Quality Settings (getPrintQuality/setPrintQuality)
 
 Description: Get or set the print and export rendering quality.
 **Note**: You must call `setPrintQuality` **before** calling `print` or `export` methods for the settings to take effect.
@@ -299,7 +318,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `quality` | `string` | Yes | The print quality tier (`'fast'`, `'normal'`, `'high'`, `'ultra'`) |
 
-### 5. Get Printers and Clients (fetchPrinters)
+### 6. Get Printers and Clients (fetchPrinters)
 
 Description: query printers, printer capabilities, and clients for local/remote print modes.
 
@@ -318,7 +337,7 @@ Parameters:
 | `printer` | `string` | Yes | Local printer name (for `fetchLocalPrinterCaps`) |
 | `clientId` | `string` | No | Remote client ID (for `fetchRemotePrinters`) |
 
-### 5. Set Branding Info (setBranding)
+### 7. Set Branding Info (setBranding)
 
 Description: set title, logo, and visibility.
 
@@ -331,7 +350,7 @@ el.setBranding({
 })
 ```
 
-### 6. Set Brand Colors (setBrandVars)
+### 8. Set Brand Colors (setBrandVars)
 
 Description: set brand CSS variables.
 
@@ -349,7 +368,7 @@ Parameters:
 | `vars` | `Record<string, string>` | Yes | CSS variables |
 | `options.persist` | `boolean` | No | Persist to local storage |
 
-### 7. Set Theme (setTheme)
+### 9. Set Theme (setTheme)
 
 Description: switch theme.
 
@@ -363,7 +382,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `theme` | `'light' \| 'dark' \| 'system'` | Yes | Theme mode |
 
-### 8. Set Designer Font (setDesignerFont)
+### 10. Set Designer Font (setDesignerFont)
 
 Description: set designer font family. Pass an empty string to reset to default inherited font.
 
@@ -378,7 +397,23 @@ Parameters:
 | `fontFamily` | `string` | Yes | Font family string |
 | `options.persist` | `boolean` | No | Persist to local storage |
 
-### 9. Set and Get Variables (setVariables / getVariables)
+### 11. Set and Get Test Data (setTestData / getTestData)
+
+Description: set or get the test data for the current template (mainly used for previewing and testing in the designer).
+
+```ts
+el.setTestData({ orderNo: 'A001' }, { merge: true })
+const testData = el.getTestData()
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `data` | `Record<string, any>` | Yes | Data object |
+| `options.merge` | `boolean` | No | Merge or overwrite |
+
+### 12. Set and Get Variables (setVariables / getVariables)
 
 Description: set or get variable data.
 
@@ -394,7 +429,16 @@ Parameters:
 | `vars` | `Record<string, any>` | Yes | Variables map |
 | `options.merge` | `boolean` | No | Merge or overwrite |
 
-### 10. Get and Load Template Data (getTemplateData / loadTemplateData)
+### 13. Extract Template Variables (getTemplateVariables)
+
+Description: Extract variables used in the current template and generate a data structure with default values.
+
+```ts
+const templateVars = el.getTemplateVariables()
+console.log('Variables structure for current template:', templateVars)
+```
+
+### 14. Get and Load Template Data (getTemplateData / loadTemplateData)
 
 Description: read/write current template data.
 
@@ -403,7 +447,7 @@ const data = el.getTemplateData()
 el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data })
 ```
 
-### 11. Templates CRUD Operations
+### 15. Template CRUD Operations
 
 #### 1) Get Template List (getTemplates)
 
@@ -471,7 +515,7 @@ Description: You can configure the following fields within the `permissions` obj
 }
 ```
 
-### 12. Custom Elements CRUD Operations
+### 16. Custom Elements CRUD Operations
 
 #### 1) Get Custom Element List (getCustomElements)
 
@@ -531,7 +575,7 @@ Description: You can configure the following fields within the `permissions` obj
 }
 ```
 
-### 13. Set CRUD Mode (setCrudMode)
+### 17. Set CRUD Mode (setCrudMode)
 
 Description: switch CRUD mode.
 
@@ -546,7 +590,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `mode` | `'local' \| 'remote'` | Yes | CRUD mode |
 
-### 14. Configure Cloud CRUD Endpoints (setCrudEndpoints)
+### 18. Configure Cloud CRUD Endpoints (setCrudEndpoints)
 
 Description: configure CRUD endpoints and headers. Supports passing a simple string URL, or an object to configure `url`, `method`, and additional `data`.
 
@@ -657,7 +701,7 @@ Note: The `EndpointConfig` type is defined as `string | { url: string; method?: 
 2. **For Write Requests** (e.g., `upsert`): Please place extra parameters directly into the `ext` field of the entity data object.
 3. **For Global Parameters**: It is recommended to pass them uniformly in the request headers by configuring `options.headers` (e.g., `X-Tenant-ID`).
 
-### 15. Set Language (setLanguage)
+### 19. Set Language (setLanguage)
 
 Description: switch language. You can also use `lang="en"` attribute to set initial language.
 
@@ -672,7 +716,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `lang` | `'zh' \| 'en'` | Yes | Language code |
 
-### 16. Configure Client and Cloud Print Links (setLinks)
+### 20. Configure Client and Cloud Print Links (setLinks)
 
 Description: Configure the client download link and cloud print link in the settings modal, or hide them. Can also be set via HTML attributes `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link`.
 
@@ -684,7 +728,7 @@ el.hideClientLink(true) // Hide client download link only
 el.hideCloudLink(true) // Hide cloud print link only
 ```
 
-### 17. Configure Extension Menu (setContextMenu)
+### 21. Configure Extension Menu (setContextMenu)
 
 Description: Configure the extension menu for the template list and custom element list.
 You can choose to append (`append`) to the default menu, or completely replace it (`replace`). When a menu item is clicked, the designer dispatches the custom event `eventName` you configured.
@@ -766,7 +810,7 @@ For `setCustomElementContextMenu` (Custom Element List):
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
 
-### 18. Configure Template Modal Custom Form (setTemplateModalForm)
+### 22. Configure Template Modal Custom Form (setTemplateModalForm)
 
 Description: Configure custom form structure and default values for template `create / edit / copy` modals.
 
@@ -843,7 +887,7 @@ Behavior notes:
 
 ### 19. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
 
-Description: Used to configure the custom form structure and default values for the custom element "Create / Rename" modals.
+Description: Used to configure the custom form structure and default values for the custom element "Create / Edit" modals.
 
 ```ts
 el.setCustomElementModalForm({
@@ -864,7 +908,7 @@ el.setCustomElementModalForm({
 el.clearCustomElementModalForm()
 ```
 
-### 20. Configure Template List Tag Extension (setTemplateTagResolver)
+### 24. Configure Template List Tag Extension (setTemplateTagResolver)
 
 ## Events
 
@@ -911,20 +955,101 @@ Event details:
 
 ## Common Scenarios
 
-**Designer initialization**
+In actual projects, integration is typically divided into three core scenarios: **Global Initialization**, **Designer Page**, and **Business Print Page**. Below is the standard API calling order and explanation.
+
+### Scenario 1: Global Initialization (Recommended in Entry File)
+
+If you use cloud storage or need uniform styling, it's recommended to configure endpoints and branding during project initialization.
 
 ```ts
 const el = document.querySelector('print-designer') as any
-el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data: /* API data */ })
-el.setVariables({ orderNo: 'A001' }, { merge: true })
+
+// 1. Set branding and language
+el.setBranding({ title: 'Enterprise Print Center', showTitle: true })
+el.setLanguage('en')
+
+// 2. Configure CRUD endpoints for cloud templates and custom elements
+el.setCrudMode('remote')
+el.setCrudEndpoints({
+  baseUrl: 'https://api.your-domain.com',
+  templates: {
+    list: '/print/templates',
+    get: '/print/templates/{id}',
+    upsert: '/print/templates',
+    delete: '/print/templates/{id}'
+  }
+}, {
+  headers: { Authorization: 'Bearer your-token' }
+})
+
+// 3. Set default print options (e.g., default to silent print)
+el.setPrintDefaults({
+  printMode: 'local',
+  silentPrint: true
+})
 ```
 
-**Business page print/export**
+### Scenario 2: Designer Page (Creating or Editing Templates)
+
+On pages dedicated to template design, the focus is on loading templates and setting test data for preview.
 
 ```ts
 const el = document.querySelector('print-designer') as any
-await el.print({ mode: 'browser' })
+
+// 1. If editing an existing template, load it by ID (relies on CRUD endpoints from Scenario 1)
+await el.loadTemplate('tpl_123')
+
+// 2. Set test data so users can preview variable rendering during design
+el.setTestData({ 
+  orderNo: 'TEST-0001', 
+  customerName: 'John Doe',
+  items: [{ name: 'Product A', qty: 2 }]
+})
+
+// 3. (Optional) Configure custom form to control the modal when users click "Save"
+el.setTemplateModalForm({
+  edit: {
+    fields: [
+      { key: 'name', label: 'Template Name', type: 'input', required: true },
+      { key: 'remark', label: 'Remark', type: 'textarea' }
+    ]
+  }
+})
+
+// 4. User completes the design in the UI and clicks save (internally calls the upsert API)
+```
+
+### Scenario 3: Business Page Print / Export (Actual Business Operation)
+
+On specific business pages (like order details), you usually just silently load the template, fill in real data, and execute printing without showing the designer UI.
+
+```ts
+const el = document.querySelector('print-designer') as any
+
+// 1. Load target template (can be pre-fetched JSON or loaded by ID)
+await el.loadTemplate('tpl_123')
+// Or: el.loadTemplateData(templateJsonData)
+
+// 2. Inject real business variable data (takes priority over test data)
+el.setVariables({
+  orderNo: 'REAL-20231025-001',
+  customerName: 'Acme Corp',
+  items: [
+    { name: 'Real Product A', qty: 10 },
+    { name: 'Real Product B', qty: 5 }
+  ]
+})
+
+// 3. Set print quality (Optional, affects image clarity)
+el.setPrintQuality('high')
+
+// 4. Execute Print or Export PDF
+// Execute silent print (using the 'local' mode configured in Scenario 1)
+await el.print()
+
+// Or export as PDF Blob and handle it yourself (e.g., upload to server)
 const pdfBlob = await el.export({ type: 'pdfBlob' })
+console.log('Generated PDF size:', pdfBlob.size)
 ```
 
 ## Backend API Specifications

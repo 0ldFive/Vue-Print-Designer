@@ -302,9 +302,9 @@
         ]
       });
 
-      // 测试：3. 通过 API 直接配置新建/重命名/复制 modal 的自定义表单
+      // 测试：3. 通过 API 直接配置新建/编辑/复制 modal 的自定义表单
       // API: setTemplateModalForm(config)
-      // 说明: 全局配置模板的“新建(create)”、“重命名/编辑(edit)”和“复制(copy)”弹窗的表单项。
+      // 说明: 全局配置模板的“新建(create)”、“编辑(edit)”和“复制(copy)”弹窗的表单项。
       // 如果模板自身有 `ext.templateModalForm`，则会覆盖全局配置。
       designer.setTemplateModalForm({
         create: {
@@ -409,7 +409,7 @@
         'Modal 用例测试步骤：',
         '1) 先点击“注入权限模板”。',
         '2) 打开顶部模板下拉，点击“新建” -> 验证 input/select/radio/number/textarea/date/datetime 是否显示。',
-        '3) 在某个可编辑模板右侧菜单点“重命名” -> 验证同样字段及保存逻辑。',
+        '3) 在某个可编辑模板右侧菜单点“编辑” -> 验证同样字段及保存逻辑。',
         '4) 在某个可复制模板右侧菜单点“复制” -> 验证同样字段及复制后模板是否置顶并自动切换。',
         '5) name 为空时确认按钮应不可点。'
       ].join('\n'));
