@@ -356,8 +356,10 @@ const buildTemplateTestData = (template: Template) => {
   return buildTestDataFromPages(pages, existing);
 };
 
-const handleTestData = (template: Template) => {
+const handleTestData = async (template: Template) => {
   activeMenuId.value = null;
+  // Ensure we have the full detail loaded to get the complete test data
+  await store.fetchTemplateDetail(template.id);
   testDataTarget.value = template;
   const data = buildTemplateTestData(template);
   testDataAllowedKeys.value = Object.keys(data);
@@ -491,10 +493,13 @@ const handleTestDataClose = () => {
 
   target.data = { ...(target.data || {}), testData: parsed };
   target.updatedAt = Date.now();
-  store.saveToLocalStorage();
-
+  
   if (store.currentTemplateId === target.id) {
     designerStore.testData = parsed;
+    store.saveCurrentTemplate(target.name);
+  } else {
+    // If not current template, update it via store's dedicated update method
+    store.updateTemplate(target.id, { data: target.data });
   }
 };
 

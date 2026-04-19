@@ -83,7 +83,7 @@ onUnmounted(() => {
         <div class="h-[60px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <div class="flex items-center gap-2">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ title }}</h3>
-            <span class="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-mono">{{ language }}</span>
+            <span class="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-mono uppercase">{{ language }}</span>
           </div>
           <button @click="handleClose" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 dark:text-gray-400">
             <Close class="w-4 h-4" />

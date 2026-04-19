@@ -305,6 +305,49 @@ export const useTemplateStore = defineStore('templates', {
       }
     },
 
+    async updateTemplate(id: string, updates: Partial<Template>) {
+      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const existing = this.templates.find(t => t.id === id);
+      const cached = this.templateDetailCache[id];
+      if (!existing && !cached) return;
+
+      const base = cached || existing;
+      const updatedTemplate = normalizeEntityConstraints({
+        ...base,
+        ...updates,
+        updatedAt: Date.now()
+      }) as Template;
+
+      if (mode === 'remote') {
+        try {
+          const url = buildEndpoint(endpoints.templates?.upsert, '');
+          const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, updatedTemplate);
+          const res = await (fetcher || fetch)(url, options);
+          const result = await res.json();
+          const resultExt = result && typeof result === 'object' && result.ext ? result.ext : {};
+          const finalTemplate = normalizeEntityConstraints({
+            ...updatedTemplate,
+            ext: mergeExt(updatedTemplate.ext, resultExt),
+            id: result?.id || updatedTemplate.id
+          }) as Template;
+          
+          const index = this.templates.findIndex(t => t.id === finalTemplate.id);
+          if (index >= 0) this.templates[index] = finalTemplate;
+          this.templateDetailCache[finalTemplate.id] = finalTemplate;
+        } catch (e) {
+          console.error('Failed to update template', e);
+          toast.error(i18n.global.t('toast.templateSaveFailed'));
+        }
+      } else {
+        const index = this.templates.findIndex(t => t.id === id);
+        if (index >= 0) {
+          this.templates[index] = updatedTemplate;
+        }
+        this.templateDetailCache[id] = updatedTemplate;
+        this.saveToLocalStorage();
+      }
+    },
+
     async createTemplate(name: string, data?: any, extraValues?: Record<string, any>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const designerStore = useDesignerStore();

@@ -304,8 +304,9 @@ const supportsTestData = (item: CustomElementTemplate) => {
   return elementSupportsVariables(item.element);
 };
 
-const handleTestData = (item: CustomElementTemplate) => {
+const handleTestData = async (item: CustomElementTemplate) => {
   activeMenuId.value = null;
+  // Custom elements don't have a fetch detail yet
   testDataTarget.value = item;
   const existing = item.testData || {};
   const data = buildTestDataFromElement(item.element, existing);

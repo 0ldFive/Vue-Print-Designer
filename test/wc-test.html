@@ -237,6 +237,7 @@
         deletable: false,
         copyable: true,
         data: {
+          testData: { message: '这是只读模板的测试数据' },
           pages: [
             {
               id: 'page-readonly',
@@ -253,6 +254,7 @@
         deletable: true,
         copyable: true,
         data: {
+          testData: { message: '这是可编辑模板的测试数据' },
           pages: [
             {
               id: 'page-editable',
@@ -267,7 +269,7 @@
       });
       const list = designer.getTemplates({ includeData: true });
       console.log('已注入权限模板:', list);
-      alert('已注入 1 个只读模板 + 1 个可编辑模板，并默认加载只读模板');
+      alert('已注入 1 个只读模板 + 1 个可编辑模板，并默认加载只读模板。\n可以点击顶部模板下拉，查看非当前模板的“测试数据”是否能正确加载和保存。');
     });
 
     document.getElementById('btn-load-readonly-template').addEventListener('click', () => {
@@ -409,13 +411,33 @@
           }
           if (url.includes('templates/tpl-remote-1')) {
             return {
-              json: async () => ({ id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } })
+              json: async () => ({ 
+                id: 'tpl-remote-1', 
+                name: 'Remote Template 1', 
+                data: { 
+                  testData: { message: '来自详情接口的远程测试数据1' },
+                  pages: [{ id: 'p1', elements: [] }] 
+                } 
+              })
             };
           }
-          // Mock list response
+          if (url.includes('templates/tpl-remote-2')) {
+            return {
+              json: async () => ({ 
+                id: 'tpl-remote-2', 
+                name: 'Remote Template 2', 
+                data: { 
+                  testData: { message: '来自详情接口的远程测试数据2' },
+                  pages: [{ id: 'p2', elements: [] }] 
+                } 
+              })
+            };
+          }
+          // Mock list response (故意不返回完整的 data.testData，模拟列表接口不带完整数据的场景)
           return {
             json: async () => ([
-              { id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } }
+              { id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } },
+              { id: 'tpl-remote-2', name: 'Remote Template 2', data: { pages: [{ id: 'p2', elements: [] }] } }
             ])
           };
         }
@@ -446,7 +468,7 @@
       await designer.refreshTemplates();
       designer.loadTemplate('tpl-remote-1');
       
-      alert('已开启模拟的远程 CRUD 模式 (带有 800ms 延迟)。\n请在设计器中快速拖拽元素或修改属性，观察控制台 Network 模拟日志，验证在 isSaving=true 时自动保存是否能成功延迟触发而不会丢失数据。');
+      alert('已开启模拟的远程 CRUD 模式 (带有 800ms 延迟)。\n请在设计器中快速拖拽元素或修改属性，观察控制台 Network 模拟日志，验证在 isSaving=true 时自动保存是否能成功延迟触发而不会丢失数据。\n\n[测试 testData]\n点击顶部下拉，分别查看“Remote Template 1”和“Remote Template 2”右侧的“测试数据”，验证在不切换模板的情况下，是否能正确拉取详情中的测试数据并正常保存。');
     });
 
     // 注册组件（如果内部未自动注册）
