@@ -47,6 +47,7 @@
       <button id="btn-seed-tag-templates">注入带标签模板</button>
       <button id="btn-test-global-loading">测试全局 Loading</button>
       <button id="btn-test-remote-autosave">测试远程防抖自动保存</button>
+      <button id="btn-test-preview-html">测试获取 HTML 预览 (getPreviewHtml)</button>
     </div>
   <!-- 加载设计器组件 -->
   <print-designer></print-designer>
@@ -469,6 +470,24 @@
       designer.loadTemplate('tpl-remote-1');
       
       alert('已开启模拟的远程 CRUD 模式 (带有 800ms 延迟)。\n请在设计器中快速拖拽元素或修改属性，观察控制台 Network 模拟日志，验证在 isSaving=true 时自动保存是否能成功延迟触发而不会丢失数据。\n\n[测试 testData]\n点击顶部下拉，分别查看“Remote Template 1”和“Remote Template 2”右侧的“测试数据”，验证在不切换模板的情况下，是否能正确拉取详情中的测试数据并正常保存。');
+    });
+
+    document.getElementById('btn-test-preview-html').addEventListener('click', async () => {
+      try {
+        const htmlStr = await designer.getPreviewHtml();
+        console.log('Preview HTML Result:', htmlStr);
+        // Open a new window to show the HTML
+        const newWin = window.open('', '_blank');
+        if (newWin) {
+          newWin.document.write(htmlStr);
+          newWin.document.close();
+        } else {
+          alert('获取预览 HTML 成功，已在控制台打印，但被浏览器拦截了新窗口弹出。');
+        }
+      } catch (err) {
+        console.error('获取预览 HTML 失败:', err);
+        alert('获取预览 HTML 失败: ' + err.message);
+      }
     });
 
     // 注册组件（如果内部未自动注册）

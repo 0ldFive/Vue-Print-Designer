@@ -338,6 +338,16 @@ class PrintDesignerElement extends HTMLElement {
     }
   }
 
+  async getPreviewHtml() {
+    if (!this.printApi) return '';
+    try {
+      return await this.printApi.getPrintHtml(this.getPrintPages());
+    } catch (error) {
+      this.dispatchEvent(new CustomEvent('error', { detail: { scope: 'getPreviewHtml', error } }));
+      throw error;
+    }
+  }
+
   async export(request: DesignerExportRequest) {
     if (!this.printApi || !this.printSettings) return;
     const type = request?.type;

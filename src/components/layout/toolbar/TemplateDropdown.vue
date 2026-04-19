@@ -222,9 +222,12 @@ const handleClickOutside = (e: MouseEvent) => {
   }
 };
 
+const currentTemplate = computed(() => {
+  return store.templates.find(t => t.id === store.currentTemplateId) || null;
+});
+
 const currentTemplateName = computed(() => {
-  const tpl = store.templates.find(t => t.id === store.currentTemplateId);
-  return tpl ? tpl.name : t('template.select');
+  return currentTemplate.value ? currentTemplate.value.name : t('template.select');
 });
 
 const toggleDropdown = () => {
@@ -532,15 +535,31 @@ const handleModalSave = (payload: ModalSavePayload) => {
   <div class="relative" ref="containerRef">
     <button 
       @click.stop="toggleDropdown"
-      class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors w-40"
-      title="Templates"
+      class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors w-52"
+      :title="currentTemplateName"
     >
       <Description class="w-4 h-4 flex-shrink-0" />
-      <span class="flex-1 truncate text-left">{{ currentTemplateName }}</span>
+      <div class="flex-1 overflow-hidden flex items-center gap-1.5 text-left">
+        <span
+          v-for="tag in currentTemplate ? getVisibleTemplateTags(currentTemplate) : []"
+          :key="`${currentTemplate?.id}-${tag.label}-${tag.color || ''}`"
+          class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0"
+          :style="normalizeTagColor(tag.color)"
+        >
+          {{ tag.label }}
+        </span>
+        <span
+          v-if="currentTemplate && getTemplateTagOverflow(currentTemplate) > 0"
+          class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0 bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+        >
+          +{{ getTemplateTagOverflow(currentTemplate) }}
+        </span>
+        <span class="truncate">{{ currentTemplateName }}</span>
+      </div>
       <ChevronDown class="w-4 h-4 flex-shrink-0" />
     </button>
 
-    <div v-if="isOpen" class="absolute top-full left-0 mt-2 w-[220px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[100] flex flex-col max-h-[500px]">
+    <div v-if="isOpen" class="absolute top-full left-0 mt-2 w-[260px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[100] flex flex-col max-h-[500px]">
       <div class="flex-1 overflow-y-auto py-1">
         <div v-if="store.templates.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
           {{ t('template.noTemplates') }}
@@ -552,6 +571,7 @@ const handleModalSave = (payload: ModalSavePayload) => {
           class="relative group border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
           @click="selectTemplate(t)"
           @contextmenu.prevent="openRowMenuByContext($event, t.id)"
+          :title="t.name"
         >
           <div class="flex items-center gap-2 overflow-hidden flex-1">
              <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
