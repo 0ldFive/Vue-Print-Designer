@@ -7,7 +7,7 @@
 - [Instance Methods and Parameters](#instance-methods-and-parameters)
   - [Initialization (Recommended)](#initialization-recommended)
   - [1. Execute Print (print)](#1-execute-print-print)
-  - [2. Export PDF/Images (export)](#2-export-pdfimages-export)
+  - [2. Export PDF/Images/HTML (export)](#2-export-pdfimageshtml-export)
   - [3. Generate and Get HTML Preview Code (getPreviewHtml)](#3-generate-and-get-html-preview-code-getpreviewhtml)
   - [4. Set Default Print Options (setPrintDefaults)](#4-set-default-print-options-setprintdefaults)
   - [5. Print Quality Settings (getPrintQuality/setPrintQuality)](#5-print-quality-settings-getprintqualitysetprintquality)
@@ -42,7 +42,7 @@
 | Method | Description |
 | --- | --- |
 | `print(request)` | Execute print |
-| `export(request)` | Export PDF/Images |
+| `export(request)` | Export PDF/Images/HTML |
 | `getPreviewHtml()` | Generate and get HTML preview code |
 | `setPrintDefaults(payload)` | Set default print options |
 | `getPrintQuality()` | Get current print quality |
@@ -234,13 +234,14 @@ Parameters:
 | `mode` | `'browser' \| 'local' \| 'remote'` | No | Print mode |
 | `options` | `PrintOptions` | No | Print options (see PrintOptions) |
 
-### 2. Export PDF/Images (export)
+### 2. Export PDF/Images/HTML (export)
 
-Description: export PDF/images or return Blob.
+Description: export PDF/images/HTML or return Blob/text.
 
 ```ts
 await el.export({ type: 'pdf', filename: 'order.pdf' })
 await el.export({ type: 'images', filenamePrefix: 'order' })
+await el.export({ type: 'html', filename: 'order.html' })
 const pdfBlob = await el.export({ type: 'pdfBlob' })
 const imageBlob = await el.export({ type: 'imageBlob' })
 ```
@@ -249,8 +250,8 @@ Parameters:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `type` | `'pdf' \| 'images' \| 'pdfBlob' \| 'imageBlob'` | Yes | Export type |
-| `filename` | `string` | No | PDF filename |
+| `type` | `'pdf' \| 'images' \| 'pdfBlob' \| 'imageBlob' \| 'html'` | Yes | Export type |
+| `filename` | `string` | No | PDF/HTML filename |
 | `filenamePrefix` | `string` | No | Image filename prefix |
 | `merged` | `boolean` | No | Merge images or not |
 
@@ -803,6 +804,9 @@ For `setTemplateContextMenu` (Template List):
 - `edit`: Edit (Icon: `material-symbols:edit`)
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
+- `exportPdf`: Export PDF (Icon: `material-symbols:picture-as-pdf`)
+- `exportImage`: Export Image (Icon: `material-symbols:image`)
+- `exportHtml`: Export HTML (Icon: `material-symbols:html`)
 
 For `setCustomElementContextMenu` (Custom Element List):
 - `editElement`: Edit Element (Icon: `material-symbols:edit`)
@@ -910,6 +914,30 @@ el.clearCustomElementModalForm()
 ```
 
 ### 24. Configure Template List Tag Extension (setTemplateTagResolver)
+
+Supports rendering custom tags (such as business status, categories, etc.) for each template in the left-side template list. The tag data is dynamically returned by the callback function you provide, based on the current template data.
+
+```ts
+el.setTemplateTagResolver((template) => {
+  // Read preset tag array from template extension data (refer to Backend API Specifications)
+  const tags = template.ext?.templateTags || []
+  
+  // You can also dynamically generate tags based on other template fields, for example:
+  // if (template.permissions?.copyable) {
+  //   tags.push({ key: 'copyable', label: 'Copyable', color: 'green' })
+  // }
+  
+  return tags
+})
+```
+
+**Returned tag object structure:**
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `key` | `string` | Unique identifier for the tag |
+| `label` | `string` | Display text of the tag |
+| `color` | `string` | Tag color. Supports built-in semantic colors (`white`, `red`, `blue`, `green`, `orange`) or valid CSS color values. If not provided, default gray style is used. |
 
 ## Backend API Specifications
 
