@@ -1018,11 +1018,9 @@ export const usePrint = () => {
     container.style.height = `${height}px`; // Start with 1 page height
     tempHost.appendChild(container);
 
-    // Copy all styles from head to the container to ensure proper rendering
-    const styles = document.head.querySelectorAll('style, link[rel="stylesheet"]');
-    styles.forEach(style => {
-        container.appendChild(style.cloneNode(true));
-    });
+    // Removed the copying of all styles from head to the container.
+    // It was causing global theme flashes in host applications (e.g. Ant Design Vue dynamic themes),
+    // and is unnecessary because cloneElementWithStyles already inlines all computed styles.
 
     let pages: HTMLElement[] = [];
     if (typeof content === 'string') {
