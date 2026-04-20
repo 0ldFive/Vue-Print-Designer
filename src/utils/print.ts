@@ -1324,7 +1324,7 @@ export const usePrint = () => {
               }, 1000);
             }
           };
-          return;
+          return { status: 'success', mode: 'browser' };
         }
         
         await new Promise<void>((resolve) => {
@@ -1356,9 +1356,11 @@ export const usePrint = () => {
             }, 1000);
           };
         });
+        return { status: 'success', mode: 'browser' };
     } catch (error) {
         console.error('Print failed', error);
         toast.error('Print failed');
+        throw error;
     } finally {
         restoreViewport();
     }
@@ -1415,7 +1417,7 @@ export const usePrint = () => {
   let localSocket: WebSocket | null = null;
   let localSocketUrl = '';
   let localSocketPromise: Promise<WebSocket> | null = null;
-  let localQueue = Promise.resolve();
+  let localQueue: Promise<any> = Promise.resolve();
 
   const resetLocalSocket = () => {
     if (localSocket && localSocket.readyState === WebSocket.OPEN) {
@@ -1456,7 +1458,7 @@ export const usePrint = () => {
   };
 
   const sendLocalWsPrint = (url: string, payload: Record<string, any>, waitFor: 'status') => {
-    localQueue = localQueue.then(() => new Promise<void>(async (resolve, reject) => {
+    localQueue = localQueue.then(() => new Promise<any>(async (resolve, reject) => {
       let resolved = false;
       let socket: WebSocket | null = null;
       const timeoutId = window.setTimeout(() => {
@@ -1477,18 +1479,30 @@ export const usePrint = () => {
         if (resolved) return;
         try {
           const msg = JSON.parse(event.data);
-          if (msg.status === 'success' || msg.status === 'error') {
+          // Check for 'success' status, but also allow 'ok' or missing status if there's no error
+          if (msg.status === 'success' || msg.status === 'error' || msg.status === 'ok' || msg.type === 'print_result') {
             resolved = true;
             window.clearTimeout(timeoutId);
             cleanup();
-            if (msg.status === 'success') resolve();
-            else reject(new Error(msg.message || 'Print failed'));
+            if (msg.status === 'success' || msg.status === 'ok' || (msg.type === 'print_result' && msg.status !== 'error')) {
+              resolve(msg);
+            } else {
+              reject(new Error(msg.message || 'Print failed'));
+            }
           }
         } catch (error) {
-          resolved = true;
-          window.clearTimeout(timeoutId);
-          cleanup();
-          reject(error instanceof Error ? error : new Error('Print failed'));
+          // If it's not JSON, it might just be a simple text ACK
+          if (event.data === 'success' || event.data === 'ok') {
+            resolved = true;
+            window.clearTimeout(timeoutId);
+            cleanup();
+            resolve({ status: 'success', message: event.data });
+          } else {
+            resolved = true;
+            window.clearTimeout(timeoutId);
+            cleanup();
+            reject(error instanceof Error ? error : new Error('Print failed'));
+          }
         }
       };
 
@@ -1531,14 +1545,12 @@ export const usePrint = () => {
     const mode = request?.mode || printMode.value;
 
     if (mode === 'browser') {
-      await browserPrint(content);
-      return;
+      return await browserPrint(content);
     }
 
     const connectionOk = mode === 'local' ? localStatus.value === 'connected' : remoteStatus.value === 'connected';
     if (!connectionOk) {
-      await browserPrint(content);
-      return;
+      return await browserPrint(content);
     }
 
     const options = request?.options || (mode === 'local' ? localPrintOptions : remotePrintOptions);
@@ -1557,7 +1569,7 @@ export const usePrint = () => {
     }
     if (!options.printer) {
       toast.error('Printer is required');
-      return;
+      throw new Error('Printer is required');
     }
 
     try {
@@ -1566,21 +1578,23 @@ export const usePrint = () => {
 
       if (mode === 'local') {
         const payload = buildPrintPayload(options, dataUrl, localSettings.secretKey.trim());
-        await sendLocalWsPrint(localWsUrl.value, payload, 'status');
-        return;
+        const result = await sendLocalWsPrint(localWsUrl.value, payload, 'status');
+        return result;
       }
 
       if (!remoteSelectedClientId.value) {
         toast.error('Client is required');
-        return;
+        throw new Error('Client is required');
       }
       const payload = buildPrintPayload(options, dataUrl);
       payload.cmd = 'submit_task';
       payload.client_id = remoteSelectedClientId.value;
-      await submitRemoteTask(payload);
+      const result = await submitRemoteTask(payload);
+      return result;
     } catch (error) {
       console.error('Print failed', error);
       toast.error('Print failed');
+      throw error;
     }
   };
 

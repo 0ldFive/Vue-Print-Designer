@@ -213,26 +213,36 @@ The component does not require a dedicated `init` method. Configure the followin
 
 ### 1. Execute Print (print)
 
-Description: trigger printing. If `mode` is omitted, default mode is used.
+Description: Execute the print operation. This method returns a Promise, allowing you to `await` the completion of the print task or catch exceptions. If `mode` is omitted, the default print mode configured in the component will be used. Upon successful printing, the Promise resolves and returns the status object (containing fields like `status`) provided by the underlying client or browser.
 
 ```ts
-await el.print({
-  mode: 'browser',
-  options: {
-    printer: 'HP LaserJet',
-    copies: 2,
-    pageRange: '1-2',
-    orientation: 'portrait'
-  }
-})
+try {
+  const result = await el.print({
+    mode: 'local', // Supports 'browser', 'local', 'remote'
+    options: {
+      printer: 'HP LaserJet',
+      copies: 2,
+      pageRange: '1-2',
+      orientation: 'portrait'
+    }
+  });
+  console.log('Print task executed successfully! Return status:', result);
+} catch (error) {
+  console.error('Print failed:', error.message);
+}
 ```
 
-Parameters:
+**Parameters:**
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `mode` | `'browser' \| 'local' \| 'remote'` | No | Print mode |
-| `options` | `PrintOptions` | No | Print options (see PrintOptions) |
+| `mode` | `'browser' \| 'local' \| 'remote'` | No | Print mode. If omitted, the default mode is used. |
+| `options` | `PrintOptions` | No | Print options (see "Print Options Detail" below) |
+
+**Promise Behavior across different `mode`s:**
+- **`browser`**: Invokes the browser's native print dialog (e.g., `window.print()`). Due to browser security restrictions, the frontend cannot determine whether the user clicked "Print" or "Cancel", so the Promise usually resolves immediately after the dialog is invoked, returning `{ status: 'success', mode: 'browser' }`.
+- **`local`**: Sends the print task to the local print client (e.g., `printdot-client`) via WebSocket. The Promise will **keep waiting** until the local client successfully sends the task to the printer (or the system print queue) and returns a confirmation ACK. It will then resolve and return the ACK message object (e.g. `{ status: 'success', ... }`). If no confirmation is received within the default timeout (30 seconds) or an error occurs, the Promise will be rejected.
+- **`remote`**: Submits the print task to a remote cloud print service. The Promise resolves once the cloud service successfully receives the task, returning the full response data from the cloud API.
 
 ### 2. Export PDF/Images/HTML (export)
 

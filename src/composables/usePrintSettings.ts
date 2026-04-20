@@ -97,7 +97,7 @@ interface PrintSettingsState {
   fetchRemoteClients: () => Promise<RemoteClientInfo[]>;
   fetchRemotePrinters: (clientId?: string) => Promise<RemotePrinterInfo[]>;
   fetchLocalPrinterCaps: (printer: string) => Promise<LocalPrinterCaps | undefined>;
-  submitRemoteTask: (payload: Record<string, any>) => Promise<void>;
+  submitRemoteTask: (payload: Record<string, any>) => Promise<any>;
   cancelLocalRetry: () => void;
   cancelRemoteRetry: () => void;
   connectLocal: () => Promise<void>;
@@ -828,7 +828,7 @@ const createState = (): PrintSettingsState => {
 
   const submitRemoteTask = async (payload: Record<string, any>) => {
     await connectRemote();
-    await sendWithWait<{ cmd: 'task_result'; task_id?: string; status?: string; message?: string }>(
+    return await sendWithWait<{ cmd: 'task_result'; task_id?: string; status?: string; message?: string }>(
       remoteSocket,
       remoteWaiters,
       payload,

@@ -331,8 +331,9 @@ class PrintDesignerElement extends HTMLElement {
     const pages = this.getPrintPages();
     this.dispatchEvent(new CustomEvent('print', { detail: { request } }));
     try {
-      await this.printApi.print(pages, { mode: request.mode, options: request.options });
-      this.dispatchEvent(new CustomEvent('printed', { detail: { request } }));
+      const result = await this.printApi.print(pages, { mode: request.mode, options: request.options });
+      this.dispatchEvent(new CustomEvent('printed', { detail: { request, result } }));
+      return result;
     } catch (error) {
       this.dispatchEvent(new CustomEvent('error', { detail: { scope: 'print', error } }));
       throw error;
