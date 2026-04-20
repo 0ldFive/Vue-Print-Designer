@@ -167,8 +167,9 @@ const el = document.querySelector('print-designer') as any;
 // Print
 await el.print({ mode: 'browser' });
 
-// Export PDF / image / blob
+// Export PDF / image / html / blob
 await el.export({ type: 'pdf', filename: 'order-20240223.pdf' });
+await el.export({ type: 'html', filename: 'order-20240223.html' });
 const pdfBlob = await el.export({ type: 'pdfBlob' });
 ```
 

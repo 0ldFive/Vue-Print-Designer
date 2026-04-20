@@ -170,8 +170,9 @@ const el = document.querySelector('print-designer') as any;
 // 打印
 await el.print({ mode: 'browser' });
 
-// 导出 PDF / 图片 / Blob
+// 导出 PDF / 图片 / HTML / Blob
 await el.export({ type: 'pdf', filename: 'order-20240223.pdf' });
+await el.export({ type: 'html', filename: 'order-20240223.html' });
 const pdfBlob = await el.export({ type: 'pdfBlob' });
 ```
 

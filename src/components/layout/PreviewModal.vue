@@ -29,7 +29,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const store = useDesignerStore();
 const modalContainer = inject('modal-container', ref<HTMLElement | null>(null));
-const { exportPdf: exportPdfHtml, getPdfBlob, exportImages, getImageBlob } = usePrint();
+const { exportPdf: exportPdfHtml, exportHtml, getPdfBlob, exportImages, getImageBlob } = usePrint();
 const templateStore = useTemplateStore();
 const previewContainer = ref<HTMLElement | null>(null);
 const wrapperRef = ref<HTMLElement | null>(null);
@@ -125,6 +125,13 @@ const handlePdf = () => {
   if (previewContainer.value) {
     const pages = Array.from(previewContainer.value.querySelectorAll('.print-page')) as HTMLElement[];
     exportPdfHtml(pages, `${getExportBaseName()}.pdf`);
+  }
+};
+
+const handleExportHtmlBtn = async () => {
+  if (previewContainer.value) {
+    const pages = Array.from(previewContainer.value.querySelectorAll('.print-page')) as HTMLElement[];
+    await exportHtml(pages, `${getExportBaseName()}.html`);
   }
 };
 
@@ -268,6 +275,13 @@ onUnmounted(() => {
           >
             <FileOutput class="text-lg" />
             {{ t('editor.exportImage') }}
+          </button>
+          <button 
+            @click="handleExportHtmlBtn"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+          >
+            <FileOutput class="text-lg" />
+            {{ t('editor.exportHtml') }}
           </button>
           <button 
             @click="handleViewImageBlob"

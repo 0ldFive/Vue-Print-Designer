@@ -40,6 +40,7 @@ export default {
   editor: {
     preview: 'Print Preview',
     exportPdf: 'Export PDF',
+    exportHtml: 'Export HTML',
     exportImage: 'Export Image',
     print: 'Print',
     viewJson: 'View JSON',

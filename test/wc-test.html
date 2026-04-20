@@ -379,6 +379,27 @@
             category: 'standard',
             priority: 1
           }
+        },
+        saveAs: {
+          fields: [
+            { key: 'name', label: '名称', type: 'input', required: true, placeholder: '请输入名称' },
+            {
+              key: 'category',
+              label: '分类',
+              type: 'select',
+              required: true,
+              options: [
+                { label: '标准', value: 'standard' },
+                { label: '发货', value: 'shipment' }
+              ]
+            },
+            { key: 'priority', label: '优先级', type: 'number', min: 1, max: 99, step: 1 },
+            { key: 'publishAt', label: '发布时间', type: 'datetime' }
+          ],
+          initialValues: {
+            category: 'standard',
+            priority: 1
+          }
         }
       });
     };

@@ -35,7 +35,7 @@ loader.config({
 });
 
 export type DesignerExportRequest = {
-  type: 'pdf' | 'images' | 'pdfBlob' | 'imageBlob';
+  type: 'pdf' | 'html' | 'images' | 'pdfBlob' | 'imageBlob';
   filename?: string;
   filenamePrefix?: string;
   merged?: boolean;
@@ -361,6 +361,11 @@ class PrintDesignerElement extends HTMLElement {
       this.dispatchEvent(new CustomEvent('export', { detail: { request } }));
       if (type === 'pdf') {
         await this.printApi.exportPdf(this.getPrintPages(), request.filename || 'print-design.pdf');
+        this.dispatchEvent(new CustomEvent('exported', { detail: { request } }));
+        return;
+      }
+      if (type === 'html') {
+        await this.printApi.exportHtml(this.getPrintPages(), request.filename || 'print-design.html');
         this.dispatchEvent(new CustomEvent('exported', { detail: { request } }));
         return;
       }

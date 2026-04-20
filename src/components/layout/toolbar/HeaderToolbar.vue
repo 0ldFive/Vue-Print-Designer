@@ -93,10 +93,8 @@ const handleViewJson = () => {
   modalLanguage.value = 'json';
   showJsonModal.value = true;
 };
-const showSaveNameModal = ref(false);
-const saveNameInitialValue = ref('');
-const saveModalMode = ref<'save' | 'saveAs'>('save');
-const { getPrintHtml, print, exportPdf, getPdfBlob, exportImages, getImageBlob } = usePrint();
+
+const { getPrintHtml, print, exportPdf, exportHtml, getPdfBlob, exportImages, getImageBlob } = usePrint();
 
 const handleViewImageBlob = async () => {
   try {
@@ -320,6 +318,11 @@ const handleExport = async () => {
   await exportPdf(undefined, `${baseName}.pdf`);
 };
 
+const handleExportHtmlBtn = async () => {
+  const baseName = getExportBaseName();
+  await exportHtml(undefined, `${baseName}.html`);
+};
+
 const handleExportImages = async () => {
   const baseName = getExportBaseName();
   await exportImages(undefined, baseName);
@@ -334,25 +337,14 @@ const handleSave = () => {
       return;
     }
   }
-  saveModalMode.value = 'save';
-  saveNameInitialValue.value = '';
-  showSaveNameModal.value = true;
+  window.dispatchEvent(new CustomEvent('designer:save'));
 };
 
 const handleSaveAs = () => {
-  saveModalMode.value = 'saveAs';
-  const current = templateStore.templates.find(t => t.id === templateStore.currentTemplateId);
-  saveNameInitialValue.value = current ? `${current.name} Copy` : '';
-  showSaveNameModal.value = true;
-};
-
-const handleSaveConfirm = (name: string) => {
-  if (saveModalMode.value === 'saveAs') {
-    templateStore.createTemplate(name);
-  } else {
-    templateStore.saveCurrentTemplate(name);
+  const currentId = templateStore.currentTemplateId;
+  if (currentId) {
+    window.dispatchEvent(new CustomEvent('designer:save-as', { detail: { id: currentId } }));
   }
-  showSaveNameModal.value = false;
 };
 
 const getExportBaseName = () => {
@@ -390,13 +382,6 @@ onUnmounted(() => {
 <template>
   <div class="flex items-center gap-4 text-gray-700 dark:text-gray-200">
     <TemplateDropdown />
-    <InputModal 
-      :show="showSaveNameModal" 
-      :title="saveModalMode === 'saveAs' ? t('editor.saveAsTemplate') : t('editor.saveTemplate')"
-      :initial-value="saveNameInitialValue"
-      @close="showSaveNameModal = false"
-      @save="handleSaveConfirm"
-    />
 
     <!-- Font Controls -->
     <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 px-2">
@@ -666,6 +651,10 @@ onUnmounted(() => {
         <button @click="handleExport(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
           <FileOutput class="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span>{{ t('editor.exportPdf') }}</span>
+        </button>
+        <button @click="handleExportHtmlBtn(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
+          <FileOutput class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <span>{{ t('editor.exportHtml') }}</span>
         </button>
         <button @click="handleExportImages(); showExportMenu = false" class="w-full flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded text-sm text-left transition-colors whitespace-nowrap">
           <FileOutput class="w-4 h-4 text-gray-500 dark:text-gray-400" />

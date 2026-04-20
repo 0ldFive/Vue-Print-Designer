@@ -1254,6 +1254,49 @@ export const usePrint = () => {
     }
   };
 
+  const exportHtml = async (content?: HTMLElement | string | HTMLElement[], filename = 'print-design.html') => {
+    try {
+        const targetContent = content || Array.from(document.querySelectorAll('.print-page')) as HTMLElement[];
+        const html = await getPrintHtml(targetContent as HTMLElement[]);
+        
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${filename}</title>
+  <style>
+    ${baseStyles}
+    body {
+      background-color: #f3f4f6;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename.endsWith('.html') ? filename : `${filename}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Export HTML failed', error);
+        toast.error('Export HTML failed');
+    }
+  };
+
       const browserPrint = async (content: HTMLElement | string | HTMLElement[]) => {
       const restoreViewport = lockViewportScroll(!isShadowDomContent(content));
       try {
@@ -1706,6 +1749,7 @@ export const usePrint = () => {
     getPrintHtml,
     print,
     exportPdf,
+    exportHtml,
     exportImages,
     getPdfBlob,
     getImageBlob

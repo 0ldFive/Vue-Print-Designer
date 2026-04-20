@@ -876,7 +876,7 @@ Parameter contract:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `config.create/edit/copy` | `TemplateModalConfigItem` | No | Config for create/edit/copy modal |
+| `config.create/edit/copy` | `TemplateModalConfigItem` | No | Config for the respective modal |
 | `item.fields` | `TemplateModalField[]` | No | Field list; fallback to default input if empty |
 | `item.initialValues` | `Record<string, any>` | No | Default initial values (used for create or as fallback for echo) |
 | `field.key` | `string` | Yes | Unique field key |

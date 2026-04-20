@@ -40,6 +40,7 @@ export default {
   editor: {
     preview: '打印预览',
     exportPdf: '导出 PDF',
+    exportHtml: '导出 HTML',
     exportImage: '导出图片',
     print: '打印',
     viewJson: '查看 JSON',

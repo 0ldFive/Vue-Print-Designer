@@ -5,7 +5,7 @@ import { uiConfirm } from '@/utils/confirm';
 import { toast } from '@/utils/toast';
 import { useTemplateStore, type Template } from '@/stores/templates';
 import { useDesignerStore } from '@/stores/designer';
-import type { ListContextMenuItem, TemplateModalConfigItem, TemplateModalField, TemplateListTag } from '@/types';
+import type { ListContextMenuItem, TemplateModalConfigItem, TemplateModalField, TemplateListTag, TemplateModalFormConfig } from '@/types';
 import { canCopyEntity, canDeleteEntity, canEditEntity } from '@/utils/entityConstraints';
 
 import ChevronDown from '~icons/material-symbols/expand-more';
@@ -51,7 +51,18 @@ type ModalSavePayload = string | Record<string, any>;
 const maxVisibleTemplateTags = 2;
 
 const getModalConfigItem = (mode: 'create' | 'edit' | 'copy'): TemplateModalConfigItem | null => {
-  return designerStore.templateModalFormConfig?.[mode] || null;
+  const config = designerStore.templateModalFormConfig;
+  if (!config) return null;
+  const keyMode = mode as keyof TemplateModalFormConfig;
+  if (config[keyMode]) return config[keyMode] || null;
+  // Fallback to edit or create if the specific mode is missing
+  if (mode === 'copy') {
+    return config.copy || config.edit || config.create || null;
+  }
+  if (mode === 'edit') {
+    return config.edit || config.create || null;
+  }
+  return config.create || null;
 };
 
 const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' | 'edit' | 'copy') => {
@@ -70,10 +81,11 @@ const getTemplateModalSavedValues = (templateId: string | null, mode: 'create' |
   let modeValues = {};
   
   // Use current mode's values if available
-  if (extForm[mode] && typeof extForm[mode] === 'object') {
-    modeValues = { ...extForm[mode] };
-  } else if (cacheForm[mode] && typeof cacheForm[mode] === 'object') {
-    modeValues = { ...cacheForm[mode] };
+  const activeMode = mode;
+  if (extForm[activeMode] && typeof extForm[activeMode] === 'object') {
+    modeValues = { ...extForm[activeMode] };
+  } else if (cacheForm[activeMode] && typeof cacheForm[activeMode] === 'object') {
+    modeValues = { ...cacheForm[activeMode] };
   } else {
     // Fallback to the last saved mode's values
     const lastMode = extForm.lastMode || cacheForm.lastMode;
@@ -200,11 +212,15 @@ onMounted(async () => {
   }
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('designer:new-template', handleCreate);
+  window.addEventListener('designer:save-as', handleSaveAsEvent as EventListener);
+  window.addEventListener('designer:save', handleSaveEvent);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('designer:new-template', handleCreate);
+  window.removeEventListener('designer:save-as', handleSaveAsEvent as EventListener);
+  window.removeEventListener('designer:save', handleSaveEvent);
 });
 
 const handleClickOutside = (e: MouseEvent) => {
@@ -298,6 +314,34 @@ const handleCreate = () => {
   modalInitialValues.value = buildModalInitialValues('', 'create');
   showModal.value = true;
   isOpen.value = false;
+};
+
+const handleSaveAsEvent = async (e: Event) => {
+  const customEvent = e as CustomEvent;
+  const currentId = customEvent.detail?.id || store.currentTemplateId;
+  if (!currentId) return;
+
+  await store.fetchTemplateDetail(currentId);
+  const current = store.templates.find(t => t.id === currentId);
+  const copyName = current ? `${current.name} Copy` : '';
+
+  modalMode.value = 'create';
+  targetTemplateId.value = currentId;
+  modalInitialName.value = copyName;
+  modalInitialValues.value = buildModalInitialValues(copyName, 'create', currentId);
+  showModal.value = true;
+  isOpen.value = false;
+  activeMenuId.value = null;
+};
+
+const handleSaveEvent = () => {
+  modalMode.value = 'create';
+  targetTemplateId.value = null;
+  modalInitialName.value = '';
+  modalInitialValues.value = buildModalInitialValues('', 'create', null);
+  showModal.value = true;
+  isOpen.value = false;
+  activeMenuId.value = null;
 };
 
 const handleEdit = async (template: Template) => {
@@ -521,7 +565,9 @@ const handleModalSave = (payload: ModalSavePayload) => {
 
     // Reset canvas before creating new template
     const designerStore = useDesignerStore(); // Ensure we have access to designer store
-    designerStore.resetCanvas();
+    if (!targetTemplateId.value) {
+      designerStore.resetCanvas();
+    }
     store.createTemplate(name, undefined, extraValues);
   } else if (modalMode.value === 'edit' && targetTemplateId.value) {
     store.editTemplate(targetTemplateId.value, name, extraValues);
@@ -529,6 +575,13 @@ const handleModalSave = (payload: ModalSavePayload) => {
     store.copyTemplate(targetTemplateId.value, name, extraValues);
   }
 };
+
+const modalTitle = computed(() => {
+  if (modalMode.value === 'edit') return t('template.edit');
+  if (modalMode.value === 'copy') return t('common.copy');
+  if (modalMode.value === 'create' && targetTemplateId.value) return t('editor.saveAsTemplate');
+  return t('template.new');
+});
 </script>
 
 <template>
@@ -649,7 +702,7 @@ const handleModalSave = (payload: ModalSavePayload) => {
       :initial-value="modalInitialName"
       :initial-values="modalInitialValues"
       :fields="modalFields"
-      :title="modalMode === 'create' ? t('template.new') : (modalMode === 'edit' ? t('template.edit') : t('common.copy'))"
+      :title="modalTitle"
       @close="showModal = false"
       @save="handleModalSave"
     />

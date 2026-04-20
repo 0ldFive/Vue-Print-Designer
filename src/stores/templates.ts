@@ -348,7 +348,7 @@ export const useTemplateStore = defineStore('templates', {
       }
     },
 
-    async createTemplate(name: string, data?: any, extraValues?: Record<string, any>) {
+    async createTemplate(name: string, data?: any, extraValues?: Record<string, any>, templateMode: 'create' | 'copy' = 'create') {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const designerStore = useDesignerStore();
       const nextData = data || {
@@ -376,7 +376,7 @@ export const useTemplateStore = defineStore('templates', {
         name,
         data: newData,
         updatedAt: Date.now()
-      }, 'create', extraValues);
+      }, templateMode, extraValues);
       const newTemplate: Template = normalizeEntityConstraints(templateBase) as Template;
 
       if (mode === 'remote') {
