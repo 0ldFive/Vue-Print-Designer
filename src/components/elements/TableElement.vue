@@ -303,9 +303,26 @@ const processedData = computed(() => {
     }
   }
 
-  if (props.element.customScript) {
+  let scriptContent = props.element.customScript;
+
+  // Custom Script Variable
+  if (store.isExporting && props.element.customScriptVariable) {
+    const key = normalizeVariableKey(props.element.customScriptVariable);
+    const variableScript = key ? (variables[key] ?? testData[key]) : undefined;
+    if (typeof variableScript === 'string') {
+      scriptContent = variableScript;
+    }
+  } else if (!store.isExporting && props.element.customScriptVariable) {
+    const key = normalizeVariableKey(props.element.customScriptVariable);
+    const variableScript = key ? testData[key] : undefined;
+    if (typeof variableScript === 'string') {
+      scriptContent = variableScript;
+    }
+  }
+
+  if (scriptContent) {
     try {
-      const func = new Function('data', 'footerData', 'columns', 'type', props.element.customScript);
+      const func = new Function('data', 'footerData', 'columns', 'type', scriptContent);
       const result = func(cloneDeep(data), cloneDeep(footerData), cloneDeep(cols), 'global');
       if (result) {
         if (result.data) data = result.data;
@@ -337,7 +354,7 @@ const processedData = computed(() => {
       });
   });
   
-  return { columns: cols, data, footerData: computedFooterData };
+  return { columns: cols, data, footerData: computedFooterData, scriptContent };
 });
 
 const cellStyle = computed(() => ({
@@ -517,6 +534,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         { label: 'properties.label.columnsVariable', type: 'text', target: 'element', key: 'columnsVariable', placeholder: '@columnsVariable' },
         { label: 'properties.label.dataVariable', type: 'text', target: 'element', key: 'variable', placeholder: '@dataVariable' },
         { label: 'properties.label.footerDataVariable', type: 'text', target: 'element', key: 'footerDataVariable', placeholder: '@footerDataVariable' },
+        { label: 'properties.label.customScriptVariable', type: 'text', target: 'element', key: 'customScriptVariable', placeholder: '@customScriptVariable' },
         { label: 'properties.label.columns', type: 'code', language: 'json', target: 'element', key: 'columns', placeholder: 'properties.label.columnsPlaceholder' },
         { label: 'properties.label.data', type: 'code', language: 'json', target: 'element', key: 'data', placeholder: 'properties.label.dataPlaceholder' },
         { label: 'properties.label.footerData', type: 'code', language: 'json', target: 'element', key: 'footerData', placeholder: 'properties.label.footerDataPlaceholder' },
@@ -613,7 +631,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 
 <template>
   <div class="w-full h-full overflow-hidden" :style="{ backgroundColor: element.style.backgroundColor || 'transparent' }">
-    <table class="w-full border-collapse" :class="{ 'h-full': !store.isExporting }" :data-tfoot-repeat="element.tfootRepeat" :data-auto-paginate="element.autoPaginate" :data-custom-script="element.customScript">
+    <table class="w-full border-collapse" :class="{ 'h-full': !store.isExporting }" :data-tfoot-repeat="element.tfootRepeat" :data-auto-paginate="element.autoPaginate" :data-custom-script="processedData.scriptContent || element.customScript">
       <thead>
         <tr>
           <th 

@@ -100,6 +100,7 @@ export interface PrintElement {
   showFooter?: boolean; // For table
   footerData?: any[]; // For table
   customScript?: string; // For table (data processing)
+  customScriptVariable?: string; // For table (data processing script variable)
   repeatPerPage?: boolean;
   style: ElementStyle;
   // Pagination-specific (optional)

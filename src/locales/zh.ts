@@ -273,6 +273,7 @@ export default {
       data: '数据',
       footerData: '表脚数据',
       customScript: '自定义脚本',
+      customScriptVariable: '自定义脚本变量',
       headerHeight: '表头高度',
       rowHeight: '行高',
       footerHeight: '表脚高度',

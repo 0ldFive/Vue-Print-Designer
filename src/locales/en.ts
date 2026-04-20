@@ -273,6 +273,7 @@ export default {
       data: 'Data',
       footerData: 'Footer Data',
       customScript: 'Custom Script',
+      customScriptVariable: 'Custom Script Variable',
       headerHeight: 'Header Height',
       rowHeight: 'Row Height',
       footerHeight: 'Footer Height',
