@@ -1457,7 +1457,7 @@ export const usePrint = () => {
     return localSocketPromise;
   };
 
-  const sendLocalWsPrint = (url: string, payload: Record<string, any>, waitFor: 'status') => {
+  const sendLocalWsPrint = (url: string, payload: Record<string, any>, waitFor: 'status', timeoutMs: number = 30000) => {
     localQueue = localQueue.then(() => new Promise<any>(async (resolve, reject) => {
       let resolved = false;
       let socket: WebSocket | null = null;
@@ -1466,7 +1466,7 @@ export const usePrint = () => {
         resolved = true;
         resetLocalSocket();
         reject(new Error('Print request timeout'));
-      }, 30000);
+      }, timeoutMs);
 
       const cleanup = () => {
         if (!socket) return;
@@ -1578,7 +1578,7 @@ export const usePrint = () => {
 
       if (mode === 'local') {
         const payload = buildPrintPayload(options, dataUrl, localSettings.secretKey.trim());
-        const result = await sendLocalWsPrint(localWsUrl.value, payload, 'status');
+        const result = await sendLocalWsPrint(localWsUrl.value, payload, 'status', options.timeout || 30000);
         return result;
       }
 
@@ -1589,7 +1589,7 @@ export const usePrint = () => {
       const payload = buildPrintPayload(options, dataUrl);
       payload.cmd = 'submit_task';
       payload.client_id = remoteSelectedClientId.value;
-      const result = await submitRemoteTask(payload);
+      const result = await submitRemoteTask(payload, options.timeout || 30000);
       return result;
     } catch (error) {
       console.error('Print failed', error);

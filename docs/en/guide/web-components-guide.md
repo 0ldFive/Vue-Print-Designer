@@ -1226,6 +1226,7 @@ Event details:
 | `jobName` | `string` | No | Job name |
 | `copies` | `number` | No | Copies |
 | `intervalMs` | `number` | No | Interval (ms) |
+| `timeout` | `number` | No | Print request timeout (ms), defaults to 30000 |
 | `pageRange` | `string` | No | Page range (e.g. `1-2,5`) |
 | `pageSet` | `'' \| 'odd' \| 'even'` | No | Odd/even pages |
 | `scale` | `'' \| 'noscale' \| 'shrink' \| 'fit'` | No | Scale mode |

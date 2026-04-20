@@ -8,6 +8,7 @@ export interface PrintOptions {
   jobName: string;
   copies: number;
   intervalMs: number;
+  timeout?: number;
   pageRange: string;
   pageSet: '' | 'odd' | 'even';
   scale: '' | 'noscale' | 'shrink' | 'fit';
@@ -97,7 +98,7 @@ interface PrintSettingsState {
   fetchRemoteClients: () => Promise<RemoteClientInfo[]>;
   fetchRemotePrinters: (clientId?: string) => Promise<RemotePrinterInfo[]>;
   fetchLocalPrinterCaps: (printer: string) => Promise<LocalPrinterCaps | undefined>;
-  submitRemoteTask: (payload: Record<string, any>) => Promise<any>;
+  submitRemoteTask: (payload: Record<string, any>, timeoutMs?: number) => Promise<any>;
   cancelLocalRetry: () => void;
   cancelRemoteRetry: () => void;
   connectLocal: () => Promise<void>;
@@ -826,14 +827,14 @@ const createState = (): PrintSettingsState => {
     }, localPrintersPollIntervalMs);
   };
 
-  const submitRemoteTask = async (payload: Record<string, any>) => {
+  const submitRemoteTask = async (payload: Record<string, any>, timeoutMs: number = 30000) => {
     await connectRemote();
     return await sendWithWait<{ cmd: 'task_result'; task_id?: string; status?: string; message?: string }>(
       remoteSocket,
       remoteWaiters,
       payload,
       (msg): msg is { cmd: 'task_result'; task_id?: string; status?: string; message?: string } => msg?.cmd === 'task_result',
-      30000
+      timeoutMs
     );
   };
 
