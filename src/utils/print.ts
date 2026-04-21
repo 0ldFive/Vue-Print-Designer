@@ -1458,7 +1458,7 @@ export const usePrint = () => {
   };
 
   const sendLocalWsPrint = (url: string, payload: Record<string, any>, waitFor: 'status', timeoutMs: number = 30000) => {
-    localQueue = localQueue.then(() => new Promise<any>(async (resolve, reject) => {
+    localQueue = localQueue.catch(() => undefined).then(() => new Promise<any>(async (resolve, reject) => {
       let resolved = false;
       let socket: WebSocket | null = null;
       const timeoutId = window.setTimeout(() => {
