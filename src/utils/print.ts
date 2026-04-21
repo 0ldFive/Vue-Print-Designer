@@ -401,6 +401,7 @@ export const usePrint = () => {
         
         paginatedPages.forEach((page, index) => {
             const clone = page.cloneNode(true) as HTMLElement;
+            const isLastPage = index === paginatedPages.length - 1;
             
             // Adjust styles for preview display
             clone.style.position = 'relative';
@@ -408,7 +409,7 @@ export const usePrint = () => {
             clone.style.top = 'auto';
             clone.style.width = `${width}px`;
             clone.style.height = `${height}px`;
-            clone.style.margin = '0 0 20px 0';
+            clone.style.margin = isLastPage ? '0' : '0 0 20px 0';
             // clone.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
             clone.style.backgroundColor = store.canvasBackground;
             clone.style.transform = 'none';
