@@ -900,7 +900,7 @@ Behavior notes:
 - When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
 - `create` uses `initialValues` by default; when not configured, component default behavior applies.
 
-### 19. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
+### 23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
 
 Description: Used to configure the custom form structure and default values for the custom element "Create / Edit" modals.
 
