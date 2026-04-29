@@ -576,6 +576,11 @@ export default {
     customElementAddFailed: '新增自定义元素失败',
     customElementRemoveFailed: '删除自定义元素失败',
     customElementEditFailed: '编辑自定义元素失败',
-    customElementUpsertFailed: '保存自定义元素失败'
+    customElementUpsertFailed: '保存自定义元素失败',
+    printerRequired: '请指定打印机',
+    clientRequired: '请指定客户端',
+    printFailed: '打印失败',
+    exportPdfFailed: '导出 PDF 失败',
+    exportImageFailed: '导出图片失败'
   }
 }

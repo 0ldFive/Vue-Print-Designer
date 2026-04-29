@@ -1274,7 +1274,7 @@ export const usePrint = () => {
         pdf.save(filename);
     } catch (error) {
         console.error('Export PDF failed', error);
-        toast.error('Export PDF failed');
+        toast.error(i18n.global.t('toast.exportPdfFailed'));
     }
   };
 
@@ -1580,21 +1580,36 @@ export const usePrint = () => {
     }
 
     const options = request?.options || (mode === 'local' ? localPrintOptions : remotePrintOptions);
+    
+    // Copy options to avoid mutating the original options object if it's passed from request
+    const currentOptions = { ...options };
+
     if (mode === 'remote' && silentPrint.value) {
       if (!remoteSelectedClientId.value) {
         await fetchRemoteClients();
       }
-      if (!options.printer && remoteSelectedClientId.value) {
+      if (!currentOptions.printer && remoteSelectedClientId.value) {
         const printers = await fetchRemotePrinters(remoteSelectedClientId.value);
         const fallbackPrinter = printers[0]?.printer_name || '';
         if (fallbackPrinter) {
-          options.printer = fallbackPrinter;
+          currentOptions.printer = fallbackPrinter;
           remotePrintOptions.printer = fallbackPrinter;
         }
       }
     }
-    if (!options.printer) {
-      toast.error('Printer is required');
+    // Also try to fallback to default printer for local mode if not specified
+    if (mode === 'local' && silentPrint.value && !currentOptions.printer) {
+      const { fetchLocalPrinters } = usePrintSettings();
+      const localPrinters = await fetchLocalPrinters();
+      const fallbackPrinter = localPrinters.find(p => p.isDefault)?.name || localPrinters[0]?.name || '';
+      if (fallbackPrinter) {
+        currentOptions.printer = fallbackPrinter;
+        localPrintOptions.printer = fallbackPrinter;
+      }
+    }
+
+    if (!currentOptions.printer) {
+      toast.error(i18n.global.t('toast.printerRequired'));
       throw new Error('Printer is required');
     }
 
@@ -1603,23 +1618,23 @@ export const usePrint = () => {
       const dataUrl = await blobToDataUrl(pdfBlob);
 
       if (mode === 'local') {
-        const payload = buildPrintPayload(options, dataUrl, localSettings.secretKey.trim());
-        const result = await sendLocalWsPrint(localWsUrl.value, payload, 'status', options.timeout || 30000);
+        const payload = buildPrintPayload(currentOptions, dataUrl, localSettings.secretKey.trim());
+        const result = await sendLocalWsPrint(localWsUrl.value, payload, 'status', currentOptions.timeout || 30000);
         return result;
       }
 
       if (!remoteSelectedClientId.value) {
-        toast.error('Client is required');
+        toast.error(i18n.global.t('toast.clientRequired'));
         throw new Error('Client is required');
       }
-      const payload = buildPrintPayload(options, dataUrl);
+      const payload = buildPrintPayload(currentOptions, dataUrl);
       payload.cmd = 'submit_task';
       payload.client_id = remoteSelectedClientId.value;
-      const result = await submitRemoteTask(payload, options.timeout || 30000);
+      const result = await submitRemoteTask(payload, currentOptions.timeout || 30000);
       return result;
     } catch (error) {
       console.error('Print failed', error);
-      toast.error('Print failed');
+      toast.error(i18n.global.t('toast.printFailed'));
       throw error;
     }
   };

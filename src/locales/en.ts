@@ -567,8 +567,13 @@ export default {
     customElementDeleteNotAllowed: 'System custom element cannot be deleted.',
     customElementCopyFailed: 'Failed to copy custom element.',
     customElementAddFailed: 'Failed to add custom element.',
-    customElementRemoveFailed: 'Failed to remove custom element.',
-    customElementEditFailed: 'Failed to edit custom element.',
-    customElementUpsertFailed: 'Failed to save custom element.'
+    customElementRemoveFailed: 'Failed to delete custom element',
+    customElementEditFailed: 'Failed to edit custom element',
+    customElementUpsertFailed: 'Failed to save custom element',
+    printerRequired: 'Printer is required',
+    clientRequired: 'Client is required',
+    printFailed: 'Print failed',
+    exportPdfFailed: 'Export PDF failed',
+    exportImageFailed: 'Export Image failed'
   }
 }
