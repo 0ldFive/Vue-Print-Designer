@@ -395,9 +395,9 @@ const buildTemplateTestData = (template: Template) => {
 const handleTestData = async (template: Template) => {
   activeMenuId.value = null;
   // Ensure we have the full detail loaded to get the complete test data
-  await store.fetchTemplateDetail(template.id);
-  testDataTarget.value = template;
-  const data = buildTemplateTestData(template);
+  const detail = await store.fetchTemplateDetail(template.id);
+  testDataTarget.value = detail || template;
+  const data = buildTemplateTestData(testDataTarget.value);
   testDataAllowedKeys.value = Object.keys(data);
   testDataContent.value = JSON.stringify(data, null, 2);
   showTestDataModal.value = true;

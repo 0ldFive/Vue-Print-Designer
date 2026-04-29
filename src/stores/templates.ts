@@ -62,11 +62,12 @@ const sanitizeTemplateData = (data: any) => {
 
 const hasMeaningfulTemplateData = (data: any): boolean => {
   if (!data || typeof data !== 'object') return false;
+  // A template data is meaningful if it has pages with elements,
+  // or it has a defined canvasSize which is a core property of a template.
+  // Just having 'testData' or other minor keys doesn't mean we have the full template data.
   if (Array.isArray(data.pages) && data.pages.length > 0) return true;
   if (data.canvasSize && typeof data.canvasSize === 'object') return true;
-  if (data.guides && Array.isArray(data.guides) && data.guides.length > 0) return true;
-  // Any non-pages field usually indicates this is not an empty placeholder payload.
-  return Object.keys(data).some((key) => key !== 'pages');
+  return false;
 };
 
 const sanitizeAvailableVariables = (variables: any): VariableTreeItem[] => {
@@ -351,7 +352,16 @@ export const useTemplateStore = defineStore('templates', {
     async updateTemplate(id: string, updates: Partial<Template>) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig();
       const existing = this.templates.find(t => t.id === id);
-      const cached = this.templateDetailCache[id];
+      let cached = this.templateDetailCache[id];
+
+      if (mode === 'remote') {
+        // Force fetch remote data to ensure we don't overwrite with incomplete data during partial updates
+        const detail = await this.fetchTemplateDetail(id);
+        if (detail) {
+          cached = detail;
+        }
+      }
+
       if (!existing && !cached) return;
 
       const base = cached || existing;
@@ -512,18 +522,17 @@ export const useTemplateStore = defineStore('templates', {
           this.isLoading = true;
           try {
             let cachedTemplate = this.templateDetailCache[id];
-            if (!hasMeaningfulTemplateData(t.data) && (!cachedTemplate || !hasMeaningfulTemplateData(cachedTemplate.data))) {
-              const detail = await this.fetchTemplateDetail(id);
-              if (detail) {
-                cachedTemplate = detail;
-              }
+            // Force fetch remote data to ensure we have the complete and latest template
+            const detail = await this.fetchTemplateDetail(id);
+            if (detail) {
+              cachedTemplate = detail;
             }
             
             const payloadBase = applyModalExtraValues({
               id: t.id,
               name: newName,
-              // If t.data only contains empty pages, try to use cached data instead
-              data: hasMeaningfulTemplateData(t.data) ? t.data : (cachedTemplate?.data || t.data || {}),
+              // Force using the complete remote data
+              data: cachedTemplate?.data || t.data || {},
               updatedAt: t.updatedAt,
               permissions: t.permissions ?? cachedTemplate?.permissions,
               ext: withExtAvailableVariables(
@@ -560,14 +569,16 @@ export const useTemplateStore = defineStore('templates', {
         }
         let cachedTemplate = this.templateDetailCache[id];
 
-        if (mode === 'remote' && !hasMeaningfulTemplateData(t.data) && (!cachedTemplate || !hasMeaningfulTemplateData(cachedTemplate.data))) {
+        if (mode === 'remote') {
+          // Force fetch remote data to ensure we have the complete and latest template
           const detail = await this.fetchTemplateDetail(id);
           if (detail) {
             cachedTemplate = detail;
           }
         }
 
-        const sourceData = hasMeaningfulTemplateData(t.data) ? t.data : (cachedTemplate?.data || t.data);
+        // Use cached full data instead of potentially incomplete list data
+        const sourceData = cachedTemplate?.data || t.data;
         const source: any = mode === 'remote'
           ? {
               id: t.id,
