@@ -17,6 +17,7 @@ import Canvas from './canvas/Canvas.vue';
 import Ruler from './layout/Ruler.vue';
 import Shortcuts from './layout/Shortcuts.vue';
 import Minimap from './layout/Minimap.vue';
+import VariablesPanel from './layout/VariablesPanel.vue';
 import InputModal from '@/components/common/InputModal.vue';
 import { toast } from '@/utils/toast';
 import Save from '~icons/material-symbols/save';
@@ -28,6 +29,9 @@ const templateStore = useTemplateStore();
 const { autoSave } = useAutoSave();
 const { isDark } = useTheme();
 const { t } = useI18n();
+
+const props = defineProps<{ headless?: boolean }>();
+
 const scrollContainer = ref<HTMLElement | null>(null);
 const rootContainer = ref<HTMLElement | null>(null);
 const modalContainer = ref<HTMLElement | null>(null);
@@ -539,7 +543,13 @@ const rulerRanges = computed(() => {
 </script>
 
 <template>
-  <div ref="rootContainer" class="h-full w-full flex flex-col bg-gray-100 overflow-hidden">
+  <!-- Headless Wrapper (hidden) -->
+  <div v-if="props.headless" class="print-designer-headless" style="display: none;">
+    <div ref="rootContainer"></div>
+  </div>
+
+  <!-- Main Designer UI -->
+  <div v-else ref="rootContainer" class="h-full w-full flex flex-col bg-gray-100 overflow-hidden">
     <Header />
     <div class="flex-1 flex overflow-hidden">
       <Sidebar />
@@ -788,5 +798,6 @@ const rulerRanges = computed(() => {
 
     <!-- Modal Container for Teleport -->
     <div ref="modalContainer" class="print-designer-modals fixed inset-0 pointer-events-none z-[9999]"></div>
+    <VariablesPanel />
   </div>
 </template>

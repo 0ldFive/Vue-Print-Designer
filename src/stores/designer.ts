@@ -162,6 +162,8 @@ export const useDesignerStore = defineStore('designer', {
     contextMenuEventEmitter: null as ((eventName: string, detail: Record<string, any>) => void) | null,
     testData: {},
     variables: {},
+    availableVariables: [] as import('../types').VariableTreeItem[],
+    showVariablesPanel: false,
     editingCustomElementId: null,
     customElementEditSnapshot: null,
     selectedElementId: null,
@@ -202,6 +204,12 @@ export const useDesignerStore = defineStore('designer', {
   actions: {
     setContextMenuEventEmitter(emitter: ((eventName: string, detail: Record<string, any>) => void) | null) {
       this.contextMenuEventEmitter = emitter;
+    },
+    setAvailableVariables(variables: import('../types').VariableTreeItem[]) {
+      this.availableVariables = variables;
+    },
+    setShowVariablesPanel(show: boolean) {
+      this.showVariablesPanel = show;
     },
     emitContextMenuEvent(eventName: string, detail: Record<string, any>) {
       if (!eventName || typeof eventName !== 'string') return;

@@ -516,7 +516,7 @@ export const usePrint = () => {
 
     wrappers.forEach(w => {
       const el = w as HTMLElement;
-      if (el.hasAttribute('data-table-flow-id')) return;
+      if (el.hasAttribute('data-flow-id')) return;
       const isRepeatPerPage = el.getAttribute('data-repeat-per-page') === 'true';
       
       const top = parseFloat(el.style.top) || 0;
@@ -632,19 +632,21 @@ export const usePrint = () => {
 
       workingPages.forEach((page, pageIndex) => {
         const pageRect = page.getBoundingClientRect();
-        const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper][data-table-flow-id]')) as HTMLElement[];
+        const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper][data-flow-id]')) as HTMLElement[];
 
         wrappers.forEach(wrapper => {
           const table = wrapper.querySelector('table');
-          if (!table) return;
-          if (table.getAttribute('data-auto-paginate') !== 'true') return;
+          const autoHeightEl = wrapper.querySelector('[data-auto-height="true"]');
+          
+          if (!table && !autoHeightEl) return;
+          if (table && table.getAttribute('data-auto-paginate') !== 'true') return;
 
           const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
           const originalTop = parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
           const originalHeight = parseAttrNumber(wrapper, 'data-original-height', wrapper.getBoundingClientRect().height);
           const originalBottom = originalTop + originalHeight;
-          const tableRect = table.getBoundingClientRect();
-          const finalBottomInPage = tableRect.bottom - pageRect.top;
+          const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
+          const finalBottomInPage = contentRect.bottom - pageRect.top;
           const finalGlobalBottom = pageIndex * pageHeight + finalBottomInPage;
 
           const list = tableEntriesByOrigin.get(originPage) || [];
@@ -667,9 +669,9 @@ export const usePrint = () => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
 
         wrappers.forEach(wrapper => {
-          // Skip tables that have already been paginated or are split chunks to avoid messing up their positions
-          if (wrapper.hasAttribute('data-table-flow-id')) {
-             if (wrapper.hasAttribute('data-table-paginated') || wrapper.hasAttribute('data-is-split-chunk')) {
+          // Skip flow elements that have already been paginated or are split chunks to avoid messing up their positions
+          if (wrapper.hasAttribute('data-flow-id')) {
+             if (wrapper.hasAttribute('data-flow-paginated') || wrapper.hasAttribute('data-is-split-chunk')) {
                  return;
              }
           }
@@ -727,18 +729,23 @@ export const usePrint = () => {
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         
-        // Find all tables in the page
-        const tables = page.querySelectorAll('table');
-        tables.forEach(table => {
+        // Find all tables and auto-height elements in the page
+        const flowElements = page.querySelectorAll('table, [data-auto-height="true"]');
+        flowElements.forEach(el => {
+             const table = el.tagName === 'TABLE' ? el as HTMLElement : null;
+             const isAutoHeight = el.getAttribute('data-auto-height') === 'true';
+             
              // Find the wrapper using the data attribute we added
-             const wrapper = table.closest('[data-print-wrapper]') as HTMLElement;
+             const wrapper = el.closest('[data-print-wrapper]') as HTMLElement;
              if (!wrapper) return;
              if (wrapper.parentElement !== page) return; // skip if moved to another page
-             if (wrapper.hasAttribute('data-table-paginated')) return; // already processed
+             if (wrapper.hasAttribute('data-flow-paginated')) return; // already processed
              
-             // Respect element-level auto paginate flag
-             const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
-             if (!autoPaginate) return;
+             // For tables, respect element-level auto paginate flag
+             if (table) {
+                 const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
+                 if (!autoPaginate) return;
+             }
 
              // Check for rotation (transform) on wrapper or table
              // If rotated, pagination logic (based on Y-axis) will be incorrect, so we skip it.
@@ -759,20 +766,35 @@ export const usePrint = () => {
                 }
              }
 
-             // UNLOCK HEIGHT: Allow the wrapper to expand to fit the table
+             // UNLOCK HEIGHT: Allow the wrapper to expand to fit the content
             wrapper.style.height = 'auto';
-            table.style.height = 'auto';
-            const tbodyEl = table.querySelector('tbody');
-            if (tbodyEl) (tbodyEl as HTMLElement).style.height = 'auto';
-            
-            // UNLOCK OVERFLOW: Remove constraints from TableElement root div
-             // The table is usually inside a div with h-full overflow-hidden
-             const tableRoot = table.parentElement as HTMLElement;
-             if (tableRoot) {
-                 tableRoot.classList.remove('h-full', 'overflow-hidden');
-                 tableRoot.style.height = 'auto';
-                 tableRoot.style.overflow = 'visible';
-             }
+            if (table) {
+                table.style.height = 'auto';
+                const tbodyEl = table.querySelector('tbody');
+                if (tbodyEl) (tbodyEl as HTMLElement).style.height = 'auto';
+                
+                // UNLOCK OVERFLOW: Remove constraints from TableElement root div
+                 // The table is usually inside a div with h-full overflow-hidden
+                 const tableRoot = table.parentElement as HTMLElement;
+                 if (tableRoot) {
+                     tableRoot.classList.remove('h-full', 'overflow-hidden');
+                     tableRoot.style.height = 'auto';
+                     tableRoot.style.overflow = 'visible';
+                 }
+            } else if (isAutoHeight) {
+                // Remove h-full from the element itself so it can expand
+                const htmlEl = el as HTMLElement;
+                htmlEl.classList.remove('h-full', 'overflow-hidden');
+                htmlEl.style.height = 'auto';
+                htmlEl.style.overflow = 'visible';
+                
+                // Also ensure the wrapper can expand
+                const textRoot = htmlEl.parentElement as HTMLElement;
+                if (textRoot) {
+                    textRoot.style.height = 'auto';
+                    textRoot.style.overflow = 'visible';
+                }
+            }
 
              // Calculate positions using getBoundingClientRect for better precision
              // This handles sub-pixel rendering and spacing correctly
@@ -783,12 +805,12 @@ export const usePrint = () => {
              const wrapperRect = wrapper.getBoundingClientRect();
              const wrapperTop = wrapperRect.top;
              
-             // Check if table extends beyond limit
-             const tableRect = table.getBoundingClientRect();
+             // Check if element extends beyond limit
+             const contentRect = (table || el).getBoundingClientRect();
              // Add 1px tolerance for sub-pixel rendering issues
-             if (tableRect.bottom <= limitBottom + 1) {
-                 updatePageSums(table);
-                 wrapper.setAttribute('data-table-paginated', 'true');
+             if (contentRect.bottom <= limitBottom + 1 || !table) {
+                 if (table) updatePageSums(table);
+                 wrapper.setAttribute('data-flow-paginated', 'true');
                  syncElementsBelowTables(); 
                  return;
              }
@@ -906,13 +928,13 @@ export const usePrint = () => {
                 }
                  
                  newPage.appendChild(newWrapper);
-                 wrapper.setAttribute('data-table-paginated', 'true');
+                 wrapper.setAttribute('data-flow-paginated', 'true');
                  newWrapper.setAttribute('data-is-split-chunk', 'true');
                  
                  syncElementsBelowTables();
              } else {
-                 updatePageSums(table);
-                 wrapper.setAttribute('data-table-paginated', 'true');
+                 if (table) updatePageSums(table);
+                 wrapper.setAttribute('data-flow-paginated', 'true');
                  syncElementsBelowTables();
              }
         });
@@ -932,7 +954,7 @@ export const usePrint = () => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
         
         const hasContent = wrappers.some(w => {
-            if (w.hasAttribute('data-table-flow-id')) return true;
+            if (w.hasAttribute('data-flow-id')) return true;
             
             const isRepeatPerPage = w.getAttribute('data-repeat-per-page') === 'true';
             if (isRepeatPerPage) return false;
@@ -1064,11 +1086,14 @@ export const usePrint = () => {
                 el.setAttribute('data-origin-page-index', `${idx}`);
                 const wrapperSeq = `${idx}-${wrapperIndex}`;
                 el.setAttribute('data-wrapper-seq', wrapperSeq);
+                
                 const table = el.querySelector('table');
-                if (table) {
-                  el.setAttribute('data-table-flow-id', wrapperSeq);
+                const autoHeightEl = el.querySelector('[data-auto-height="true"]');
+                
+                if (table || autoHeightEl) {
+                  el.setAttribute('data-flow-id', wrapperSeq);
                 } else {
-                  el.removeAttribute('data-table-flow-id');
+                  el.removeAttribute('data-flow-id');
                 }
             });
             

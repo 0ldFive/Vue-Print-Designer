@@ -57,6 +57,7 @@ export interface PrintDesignerElement extends HTMLElement {
 
   getVariables(): Record<string, any>;
   setVariables(data: Record<string, any>, options?: { merge?: boolean }): Promise<void>;
+  setTemplateVariables(data: Record<string, any>, options?: { merge?: boolean }): Promise<void>;
 
   getTemplateVariables(): Record<string, any>;
 

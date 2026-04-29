@@ -29,6 +29,8 @@ export default {
     testData: '测试数据',
     invalidJson: 'JSON 无效，未保存更改。',
     testDataKeyChanged: '测试数据的键不允许修改，请仅编辑值。',
+    variables: '可用变量',
+    noData: '暂无数据',
   },
   template: {
     select: '选择模版',
@@ -266,6 +268,7 @@ export default {
       cornerRadius: '圆角半径',
       background: '背景',
       autoPaginate: '自动分页',
+      autoHeight: '自适应高度',
       repeatPerPage: '每页重复',
       repeatFooter: '重复表脚',
       showFooter: '显示表脚',

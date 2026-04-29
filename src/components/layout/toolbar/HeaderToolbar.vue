@@ -337,7 +337,7 @@ const handleSave = () => {
       return;
     }
   }
-  window.dispatchEvent(new CustomEvent('designer:save'));
+  window.dispatchEvent(new CustomEvent('designer:new-template'));
 };
 
 const handleSaveAs = () => {

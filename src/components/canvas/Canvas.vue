@@ -193,13 +193,19 @@ const getRenderableElements = (elements: Array<PrintElement | null | undefined>)
   return elements.filter(isRenderableElement);
 };
 
+const toAtVariable = (raw: string) => {
+  const normalized = String(raw || '').trim();
+  if (!normalized) return '';
+  return normalized.startsWith('@') ? normalized : `@${normalized}`;
+};
+
 const handleDrop = (event: DragEvent, pageIndex: number) => {
   event.preventDefault();
   if (!store.isTemplateEditable) return;
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
 
-  const { type, payload } = JSON.parse(data);
+  const { type, payload, variable, dataVariable } = JSON.parse(data);
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = (event.clientX - rect.left) / store.zoom;
   const y = (event.clientY - rect.top) / store.zoom;
@@ -214,9 +220,48 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
     return;
   }
 
-  const newElement = createNewElement(type as ElementType, x, y, t);
+  // Handle dropping a variable directly to canvas
+  if (variable || dataVariable) {
+    const page = store.pages[pageIndex];
+    if (page) {
+      // Iterate backwards to find the topmost element at drop position
+      for (let i = page.elements.length - 1; i >= 0; i--) {
+        const element = page.elements[i];
+        if (!element) continue;
+        
+        const isPointInside = 
+          x >= element.x &&
+          x <= element.x + element.width &&
+          y >= element.y &&
+          y <= element.y + element.height;
+          
+        if (isPointInside) {
+          // Bind variable to this existing element if types match
+          if (variable && element.type === ElementType.TEXT) {
+            const atVariable = toAtVariable(variable);
+            store.updateElement(element.id, {
+              variable: atVariable,
+              content: atVariable
+            });
+            return;
+          } else if (dataVariable && element.type === ElementType.TABLE) {
+            store.updateElement(element.id, {
+              variable: toAtVariable(dataVariable)
+            });
+            return;
+          }
+        }
+      }
+    }
+    // Do not create new elements if dropping a variable on empty space
+    return;
+  }
 
-  store.addElement(newElement, pageIndex);
+  // Handle dropping a regular element from the left panel
+  if (type) {
+    const newElement = createNewElement(type as ElementType, x, y, t);
+    store.addElement(newElement as PrintElement, pageIndex);
+  }
 };
 
 const handleDragOver = (event: DragEvent) => {

@@ -8,6 +8,7 @@ import { toast } from '../utils/toast';
 import { getCrudConfig, buildEndpoint, buildFetchOptions } from '../utils/crudConfig';
 import { canCopyEntity, canDeleteEntity, canEditEntity, normalizeEntityConstraints, applyModalExtraValues, mergeExt } from '../utils/entityConstraints';
 import i18n from '../locales';
+import type { VariableTreeItem } from '../types';
 
 export interface Template {
   id: string;
@@ -59,6 +60,33 @@ const sanitizeTemplateData = (data: any) => {
   };
 };
 
+const hasMeaningfulTemplateData = (data: any): boolean => {
+  if (!data || typeof data !== 'object') return false;
+  if (Array.isArray(data.pages) && data.pages.length > 0) return true;
+  if (data.canvasSize && typeof data.canvasSize === 'object') return true;
+  if (data.guides && Array.isArray(data.guides) && data.guides.length > 0) return true;
+  // Any non-pages field usually indicates this is not an empty placeholder payload.
+  return Object.keys(data).some((key) => key !== 'pages');
+};
+
+const sanitizeAvailableVariables = (variables: any): VariableTreeItem[] => {
+  return Array.isArray(variables) ? cloneDeep(variables) : [];
+};
+
+const readAvailableVariables = (...sources: any[]): VariableTreeItem[] => {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue;
+    if (Array.isArray(source.ext?.availableVariables)) {
+      return sanitizeAvailableVariables(source.ext.availableVariables);
+    }
+  }
+  return [];
+};
+
+const withExtAvailableVariables = (ext: Record<string, any> | undefined, variables: any): Record<string, any> => {
+  return mergeExt(ext, { availableVariables: sanitizeAvailableVariables(variables) });
+};
+
 
 export const useTemplateStore = defineStore('templates', {
   state: () => ({
@@ -92,7 +120,10 @@ export const useTemplateStore = defineStore('templates', {
             data,
             updatedAt: t.updatedAt || cachedTemplate?.updatedAt || existingTemplate?.updatedAt || Date.now(),
             permissions: t.permissions ?? cachedTemplate?.permissions ?? existingTemplate?.permissions,
-            ext: mergeExt(existingTemplate?.ext, cachedTemplate?.ext, t.ext)
+            ext: withExtAvailableVariables(
+              mergeExt(existingTemplate?.ext, cachedTemplate?.ext, t.ext),
+              readAvailableVariables(t, cachedTemplate, existingTemplate)
+            )
           };
           const normalized = normalizeEntityConstraints(detail);
           this.templateDetailCache[currentId] = normalized;
@@ -130,10 +161,15 @@ export const useTemplateStore = defineStore('templates', {
               const merged = {
                 id: t.id,
                 name: t.name,
-                data: t.data ? sanitizeTemplateData(t.data) : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
+                data: hasMeaningfulTemplateData(t.data)
+                  ? sanitizeTemplateData(t.data)
+                  : (cached?.data || existing?.data || sanitizeTemplateData(undefined)),
                 updatedAt: t.updatedAt || cached?.updatedAt || existing?.updatedAt || Date.now(),
                 permissions: t.permissions ?? cached?.permissions ?? existing?.permissions,
-                ext: mergeExt(existing?.ext, cached?.ext, t.ext)
+                ext: withExtAvailableVariables(
+                  mergeExt(existing?.ext, cached?.ext, t.ext),
+                  readAvailableVariables(t, cached, existing)
+                )
               };
               const normalized = normalizeEntityConstraints(merged);
               this.templateDetailCache[t.id] = normalized;
@@ -168,7 +204,10 @@ export const useTemplateStore = defineStore('templates', {
                 data: t.data ? sanitizeTemplateData(t.data) : (existing?.data || sanitizeTemplateData(undefined)),
                 updatedAt: t.updatedAt || existing?.updatedAt || Date.now(),
                 permissions: t.permissions ?? existing?.permissions,
-                ext: mergeExt(existing?.ext, t.ext)
+                ext: withExtAvailableVariables(
+                  mergeExt(existing?.ext, t.ext),
+                  readAvailableVariables(t, existing)
+                )
               }) as Template;
             });
           const rawTemplates = cloneDeep(toRaw(this.templates));
@@ -247,7 +286,10 @@ export const useTemplateStore = defineStore('templates', {
               },
               updatedAt: Date.now(),
               permissions: upsertBase?.permissions,
-              ext: mergeExt(existingTemplate?.ext, upsertBase?.ext)
+              ext: withExtAvailableVariables(
+                mergeExt(existingTemplate?.ext, upsertBase?.ext),
+                designerStore.availableVariables
+              )
             };
             const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, targetId ? 'edit' : 'create'));
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -290,7 +332,8 @@ export const useTemplateStore = defineStore('templates', {
               ...this.templates[idx],
               name,
               data,
-              updatedAt: Date.now()
+              updatedAt: Date.now(),
+              ext: withExtAvailableVariables(this.templates[idx]?.ext, designerStore.availableVariables)
             }) as Template;
           }
         } else {
@@ -375,7 +418,8 @@ export const useTemplateStore = defineStore('templates', {
         id: uuidv4(),
         name,
         data: newData,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        ext: withExtAvailableVariables(undefined, designerStore.availableVariables)
       }, templateMode, extraValues);
       const newTemplate: Template = normalizeEntityConstraints(templateBase) as Template;
 
@@ -400,7 +444,10 @@ export const useTemplateStore = defineStore('templates', {
             data: newTemplate.data || cached?.data,
             updatedAt: newTemplate.updatedAt || cached?.updatedAt,
             permissions: newTemplate.permissions ?? cached?.permissions,
-            ext: mergeExt(cached?.ext, newTemplate.ext)
+            ext: withExtAvailableVariables(
+              mergeExt(cached?.ext, newTemplate.ext),
+              readAvailableVariables(newTemplate, cached)
+            )
           });
           
           await this.loadTemplates();
@@ -464,15 +511,25 @@ export const useTemplateStore = defineStore('templates', {
         if (mode === 'remote') {
           this.isLoading = true;
           try {
-            const cachedTemplate = this.templateDetailCache[id];
+            let cachedTemplate = this.templateDetailCache[id];
+            if (!hasMeaningfulTemplateData(t.data) && (!cachedTemplate || !hasMeaningfulTemplateData(cachedTemplate.data))) {
+              const detail = await this.fetchTemplateDetail(id);
+              if (detail) {
+                cachedTemplate = detail;
+              }
+            }
+            
             const payloadBase = applyModalExtraValues({
               id: t.id,
               name: newName,
               // If t.data only contains empty pages, try to use cached data instead
-              data: (t.data && t.data.pages && t.data.pages.length > 0) ? t.data : (cachedTemplate?.data || t.data || {}),
+              data: hasMeaningfulTemplateData(t.data) ? t.data : (cachedTemplate?.data || t.data || {}),
               updatedAt: t.updatedAt,
               permissions: t.permissions ?? cachedTemplate?.permissions,
-              ext: mergeExt(cachedTemplate?.ext, t.ext)
+              ext: withExtAvailableVariables(
+                mergeExt(cachedTemplate?.ext, t.ext),
+                readAvailableVariables(t, cachedTemplate)
+              )
             }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
             const url = buildEndpoint(endpoints.templates?.upsert, '');
@@ -501,13 +558,25 @@ export const useTemplateStore = defineStore('templates', {
           toast.warning(i18n.global.t('toast.templateCopyNotAllowed'));
           return;
         }
-        const cachedTemplate = this.templateDetailCache[id];
+        let cachedTemplate = this.templateDetailCache[id];
+
+        if (mode === 'remote' && !hasMeaningfulTemplateData(t.data) && (!cachedTemplate || !hasMeaningfulTemplateData(cachedTemplate.data))) {
+          const detail = await this.fetchTemplateDetail(id);
+          if (detail) {
+            cachedTemplate = detail;
+          }
+        }
+
+        const sourceData = hasMeaningfulTemplateData(t.data) ? t.data : (cachedTemplate?.data || t.data);
         const source: any = mode === 'remote'
           ? {
               id: t.id,
               name: t.name,
-              data: t.data || cachedTemplate?.data,
-              ext: mergeExt(cachedTemplate?.ext, t.ext)
+              data: sourceData,
+              ext: withExtAvailableVariables(
+                mergeExt(cachedTemplate?.ext, t.ext),
+                readAvailableVariables(t, cachedTemplate)
+              )
             }
           : t;
         const newTemplateBase = applyModalExtraValues({
@@ -515,7 +584,7 @@ export const useTemplateStore = defineStore('templates', {
           name: typeof newName === 'string' && newName.trim() ? newName.trim() : `${source.name} Copy`,
           data: sanitizeTemplateData(JSON.parse(JSON.stringify(source.data))),
           updatedAt: Date.now(),
-          ext: source.ext,
+          ext: withExtAvailableVariables(source.ext, readAvailableVariables(source)),
           // A copied template should be a normal editable template by default,
           // instead of inheriting source read-only/system flags.
           permissions: {
@@ -543,7 +612,10 @@ export const useTemplateStore = defineStore('templates', {
                 data: newTemplate.data || cached?.data,
                 updatedAt: newTemplate.updatedAt || cached?.updatedAt,
                 permissions: newTemplate.permissions ?? cached?.permissions,
-                ext: mergeExt(cached?.ext, newTemplate.ext)
+                ext: withExtAvailableVariables(
+                  mergeExt(cached?.ext, newTemplate.ext),
+                  readAvailableVariables(newTemplate, cached)
+                )
               });
             
             await this.loadTemplates();
@@ -592,6 +664,7 @@ export const useTemplateStore = defineStore('templates', {
             if (data.unit !== undefined) designerStore.unit = data.unit;
             if (data.watermark !== undefined) designerStore.watermark = cloneDeep(data.watermark);
             designerStore.testData = cloneDeep(data.testData || {});
+            designerStore.setAvailableVariables(readAvailableVariables(t));
             designerStore.selectedElementId = null;
             designerStore.selectedGuideId = null;
             designerStore.historyPast = [];
@@ -607,7 +680,10 @@ export const useTemplateStore = defineStore('templates', {
                 data,
                 updatedAt: t.updatedAt || this.templates[existingIndex].updatedAt,
                 permissions: t.permissions ?? this.templates[existingIndex].permissions,
-                ext: mergeExt(this.templates[existingIndex].ext, t.ext)
+                ext: withExtAvailableVariables(
+                  mergeExt(this.templates[existingIndex].ext, t.ext),
+                  readAvailableVariables(t, this.templates[existingIndex])
+                )
               }) as Template;
             } else {
               this.templates.push(normalizeEntityConstraints({
@@ -616,7 +692,7 @@ export const useTemplateStore = defineStore('templates', {
                 data,
                 updatedAt: t.updatedAt || Date.now(),
                 permissions: t.permissions,
-                ext: t.ext || {}
+                ext: withExtAvailableVariables(t.ext || {}, readAvailableVariables(t))
               }) as Template);
             }
             return;
@@ -651,6 +727,7 @@ export const useTemplateStore = defineStore('templates', {
           if (data.unit !== undefined) designerStore.unit = data.unit;
           if (data.watermark !== undefined) designerStore.watermark = cloneDeep(data.watermark);
           designerStore.testData = cloneDeep(data.testData || {});
+          designerStore.setAvailableVariables(readAvailableVariables(t));
           
           // Reset selection and history
           designerStore.selectedElementId = null;

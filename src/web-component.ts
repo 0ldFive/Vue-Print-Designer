@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue';
+import { createApp, nextTick, ref, h } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
 import i18n, { createI18nInstance } from './locales';
 import baseStyles from './style.css?inline';
@@ -75,6 +75,23 @@ const applyStoredBrandVars = () => {
 
 const getStoredDesignerFont = () => localStorage.getItem(designerFontStorageKey)?.trim() || '';
 
+const normalizeTemplateVariableKey = (rawKey: string) => {
+  const key = String(rawKey || '').trim();
+  if (!key) return '';
+  return key.startsWith('@') ? key.slice(1).trim() : key;
+};
+
+const normalizeTemplateVariableMap = (data: Record<string, any>) => {
+  const result: Record<string, any> = {};
+  if (!data || typeof data !== 'object') return result;
+  Object.entries(data).forEach(([rawKey, value]) => {
+    const key = normalizeTemplateVariableKey(rawKey);
+    if (!key) return;
+    result[key] = value;
+  });
+  return result;
+};
+
 export type DesignerListContextMenuItem = Omit<ListContextMenuItem, 'hidden' | 'disabled' | 'onClick'>;
 export interface DesignerListContextMenuConfig {
   mode?: 'replace' | 'append';
@@ -99,10 +116,11 @@ class PrintDesignerElement extends HTMLElement {
   private _pendingCloudUrl: string | null = null;
   private _pendingHideClientLink: boolean | null = null;
   private _pendingHideCloudLink: boolean | null = null;
+  private _headless = ref(false);
   public isReady: boolean = false;
 
   static get observedAttributes() {
-    return ['lang', 'client-url', 'cloud-url', 'hide-links', 'hide-client-link', 'hide-cloud-link'];
+    return ['lang', 'client-url', 'cloud-url', 'hide-links', 'hide-client-link', 'hide-cloud-link', 'headless'];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -123,6 +141,9 @@ class PrintDesignerElement extends HTMLElement {
     }
     if (name === 'hide-cloud-link' && newValue !== oldValue) {
       this.hideCloudLink(newValue === 'true' || newValue === '');
+    }
+    if (name === 'headless' && newValue !== oldValue) {
+      this._headless.value = newValue === 'true' || newValue === '';
     }
   }
 
@@ -242,7 +263,14 @@ class PrintDesignerElement extends HTMLElement {
     const pinia = createPinia();
     setActivePinia(pinia);
 
-    const app = createApp(PrintDesigner);
+    const initialHeadless = this.hasAttribute('headless') && (this.getAttribute('headless') === 'true' || this.getAttribute('headless') === '');
+    this._headless.value = initialHeadless;
+
+    const app = createApp({
+      setup: () => {
+        return () => h(PrintDesigner, { headless: this._headless.value });
+      }
+    });
     this.themeApi = useTheme();
     applyStoredBrandVars();
 
@@ -472,6 +500,22 @@ class PrintDesignerElement extends HTMLElement {
     await nextTick();
   }
 
+  async setTemplateVariables(data: Record<string, any>, options: { merge?: boolean } = {}) {
+    if (!this.designerStore || !data || typeof data !== 'object') return;
+    const normalizedData = normalizeTemplateVariableMap(data);
+    if (options.merge) {
+      this.designerStore.variables = { ...(this.designerStore.variables || {}), ...normalizedData };
+    } else {
+      this.designerStore.variables = normalizedData;
+    }
+    await nextTick();
+  }
+
+  setAvailableVariables(variables: import('./types').VariableTreeItem[]) {
+    if (!this.designerStore) return;
+    this.designerStore.setAvailableVariables(variables);
+  }
+
   getTemplateVariables(): Record<string, any> {
     if (!this.designerStore) return {};
     const testData = buildTestDataFromPages(this.designerStore.pages, {});
@@ -510,7 +554,10 @@ class PrintDesignerElement extends HTMLElement {
       pageSpacingY: this.designerStore.pageSpacingY,
       unit: this.designerStore.unit,
       watermark: cloneDeep(this.designerStore.watermark),
-      testData: cloneDeep(this.designerStore.testData || {})
+      testData: cloneDeep(this.designerStore.testData || {}),
+      ext: {
+        availableVariables: cloneDeep(this.designerStore.availableVariables || [])
+      }
     };
   }
 
@@ -537,6 +584,10 @@ class PrintDesignerElement extends HTMLElement {
     if (data.unit !== undefined) this.designerStore.unit = data.unit;
     if (data.watermark !== undefined) this.designerStore.watermark = cloneDeep(data.watermark);
     this.designerStore.testData = cloneDeep(data.testData || {});
+    const availableVariables = Array.isArray(data?.ext?.availableVariables)
+      ? cloneDeep(data.ext.availableVariables)
+      : [];
+    this.designerStore.setAvailableVariables(availableVariables);
     this.designerStore.selectedElementId = null;
     this.designerStore.selectedGuideId = null;
     this.designerStore.historyPast = [];
@@ -647,13 +698,18 @@ class PrintDesignerElement extends HTMLElement {
       toast.warning(i18n.global.t('toast.templateReadOnly'));
       return null;
     }
+    const nextAvailableVariables = Array.isArray(template?.ext?.availableVariables)
+      ? cloneDeep(template.ext.availableVariables)
+      : (Array.isArray(existing?.ext?.availableVariables)
+        ? cloneDeep(existing.ext.availableVariables)
+        : []);
     const next = normalizeEntityConstraints({
       id,
       name: template.name,
       data: template.data || this.templateStore.templates[index]?.data || {},
       updatedAt: template.updatedAt || Date.now(),
       permissions: template.permissions ?? existing?.permissions,
-      ext: mergeExt(existing?.ext, template.ext)
+      ext: mergeExt(existing?.ext, template.ext, { availableVariables: nextAvailableVariables })
     });
     if (index >= 0) {
       this.templateStore.templates[index] = next;
@@ -672,7 +728,15 @@ class PrintDesignerElement extends HTMLElement {
           data: next.data || cachedTemplate.data || {},
           updatedAt: next.updatedAt || cachedTemplate.updatedAt,
           permissions: next.permissions ?? cachedTemplate.permissions,
-          ext: mergeExt(cachedTemplate.ext, next.ext)
+          ext: mergeExt(
+            cachedTemplate.ext,
+            next.ext,
+            {
+              availableVariables: Array.isArray((next as any)?.ext?.availableVariables)
+                ? cloneDeep((next as any).ext.availableVariables)
+                : cloneDeep(cachedTemplate?.ext?.availableVariables || [])
+            }
+          )
         });
         const url = buildEndpoint(endpoints.templates?.upsert || '');
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
@@ -688,7 +752,14 @@ class PrintDesignerElement extends HTMLElement {
           data: resultObj.data || requestPayload.data,
           updatedAt: resultObj.updatedAt || requestPayload.updatedAt,
           permissions: resultObj.permissions ?? requestPayload.permissions,
-          ext: mergedExt
+          ext: mergeExt(
+            mergedExt,
+            {
+              availableVariables: Array.isArray(resultObj?.ext?.availableVariables)
+                ? cloneDeep(resultObj.ext.availableVariables)
+                : cloneDeep(requestPayload?.ext?.availableVariables || [])
+            }
+          )
         });
         if (targetIndex >= 0) this.templateStore.templates[targetIndex] = updated;
         else this.templateStore.templates.push(updated);
@@ -722,7 +793,14 @@ class PrintDesignerElement extends HTMLElement {
         data: t.data || {},
         updatedAt: t.updatedAt || Date.now(),
         permissions: t.permissions,
-        ext: t.ext || {}
+        ext: mergeExt(
+          t.ext || {},
+          {
+            availableVariables: Array.isArray(t?.ext?.availableVariables)
+              ? cloneDeep(t.ext.availableVariables)
+              : []
+          }
+        )
       }));
     let targetId = options.currentTemplateId || this.templateStore.currentTemplateId;
     if (targetId && !this.templateStore.templates.some((t) => t.id === targetId)) {

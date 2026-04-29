@@ -73,6 +73,8 @@ export interface ElementStyle {
   qrErrorCorrection?: 'L' | 'M' | 'Q' | 'H';
   // Shape specific
   borderRadius?: number;
+  // Text specific
+  autoHeight?: boolean;
 }
 
 export interface TableColumn {
@@ -172,6 +174,8 @@ export interface ListContextMenuConfig {
   items: ListContextMenuItem[];
 }
 
+export type TemplateMenuActionKey = 'edit' | 'copy' | 'delete' | 'testData' | 'variablesPanel';
+
 export type TemplateModalMode = 'create' | 'edit' | 'copy';
 export type TemplateModalFieldType = 'input' | 'number' | 'textarea' | 'select' | 'radio' | 'date' | 'datetime';
 
@@ -197,6 +201,14 @@ export interface TemplateModalConfigItem {
   fields?: TemplateModalField[];
   initialValues?: Record<string, any>;
 }
+
+export interface VariableTreeItem {
+  id: string;
+  label: string;
+  children?: VariableTreeItem[];
+  isArray?: boolean;
+}
+
 
 export interface TemplateModalFormConfig {
   create?: TemplateModalConfigItem;
@@ -293,6 +305,8 @@ export interface DesignerState {
     elementId: string;
     cells: { rowIndex: number; colField: string; section?: 'body' | 'footer' }[];
   } | null;
+  showVariablesPanel?: boolean;
+  availableVariables?: VariableTreeItem[];
 }
 
 export interface Guide {

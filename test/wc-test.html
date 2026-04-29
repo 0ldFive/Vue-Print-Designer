@@ -216,7 +216,9 @@
           <div class="test-btn-grid">
             <button id="btn-test-global-loading">测试全局 Loading</button>
             <button id="btn-test-remote-autosave" title="API: setCrudEndpoints() / setCrudMode() / refreshTemplates()">测试远程防抖自动保存<span class="test-btn-api">setCrudMode('remote')</span></button>
+            <button id="btn-test-template-detail-vars" title="API: setCrudMode('remote') / loadTemplate() / getTemplateData()">测试模板详情变量绑定<span class="test-btn-api">availableVariables</span></button>
             <button id="btn-test-preview-html" title="API: getPreviewHtml()">测试获取 HTML 预览<span class="test-btn-api">getPreviewHtml()</span></button>
+            <button id="btn-test-headless" title="API: headless attribute & print()">测试无头模式打印<span class="test-btn-api">headless</span></button>
           </div>
         </div>
 
@@ -301,6 +303,41 @@
           }
         ]
       });
+
+      // 测试：设置可用的变量面板数据
+      designer.setAvailableVariables([
+        {
+          id: 'company',
+          label: '公司信息',
+          children: [
+            { id: 'company.name', label: '公司名称', isArray: false },
+            { id: 'company.address', label: '公司地址', isArray: false },
+            { id: 'company.phone', label: '联系电话', isArray: false }
+          ]
+        },
+        {
+          id: 'order',
+          label: '订单信息',
+          children: [
+            { id: 'order.id', label: '订单号', isArray: false },
+            { id: 'order.date', label: '下单日期', isArray: false },
+            { id: 'order.customer', label: '客户姓名', isArray: false },
+            { id: 'order.amount', label: '订单总额', isArray: false }
+          ]
+        },
+        {
+          id: 'items',
+          label: '商品明细 (表格)',
+          isArray: true,
+          children: [
+            { id: 'items.name', label: '商品名称', isArray: false },
+            { id: 'items.sku', label: '商品编码', isArray: false },
+            { id: 'items.price', label: '单价', isArray: false },
+            { id: 'items.quantity', label: '数量', isArray: false },
+            { id: 'items.total', label: '小计', isArray: false }
+          ]
+        }
+      ]);
 
       // 测试：3. 通过 API 直接配置新建/编辑/复制 modal 的自定义表单
       // API: setTemplateModalForm(config)
@@ -812,6 +849,99 @@
       alert('已开启模拟的远程 CRUD 模式 (带有 800ms 延迟)。\n请在设计器中快速拖拽元素或修改属性，观察控制台 Network 模拟日志，验证在 isSaving=true 时自动保存是否能成功延迟触发而不会丢失数据。\n\n[测试 testData]\n点击顶部下拉，分别查看“Remote Template 1”和“Remote Template 2”右侧的“测试数据”，验证在不切换模板的情况下，是否能正确拉取详情中的测试数据并正常保存。');
     });
 
+    document.getElementById('btn-test-template-detail-vars').addEventListener('click', async () => {
+      const mockFetcher = async (url, options) => {
+        await new Promise(resolve => setTimeout(resolve, 120));
+        if (options.method === 'POST') {
+          const body = JSON.parse(options.body);
+          return { json: async () => ({ ...body, updatedAt: Date.now() }) };
+        }
+        if (options.method === 'GET') {
+          if (url.includes('custom-elements')) {
+            return { json: async () => ([]) };
+          }
+          if (url.includes('templates/tpl-remote-1')) {
+            return {
+              json: async () => ({
+                id: 'tpl-remote-1',
+                name: 'Remote Template 1',
+                data: {
+                  pages: [{ id: 'p1', elements: [] }],
+                  testData: { message: 'remote1' }
+                },
+                ext: {
+                  availableVariables: [
+                    { id: 'order', label: '订单', children: [{ id: 'order.no', label: '订单号' }] }
+                  ]
+                }
+              })
+            };
+          }
+          if (url.includes('templates/tpl-remote-2')) {
+            return {
+              json: async () => ({
+                id: 'tpl-remote-2',
+                name: 'Remote Template 2',
+                data: {
+                  pages: [{ id: 'p2', elements: [] }],
+                  testData: { message: 'remote2' }
+                },
+                ext: {
+                  availableVariables: [
+                    { id: 'customer', label: '客户', children: [{ id: 'customer.name', label: '客户名' }] },
+                    { id: 'amount', label: '金额' }
+                  ]
+                }
+              })
+            };
+          }
+          // 列表接口不返回 ext.availableVariables，验证“必须依赖详情接口”才能拿到变量
+          return {
+            json: async () => ([
+              { id: 'tpl-remote-1', name: 'Remote Template 1', data: { pages: [{ id: 'p1', elements: [] }] } },
+              { id: 'tpl-remote-2', name: 'Remote Template 2', data: { pages: [{ id: 'p2', elements: [] }] } }
+            ])
+          };
+        }
+        return { json: async () => ({}) };
+      };
+
+      designer.setCrudEndpoints({
+        baseUrl: 'https://mock.api',
+        templates: {
+          list: '/templates',
+          upsert: '/templates',
+          get: '/templates/{id}',
+          delete: '/templates/{id}'
+        },
+        customElements: {
+          list: '/custom-elements',
+          upsert: '/custom-elements',
+          get: '/custom-elements/{id}',
+          delete: '/custom-elements/{id}'
+        }
+      }, { fetcher: mockFetcher });
+      designer.setCrudMode('remote');
+
+      await designer.refreshTemplates();
+      designer.loadTemplate('tpl-remote-1');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const vars1 = (designer.getTemplateData()?.ext?.availableVariables || []).map(v => v.id);
+
+      designer.loadTemplate('tpl-remote-2');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const vars2 = (designer.getTemplateData()?.ext?.availableVariables || []).map(v => v.id);
+
+      const pass1 = vars1.length === 1 && vars1[0] === 'order';
+      const pass2 = vars2.length === 2 && vars2[0] === 'customer' && vars2[1] === 'amount';
+      const passed = pass1 && pass2;
+      alert([
+        passed ? 'PASS: 可用变量已与模板详情绑定并随模板切换' : 'FAIL: 模板详情变量绑定未生效',
+        `tpl-remote-1 availableVariables: ${JSON.stringify(vars1)}`,
+        `tpl-remote-2 availableVariables: ${JSON.stringify(vars2)}`
+      ].join('\n'));
+    });
+
     document.getElementById('btn-test-preview-html').addEventListener('click', async () => {
       try {
         // API: getPreviewHtml(options?)
@@ -830,6 +960,58 @@
       } catch (err) {
         console.error('获取预览 HTML 失败:', err);
         alert('获取预览 HTML 失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-headless').addEventListener('click', async () => {
+      // 动态创建一个无头模式的 print-designer 元素
+      const headlessDesigner = document.createElement('print-designer');
+      headlessDesigner.setAttribute('headless', 'true');
+      document.body.appendChild(headlessDesigner);
+
+      try {
+        // 设置一点测试模板数据
+        headlessDesigner.loadTemplateData({
+          pageSettings: { width: 210, height: 297, unit: 'mm' },
+          pages: [{
+            id: 'page1',
+            elements: [
+              {
+                id: 'text1',
+                type: 'text',
+                x: 50,
+                y: 50,
+                width: 100,
+                height: 20,
+                content: '无头模式测试打印内容',
+                style: {
+                  fontSize: 20,
+                  color: '#ff0000',
+                  fontWeight: 'bold'
+                }
+              }
+            ]
+          }]
+        });
+
+        // 稍微等待组件挂载及数据加载
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        alert('即将触发无头模式下的静默打印...');
+        
+        // 调用静默打印
+        await headlessDesigner.print({
+          mode: 'browser',
+          options: { silent: true }
+        });
+        
+        console.log('无头模式打印完成');
+      } catch (err) {
+        console.error('无头模式测试失败:', err);
+        alert('无头模式测试失败: ' + err.message);
+      } finally {
+        // 测试完成后清理 dom
+        document.body.removeChild(headlessDesigner);
       }
     });
 

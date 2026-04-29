@@ -29,6 +29,8 @@ export default {
     testData: 'Test Data',
     invalidJson: 'Invalid JSON. Changes were not saved.',
     testDataKeyChanged: 'Test data keys cannot be changed. Please only edit values.',
+    variables: 'Available Variables',
+    noData: 'No Data',
   },
   template: {
     select: 'Select Template',
@@ -266,7 +268,8 @@ export default {
       cornerRadius: 'Corner Radius',
       background: 'Background',
       autoPaginate: 'Auto Paginate',
-      repeatPerPage: 'Repeat Each Page',
+      autoHeight: 'Auto Height',
+      repeatPerPage: 'Repeat Per Page',
       repeatFooter: 'Repeat Footer',
       showFooter: 'Show Footer',
       columns: 'Columns',

@@ -1,4 +1,4 @@
-# Web Components API Guide
+﻿# Web Components API Guide
 
 ## Contents
 
@@ -30,6 +30,7 @@
   - [22. Configure Template Modal Custom Form (setTemplateModalForm)](#22-configure-template-modal-custom-form-settemplatemodalform)
   - [23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#23-configure-custom-element-modal-custom-form-setcustomelementmodalform)
   - [24. Configure Template List Tag Extension (setTemplateTagResolver)](#24-configure-template-list-tag-extension-settemplatetagresolver)
+
 - [Backend API Specifications](#backend-api-specifications)
 - [Events](#events)
 - [PrintOptions](#printoptions)
@@ -107,6 +108,25 @@ Import in your entry file:
 import 'vue-print-designer'
 import 'vue-print-designer/style.css'
 ```
+
+> **Note for Older Webpack Versions**
+> If you are using an older build tool (like Webpack 4 or early vue-cli), it might fail to resolve modules/styles because it doesn't support the `exports` field in `package.json`, or throw errors when compiling dependencies with ES6+ syntax.
+> 
+> **Solution 1: Use Full Path Imports**
+> ```ts
+> import 'vue-print-designer/dist/print-designer.es.js'
+> import 'vue-print-designer/dist/print-designer.css'
+> ```
+> 
+> **Solution 2: Configure Babel Transpilation**
+> If you encounter syntax errors (like optional chaining `?.`), please add the component to `transpileDependencies` in your `vue.config.js` for Babel transpilation:
+> ```js
+> module.exports = {
+>   transpileDependencies: [
+>     'vue-print-designer'
+>   ]
+> }
+> ```
 
 Use the custom element:
 
@@ -452,12 +472,32 @@ console.log('Variables structure for current template:', templateVars)
 
 ### 14. Get and Load Template Data (getTemplateData / loadTemplateData)
 
-Description: read/write current template data.
+Description: read/write current template data. In addition to `data`, template-level variable bindings are supported via `ext.availableVariables`.
 
 ```ts
-const data = el.getTemplateData()
-el.loadTemplateData({ id: 'tpl_1', name: 'A4 Template', data })
+const tpl = el.getTemplateData()
+// tpl.ext.availableVariables is the bound variable tree for this template
+
+el.loadTemplateData({
+  id: 'tpl_1',
+  name: 'A4 Template',
+  data: tpl.data,
+  ext: {
+    availableVariables: [
+      { id: 'customer', label: 'Customer', children: [{ id: 'customer.name', label: 'Customer Name' }] }
+    ]
+  }
+})
 ```
+
+Parameters (`loadTemplateData`):
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | No | Template ID |
+| `name` | `string` | No | Template name |
+| `data` | `TemplateData` | Yes | Template canvas data |
+| `ext.availableVariables` | `VariableTreeItem[]` | No | Template-bound variable tree |
 
 ### 15. Template CRUD Operations
 
@@ -479,12 +519,21 @@ Parameter `options.includeData` (`boolean`): Whether to include detailed templat
 Description: Get detailed data of a template by ID.
 ```ts
 const detail = el.getTemplate('template-id')
+// detail.ext.availableVariables is the template-bound variable tree
 ```
 
 #### 4) Create or Update Template (upsertTemplate)
 Description: Save or update template data. It acts as a create operation if no `id` is provided, otherwise it's an update.
 ```ts
-const id = await el.upsertTemplate({ name: 'A4 Template', data: { pages: [] } }, { setCurrent: true })
+const id = await el.upsertTemplate({
+  name: 'A4 Template',
+  data: { pages: [] },
+  ext: {
+    availableVariables: [
+      { id: 'customer', label: 'Customer', children: [{ id: 'customer.name', label: 'Customer Name' }] }
+    ]
+  }
+}, { setCurrent: true })
 ```
 Parameter `options.setCurrent` (`boolean`): Whether to automatically set it as the current canvas template after saving.
 Permission behavior (read-only template):
@@ -502,7 +551,16 @@ Permission behavior (protected template):
 #### 6) Overwrite Template List (setTemplates)
 Description: Overwrite the locally stored template list directly.
 ```ts
-el.setTemplates([{ id: 't1', name: 'T1', data: {} }])
+el.setTemplates([
+  {
+    id: 't1',
+    name: 'T1',
+    data: {},
+    ext: {
+      availableVariables: [{ id: 'customer.name', label: 'Customer Name' }]
+    }
+  }
+])
 ```
 Parameter `options.currentTemplateId` (`string`): Optional, set the currently active template ID after overwriting.
 
@@ -753,7 +811,7 @@ el.setTemplateContextMenu({
       key: 'custom-publish',
       label: 'Publish Template',
       icon: 'material-symbols:rocket-launch', // Optional: Iconify name (e.g. material-symbols:edit)
-      // icon: '🚀', // Optional: Text or emoji
+      // icon: '馃殌', // Optional: Text or emoji
       // iconClass: 'fa fa-edit', // Optional: CSS class for icon fonts
       // iconImage: 'https://example.com/icon.png', // Optional: Image URL
       eventName: 'template-custom-publish' // Event to dispatch
@@ -951,246 +1009,164 @@ el.setTemplateTagResolver((template) => {
 
 ## Backend API Specifications
 
-When integrating with the designer's cloud CRUD capabilities, your backend services **MUST strictly adhere** to the following data structure specifications:
+When integrating with remote CRUD, implement API paths and core fields first, then extend with `ext`. The following structure is concise and implementation-ready.
 
-**1) List templates**
+### Overview
+
+| Resource | Action | Default Method (Customizable) | Path | Description |
+| --- | --- | --- | --- | --- |
+| Template | List | `GET` | `/api/print/templates` | Template list endpoint. |
+| Template | Detail | `GET` | `/api/print/templates/{id}` | Template detail endpoint. |
+| Template | Create/Update | `POST` | `/api/print/templates` | Template create/update endpoint. |
+| Template | Delete | `DELETE` | `/api/print/templates/{id}` | Template delete endpoint. |
+| Custom Element | List | `GET` | `/api/print/custom-elements` | Custom element list endpoint. |
+| Custom Element | Detail | `GET` | `/api/print/custom-elements/{id}` | Custom element detail endpoint. |
+| Custom Element | Create/Update | `POST` | `/api/print/custom-elements` | Custom element create/update endpoint. |
+| Custom Element | Delete | `DELETE` | `/api/print/custom-elements/{id}` | Custom element delete endpoint. |
+
+### Common Fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | Required for detail/update | Primary key. Can be omitted for create; backend returns the real `id`. |
+| `name` | `string` | Required for create/update | Display name. |
+| `permissions` | `object` | Optional | Can include `editable/deletable/copyable` to control UI actions. |
+| `updatedAt` | `number` | Recommended | Unix timestamp in milliseconds. |
+| `ext` | `object` | Recommended | Extension container. See `ext` rules at the end of this section. |
+| `success` | `boolean` | Recommended for delete | Delete result flag. |
+
+### Template CRUD Constraints
+
+#### 1) List Templates
 
 `GET /api/print/templates`
 
-Ordering rule (Remote CRUD): the frontend renders the template list strictly in the order returned by this API, and no longer reorders by `updatedAt` or copy actions on the client side.  
-So the backend must return a **stable, business-expected** order (e.g. `displayOrder ASC, id ASC`), otherwise the visible order will change with API responses.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `request.body` | `null` | Yes | No request body. |
+| `response[]` | `Template[]` | Yes | Returns an array. |
+| `response[].id` | `string` | Recommended | Template unique ID. |
+| `response[].name` | `string` | Recommended | Template name. |
+| `response[].updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `response[].permissions` | `object` | Optional | Permission control fields. |
+| `response[].ext` | `object` | Optional | Extension data. |
+| `response.order` | Rule | Yes | Frontend renders in API return order and does not re-sort by `updatedAt` or copy action; backend should return a stable order (e.g. `displayOrder ASC, id ASC`). |
 
-**Request:**
-No request body.
-
-**Response:**
-
-```json
-[
-  {
-    "id": "tpl_1",
-    "name": "A4 Template",
-    "permissions": {
-      "editable": true,
-      "deletable": true,
-      "copyable": true
-    },
-    "ext": {
-      "templateTags": [
-        { "key": "system", "label": "System", "color": "blue" }
-      ]
-    },
-    "updatedAt": 1700000000000
-  }
-]
-```
-
-**2) Get template**
+#### 2) Get Template Detail
 
 `GET /api/print/templates/{id}`
 
-**Request:**
-URL path parameter `id` is the unique identifier of the template. No request body.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path.id` | `string` | Yes | Template unique identifier. |
+| `request.body` | `null` | Yes | No request body. |
+| `response.id` | `string` | Yes | Template unique ID. |
+| `response.name` | `string` | Yes | Template name. |
+| `response.data` | `object` | Yes | Template design data used to load canvas. |
+| `response.ext.availableVariables` | `VariableTreeItem[]` | Recommended | Template-bound variable tree; used to restore binding on load. |
+| `response.permissions` | `object` | Optional | Permission control fields. |
+| `response.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
 
-**Response:**
-
-```json
-{
-  "id": "tpl_1",
-  "name": "A4 Template",
-  "permissions": {
-    "editable": true,
-    "deletable": true,
-    "copyable": true
-  },
-  "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } },
-  "updatedAt": 1700000000000
-}
-```
-
-**3) Save template (create/update)**
+#### 3) Save Template (Create/Update)
 
 `POST /api/print/templates`
 
-**Request:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `request.id` | `string` | Required for update | Template unique ID; omit for create. |
+| `request.name` | `string` | Yes | Template name. |
+| `request.data` | `object` | Yes | Template design data. |
+| `request.ext` | `object` | Optional | Template extension container. |
+| `request.ext.availableVariables` | `VariableTreeItem[]` | Recommended | Template-bound variable tree; backend should persist as-is. |
+| `response.id` | `string` | Yes | Must return real `id` for create flow. |
+| `response.ext` | `object` | Recommended | Backend-appended extension data for frontend merge. |
+| `request.<customRootField>` | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
 
-```json
-{
-  "id": "tpl_1",
-  "name": "A4 Template",
-  "permissions": {
-    "editable": true,
-    "deletable": true,
-    "copyable": true
-  },
-  "data": { "pages": [], "canvasSize": { "width": 794, "height": 1123 } },
-  "ext": {
-    "templateModalForm": {
-      "create": { "category": "standard", "scope": "private", "priority": 1 },
-      "edit": { "scope": "team" },
-      "copy": { "category": "shipment", "priority": 2 },
-      "lastMode": "copy",
-      "updatedAt": 1700000000000
-    }
-  }
-}
-```
-
-**Response:**
-The frontend will read the `id` (to get the real ID when creating) and `ext` (to merge extended data appended by the backend) from the response.
-
-```json
-{
-  "id": "tpl_1",
-  "ext": {
-    "templateModalForm": {
-      "create": { "category": "standard", "scope": "private", "priority": 1 },
-      "edit": { "scope": "team" },
-      "copy": { "category": "shipment", "priority": 2 },
-      "lastMode": "copy",
-      "updatedAt": 1700000000000
-    }
-  }
-}
-```
-
-**3.1) Template ext Round-Trip and Load Contract (Custom Form)**
-
-- To ensure custom form values can be echoed after save, backend should persist and return the `ext` field in template objects as-is.
-- Recommended path: `ext.templateModalForm.{create|edit|copy}` where each value stores the latest submitted extended form values for that mode (excluding `name`).
-- `GET /templates/{id}` should return the latest `ext.templateModalForm`; frontend uses it for `edit/copy` modal echo.
-- Returning `ext` in `GET /templates` list response is optional but recommended to reduce first-open differences.
-- If backend does not return `ext`, frontend still works and falls back to `setTemplateModalForm(...).initialValues`.
-- Convention: All template extension parameters must be placed inside the `ext` object. Appending custom parameters to the root level of the template is no longer supported.
-
-**3.2) Template Tag Data Return Guidelines (Template List Tags)**
-
-- The template list tags directly read `template.ext.templateTags`.
-- If you want to display business tags in the template list, please provide the following structure in the `ext` field returned by the backend:
-  ```json
-  "templateTags": [
-    { "key": "system", "label": "System", "color": "blue" }
-  ]
-  ```
-- Color Rules: Supports built-in semantic colors (`white/red/blue/green/orange`) or CSS color values. When no color is passed, the default gray style will be used.
-
-**4) Delete template**
+#### 4) Delete Template
 
 `DELETE /api/print/templates/{id}`
 
-**Request:**
-URL path parameter `id` is the unique identifier of the template to be deleted. No request body.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path.id` | `string` | Yes | Template ID to delete. |
+| `request.body` | `null` | Yes | No request body. |
+| `response.success` | `boolean` | Recommended | Delete result. `true` indicates success. |
 
-**Response:**
+### Custom Element CRUD Constraints
 
-```json
-{ "success": true }
-```
-
-**5) List custom elements**
+#### 5) List Custom Elements
 
 `GET /api/print/custom-elements`
 
-Note: To ensure custom elements are visible in the left list and can be edited directly, each item in this list response must include the `element` field. Returning only `id/name` will be filtered out by the frontend.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `request.body` | `null` | Yes | No request body. |
+| `response[]` | `CustomElement[]` | Yes | Returns an array. |
+| `response[].id` | `string` | Recommended | Element unique ID. |
+| `response[].name` | `string` | Recommended | Element name. |
+| `response[].element` | `object` | Yes | Element definition; items without this field are filtered by frontend. |
+| `response[].updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `response[].permissions` | `object` | Optional | Permission control fields. |
+| `response[].ext` | `object` | Optional | Extension data. |
 
-**Request:**
-No request body.
-
-**Response:**
-
-```json
-[
-  {
-    "id": "ce_1",
-    "name": "Barcode Element",
-    "permissions": {
-      "editable": true,
-      "deletable": true,
-      "copyable": true
-    },
-    "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
-    "ext": {
-      "customField": "value"
-    },
-    "updatedAt": 1700000000000
-  }
-]
-```
-
-**6) Get custom element**
+#### 6) Get Custom Element Detail
 
 `GET /api/print/custom-elements/{id}`
 
-**Request:**
-URL path parameter `id` is the unique identifier of the custom element. No request body.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path.id` | `string` | Yes | Custom element unique identifier. |
+| `request.body` | `null` | Yes | No request body. |
+| `response.id` | `string` | Yes | Element unique ID. |
+| `response.name` | `string` | Yes | Element name. |
+| `response.element` | `object` | Yes | Element definition used for render/edit. |
+| `response.permissions` | `object` | Optional | Permission control fields. |
+| `response.ext` | `object` | Optional | Extension data. |
+| `response.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
 
-**Response:**
-
-```json
-{
-  "id": "ce_1",
-  "name": "Barcode Element",
-  "permissions": {
-    "editable": true,
-    "deletable": true,
-    "copyable": true
-  },
-  "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
-  "ext": {
-    "customField": "value"
-  },
-  "updatedAt": 1700000000000
-}
-```
-
-**7) Save custom element (create/update)**
+#### 7) Save Custom Element (Create/Update)
 
 `POST /api/print/custom-elements`
 
-**Request:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `request.id` | `string` | Required for update | Element unique ID; omit for create. |
+| `request.name` | `string` | Yes | Element name. |
+| `request.element` | `object` | Yes | Element definition. |
+| `request.ext` | `object` | Optional | Element extension container. |
+| `response.id` | `string` | Yes | Must return real `id` for create flow. |
+| `response.ext` | `object` | Recommended | Backend-appended extension data for frontend merge. |
+| `request.<customRootField>` | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
 
-```json
-{
-  "id": "ce_1",
-  "name": "Barcode Element",
-  "permissions": {
-    "editable": true,
-    "deletable": true,
-    "copyable": true
-  },
-  "element": { "type": "barcode", "x": 20, "y": 20, "width": 200, "height": 60, "style": { "fontSize": 12 } },
-  "ext": {
-    "customField": "value"
-  }
-}
-```
-
-**Response:**
-The frontend will read the `id` (to get the real ID when creating) and `ext` (to merge extended data appended by the backend) from the response.
-
-```json
-{
-  "id": "ce_1",
-  "ext": {
-    "customField": "value"
-  }
-}
-```
-
-- Convention: All custom element extension parameters must be placed inside the `ext` object. Appending custom parameters to the root level is no longer supported.
-
-**8) Delete custom element**
+#### 8) Delete Custom Element
 
 `DELETE /api/print/custom-elements/{id}`
 
-**Request:**
-URL path parameter `id` is the unique identifier of the element to be deleted. No request body.
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path.id` | `string` | Yes | Element ID to delete. |
+| `request.body` | `null` | Yes | No request body. |
+| `response.success` | `boolean` | Recommended | Delete result. `true` indicates success. |
 
-**Response:**
+### Generic `ext` Constraints (At the End)
 
-```json
-{ "success": true }
-```
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ext` | `Record<string, any>` | Recommended | Extension container. Non-object values (`null`, array, string) are treated as empty object on frontend. |
+| `ext.templateModalForm` | `Record<string, any>` | Optional | Extended modal-form echo data (shared by template/custom-element flows). |
+| `ext.templateTags` | `TemplateListTag[]` | Optional | Template list tag data. |
+| `ext.availableVariables` | `VariableTreeItem[]` | Recommended for template | Template-bound variable tree. |
+| `ext.<customKey>` | Any JSON value | Optional | Business extension fields (e.g. `ext.customField`, `ext.bizMeta`) are round-tripped and merged by frontend. |
+| `<root>.<customKey>` | Not supported | No | Root-level flattened custom extension fields are not supported; place them under `ext`. |
+| `ext` merge rule | Rule | Yes | Frontend merges objects by key; arrays use last value wins (no concatenation). Return full arrays for array fields. |
+
+### Quick Checklist
+
+- Both template and custom-element resources expose `list/get/upsert/delete`.
+- All create/update APIs return a real `id`.
+- Template detail returns both `data` and `ext.availableVariables`.
+- Every custom-element list item includes `element`.
+- All extension fields are under `ext` (no root-level flattened custom fields).
 
 ## Events
 
@@ -1335,6 +1311,35 @@ const pdfBlob = await el.export({ type: 'pdfBlob' })
 console.log('Generated PDF size:', pdfBlob.size)
 ```
 
+### Scenario 4: Headless Mode Silent Printing
+
+Description: If you do not want to keep any hidden template DOM on the page, or purely call it silently in the background, you can enable headless mode. The designer UI will be completely hidden. This mode is suitable for scenarios where you only need to silently call print or export APIs in business pages without displaying the designer UI. It can also be set via the HTML attribute `headless="true"`.
+
+```html
+<!-- Enable headless mode via attribute -->
+<print-designer id="designer" lang="en" headless></print-designer>
+```
+
+```ts
+const el = document.querySelector('print-designer') as any
+
+// Load the template or data to be printed
+await el.loadTemplate('tpl_123')
+el.setVariables({ orderNo: 'REAL-20231025-002' })
+
+// Call silent print in headless mode
+await el.print({
+  mode: 'browser',
+  options: { silent: true }
+})
+
+// Or call PDF export
+await el.export({
+  type: 'pdf',
+  filename: 'export.pdf'
+})
+```
+
 ## Template and Custom Element JSON Examples
 
 **Template Data**
@@ -1404,3 +1409,4 @@ console.log('Generated PDF size:', pdfBlob.size)
 - If you use Shadow DOM, ensure `print-designer.css` is loaded.
 - When current template has `editable=false`, designer enters template-level read-only mode (drag/resize/property edit/page operations are disabled).
 - Permission checks run in both UI and Store/API layers to prevent bypass via external method calls.
+

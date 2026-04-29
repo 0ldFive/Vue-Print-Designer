@@ -239,7 +239,33 @@ const currentSchema = computed(() => element.value ? getSchema(element.value.typ
 
 const visibleSections = computed(() => {
   if (!currentSchema.value) return [];
-  return currentSchema.value.sections.filter(s => (s.tab || 'properties') === activeTab.value);
+  const sections = currentSchema.value.sections.filter(s => (s.tab || 'properties') === activeTab.value);
+  
+  if (activeTab.value === 'properties' && showRepeatPerPage.value) {
+    const clonedSections = JSON.parse(JSON.stringify(sections));
+    let dataBehavior = clonedSections.find((s: any) => s.title === 'properties.section.dataBehavior');
+    if (!dataBehavior) {
+      dataBehavior = {
+        title: 'properties.section.dataBehavior',
+        tab: 'properties',
+        fields: []
+      };
+      clonedSections.push(dataBehavior);
+    }
+    
+    if (!dataBehavior.fields.some((f: any) => f.key === 'repeatPerPage')) {
+      dataBehavior.fields.unshift({
+        label: 'properties.label.repeatPerPage',
+        type: 'switch',
+        target: 'element',
+        key: 'repeatPerPage'
+      });
+    }
+    
+    return clonedSections;
+  }
+  
+  return sections;
 });
 
 const getFieldValue = (field: PropertyField) => {
@@ -494,17 +520,6 @@ const handleFocusOut = (e: FocusEvent) => {
           </div>
         </div>
 
-        <div v-if="activeTab === 'properties' && showRepeatPerPage" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.dataBehavior') }}</h3>
-          <PropertyInput
-            :label="t('properties.label.repeatPerPage')"
-            type="switch"
-            :disabled="isEditingDisabled"
-            :value="element.repeatPerPage || false"
-            @update:value="(v) => handleChange('repeatPerPage', Boolean(v))"
-          />
-        </div>
-
         <!-- Table Cell Operations -->
         <div v-if="activeTab === 'properties' && element.type === 'table' && store.tableSelection" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
           <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('properties.section.cellOperations') }}</h3>
@@ -561,7 +576,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <PropertySelect
                   v-else-if="field.type === 'select'"
                   :label="t(field.label)"
-                  :options="(field.options || []).map(o => ({ ...o, label: t(o.label) }))"
+                  :options="(field.options || []).map((o: any) => ({ ...o, label: t(o.label) }))"
                   :disabled="isEditingDisabled"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"

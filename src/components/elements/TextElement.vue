@@ -43,7 +43,12 @@ const resolvedText = computed(() => {
     }
   }
 
-  return props.element.variable || props.element.content;
+  if (props.element.variable) {
+    const key = normalizeVariableKey(props.element.variable);
+    if (!key) return props.element.content;
+    return `@${key}`;
+  }
+  return props.element.content;
 });
 
 const canInlineEdit = computed(() => {
@@ -117,6 +122,13 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       fields: [
         { label: 'properties.label.content', type: 'textarea', target: 'element', key: 'content', placeholder: 'properties.label.textContentPlaceholder' },
         { label: 'properties.label.variable', type: 'text', target: 'element', key: 'variable', placeholder: '@variable' }
+      ]
+    },
+    {
+      title: 'properties.section.dataBehavior',
+      tab: 'properties',
+      fields: [
+        { label: 'properties.label.autoHeight', type: 'switch', target: 'style', key: 'autoHeight' }
       ]
     },
     {
@@ -202,7 +214,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden" @dblclick="startInlineEdit" :style="{
+  <div class="w-full h-full overflow-hidden" @dblclick="startInlineEdit" :data-auto-height="element.style.autoHeight ? 'true' : undefined" :style="{
     display: 'flex',
     flexDirection: 'column',
     justifyContent,

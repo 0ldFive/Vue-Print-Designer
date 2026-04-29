@@ -13,6 +13,7 @@ import MoreVert from '~icons/material-symbols/more-vert';
 import Edit from '~icons/material-symbols/edit';
 import Copy from '~icons/material-symbols/content-copy';
 import Trash2 from '~icons/material-symbols/delete';
+import ViewList from '~icons/material-symbols/view-list';
 import Add from '~icons/material-symbols/add';
 import Check from '~icons/material-symbols/check'; // For selection indicator maybe?
 import Description from '~icons/material-symbols/description';
@@ -45,7 +46,7 @@ const testDataContent = ref('');
 const testDataTarget = ref<Template | null>(null);
 const testDataAllowedKeys = ref<string[]>([]);
 
-type TemplateMenuActionKey = 'testData' | 'edit' | 'copy' | 'delete';
+type TemplateMenuActionKey = 'testData' | 'variablesPanel' | 'edit' | 'copy' | 'delete';
 type TemplateMenuItemView = ListContextMenuItem & { iconComponent?: Component };
 type ModalSavePayload = string | Record<string, any>;
 const maxVisibleTemplateTags = 2;
@@ -213,14 +214,12 @@ onMounted(async () => {
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('designer:new-template', handleCreate);
   window.addEventListener('designer:save-as', handleSaveAsEvent as EventListener);
-  window.addEventListener('designer:save', handleSaveEvent);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('designer:new-template', handleCreate);
   window.removeEventListener('designer:save-as', handleSaveAsEvent as EventListener);
-  window.removeEventListener('designer:save', handleSaveEvent);
 });
 
 const handleClickOutside = (e: MouseEvent) => {
@@ -334,16 +333,6 @@ const handleSaveAsEvent = async (e: Event) => {
   activeMenuId.value = null;
 };
 
-const handleSaveEvent = () => {
-  modalMode.value = 'create';
-  targetTemplateId.value = null;
-  modalInitialName.value = '';
-  modalInitialValues.value = buildModalInitialValues('', 'create', null);
-  showModal.value = true;
-  isOpen.value = false;
-  activeMenuId.value = null;
-};
-
 const handleEdit = async (template: Template) => {
   if (!canEditEntity(template)) {
     toast.warning(t('toast.templateReadOnly'));
@@ -417,6 +406,7 @@ const handleTestData = async (template: Template) => {
 
 const defaultTemplateMenuItems = computed<TemplateMenuItemView[]>(() => ([
   { key: 'testData', actionKey: 'testData', label: t('common.testData'), iconComponent: DataObject },
+  { key: 'variablesPanel', actionKey: 'variablesPanel', label: t('common.variables'), iconComponent: ViewList },
   { key: 'edit', actionKey: 'edit', label: t('common.edit'), iconComponent: Edit, disabled: ({ item }) => !canEditEntity(item) },
   { key: 'copy', actionKey: 'copy', label: t('common.copy'), iconComponent: Copy, disabled: ({ item }) => !canCopyEntity(item) },
   { key: 'delete', actionKey: 'delete', label: t('common.delete'), iconComponent: Trash2, danger: true, disabled: ({ item }) => !canDeleteEntity(item) }
@@ -464,6 +454,10 @@ const runBuiltInMenuAction = (actionKey: string | undefined, template: Template)
   const key = (actionKey || '') as TemplateMenuActionKey;
   if (key === 'testData') {
     handleTestData(template);
+    return;
+  }
+  if (key === 'variablesPanel') {
+    designerStore.setShowVariablesPanel(true);
     return;
   }
   if (key === 'edit') {
