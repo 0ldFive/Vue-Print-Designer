@@ -1041,31 +1041,116 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 
 `GET /api/print/templates`
 
+Note: request body is empty; response body is a template array. All fields below are list-item fields (item.xxx).
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `request.body` | `null` | Yes | No request body. |
-| `response[]` | `Template[]` | Yes | Returns an array. |
-| `response[].id` | `string` | Recommended | Template unique ID. |
-| `response[].name` | `string` | Recommended | Template name. |
-| `response[].updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
-| `response[].permissions` | `object` | Optional | Permission control fields. |
-| `response[].ext` | `object` | Optional | Extension data. |
-| `response.order` | Rule | Yes | Frontend renders in API return order and does not re-sort by `updatedAt` or copy action; backend should return a stable order (e.g. `displayOrder ASC, id ASC`). |
+| `item.id` | `string` | Recommended | Template unique ID. |
+| `item.name` | `string` | Recommended | Template name. |
+| `item.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `item.permissions` | `object` | Optional | Permission control fields. |
+| `item.ext` | `object` | Optional | Extension data. |
+| `order` | Rule | Yes | Frontend renders in API return order and does not re-sort by `updatedAt` or copy action; backend should return a stable order (e.g. `displayOrder ASC, id ASC`). |
+
+Request example:
+
+```http
+GET /api/print/templates HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+[
+  {
+    "id": "tpl_1001",
+    "name": "A4 Delivery Note",
+    "updatedAt": 1715251200000,
+    "permissions": {
+      "editable": true,
+      "deletable": true,
+      "copyable": true
+    },
+    "ext": {
+      "category": "delivery"
+    }
+  },
+  {
+    "id": "tpl_1002",
+    "name": "A5 QC Label",
+    "updatedAt": 1715337600000,
+    "permissions": {
+      "editable": false,
+      "deletable": false,
+      "copyable": true
+    },
+    "ext": {
+      "category": "qc"
+    }
+  }
+]
+```
 
 #### 2) Get Template Detail
 
 `GET /api/print/templates/{id}`
 
+Note: request body is empty.
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `path.id` | `string` | Yes | Template unique identifier. |
-| `request.body` | `null` | Yes | No request body. |
-| `response.id` | `string` | Yes | Template unique ID. |
-| `response.name` | `string` | Yes | Template name. |
-| `response.data` | `object` | Yes | Template design data used to load canvas. |
-| `response.ext.availableVariables` | `VariableTreeItem[]` | Recommended | Template-bound variable tree; used to restore binding on load. |
-| `response.permissions` | `object` | Optional | Permission control fields. |
-| `response.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `path.id` | `string` | Yes | Path parameter, template unique identifier. |
+| `id` | `string` | Yes | Template unique ID. |
+| `name` | `string` | Yes | Template name. |
+| `data` | `object` | Yes | Template design data used to load canvas. |
+| `ext.availableVariables` | `VariableTreeItem[]` | Recommended | Template-bound variable tree; used to restore binding on load. |
+| `permissions` | `object` | Optional | Permission control fields. |
+| `updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+
+Request example:
+
+```http
+GET /api/print/templates/tpl_1001 HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+{
+  "id": "tpl_1001",
+  "name": "A4 Delivery Note",
+  "data": {
+    "pages": [
+      {
+        "id": "page_1",
+        "elements": []
+      }
+    ]
+  },
+  "ext": {
+    "availableVariables": [
+      {
+        "id": "order",
+        "label": "Order",
+        "children": [
+          {
+            "id": "order.no",
+            "label": "Order No"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
+  "updatedAt": 1715251200000
+}
+```
 
 #### 3) Save Template (Create/Update)
 
@@ -1073,24 +1158,81 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `request.id` | `string` | Required for update | Template unique ID; omit for create. |
-| `request.name` | `string` | Yes | Template name. |
-| `request.data` | `object` | Yes | Template design data. |
-| `request.ext` | `object` | Optional | Template extension container. |
-| `request.ext.availableVariables` | `VariableTreeItem[]` | Recommended | Template-bound variable tree; backend should persist as-is. |
-| `response.id` | `string` | Yes | Must return real `id` for create flow. |
-| `response.ext` | `object` | Recommended | Backend-appended extension data for frontend merge. |
-| `request.<customRootField>` | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
+| `id` (request) | `string` | Required for update | Template unique ID; omit for create. |
+| `name` (request) | `string` | Yes | Template name. |
+| `data` (request) | `object` | Yes | Template design data. |
+| `ext` (request) | `object` | Optional | Template extension container. |
+| `ext.availableVariables` (request) | `VariableTreeItem[]` | Recommended | Template-bound variable tree; backend should persist as-is. |
+| `id` (response) | `string` | Yes | Must return real `id` for create flow. |
+| `ext` (response) | `object` | Recommended | Backend-appended extension data for frontend merge. |
+| `<customRootField>` (request root) | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
+
+Request example:
+
+```http
+POST /api/print/templates HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "name": "A6 Shipping Label",
+  "data": {
+    "pages": [
+      {
+        "id": "page_1",
+        "elements": []
+      }
+    ]
+  },
+  "ext": {
+    "availableVariables": [
+      {
+        "id": "customer.name",
+        "label": "Customer Name"
+      }
+    ],
+    "category": "express"
+  }
+}
+```
+
+Response example:
+
+```json
+{
+  "id": "tpl_2001",
+  "ext": {
+    "category": "express",
+    "lastOperator": "admin"
+  }
+}
+```
 
 #### 4) Delete Template
 
 `DELETE /api/print/templates/{id}`
 
+Note: request body is empty.
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path.id` | `string` | Yes | Template ID to delete. |
-| `request.body` | `null` | Yes | No request body. |
-| `response.success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+| `success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+
+Request example:
+
+```http
+DELETE /api/print/templates/tpl_1001 HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+{
+  "success": true
+}
+```
 
 ### Custom Element CRUD Constraints
 
@@ -1098,31 +1240,98 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 
 `GET /api/print/custom-elements`
 
+Note: request body is empty; response body is a custom-element array. All fields below are list-item fields (item.xxx).
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `request.body` | `null` | Yes | No request body. |
-| `response[]` | `CustomElement[]` | Yes | Returns an array. |
-| `response[].id` | `string` | Recommended | Element unique ID. |
-| `response[].name` | `string` | Recommended | Element name. |
-| `response[].element` | `object` | Yes | Element definition; items without this field are filtered by frontend. |
-| `response[].updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
-| `response[].permissions` | `object` | Optional | Permission control fields. |
-| `response[].ext` | `object` | Optional | Extension data. |
+| `item.id` | `string` | Recommended | Element unique ID. |
+| `item.name` | `string` | Recommended | Element name. |
+| `item.element` | `object` | Yes | Element definition; items without this field are filtered by frontend. |
+| `item.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `item.permissions` | `object` | Optional | Permission control fields. |
+| `item.ext` | `object` | Optional | Extension data. |
+
+Request example:
+
+```http
+GET /api/print/custom-elements HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+[
+  {
+    "id": "ce_1001",
+    "name": "Standard Barcode",
+    "element": {
+      "type": "barcode",
+      "width": 220,
+      "height": 80
+    },
+    "updatedAt": 1715251200000,
+    "permissions": {
+      "editable": true,
+      "deletable": true,
+      "copyable": true
+    },
+    "ext": {
+      "category": "barcode"
+    }
+  }
+]
+```
 
 #### 6) Get Custom Element Detail
 
 `GET /api/print/custom-elements/{id}`
 
+Note: request body is empty.
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path.id` | `string` | Yes | Custom element unique identifier. |
-| `request.body` | `null` | Yes | No request body. |
-| `response.id` | `string` | Yes | Element unique ID. |
-| `response.name` | `string` | Yes | Element name. |
-| `response.element` | `object` | Yes | Element definition used for render/edit. |
-| `response.permissions` | `object` | Optional | Permission control fields. |
-| `response.ext` | `object` | Optional | Extension data. |
-| `response.updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+| `id` | `string` | Yes | Element unique ID. |
+| `name` | `string` | Yes | Element name. |
+| `element` | `object` | Yes | Element definition used for render/edit. |
+| `permissions` | `object` | Optional | Permission control fields. |
+| `ext` | `object` | Optional | Extension data. |
+| `updatedAt` | `number` | Recommended | Update timestamp in milliseconds. |
+
+Request example:
+
+```http
+GET /api/print/custom-elements/ce_1001 HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+{
+  "id": "ce_1001",
+  "name": "Standard Barcode",
+  "element": {
+    "id": "el_barcode_1",
+    "type": "barcode",
+    "x": 20,
+    "y": 20,
+    "width": 220,
+    "height": 80,
+    "content": "A001"
+  },
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
+  "ext": {
+    "category": "barcode"
+  },
+  "updatedAt": 1715251200000
+}
+```
 
 #### 7) Save Custom Element (Create/Update)
 
@@ -1130,23 +1339,74 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `request.id` | `string` | Required for update | Element unique ID; omit for create. |
-| `request.name` | `string` | Yes | Element name. |
-| `request.element` | `object` | Yes | Element definition. |
-| `request.ext` | `object` | Optional | Element extension container. |
-| `response.id` | `string` | Yes | Must return real `id` for create flow. |
-| `response.ext` | `object` | Recommended | Backend-appended extension data for frontend merge. |
-| `request.<customRootField>` | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
+| `id` (request) | `string` | Required for update | Element unique ID; omit for create. |
+| `name` (request) | `string` | Yes | Element name. |
+| `element` (request) | `object` | Yes | Element definition. |
+| `ext` (request) | `object` | Optional | Element extension container. |
+| `id` (response) | `string` | Yes | Must return real `id` for create flow. |
+| `ext` (response) | `object` | Recommended | Backend-appended extension data for frontend merge. |
+| `<customRootField>` (request root) | Not supported | No | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
+
+Request example:
+
+```http
+POST /api/print/custom-elements HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "name": "QRCode Element",
+  "element": {
+    "type": "qrcode",
+    "x": 16,
+    "y": 16,
+    "width": 100,
+    "height": 100,
+    "content": "https://example.com/order/1001"
+  },
+  "ext": {
+    "category": "qrcode"
+  }
+}
+```
+
+Response example:
+
+```json
+{
+  "id": "ce_2001",
+  "ext": {
+    "category": "qrcode",
+    "lastOperator": "admin"
+  }
+}
+```
 
 #### 8) Delete Custom Element
 
 `DELETE /api/print/custom-elements/{id}`
 
+Note: request body is empty.
+
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `path.id` | `string` | Yes | Element ID to delete. |
-| `request.body` | `null` | Yes | No request body. |
-| `response.success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+| `success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+
+Request example:
+
+```http
+DELETE /api/print/custom-elements/ce_1001 HTTP/1.1
+Authorization: Bearer <token>
+```
+
+Response example:
+
+```json
+{
+  "success": true
+}
+```
 
 ### Generic `ext` Constraints (At the End)
 
