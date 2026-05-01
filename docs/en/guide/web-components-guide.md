@@ -3,6 +3,9 @@
 ## Contents
 
 - [Quick Start](#quick-start)
+  - [Vue Integration](#vue-integration)
+  - [React Integration](#react-integration)
+  - [Native HTML Integration](#native-html-integration)
 - [API Index](#api-index)
 - [Instance Methods and Parameters](#instance-methods-and-parameters)
   - [Initialization (Recommended)](#initialization-recommended)
@@ -120,6 +123,8 @@ Install:
 npm i vue-print-designer
 ```
 
+### Vue Integration
+
 Import in your entry file:
 
 ```ts
@@ -151,6 +156,77 @@ Use the custom element:
 
 ```html
 <print-designer id="designer" lang="en"></print-designer>
+```
+
+### React Integration
+
+Example (Vite + React):
+
+```tsx
+// main.tsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import 'vue-print-designer'
+import 'vue-print-designer/style.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+```
+
+```tsx
+// App.tsx
+import { useEffect, useRef } from 'react'
+
+export default function App() {
+  const designerRef = useRef<any>(null)
+
+  useEffect(() => {
+    designerRef.current?.setLanguage('en')
+  }, [])
+
+  return <print-designer ref={designerRef} lang="en"></print-designer>
+}
+```
+
+For TypeScript React projects, if you see `Property 'print-designer' does not exist on type 'JSX.IntrinsicElements'`, add a declaration file:
+
+```ts
+// src/custom-elements.d.ts
+declare namespace JSX {
+  interface IntrinsicElements {
+    'print-designer': any
+  }
+}
+```
+
+### Native HTML Integration
+
+Example (no framework):
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Print Designer</title>
+    <link rel="stylesheet" href="https://unpkg.com/vue-print-designer@latest/dist/print-designer.css" />
+  </head>
+  <body>
+    <print-designer id="designer" lang="en"></print-designer>
+
+    <script type="module">
+      import 'https://unpkg.com/vue-print-designer@latest/dist/print-designer.es.js'
+
+      const designer = document.getElementById('designer')
+      designer?.setLanguage('en')
+    </script>
+  </body>
+</html>
 ```
 
 ## Instance Methods and Parameters
