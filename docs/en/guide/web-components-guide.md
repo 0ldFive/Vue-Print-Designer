@@ -6,6 +6,7 @@
 - [API Index](#api-index)
 - [Instance Methods and Parameters](#instance-methods-and-parameters)
   - [Initialization (Recommended)](#initialization-recommended)
+  - [Initialization Parameters (Suggested)](#initialization-parameters-suggested)
   - [1. Execute Print (print)](#1-execute-print-print)
   - [2. Export PDF/Images/HTML (export)](#2-export-pdfimageshtml-export)
   - [3. Generate and Get HTML Preview Code (getPreviewHtml)](#3-generate-and-get-html-preview-code-getpreviewhtml)
@@ -19,9 +20,9 @@
   - [11. Set and Get Test Data (setTestData / getTestData)](#11-set-and-get-test-data-settestdata--gettestdata)
   - [12. Set and Get Variables (setVariables / getVariables)](#12-set-and-get-variables-setvariables--getvariables)
   - [13. Extract Template Variables (getTemplateVariables)](#13-extract-template-variables-gettemplatevariables)
-  - [14. Get and Load Template Data (getTemplateData / loadTemplateData)](#14-get-and-load-template-data-gettemplatedata--loadtemplatedatadata)
+  - [14. Get and Load Template Data (getTemplateData / loadTemplateData)](#14-get-and-load-template-data-gettemplatedata--loadtemplatedata)
   - [15. Template CRUD Operations](#15-template-crud-operations)
-  - [16. Custom Element CRUD Operations](#16-custom-element-crud-operations)
+  - [16. Custom Elements CRUD Operations](#16-custom-elements-crud-operations)
   - [17. Set CRUD Mode (setCrudMode)](#17-set-crud-mode-setcrudmode)
   - [18. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#18-configure-cloud-crud-endpoints-setcrudendpoints)
   - [19. Set Language (setLanguage)](#19-set-language-setlanguage)
@@ -32,9 +33,27 @@
   - [24. Configure Template List Tag Extension (setTemplateTagResolver)](#24-configure-template-list-tag-extension-settemplatetagresolver)
 
 - [Backend API Specifications](#backend-api-specifications)
+  - [Overview](#overview)
+  - [Common Fields](#common-fields)
+  - [Template CRUD Constraints](#template-crud-constraints)
+    - [1) List Templates](#1-list-templates)
+    - [2) Get Template Detail](#2-get-template-detail)
+    - [3) Save Template (Create/Update)](#3-save-template-createupdate)
+    - [4) Delete Template](#4-delete-template)
+  - [Custom Element CRUD Constraints](#custom-element-crud-constraints)
+    - [5) List Custom Elements](#5-list-custom-elements)
+    - [6) Get Custom Element Detail](#6-get-custom-element-detail)
+    - [7) Save Custom Element (Create/Update)](#7-save-custom-element-createupdate)
+    - [8) Delete Custom Element](#8-delete-custom-element)
+  - [Generic ext Constraints](#generic-ext-constraints)
+  - [Quick Checklist](#quick-checklist)
 - [Events](#events)
 - [PrintOptions](#printoptions)
 - [Common Scenarios](#common-scenarios)
+  - [Scenario 1: Global Initialization (Recommended in Entry File)](#scenario-1-global-initialization-recommended-in-entry-file)
+  - [Scenario 2: Designer Page (Creating or Editing Templates)](#scenario-2-designer-page-creating-or-editing-templates)
+  - [Scenario 3: Business Page Print / Export (Actual Business Operation)](#scenario-3-business-page-print--export-actual-business-operation)
+  - [Scenario 4: Headless Mode Silent Printing](#scenario-4-headless-mode-silent-printing)
 - [Template and Custom Element JSON Examples](#template-and-custom-element-json-examples)
 - [Notes](#notes)
 
@@ -1032,7 +1051,7 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 | `name` | `string` | Required for create/update | Display name. |
 | `permissions` | `object` | Optional | Can include `editable/deletable/copyable` to control UI actions. |
 | `updatedAt` | `number` | Recommended | Unix timestamp in milliseconds. |
-| `ext` | `object` | Recommended | Extension container. See `ext` rules at the end of this section. |
+| `ext` | `object` | Recommended | Extension container. See `ext` rules in this section. |
 | `success` | `boolean` | Recommended for delete | Delete result flag. |
 
 ### Template CRUD Constraints
@@ -1408,7 +1427,7 @@ Response example:
 }
 ```
 
-### Generic `ext` Constraints (At the End)
+### Generic `ext` Constraints
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
