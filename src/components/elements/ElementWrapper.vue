@@ -24,9 +24,13 @@ const getQueryRoot = () => {
   return (designerRoot?.value?.getRootNode() as Document | ShadowRoot) || document;
 };
 
-const style = computed(() => {
+const actualIsSelected = computed(() => {
   const isMultiSelected = !props.isSelected && store.selectedElementIds.includes(props.element.id);
-  const actualIsSelected = !props.readOnly && (props.isSelected || isMultiSelected);
+  return !props.readOnly && (props.isSelected || isMultiSelected);
+});
+
+const style = computed(() => {
+  let hoverAlignedBorderWidth = 1;
   const baseStyle: Record<string, any> = {
     left: `${props.element.x}px`,
     top: `${props.element.y}px`,
@@ -57,27 +61,40 @@ const style = computed(() => {
     delete baseStyle.borderRadius; // Rect handles its own radius
   }
 
-  if (actualIsSelected) {
-    baseStyle.border = props.element.locked ? '2px solid #ef4444' : '2px solid var(--brand-500)';
-  } else {
-    if (!selfBorderedTypes.includes(props.element.type) && props.element.style.borderStyle && props.element.style.borderStyle !== 'none') {
-      baseStyle.borderStyle = props.element.style.borderStyle;
-      baseStyle.borderWidth = `${props.element.style.borderWidth || 1}px`;
-      baseStyle.borderColor = props.element.style.borderColor || '#000';
-      // Remove shorthand border to avoid override
-      delete baseStyle.border;
-    } 
-    // Handle legacy string border
-    else if (!selfBorderedTypes.includes(props.element.type) && props.element.style.border) {
-      baseStyle.border = props.element.style.border;
-    } 
-    // Default invisible border
-    else {
-      baseStyle.border = '1px dashed transparent';
-    }
+  if (!selfBorderedTypes.includes(props.element.type) && props.element.style.borderStyle && props.element.style.borderStyle !== 'none') {
+    baseStyle.borderStyle = props.element.style.borderStyle;
+    baseStyle.borderWidth = `${props.element.style.borderWidth || 1}px`;
+    baseStyle.borderColor = props.element.style.borderColor || '#000';
+    hoverAlignedBorderWidth = Number(props.element.style.borderWidth || 1);
+    // Remove shorthand border to avoid override
+    delete baseStyle.border;
+  }
+  // Handle legacy string border
+  else if (!selfBorderedTypes.includes(props.element.type) && props.element.style.border) {
+    baseStyle.border = props.element.style.border;
+    const legacyBorderWidthMatch = String(props.element.style.border).match(/^(\d+(?:\.\d+)?)px/i);
+    hoverAlignedBorderWidth = legacyBorderWidthMatch ? Number(legacyBorderWidthMatch[1]) : 1;
+  }
+  // Default invisible border
+  else {
+    baseStyle.border = '1px dashed transparent';
+    hoverAlignedBorderWidth = 1;
   }
 
+  // Keep outer width/height equal to the element size regardless of border width.
+  baseStyle.boxSizing = 'border-box';
+
+  // Keep hover outline on the exact same edge as the current wrapper border.
+  baseStyle['--hover-outline-offset'] = `${-hoverAlignedBorderWidth}px`;
+  baseStyle['--hover-outline-color'] = actualIsSelected.value ? 'transparent' : 'var(--brand-300)';
+
   return baseStyle;
+});
+
+const isAlignmentTarget = computed(() => {
+  if (props.readOnly) return false;
+  if (actualIsSelected.value) return false;
+  return store.highlightedAlignedElementIds.includes(props.element.id);
 });
 
 // Dragging Logic
@@ -216,6 +233,7 @@ const handleMouseUp = (e: MouseEvent) => {
   window.removeEventListener('mouseup', handleMouseUp);
   store.setHighlightedGuide(null);
   store.setHighlightedEdge(null);
+  store.setHighlightedAlignedElements([]);
 };
 
 // Resizing Logic (Simple bottom-right handle for now)
@@ -304,12 +322,157 @@ const handleRotateStart = (e: MouseEvent) => {
 const handleResizeStart = (e: MouseEvent) => {
   e.stopPropagation();
   e.preventDefault();
+
+  type ResizeSnapCandidate = {
+    point: number;
+    type: 'edge' | 'guide' | 'element';
+    edge?: 'right' | 'bottom';
+    guideId?: string;
+  };
+
+  const SNAP_THRESHOLD = 6;
+  const MIN_SIZE = 10;
+  const ALIGN_EPSILON = 0.5;
+
+  const findBestSnap = (target: number, candidates: ResizeSnapCandidate[]) => {
+    let best: ResizeSnapCandidate | null = null;
+    let bestDist = Infinity;
+
+    for (const candidate of candidates) {
+      const dist = Math.abs(target - candidate.point);
+      if (dist > SNAP_THRESHOLD) continue;
+      if (dist < bestDist - 1e-6) {
+        best = candidate;
+        bestDist = dist;
+      }
+    }
+
+    return best;
+  };
+
+  const getResizeSnapResult = (targetWidth: number, targetHeight: number) => {
+    const x = props.element.x;
+    const y = props.element.y;
+
+    let width = Math.max(MIN_SIZE, targetWidth);
+    let height = Math.max(MIN_SIZE, targetHeight);
+
+    const marginX = store.pageSpacingX || 0;
+    const marginY = store.pageSpacingY || 0;
+    const maxRightBoundary = store.canvasSize.width - marginX;
+    const maxBottomBoundary = store.canvasSize.height - marginY;
+
+    const page = store.pages[props.pageIndex];
+    const selectedSet = new Set(store.selectedElementIds);
+    selectedSet.add(props.element.id);
+    const referenceElements = page
+      ? page.elements.filter(item => !selectedSet.has(item.id))
+      : [];
+
+    const xCandidates: ResizeSnapCandidate[] = [];
+    const yCandidates: ResizeSnapCandidate[] = [];
+
+    if (maxRightBoundary - x >= MIN_SIZE) {
+      xCandidates.push({ point: maxRightBoundary, type: 'edge', edge: 'right' });
+    }
+    if (maxBottomBoundary - y >= MIN_SIZE) {
+      yCandidates.push({ point: maxBottomBoundary, type: 'edge', edge: 'bottom' });
+    }
+
+    for (const guide of store.guides) {
+      if (guide.type === 'vertical' && guide.position - x >= MIN_SIZE) {
+        xCandidates.push({ point: guide.position, type: 'guide', guideId: guide.id });
+      }
+      if (guide.type === 'horizontal' && guide.position - y >= MIN_SIZE) {
+        yCandidates.push({ point: guide.position, type: 'guide', guideId: guide.id });
+      }
+    }
+
+    for (const item of referenceElements) {
+      const bounds = store.getElementBoundsAtPosition(item, item.x, item.y);
+      const xPoints = [bounds.minX, (bounds.minX + bounds.maxX) / 2, bounds.maxX];
+      const yPoints = [bounds.minY, (bounds.minY + bounds.maxY) / 2, bounds.maxY];
+
+      for (const point of xPoints) {
+        if (point - x >= MIN_SIZE) {
+          xCandidates.push({ point, type: 'element' });
+        }
+      }
+      for (const point of yPoints) {
+        if (point - y >= MIN_SIZE) {
+          yCandidates.push({ point, type: 'element' });
+        }
+      }
+    }
+
+    const targetRight = x + width;
+    const targetBottom = y + height;
+    const bestX = findBestSnap(targetRight, xCandidates);
+    const bestY = findBestSnap(targetBottom, yCandidates);
+
+    if (bestX) {
+      width = Math.max(MIN_SIZE, bestX.point - x);
+    }
+    if (bestY) {
+      height = Math.max(MIN_SIZE, bestY.point - y);
+    }
+
+    const highlightedAlignedElementIds = new Set<string>();
+    const snappedRight = x + width;
+    const snappedBottom = y + height;
+
+    if (bestX?.type === 'element' || bestY?.type === 'element') {
+      for (const item of referenceElements) {
+        const bounds = store.getElementBoundsAtPosition(item, item.x, item.y);
+        if (bestX?.type === 'element') {
+          const xPoints = [bounds.minX, (bounds.minX + bounds.maxX) / 2, bounds.maxX];
+          if (xPoints.some(point => Math.abs(point - snappedRight) <= ALIGN_EPSILON)) {
+            highlightedAlignedElementIds.add(item.id);
+          }
+        }
+        if (bestY?.type === 'element') {
+          const yPoints = [bounds.minY, (bounds.minY + bounds.maxY) / 2, bounds.maxY];
+          if (yPoints.some(point => Math.abs(point - snappedBottom) <= ALIGN_EPSILON)) {
+            highlightedAlignedElementIds.add(item.id);
+          }
+        }
+      }
+    }
+
+    let highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null = null;
+    if (bestX?.type === 'edge') {
+      highlightedEdge = 'right';
+    }
+    if (bestY?.type === 'edge') {
+      highlightedEdge = highlightedEdge || 'bottom';
+    }
+
+    let highlightedGuideId: string | null = null;
+    if (bestX?.type === 'guide') {
+      highlightedGuideId = bestX.guideId || null;
+    }
+    if (!highlightedGuideId && bestY?.type === 'guide') {
+      highlightedGuideId = bestY.guideId || null;
+    }
+
+    return {
+      width,
+      height,
+      highlightedEdge,
+      highlightedGuideId,
+      highlightedAlignedElementIds: Array.from(highlightedAlignedElementIds)
+    };
+  };
   
   const startX = e.clientX;
   const startY = e.clientY;
   const initialWidth = props.element.width;
   const initialHeight = props.element.height;
   hasSnapshot = false;
+  store.setDragging(true);
+  store.setHighlightedGuide(null);
+  store.setHighlightedEdge(null);
+  store.setHighlightedAlignedElements([]);
   
   const handleResizeMove = (moveEvent: MouseEvent) => {
     const dx = (moveEvent.clientX - startX) / props.zoom;
@@ -333,13 +496,22 @@ const handleResizeStart = (e: MouseEvent) => {
       }
     }
 
+    const snapped = getResizeSnapResult(newWidth, newHeight);
+    store.setHighlightedGuide(snapped.highlightedGuideId || null);
+    store.setHighlightedEdge(snapped.highlightedEdge || null);
+    store.setHighlightedAlignedElements(snapped.highlightedAlignedElementIds || []);
+
     store.updateElement(props.element.id, {
-      width: Math.max(10, newWidth),
-      height: Math.max(10, newHeight)
+      width: snapped.width,
+      height: snapped.height
     }, false);
   };
   
   const handleResizeUp = () => {
+    store.setDragging(false);
+    store.setHighlightedGuide(null);
+    store.setHighlightedEdge(null);
+    store.setHighlightedAlignedElements([]);
     window.removeEventListener('mousemove', handleResizeMove);
     window.removeEventListener('mouseup', handleResizeUp);
   };
@@ -357,6 +529,7 @@ const handleResizeStart = (e: MouseEvent) => {
     :data-element-id="element.id"
     :data-read-only="readOnly ? 'true' : 'false'"
     :data-repeat-per-page="element.repeatPerPage === true ? 'true' : null"
+    :data-alignment-target="isAlignmentTarget ? 'true' : null"
     :class="[
       readOnly ? 'cursor-not-allowed' : 'group theme-outline-hover',
       !readOnly && element.locked ? 'cursor-not-allowed' : '',
@@ -367,6 +540,24 @@ const handleResizeStart = (e: MouseEvent) => {
   >
     <!-- Slot for specific element content -->
     <slot></slot>
+
+    <div
+      v-if="actualIsSelected"
+      data-print-exclude="true"
+      :class="[
+        'absolute inset-0 box-border border-2 pointer-events-none z-40',
+        element.locked ? 'border-red-500' : 'theme-border-strong'
+      ]"
+    ></div>
+
+    <template v-if="isAlignmentTarget">
+      <div data-print-exclude="true" class="absolute inset-0 pointer-events-none z-30">
+        <div class="absolute inset-0 border-2 theme-border"></div>
+        <div class="absolute inset-0" style="background-color: var(--brand-500-alpha-10);"></div>
+        <div class="absolute w-px theme-bg-strong" style="left: 50%; top: 50%; height: min(45%, 20px); transform: translate(-0.5px, -50%);"></div>
+        <div class="absolute h-px theme-bg-strong" style="left: 50%; top: 50%; width: min(45%, 20px); transform: translate(-50%, -0.5px);"></div>
+      </div>
+    </template>
 
     <!-- Locked Indicator -->
     <div v-if="!readOnly && element.locked && isSelected" data-print-exclude="true" class="absolute -top-3 -right-3 bg-red-500 rounded-full p-1 shadow-md z-50">

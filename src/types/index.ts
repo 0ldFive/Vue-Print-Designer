@@ -249,6 +249,7 @@ export interface CustomElementEditSnapshot {
   selectedGuideId: string | null;
   highlightedGuideId: string | null;
   highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null;
+  highlightedAlignedElementIds: string[];
 }
 
 export interface DesignerState {
@@ -271,6 +272,7 @@ export interface DesignerState {
   selectedGuideId: string | null;
   highlightedGuideId: string | null;
   highlightedEdge: 'left' | 'top' | 'right' | 'bottom' | null;
+  highlightedAlignedElementIds: string[];
   canvasSize: Size; // A4 usually
   unit?: 'mm' | 'px' | 'pt' | 'in' | 'cm';
   watermark?: WatermarkSettings;

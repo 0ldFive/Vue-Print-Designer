@@ -21,7 +21,8 @@
     accent-color: var(--brand-600);
   }
   .theme-outline-hover:hover {
-    outline: 1px solid var(--brand-300);
+    outline: 1px solid var(--hover-outline-color, var(--brand-300));
+    outline-offset: var(--hover-outline-offset, -1px);
   }
   .theme-hover-bg:hover {
     background-color: var(--brand-50);

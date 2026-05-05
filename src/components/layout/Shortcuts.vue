@@ -136,6 +136,7 @@ const handleKeydown = (e: KeyboardEvent) => {
       e.preventDefault();
       const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
       const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
+      store.setDragging(true);
       store.nudgeSelectedElements(dx, dy);
     }
     return;
@@ -280,9 +281,18 @@ const handleKeydown = (e: KeyboardEvent) => {
 const handleKeyup = (e: KeyboardEvent) => {
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
     // Clear highlight after arrow movement stops
+    store.setDragging(false);
     store.setHighlightedGuide(null);
     store.setHighlightedEdge(null);
+    store.setHighlightedAlignedElements([]);
   }
+};
+
+const handleWindowBlur = () => {
+  store.setDragging(false);
+  store.setHighlightedGuide(null);
+  store.setHighlightedEdge(null);
+  store.setHighlightedAlignedElements([]);
 };
 
 const handleContextMenu = async (e: MouseEvent) => {
@@ -344,6 +354,7 @@ onMounted(() => {
   window.addEventListener('contextmenu', handleContextMenu);
   window.addEventListener('keyup', handleKeyup);
   window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('blur', handleWindowBlur);
 });
 
 onUnmounted(() => {
@@ -352,6 +363,7 @@ onUnmounted(() => {
   window.removeEventListener('click', closeMenuOnce);
   window.removeEventListener('keyup', handleKeyup);
   window.removeEventListener('mousemove', handleMouseMove);
+  window.removeEventListener('blur', handleWindowBlur);
 });
 </script>
 

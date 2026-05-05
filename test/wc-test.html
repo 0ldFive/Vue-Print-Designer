@@ -228,6 +228,7 @@
             <button id="btn-test-get-test-data" title="API: getTestData()">获取测试数据<span class="test-btn-api">getTestData()</span></button>
             <button id="btn-test-get-vars" title="API: getVariables()">获取变量数据<span class="test-btn-api">getVariables()</span></button>
             <button id="btn-test-template-vars" title="API: getTemplateVariables()">提取模板变量<span class="test-btn-api">getTemplateVariables()</span></button>
+            <button id="btn-test-inline-text-var" title="API: setTemplates() / setVariables() / getPreviewHtml()">测试文本变量替换用例<span class="test-btn-api">客户: @customer -> 客户: 张三</span></button>
           </div>
           <div style="margin-top: 10px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
             <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">模拟注入业务变量 (setVariables)：</label>
@@ -1052,6 +1053,81 @@
       } catch (err) {
         console.error('获取当前变量数据失败:', err);
         alert('获取当前变量数据失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-test-inline-text-var').addEventListener('click', async () => {
+      try {
+        const inlineVarTemplate = {
+          id: 'tpl-inline-text-var',
+          name: '文本变量替换用例',
+          permissions: {
+            editable: true,
+            deletable: true,
+            copyable: true,
+          },
+          data: {
+            testData: {
+              customer: '测试客户'
+            },
+            pages: [
+              {
+                id: 'page-inline-text-var',
+                elements: [
+                  {
+                    id: 'el-inline-customer',
+                    type: 'text',
+                    x: 32,
+                    y: 32,
+                    width: 280,
+                    height: 40,
+                    content: '客户: @customer',
+                    variable: '@customer',
+                    style: {
+                      fontSize: 18,
+                      color: '#111827',
+                      fontWeight: '500'
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        };
+
+        designer.setTemplates([inlineVarTemplate], {
+          currentTemplateId: inlineVarTemplate.id
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 80));
+
+        await designer.setVariables({ customer: '张三' }, { merge: false });
+        const htmlStr = await designer.getPreviewHtml();
+        const expectedText = '客户: 张三';
+        const passed = htmlStr.includes(expectedText);
+
+        console.log('文本变量替换用例结果:', {
+          expectedText,
+          passed,
+          htmlLength: htmlStr.length
+        });
+
+        const newWin = window.open('', '_blank');
+        if (newWin) {
+          newWin.document.write(htmlStr);
+          newWin.document.close();
+        }
+
+        alert([
+          passed ? 'PASS: setVariables 已替换为“客户: 张三”' : 'FAIL: 预览 HTML 未命中“客户: 张三”',
+          '模板内容: 客户: @customer',
+          '注入变量: {"customer":"张三"}',
+          `断言文本: ${expectedText}`,
+          newWin ? '预览窗口已打开，可直接查看渲染结果。' : '预览窗口被浏览器拦截，请允许弹窗或从控制台检查结果。'
+        ].join('\n'));
+      } catch (err) {
+        console.error('文本变量替换用例测试失败:', err);
+        alert('文本变量替换用例测试失败: ' + err.message);
       }
     });
 

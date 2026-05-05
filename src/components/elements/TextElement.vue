@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import type { PrintElement } from '@/types';
 import { useDesignerStore } from '@/stores/designer';
 import { normalizeVariableKey } from '@/utils/variables';
@@ -14,41 +14,43 @@ const editingValue = ref('');
 const editorRef = ref<HTMLTextAreaElement | null>(null);
 
 const resolvedText = computed(() => {
+  const baseContent = props.element.content || '';
   const variable = props.element.variable || '';
-  if (store.isExporting && variable) {
-      const key = normalizeVariableKey(variable);
-      if (key && (store as any).variables && Object.prototype.hasOwnProperty.call((store as any).variables, key)) {
-        const value = (store as any).variables[key];
-        if (value !== undefined && value !== null) {
-          return String(value);
-        }
-      }
-    
-    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
-      const value = store.testData[key];
-      if (value !== undefined && value !== null) {
-        return String(value);
-      }
+  
+  if (!variable) {
+    return baseContent;
+  }
+
+  const key = normalizeVariableKey(variable);
+  if (!key) {
+    return baseContent;
+  }
+
+  let resolvedValue: string | null = null;
+
+  if (store.isExporting && (store as any).variables && Object.prototype.hasOwnProperty.call((store as any).variables, key)) {
+    const value = (store as any).variables[key];
+    if (value !== undefined && value !== null) {
+      resolvedValue = String(value);
     }
   }
 
-  // 即使不是导出模式，只要有 testData 并且有匹配的 variable，就展示 testData
-  if (!store.isExporting && props.element.variable) {
-    const key = normalizeVariableKey(props.element.variable);
-    if (key && Object.prototype.hasOwnProperty.call(store.testData, key)) {
-      const value = store.testData[key];
-      if (value !== undefined && value !== null) {
-        return String(value);
-      }
+  if (resolvedValue === null && Object.prototype.hasOwnProperty.call(store.testData, key)) {
+    const value = store.testData[key];
+    if (value !== undefined && value !== null) {
+      resolvedValue = String(value);
     }
   }
 
-  if (props.element.variable) {
-    const key = normalizeVariableKey(props.element.variable);
-    if (!key) return props.element.content;
-    return `@${key}`;
+  if (resolvedValue !== null) {
+    const targetToReplace = variable.startsWith('@') ? variable : `@${key}`;
+    if (baseContent.includes(targetToReplace)) {
+      return baseContent.replace(targetToReplace, resolvedValue);
+    }
+    return resolvedValue;
   }
-  return props.element.content;
+
+  return baseContent || `@${key}`;
 });
 
 const canInlineEdit = computed(() => {
@@ -110,6 +112,16 @@ watch(
     }
   }
 );
+
+watch(isInlineEditing, (val) => {
+  store.setDisableGlobalShortcuts(val);
+});
+
+onUnmounted(() => {
+  if (isInlineEditing.value) {
+    store.setDisableGlobalShortcuts(false);
+  }
+});
 </script>
 
 <script lang="ts">

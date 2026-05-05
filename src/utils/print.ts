@@ -702,6 +702,27 @@ export const usePrint = () => {
           let targetPageIndex = Math.floor(targetGlobalTop / pageHeight);
           if (targetPageIndex < 0) targetPageIndex = 0;
 
+          let targetTop = targetGlobalTop - targetPageIndex * pageHeight;
+          const minContentTop = copyHeader && headerHeight > 0 ? (headerHeight + marginTop) : marginTop;
+          const maxContentBottom = pageHeight - (copyFooter ? footerHeight : 0) - marginBottom;
+          const availableContentHeight = maxContentBottom - minContentTop;
+          const wrapperHeight = parseAttrNumber(wrapper, 'data-original-height', wrapper.getBoundingClientRect().height);
+
+          if (wrapperHeight > 0) {
+            if (targetTop < minContentTop) {
+              targetTop = minContentTop;
+            }
+
+            if (wrapperHeight <= availableContentHeight && targetTop + wrapperHeight > maxContentBottom) {
+              targetPageIndex += 1;
+              targetTop = minContentTop;
+            } else if (wrapperHeight > availableContentHeight) {
+              // Oversized fixed elements cannot fully fit inside printable content area;
+              // anchor to the top content boundary to avoid overlapping footer first.
+              targetTop = minContentTop;
+            }
+          }
+
           while (targetPageIndex >= workingPages.length) {
             const sourcePage = workingPages[workingPages.length - 1];
             const newPage = document.createElement('div');
@@ -714,7 +735,6 @@ export const usePrint = () => {
           }
 
           const targetPage = workingPages[targetPageIndex];
-          const targetTop = targetGlobalTop - targetPageIndex * pageHeight;
           if (wrapper.parentElement !== targetPage) {
             targetPage.appendChild(wrapper);
           }
@@ -722,9 +742,90 @@ export const usePrint = () => {
           wrapper.style.setProperty('top', `${targetTop}px`, 'important');
         });
       }
+
+      // syncElementsBelowTables may append pages while shifting wrappers.
+      // Keep the outer loop's pages reference up to date so moved flow elements
+      // (e.g. tables below auto-height text) still get processed for pagination.
+      pages = workingPages;
     };
 
     let pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+
+    const resolveFlowChunkStartY = (wrapper: HTMLElement) => {
+      const marginTop = store.pageSpacingY || 0;
+      const minTop = copyHeader && headerHeight > 0 ? (headerHeight + marginTop) : marginTop;
+      let startY = minTop;
+      const originalTopVal = parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
+      if (originalTopVal >= minTop && originalTopVal <= minTop + 100) {
+        startY = originalTopVal;
+      }
+      return startY;
+    };
+
+    const createFlowOverflowPage = (currentPage: HTMLElement, currentPageIndex: number) => {
+      const newPage = document.createElement('div');
+      newPage.className = currentPage.className;
+      newPage.style.cssText = currentPage.style.cssText;
+      newPage.innerHTML = '';
+
+      copyHeaderFooter(currentPage, newPage, headerHeight, footerHeight, pageHeight, copyHeader, copyFooter);
+
+      if (currentPageIndex === pages.length - 1) {
+        container.appendChild(newPage);
+      } else {
+        container.insertBefore(newPage, pages[currentPageIndex + 1]);
+      }
+
+      pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+      return newPage;
+    };
+
+    const findAutoHeightSplitIndex = (textEl: HTMLElement, fullText: string, limitBottom: number) => {
+      if (!fullText) return 0;
+
+      const normalizeSplitIndex = (candidate: number) => {
+        if (candidate <= 0 || candidate >= fullText.length) return candidate;
+
+        const nearNewLine = fullText.lastIndexOf('\n', candidate - 1);
+        if (nearNewLine >= Math.max(0, candidate - 120)) {
+          return nearNewLine + 1;
+        }
+
+        const nearSpace = Math.max(fullText.lastIndexOf(' ', candidate - 1), fullText.lastIndexOf('\t', candidate - 1));
+        if (nearSpace >= Math.max(0, candidate - 40)) {
+          return nearSpace + 1;
+        }
+
+        return candidate;
+      };
+
+      let low = 1;
+      let high = fullText.length;
+      let best = 0;
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        textEl.textContent = fullText.slice(0, mid);
+        const bottom = textEl.getBoundingClientRect().bottom;
+        if (bottom <= limitBottom + 1) {
+          best = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      const adjusted = normalizeSplitIndex(best);
+      if (adjusted > 0 && adjusted < fullText.length && adjusted !== best) {
+        textEl.textContent = fullText.slice(0, adjusted);
+        if (textEl.getBoundingClientRect().bottom <= limitBottom + 1) {
+          best = adjusted;
+        }
+      }
+
+      textEl.textContent = fullText;
+      return best;
+    };
     
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
@@ -808,12 +909,82 @@ export const usePrint = () => {
              // Check if element extends beyond limit
              const contentRect = (table || el).getBoundingClientRect();
              // Add 1px tolerance for sub-pixel rendering issues
-             if (contentRect.bottom <= limitBottom + 1 || !table) {
+             if (contentRect.bottom <= limitBottom + 1) {
                  if (table) updatePageSums(table);
                  wrapper.setAttribute('data-flow-paginated', 'true');
                  syncElementsBelowTables(); 
                  return;
              }
+
+             if (isAutoHeight) {
+                const textEl = el as HTMLElement;
+                const fullText = textEl.textContent || '';
+
+                if (!fullText) {
+                  wrapper.setAttribute('data-flow-paginated', 'true');
+                  syncElementsBelowTables();
+                  return;
+                }
+
+                let splitIndex = findAutoHeightSplitIndex(textEl, fullText, limitBottom);
+
+                if (splitIndex <= 0) {
+                  const startY = resolveFlowChunkStartY(wrapper);
+                  if (wrapperTop <= startY + 5) {
+                   splitIndex = 1;
+                  } else {
+                   const newPage = createFlowOverflowPage(page, i);
+                   wrapper.style.removeProperty('top');
+                   wrapper.style.setProperty('top', `${startY}px`, 'important');
+                   newPage.appendChild(wrapper);
+                   wrapper.setAttribute('data-is-split-chunk', 'true');
+                   syncElementsBelowTables();
+                   return;
+                  }
+                }
+
+                if (splitIndex >= fullText.length) {
+                  wrapper.setAttribute('data-flow-paginated', 'true');
+                  syncElementsBelowTables();
+                  return;
+                }
+
+                const currentText = fullText.slice(0, splitIndex);
+                const overflowText = fullText.slice(splitIndex);
+                textEl.textContent = currentText;
+
+                const newPage = createFlowOverflowPage(page, i);
+                const newWrapper = wrapper.cloneNode(true) as HTMLElement;
+                const newTextEl = newWrapper.querySelector('[data-auto-height="true"]') as HTMLElement | null;
+                if (newTextEl) {
+                  newTextEl.classList.remove('h-full', 'overflow-hidden');
+                  newTextEl.style.height = 'auto';
+                  newTextEl.style.overflow = 'visible';
+                  newTextEl.textContent = overflowText;
+
+                  const newTextRoot = newTextEl.parentElement as HTMLElement | null;
+                  if (newTextRoot) {
+                   newTextRoot.style.height = 'auto';
+                   newTextRoot.style.overflow = 'visible';
+                  }
+                }
+
+                const startY = resolveFlowChunkStartY(wrapper);
+                newWrapper.style.removeProperty('top');
+                newWrapper.style.setProperty('top', `${startY}px`, 'important');
+
+                newPage.appendChild(newWrapper);
+                wrapper.setAttribute('data-flow-paginated', 'true');
+                newWrapper.setAttribute('data-is-split-chunk', 'true');
+                syncElementsBelowTables();
+                return;
+             }
+
+               if (!table) {
+                 wrapper.setAttribute('data-flow-paginated', 'true');
+                 syncElementsBelowTables();
+                 return;
+               }
              
              // Split needed
              let splitIndex = -1;
@@ -859,35 +1030,13 @@ export const usePrint = () => {
              
              if (splitIndex !== -1) {
                  // Create new page
-                 const newPage = document.createElement('div');
-                 newPage.className = page.className;
-                 newPage.style.cssText = page.style.cssText;
-                 newPage.innerHTML = ''; // Empty
-                 
-                 // Copy header and footer to new page
-                 copyHeaderFooter(page, newPage, headerHeight, footerHeight, pageHeight, copyHeader, copyFooter);
-
-                 // Insert new page
-                 if (i === pages.length - 1) {
-                     container.appendChild(newPage);
-                 } else {
-                     container.insertBefore(newPage, pages[i+1]);
-                 }
-                 
-                 // Re-fetch pages to update array reference for next loop
-                 pages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
+                 const newPage = createFlowOverflowPage(page, i);
                  
                  // Clone wrapper for new page
                  const newWrapper = wrapper.cloneNode(true) as HTMLElement;
                  // Set top to headerHeight + padding or just below header
                  // If headerHeight is 0, use 20px padding.
-                 const marginTop = store.pageSpacingY || 0;
-                 const minTop = copyHeader && headerHeight > 0 ? (headerHeight + marginTop) : marginTop;
-                 let startY = minTop;
-                 const originalTopVal = parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
-                 if (originalTopVal >= minTop && originalTopVal <= minTop + 100) {
-                     startY = originalTopVal;
-                 }
+                 const startY = resolveFlowChunkStartY(wrapper);
                  
                  newWrapper.style.removeProperty('top');
                  newWrapper.style.setProperty('top', `${startY}px`, 'important');
