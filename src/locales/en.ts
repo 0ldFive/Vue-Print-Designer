@@ -233,6 +233,11 @@ export default {
       noSelection: 'No Selection',
       selectInstruction: 'Select an element to edit properties'
     },
+    hint: {
+      textBehaviorConflict: 'Auto Height and Repeat Per Page are both enabled, please disable one',
+      autoHeightExclusive: 'Auto Height is unavailable when Repeat Per Page is enabled',
+      repeatPerPageExclusive: 'Repeat Per Page is unavailable when Auto Height is enabled'
+    },
     label: {
       type: 'Type',
       textAlign: 'Text Align',

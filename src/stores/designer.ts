@@ -1795,6 +1795,35 @@ export const useDesignerStore = defineStore("designer", {
             nextUpdates.variable = inferredVariable ? inferredVariable : "";
           }
 
+          if (el.type === ElementType.TEXT) {
+            const touchedRepeatPerPage = Object.prototype.hasOwnProperty.call(
+              nextUpdates,
+              "repeatPerPage",
+            );
+            const touchedAutoHeight =
+              !!nextUpdates.style &&
+              Object.prototype.hasOwnProperty.call(nextUpdates.style, "autoHeight");
+
+            const nextRepeatPerPage = touchedRepeatPerPage
+              ? nextUpdates.repeatPerPage === true
+              : el.repeatPerPage === true;
+            const nextAutoHeight = touchedAutoHeight
+              ? nextUpdates.style?.autoHeight === true
+              : el.style?.autoHeight === true;
+
+            if (nextRepeatPerPage && nextAutoHeight) {
+              if (touchedAutoHeight && !touchedRepeatPerPage) {
+                nextUpdates.repeatPerPage = false;
+              } else {
+                nextUpdates.style = {
+                  ...el.style,
+                  ...(nextUpdates.style || {}),
+                  autoHeight: false,
+                };
+              }
+            }
+          }
+
           page.elements[index] = { ...page.elements[index], ...nextUpdates };
           return;
         }

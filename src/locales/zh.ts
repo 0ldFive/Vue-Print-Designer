@@ -233,6 +233,11 @@ export default {
       noSelection: '未选择',
       selectInstruction: '选择一个元素以编辑属性'
     },
+    hint: {
+      textBehaviorConflict: '当前自适应高度与每页重复同时开启，请关闭其中一个',
+      autoHeightExclusive: '启用每页重复时，自适应高度不可用',
+      repeatPerPageExclusive: '启用自适应高度时，每页重复不可用'
+    },
     label: {
       textAlign: '对齐方式',
       type: '类型',

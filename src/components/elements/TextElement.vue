@@ -226,7 +226,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
 </script>
 
 <template>
-  <div class="w-full h-full overflow-hidden" @dblclick="startInlineEdit" :data-auto-height="element.style.autoHeight ? 'true' : undefined" :style="{
+  <div class="w-full h-full overflow-hidden" @dblclick="startInlineEdit" :data-auto-height="element.style.autoHeight ? 'true' : undefined" data-text-content="true" :style="{
     display: 'flex',
     flexDirection: 'column',
     justifyContent,

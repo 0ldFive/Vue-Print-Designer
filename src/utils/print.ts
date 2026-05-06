@@ -622,6 +622,34 @@ export const usePrint = () => {
       return Number.isFinite(value) ? value : fallback;
     };
 
+    const getFlowKind = (wrapper: HTMLElement) => wrapper.getAttribute('data-flow-kind') || '';
+
+    const resolveAutoHeightContentEl = (wrapper: HTMLElement) => {
+      return (wrapper.querySelector('[data-auto-height="true"]') || wrapper.querySelector('[data-text-content="true"]')) as HTMLElement | null;
+    };
+
+    const getWrapperOriginalTop = (wrapper: HTMLElement) => {
+      return parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
+    };
+
+    const compareWrappersByOriginalTop = (a: HTMLElement, b: HTMLElement) => {
+      const topDelta = getWrapperOriginalTop(a) - getWrapperOriginalTop(b);
+      if (Math.abs(topDelta) > 0.01) {
+        return topDelta;
+      }
+
+      const seqA = a.getAttribute('data-wrapper-seq') || '';
+      const seqB = b.getAttribute('data-wrapper-seq') || '';
+      const seqDelta = seqA.localeCompare(seqB, undefined, { numeric: true, sensitivity: 'base' });
+      if (seqDelta !== 0) {
+        return seqDelta;
+      }
+
+      const flowA = a.getAttribute('data-flow-id') || '';
+      const flowB = b.getAttribute('data-flow-id') || '';
+      return flowA.localeCompare(flowB, undefined, { numeric: true, sensitivity: 'base' });
+    };
+
     const syncElementsBelowTables = () => {
       let workingPages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
       if (workingPages.length === 0) return;
@@ -635,11 +663,19 @@ export const usePrint = () => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper][data-flow-id]')) as HTMLElement[];
 
         wrappers.forEach(wrapper => {
+          const flowKind = getFlowKind(wrapper);
           const table = wrapper.querySelector('table');
-          const autoHeightEl = wrapper.querySelector('[data-auto-height="true"]');
+          const autoHeightEl = resolveAutoHeightContentEl(wrapper);
           
-          if (!table && !autoHeightEl) return;
-          if (table && table.getAttribute('data-auto-paginate') !== 'true') return;
+          if (flowKind === 'table') {
+            if (!table) return;
+            if (table.getAttribute('data-auto-paginate') !== 'true') return;
+          } else if (flowKind === 'auto-height') {
+            if (!autoHeightEl) return;
+          } else {
+            if (!table && !autoHeightEl) return;
+            if (table && table.getAttribute('data-auto-paginate') !== 'true') return;
+          }
 
           const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
           const originalTop = parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
@@ -667,11 +703,14 @@ export const usePrint = () => {
       for (let pageIndex = 0; pageIndex < workingPages.length; pageIndex++) {
         const page = workingPages[pageIndex];
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
+        wrappers.sort(compareWrappersByOriginalTop);
 
         wrappers.forEach(wrapper => {
-          // Skip flow elements that have already been paginated or are split chunks to avoid messing up their positions
+           // Split chunks share the original top metadata and must keep their own chunk layout,
+           // so we skip shifting them here. Non-chunk flow wrappers can still be shifted even
+           // after being paginated, otherwise downstream auto-height elements may get frozen.
           if (wrapper.hasAttribute('data-flow-id')) {
-             if (wrapper.hasAttribute('data-flow-paginated') || wrapper.hasAttribute('data-is-split-chunk')) {
+             if (wrapper.hasAttribute('data-is-split-chunk')) {
                  return;
              }
           }
@@ -706,7 +745,10 @@ export const usePrint = () => {
           const minContentTop = copyHeader && headerHeight > 0 ? (headerHeight + marginTop) : marginTop;
           const maxContentBottom = pageHeight - (copyFooter ? footerHeight : 0) - marginBottom;
           const availableContentHeight = maxContentBottom - minContentTop;
-          const wrapperHeight = parseAttrNumber(wrapper, 'data-original-height', wrapper.getBoundingClientRect().height);
+          const wrapperRectHeight = wrapper.getBoundingClientRect().height;
+          const wrapperHeight = wrapper.hasAttribute('data-flow-id')
+            ? wrapperRectHeight
+            : parseAttrNumber(wrapper, 'data-original-height', wrapperRectHeight);
 
           if (wrapperHeight > 0) {
             if (targetTop < minContentTop) {
@@ -735,11 +777,20 @@ export const usePrint = () => {
           }
 
           const targetPage = workingPages[targetPageIndex];
+          const previousTop = parseFloat(wrapper.style.top || '') || 0;
+          const didMovePage = wrapper.parentElement !== targetPage;
+          const didMoveTop = Math.abs(previousTop - targetTop) > 0.1;
           if (wrapper.parentElement !== targetPage) {
             targetPage.appendChild(wrapper);
           }
           wrapper.style.removeProperty('top');
           wrapper.style.setProperty('top', `${targetTop}px`, 'important');
+
+          // If a flow wrapper has been shifted by upstream growth after it was marked
+          // paginated, clear the flag so it can be repaginated at the new position.
+          if (wrapper.hasAttribute('data-flow-id') && wrapper.hasAttribute('data-flow-paginated') && (didMovePage || didMoveTop)) {
+            wrapper.removeAttribute('data-flow-paginated');
+          }
         });
       }
 
@@ -830,20 +881,22 @@ export const usePrint = () => {
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         
-        // Find all tables and auto-height elements in the page
-        const flowElements = page.querySelectorAll('table, [data-auto-height="true"]');
-        flowElements.forEach(el => {
-             const table = el.tagName === 'TABLE' ? el as HTMLElement : null;
-             const isAutoHeight = el.getAttribute('data-auto-height') === 'true';
-             
-             // Find the wrapper using the data attribute we added
-             const wrapper = el.closest('[data-print-wrapper]') as HTMLElement;
-             if (!wrapper) return;
+        const flowWrappers = (Array.from(page.querySelectorAll('[data-print-wrapper][data-flow-id]')) as HTMLElement[])
+          .sort(compareWrappersByOriginalTop);
+
+        flowWrappers.forEach(wrapper => {
              if (wrapper.parentElement !== page) return; // skip if moved to another page
              if (wrapper.hasAttribute('data-flow-paginated')) return; // already processed
+
+             const flowKind = getFlowKind(wrapper);
+             const table = wrapper.querySelector('table') as HTMLElement | null;
+             const autoHeightEl = resolveAutoHeightContentEl(wrapper);
+             const isAutoHeight = flowKind === 'auto-height' || (!table && !!autoHeightEl);
+
+             if (!table && !autoHeightEl) return;
              
              // For tables, respect element-level auto paginate flag
-             if (table) {
+             if (table && flowKind !== 'auto-height') {
                  const autoPaginate = table.getAttribute('data-auto-paginate') === 'true';
                  if (!autoPaginate) return;
              }
@@ -882,9 +935,9 @@ export const usePrint = () => {
                      tableRoot.style.height = 'auto';
                      tableRoot.style.overflow = 'visible';
                  }
-            } else if (isAutoHeight) {
+            } else if (isAutoHeight && autoHeightEl) {
                 // Remove h-full from the element itself so it can expand
-                const htmlEl = el as HTMLElement;
+                const htmlEl = autoHeightEl;
                 htmlEl.classList.remove('h-full', 'overflow-hidden');
                 htmlEl.style.height = 'auto';
                 htmlEl.style.overflow = 'visible';
@@ -907,7 +960,7 @@ export const usePrint = () => {
              const wrapperTop = wrapperRect.top;
              
              // Check if element extends beyond limit
-             const contentRect = (table || el).getBoundingClientRect();
+             const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
              // Add 1px tolerance for sub-pixel rendering issues
              if (contentRect.bottom <= limitBottom + 1) {
                  if (table) updatePageSums(table);
@@ -917,7 +970,8 @@ export const usePrint = () => {
              }
 
              if (isAutoHeight) {
-                const textEl = el as HTMLElement;
+                if (!autoHeightEl) return;
+                const textEl = autoHeightEl;
                 const fullText = textEl.textContent || '';
 
                 if (!fullText) {
@@ -937,7 +991,10 @@ export const usePrint = () => {
                    wrapper.style.removeProperty('top');
                    wrapper.style.setProperty('top', `${startY}px`, 'important');
                    newPage.appendChild(wrapper);
-                   wrapper.setAttribute('data-is-split-chunk', 'true');
+                   // This branch only repositions the same wrapper to the next page.
+                   // It is not a real text split chunk, so keep it eligible for later reflow.
+                   wrapper.removeAttribute('data-is-split-chunk');
+                   wrapper.removeAttribute('data-flow-paginated');
                    syncElementsBelowTables();
                    return;
                   }
@@ -1237,12 +1294,17 @@ export const usePrint = () => {
                 el.setAttribute('data-wrapper-seq', wrapperSeq);
                 
                 const table = el.querySelector('table');
-                const autoHeightEl = el.querySelector('[data-auto-height="true"]');
+                  const autoHeightEl = el.querySelector('[data-auto-height="true"]');
                 
-                if (table || autoHeightEl) {
+                  if (table) {
                   el.setAttribute('data-flow-id', wrapperSeq);
+                    el.setAttribute('data-flow-kind', 'table');
+                  } else if (autoHeightEl) {
+                    el.setAttribute('data-flow-id', wrapperSeq);
+                    el.setAttribute('data-flow-kind', 'auto-height');
                 } else {
                   el.removeAttribute('data-flow-id');
+                    el.removeAttribute('data-flow-kind');
                 }
             });
             

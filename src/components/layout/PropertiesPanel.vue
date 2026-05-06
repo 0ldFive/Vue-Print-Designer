@@ -53,6 +53,33 @@ const showRepeatPerPage = computed(() => {
   return element.value.type !== ElementType.TABLE;
 });
 
+const isTextElement = computed(() => element.value?.type === ElementType.TEXT);
+const isTextAutoHeightEnabled = computed(
+  () => isTextElement.value && element.value?.style?.autoHeight === true,
+);
+const isTextRepeatPerPageEnabled = computed(
+  () => isTextElement.value && element.value?.repeatPerPage === true,
+);
+const hasTextBehaviorConflict = computed(
+  () => isTextAutoHeightEnabled.value && isTextRepeatPerPageEnabled.value,
+);
+
+const isFieldDisabled = (field: PropertyField) => {
+  if (isEditingDisabled.value) return true;
+  if (!isTextElement.value || field.type !== "switch") return false;
+  if (hasTextBehaviorConflict.value) return false;
+
+  if (field.target === "style" && field.key === "autoHeight") {
+    return isTextRepeatPerPageEnabled.value;
+  }
+
+  if (field.target === "element" && field.key === "repeatPerPage") {
+    return isTextAutoHeightEnabled.value;
+  }
+
+  return false;
+};
+
 const canMergeCells = computed(() => {
   if (!store.tableSelection) return false;
   return store.tableSelection.cells.length > 1;
@@ -667,7 +694,7 @@ const handleFocusOut = (e: FocusEvent) => {
                   :min="getFieldMin(field)"
                   :max="getFieldMax(field)"
                   :step="getFieldStep(field)"
-                  :disabled="isEditingDisabled"
+                  :disabled="isFieldDisabled(field)"
                   :placeholder="
                     field.placeholder
                       ? field.placeholder.startsWith('properties.')
