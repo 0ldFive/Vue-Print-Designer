@@ -262,6 +262,7 @@ export interface DesignerState {
   templateModalFormConfig?: TemplateModalFormConfig | null;
   customElementModalFormConfig?: TemplateModalFormConfig | null;
   contextMenuEventEmitter?: ((eventName: string, detail: Record<string, any>) => void) | null;
+  crudScopeId?: string;
   testData: Record<string, any>;
   variables: Record<string, any>;
   branding: BrandingSettings;

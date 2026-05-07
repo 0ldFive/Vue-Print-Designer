@@ -27,6 +27,7 @@ const { t } = useI18n();
 const store = useTemplateStore();
 const designerStore = useDesignerStore();
 const modalContainer = inject('modal-container', ref<HTMLElement | null>(null));
+const designerInstanceId = inject<string | null>('designer-instance-id', null);
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -245,6 +246,12 @@ const currentTemplateName = computed(() => {
   return currentTemplate.value ? currentTemplate.value.name : t('template.select');
 });
 
+const isEventForCurrentDesigner = (e: Event) => {
+  const eventId = (e as CustomEvent)?.detail?.__designerInstanceId;
+  if (!eventId || !designerInstanceId) return true;
+  return eventId === designerInstanceId;
+};
+
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
   if (!isOpen.value) activeMenuId.value = null;
@@ -306,7 +313,8 @@ const getActiveTemplate = () => {
   return store.templates.find(t => t.id === activeMenuId.value);
 };
 
-const handleCreate = () => {
+const handleCreate = (e?: Event) => {
+  if (e && !isEventForCurrentDesigner(e)) return;
   activeMenuId.value = null;
   modalMode.value = 'create';
   modalInitialName.value = '';
@@ -316,6 +324,7 @@ const handleCreate = () => {
 };
 
 const handleSaveAsEvent = async (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
   const customEvent = e as CustomEvent;
   const currentId = customEvent.detail?.id || store.currentTemplateId;
   if (!currentId) return;

@@ -35,6 +35,7 @@ const props = defineProps<{ headless?: boolean }>();
 const scrollContainer = ref<HTMLElement | null>(null);
 const rootContainer = ref<HTMLElement | null>(null);
 const modalContainer = ref<HTMLElement | null>(null);
+const designerInstanceId = `designer-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
 let resizeObserver: ResizeObserver | null = null;
 const canvasContainer = ref<HTMLElement | null>(null);
 
@@ -42,6 +43,7 @@ const canvasContainer = ref<HTMLElement | null>(null);
 import { provide } from 'vue';
 provide('designer-root', rootContainer);
 provide('modal-container', modalContainer);
+provide('designer-instance-id', designerInstanceId);
 const canvasWrapper = ref<HTMLElement | null>(null);
 const showSaveAsModal = ref(false);
 const brandTick = ref(0);

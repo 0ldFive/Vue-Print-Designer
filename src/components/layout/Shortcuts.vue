@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, nextTick, inject, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDesignerStore } from '@/stores/designer';
+import { useTemplateStore } from '@/stores/templates';
 import { formatShortcut } from '@/utils/os';
 import type { PrintElement } from '@/types';
 import DeleteIcon from '~icons/material-symbols/delete';
@@ -15,7 +16,9 @@ import RedoIcon from '~icons/material-symbols/redo';
 
 const { t } = useI18n();
 const store = useDesignerStore();
+const templateStore = useTemplateStore();
 const designerRoot = inject<Ref<HTMLElement | null>>('designer-root');
+const designerInstanceId = inject<string | null>('designer-instance-id', null);
 const showMenu = ref(false);
 const menuX = ref(0);
 const menuY = ref(0);
@@ -33,6 +36,27 @@ const handleMouseMove = (e: MouseEvent) => {
 
 const getQueryRoot = () => {
   return (designerRoot?.value?.getRootNode() as Document | ShadowRoot) || document;
+};
+
+const isShortcutEventForCurrentDesigner = (e: KeyboardEvent) => {
+  const root = designerRoot?.value;
+  if (!root) return true;
+
+  const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+  if (path.length > 0) {
+    return path.includes(root);
+  }
+
+  const target = e.target as Node | null;
+  return !!target && root.contains(target);
+};
+
+const dispatchDesignerEvent = (name: string, detail: Record<string, any> = {}) => {
+  const payload = { ...detail };
+  if (designerInstanceId) {
+    payload.__designerInstanceId = designerInstanceId;
+  }
+  window.dispatchEvent(new CustomEvent(name, { detail: payload }));
 };
 
 const getPasteTarget = (clientX: number, clientY: number) => {
@@ -88,12 +112,13 @@ const getPasteTarget = (clientX: number, clientY: number) => {
 const handleKeydown = (e: KeyboardEvent) => {
   // If global shortcuts are disabled (e.g. modal open), ignore
   if (store.disableGlobalShortcuts) return;
+  if (!isShortcutEventForCurrentDesigner(e)) return;
 
   // New Template (Ctrl + Alt + N) - Trigger UI flow via event
   if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === 'n') {
     e.preventDefault();
     e.stopPropagation();
-    window.dispatchEvent(new CustomEvent('designer:new-template'));
+    dispatchDesignerEvent('designer:new-template');
     return;
   }
 
@@ -231,7 +256,7 @@ const handleKeydown = (e: KeyboardEvent) => {
   // Preview (Ctrl + Shift + P)
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:preview'));
+    dispatchDesignerEvent('designer:preview');
     return;
   }
 
@@ -245,35 +270,35 @@ const handleKeydown = (e: KeyboardEvent) => {
   // Save As (Ctrl + Shift + S)
   if (mod && e.shiftKey && key === 's') {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:save-as'));
+    dispatchDesignerEvent('designer:save-as', { id: templateStore.currentTemplateId });
     return;
   }
 
   // Save (Ctrl + S)
   if (mod && key === 's') {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:save'));
+    dispatchDesignerEvent('designer:save');
     return;
   }
 
   // Print (Ctrl + P)
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:print'));
+    dispatchDesignerEvent('designer:print');
     return;
   }
 
   // Export PDF (Ctrl + Shift + E)
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:export-pdf'));
+    dispatchDesignerEvent('designer:export-pdf');
     return;
   }
 
   // View JSON (Ctrl + Shift + J)
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent('designer:view-json'));
+    dispatchDesignerEvent('designer:view-json');
     return;
   }
 };

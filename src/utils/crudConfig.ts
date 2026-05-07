@@ -28,6 +28,9 @@ export type CrudConfig = {
   fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 };
 
+export type CrudScopeId = string;
+const DEFAULT_CRUD_SCOPE_ID = '__global__';
+
 const defaultConfig: CrudConfig = {
   mode: 'local',
   endpoints: {
@@ -50,7 +53,16 @@ const defaultConfig: CrudConfig = {
   }
 };
 
-let config: CrudConfig = { ...defaultConfig };
+const crudConfigs = new Map<CrudScopeId, CrudConfig>();
+const explicitScopedConfigs = new Set<CrudScopeId>();
+
+let sharedDefaultProviderScopeId: CrudScopeId | null = null;
+let sharedDefaultConfig: CrudConfig | null = null;
+
+const normalizeScopeId = (scopeId?: CrudScopeId) => {
+  const next = String(scopeId || '').trim();
+  return next || DEFAULT_CRUD_SCOPE_ID;
+};
 
 const mergeEndpoints = (base: CrudEndpoints, next?: CrudEndpoints): CrudEndpoints => {
   if (!next) return { ...base };
@@ -61,29 +73,96 @@ const mergeEndpoints = (base: CrudEndpoints, next?: CrudEndpoints): CrudEndpoint
   };
 };
 
-export const setCrudConfig = (next: Partial<CrudConfig>) => {
+const cloneConfig = (source: CrudConfig): CrudConfig => ({
+  mode: source.mode,
+  endpoints: mergeEndpoints(defaultConfig.endpoints, source.endpoints),
+  headers: { ...(source.headers || {}) },
+  fetcher: source.fetcher,
+});
+
+const isScopedConfig = (scopeId: CrudScopeId) => scopeId !== DEFAULT_CRUD_SCOPE_ID;
+
+const syncSharedDefaultFromScope = (scopeId: CrudScopeId) => {
+  if (!isScopedConfig(scopeId)) return;
+
+  if (!sharedDefaultProviderScopeId) {
+    sharedDefaultProviderScopeId = scopeId;
+  }
+  if (sharedDefaultProviderScopeId !== scopeId) return;
+
+  const current = crudConfigs.get(scopeId);
+  if (!current) return;
+
+  sharedDefaultConfig = cloneConfig(current);
+
+  for (const [key] of crudConfigs.entries()) {
+    if (!isScopedConfig(key)) continue;
+    if (key === scopeId) continue;
+    if (explicitScopedConfigs.has(key)) continue;
+    crudConfigs.set(key, cloneConfig(sharedDefaultConfig));
+  }
+};
+
+const getScopeConfigRef = (scopeId?: CrudScopeId): CrudConfig => {
+  const key = normalizeScopeId(scopeId);
+  const existing = crudConfigs.get(key);
+  if (existing) return existing;
+
+  const source =
+    isScopedConfig(key) && sharedDefaultConfig
+      ? sharedDefaultConfig
+      : defaultConfig;
+  const created = cloneConfig(source);
+  crudConfigs.set(key, created);
+  return created;
+};
+
+export const setCrudConfig = (next: Partial<CrudConfig>, scopeId?: CrudScopeId) => {
   if (!next || typeof next !== 'object') return;
-  config = {
-    mode: next.mode || config.mode,
-    endpoints: mergeEndpoints(config.endpoints, next.endpoints),
-    headers: { ...config.headers, ...(next.headers || {}) },
-    fetcher: next.fetcher || config.fetcher
+  const key = normalizeScopeId(scopeId);
+  const current = getScopeConfigRef(key);
+
+  const updated = {
+    mode: next.mode || current.mode,
+    endpoints: mergeEndpoints(current.endpoints, next.endpoints),
+    headers: { ...(current.headers || {}), ...(next.headers || {}) },
+    fetcher: next.fetcher || current.fetcher
+  };
+
+  crudConfigs.set(key, updated);
+
+  if (isScopedConfig(key)) {
+    explicitScopedConfigs.add(key);
+    syncSharedDefaultFromScope(key);
+  }
+};
+
+export const getCrudConfig = (scopeId?: CrudScopeId): CrudConfig => {
+  const current = getScopeConfigRef(scopeId);
+  return {
+    mode: current.mode,
+    endpoints: mergeEndpoints(current.endpoints),
+    headers: { ...(current.headers || {}) },
+    fetcher: current.fetcher
   };
 };
 
-export const getCrudConfig = (): CrudConfig => ({
-  mode: config.mode,
-  endpoints: mergeEndpoints(config.endpoints),
-  headers: { ...(config.headers || {}) },
-  fetcher: config.fetcher
-});
+export const setCrudMode = (mode: CrudMode, scopeId?: CrudScopeId) => {
+  const key = normalizeScopeId(scopeId);
+  const current = getScopeConfigRef(key);
 
-export const setCrudMode = (mode: CrudMode) => {
-  config = { ...config, mode };
+  const updated = { ...current, mode };
+  crudConfigs.set(key, updated);
+
+  if (isScopedConfig(key)) {
+    explicitScopedConfigs.add(key);
+    syncSharedDefaultFromScope(key);
+  }
 };
 
-export const resolveUrl = (path: string) => {
-  const baseUrl = config.endpoints.baseUrl || '';
+export const resolveUrl = (path: string, scopeId?: CrudScopeId) => {
+  const current = getScopeConfigRef(scopeId);
+  const baseUrl = current.endpoints.baseUrl || '';
   if (!path) return baseUrl || '';
   if (/^https?:\/\//i.test(path)) return path;
   if (!baseUrl) return path;
@@ -91,10 +170,10 @@ export const resolveUrl = (path: string) => {
   return `${baseUrl.replace(/\/+$/, '')}/${path}`;
 };
 
-export const buildEndpoint = (config: EndpointConfig | undefined, id?: string) => {
+export const buildEndpoint = (config: EndpointConfig | undefined, id?: string, scopeId?: CrudScopeId) => {
   const raw = typeof config === 'string' ? config : (config?.url || '');
   const withId = id ? raw.replace('{id}', id) : raw;
-  return resolveUrl(withId);
+  return resolveUrl(withId, scopeId);
 };
 
 export const buildFetchOptions = (

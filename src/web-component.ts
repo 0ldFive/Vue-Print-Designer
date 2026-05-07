@@ -116,6 +116,7 @@ class PrintDesignerElement extends HTMLElement {
   private _pendingCloudUrl: string | null = null;
   private _pendingHideClientLink: boolean | null = null;
   private _pendingHideCloudLink: boolean | null = null;
+  private _crudScopeId: string = `crud-${uuidv4()}`;
   private _headless = ref(false);
   public isReady: boolean = false;
 
@@ -298,6 +299,7 @@ class PrintDesignerElement extends HTMLElement {
     this.printApi = usePrint();
     this.printSettings = usePrintSettings();
     this.designerStore = useDesignerStore(pinia);
+    this.designerStore.setCrudScopeId(this._crudScopeId);
     
     this.designerStore.setContextMenuEventEmitter((eventName, detail) => {
       this.dispatchEvent(new CustomEvent(eventName, { detail }));
@@ -321,6 +323,7 @@ class PrintDesignerElement extends HTMLElement {
     }
 
     this.templateStore = useTemplateStore(pinia);
+    this.templateStore.setCrudScopeId(this._crudScopeId);
 
     this.app = app;
     this.isReady = true;
@@ -641,7 +644,7 @@ class PrintDesignerElement extends HTMLElement {
   }
 
   setCrudMode(mode: CrudMode) {
-    setCrudMode(mode);
+    setCrudMode(mode, this._crudScopeId);
     if (mode === 'remote') {
       this.templateStore?.loadTemplates().then(() => {
         if (this.templateStore && !this.templateStore.currentTemplateId && this.templateStore.templates.length > 0) {
@@ -654,7 +657,10 @@ class PrintDesignerElement extends HTMLElement {
 
   setCrudEndpoints(endpoints: CrudEndpoints, options: { baseUrl?: string; headers?: Record<string, string>; fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> } = {}) {
     const finalBaseUrl = options.baseUrl !== undefined ? options.baseUrl : endpoints.baseUrl;
-    setCrudConfig({ endpoints: { ...endpoints, baseUrl: finalBaseUrl }, headers: options.headers, fetcher: options.fetcher });
+    setCrudConfig(
+      { endpoints: { ...endpoints, baseUrl: finalBaseUrl }, headers: options.headers, fetcher: options.fetcher },
+      this._crudScopeId,
+    );
   }
 
   getTemplates(options: { includeData?: boolean } = {}) {
@@ -690,7 +696,7 @@ class PrintDesignerElement extends HTMLElement {
   async upsertTemplate(template: { id?: string; name: string; data?: any; updatedAt?: number; [key: string]: any }, options: { setCurrent?: boolean } = {}) {
     if (!this.templateStore) return null;
     if (!template || typeof template.name !== 'string') return null;
-    const { mode, endpoints, headers, fetcher } = getCrudConfig();
+    const { mode, endpoints, headers, fetcher } = getCrudConfig(this._crudScopeId);
     const id = template.id || uuidv4();
     const index = this.templateStore.templates.findIndex((t) => t.id === id);
     const existing: any = index >= 0 ? this.templateStore.templates[index] : {};
@@ -738,7 +744,7 @@ class PrintDesignerElement extends HTMLElement {
             }
           )
         });
-        const url = buildEndpoint(endpoints.templates?.upsert || '');
+        const url = buildEndpoint(endpoints.templates?.upsert || '', undefined, this._crudScopeId);
         const fetchOptions = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
@@ -784,7 +790,7 @@ class PrintDesignerElement extends HTMLElement {
   setTemplates(templates: Array<{ id: string; name: string; data?: any; updatedAt?: number; [key: string]: any }>, options: { currentTemplateId?: string } = {}) {
     if (!this.templateStore) return;
     if (!Array.isArray(templates)) return;
-    const { mode } = getCrudConfig();
+    const { mode } = getCrudConfig(this._crudScopeId);
     this.templateStore.templates = templates
       .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string')
       .map((t) => normalizeEntityConstraints({
@@ -858,7 +864,7 @@ class PrintDesignerElement extends HTMLElement {
   async upsertCustomElement(customElement: { id?: string; name: string; element: any; [key: string]: any }) {
     if (!this.designerStore) return null;
     if (!customElement || typeof customElement.name !== 'string' || !customElement.element) return null;
-    const { mode, endpoints, headers, fetcher } = getCrudConfig();
+    const { mode, endpoints, headers, fetcher } = getCrudConfig(this._crudScopeId);
     const id = customElement.id || uuidv4();
     const index = this.designerStore.customElements.findIndex((el) => el.id === id);
     const existing: any = index >= 0 ? this.designerStore.customElements[index] : {};
@@ -890,7 +896,7 @@ class PrintDesignerElement extends HTMLElement {
           permissions: next.permissions ?? cachedCustomElement.permissions,
           ext: mergeExt(cachedCustomElement.ext, next.ext)
         });
-        const url = buildEndpoint(endpoints.customElements?.upsert || '');
+        const url = buildEndpoint(endpoints.customElements?.upsert || '', undefined, this._crudScopeId);
         const fetchOptions = buildFetchOptions(endpoints.customElements?.upsert, 'POST', headers, requestPayload);
         const res = await (fetcher || fetch)(url, fetchOptions);
         const result = await res.json();
@@ -926,7 +932,7 @@ class PrintDesignerElement extends HTMLElement {
   setCustomElements(customElements: Array<{ id: string; name: string; element: any; [key: string]: any }>) {
     if (!this.designerStore) return;
     if (!Array.isArray(customElements)) return;
-    const { mode } = getCrudConfig();
+    const { mode } = getCrudConfig(this._crudScopeId);
     this.designerStore.customElements = customElements
       .filter((el) => el && typeof el.id === 'string' && typeof el.name === 'string' && el.element)
       .map((el) => normalizeEntityConstraints({

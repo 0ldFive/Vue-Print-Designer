@@ -232,6 +232,7 @@ export const useDesignerStore = defineStore("designer", {
     contextMenuEventEmitter: null as
       | ((eventName: string, detail: Record<string, any>) => void)
       | null,
+    crudScopeId: "__global__",
     testData: {},
     variables: {},
     availableVariables: [] as import("../types").VariableTreeItem[],
@@ -281,6 +282,9 @@ export const useDesignerStore = defineStore("designer", {
         | null,
     ) {
       this.contextMenuEventEmitter = emitter;
+    },
+    setCrudScopeId(scopeId: string) {
+      this.crudScopeId = String(scopeId || "").trim() || "__global__";
     },
     setAvailableVariables(variables: import("../types").VariableTreeItem[]) {
       this.availableVariables = variables;
@@ -512,7 +516,9 @@ export const useDesignerStore = defineStore("designer", {
 
       template.element = cloneDeep(element);
 
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       if (mode === "remote") {
         try {
           const cachedTemplate = this.customElementDetailCache[template.id];
@@ -527,7 +533,11 @@ export const useDesignerStore = defineStore("designer", {
           const payload = normalizeEntityConstraints(
             applyModalExtraValues(payloadBase, "edit"),
           );
-          const url = buildEndpoint(endpoints.customElements?.upsert, "");
+          const url = buildEndpoint(
+            endpoints.customElements?.upsert,
+            "",
+            this.crudScopeId,
+          );
           const options = buildFetchOptions(
             endpoints.customElements?.upsert,
             "POST",
@@ -2336,10 +2346,16 @@ export const useDesignerStore = defineStore("designer", {
       toast.warning("Grouping feature is under development");
     },
     async loadCustomElements() {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       if (mode !== "remote") return;
       try {
-        const url = buildEndpoint(endpoints.customElements?.list, "");
+        const url = buildEndpoint(
+          endpoints.customElements?.list,
+          "",
+          this.crudScopeId,
+        );
         const options = buildFetchOptions(
           endpoints.customElements?.list,
           "GET",
@@ -2381,7 +2397,9 @@ export const useDesignerStore = defineStore("designer", {
       }
     },
     async copyCustomElement(id: string, extraValues?: Record<string, any>) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       const el = this.customElements.find((el) => el.id === id);
       if (!el) return;
       if (!canCopyEntity(el)) {
@@ -2429,7 +2447,11 @@ export const useDesignerStore = defineStore("designer", {
       ) as CustomElementTemplate;
       if (mode === "remote") {
         try {
-          const url = buildEndpoint(endpoints.customElements?.upsert, "");
+          const url = buildEndpoint(
+            endpoints.customElements?.upsert,
+            "",
+            this.crudScopeId,
+          );
           const options = buildFetchOptions(
             endpoints.customElements?.upsert,
             "POST",
@@ -2470,7 +2492,9 @@ export const useDesignerStore = defineStore("designer", {
       element: PrintElement,
       extraValues?: Record<string, any>,
     ) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       const template = applyModalExtraValues(
         {
           id: uuidv4(),
@@ -2488,7 +2512,11 @@ export const useDesignerStore = defineStore("designer", {
 
       if (mode === "remote") {
         try {
-          const url = buildEndpoint(endpoints.customElements?.upsert, "");
+          const url = buildEndpoint(
+            endpoints.customElements?.upsert,
+            "",
+            this.crudScopeId,
+          );
           const options = buildFetchOptions(
             endpoints.customElements?.upsert,
             "POST",
@@ -2530,7 +2558,9 @@ export const useDesignerStore = defineStore("designer", {
       }
     },
     async removeCustomElement(id: string) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       const existing = this.customElements.find((el) => el.id === id);
       if (existing && !canDeleteEntity(existing)) {
         toast.warning(i18n.global.t("toast.customElementDeleteNotAllowed"));
@@ -2542,7 +2572,11 @@ export const useDesignerStore = defineStore("designer", {
         delete this.customElementDetailCache[id];
         if (mode === "remote") {
           try {
-            const url = buildEndpoint(endpoints.customElements?.delete, id);
+            const url = buildEndpoint(
+              endpoints.customElements?.delete,
+              id,
+              this.crudScopeId,
+            );
             const options = buildFetchOptions(
               endpoints.customElements?.delete,
               "DELETE",
@@ -2564,7 +2598,9 @@ export const useDesignerStore = defineStore("designer", {
       newName: string,
       extraValues?: Record<string, any>,
     ) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(
+        this.crudScopeId,
+      );
       const template = this.customElements.find((el) => el.id === id);
       if (template) {
         if (!canEditEntity(template)) {
@@ -2595,7 +2631,11 @@ export const useDesignerStore = defineStore("designer", {
               permissions: template.permissions ?? cachedTemplate?.permissions,
               ext: mergedTemplate.ext,
             }) as CustomElementTemplate;
-            const url = buildEndpoint(endpoints.customElements?.upsert, "");
+            const url = buildEndpoint(
+              endpoints.customElements?.upsert,
+              "",
+              this.crudScopeId,
+            );
             const options = buildFetchOptions(
               endpoints.customElements?.upsert,
               "POST",
@@ -2623,7 +2663,7 @@ export const useDesignerStore = defineStore("designer", {
       }
     },
     saveCustomElements() {
-      const { mode } = getCrudConfig();
+      const { mode } = getCrudConfig(this.crudScopeId);
       if (mode === "remote") return;
       localStorage.setItem(
         "print-designer-custom-elements",

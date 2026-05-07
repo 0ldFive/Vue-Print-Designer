@@ -62,8 +62,23 @@ const store = useDesignerStore();
 const templateStore = useTemplateStore();
 
 const designerRoot = inject<Ref<HTMLElement | null>>('designer-root', ref(null));
+const designerInstanceId = inject<string | null>('designer-instance-id', null);
 const getQueryRoot = () => {
   return (designerRoot?.value?.getRootNode() as Document | ShadowRoot) || document;
+};
+
+const dispatchDesignerEvent = (name: string, detail: Record<string, any> = {}) => {
+  const payload = { ...detail };
+  if (designerInstanceId) {
+    payload.__designerInstanceId = designerInstanceId;
+  }
+  window.dispatchEvent(new CustomEvent(name, { detail: payload }));
+};
+
+const isEventForCurrentDesigner = (e: Event) => {
+  const eventId = (e as CustomEvent)?.detail?.__designerInstanceId;
+  if (!eventId || !designerInstanceId) return true;
+  return eventId === designerInstanceId;
 };
 
 const { printMode, silentPrint, localPrintOptions, remotePrintOptions } = usePrintSettings();
@@ -251,8 +266,6 @@ const fontOptions = computed(() => [
   { label: t('editor.fonts.simHei'), value: 'SimHei, sans-serif' }
 ]);
 
-
-
 const handleZoomIn = () => {
   const currentPercent = Math.round(store.zoom * 100);
   const nextPercent = Math.min(currentPercent + 10, 500);
@@ -337,13 +350,13 @@ const handleSave = () => {
       return;
     }
   }
-  window.dispatchEvent(new CustomEvent('designer:new-template'));
+  dispatchDesignerEvent('designer:new-template');
 };
 
 const handleSaveAs = () => {
   const currentId = templateStore.currentTemplateId;
   if (currentId) {
-    window.dispatchEvent(new CustomEvent('designer:save-as', { detail: { id: currentId } }));
+    dispatchDesignerEvent('designer:save-as', { id: currentId });
   }
 };
 
@@ -358,24 +371,52 @@ const getExportBaseName = () => {
   return `${safeName}-${yyyy}${mm}${dd}`;
 };
 
+const handlePreviewEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handlePreview();
+};
+
+const handleSaveEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handleSave();
+};
+
+const handlePrintEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handlePrint();
+};
+
+const handleExportEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handleExport();
+};
+
+const handleViewJsonEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handleViewJson();
+};
+
+const handleViewImageBlobEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  handleViewImageBlob();
+};
+
 onMounted(() => {
-  window.addEventListener('designer:preview', handlePreview);
-  window.addEventListener('designer:save', handleSave);
-  window.addEventListener('designer:save-as', handleSaveAs);
-  window.addEventListener('designer:print', handlePrint);
-  window.addEventListener('designer:export-pdf', handleExport);
-  window.addEventListener('designer:view-json', handleViewJson);
-  window.addEventListener('designer:view-blob', handleViewImageBlob);
+  window.addEventListener('designer:preview', handlePreviewEvent);
+  window.addEventListener('designer:save', handleSaveEvent);
+  window.addEventListener('designer:print', handlePrintEvent);
+  window.addEventListener('designer:export-pdf', handleExportEvent);
+  window.addEventListener('designer:view-json', handleViewJsonEvent);
+  window.addEventListener('designer:view-blob', handleViewImageBlobEvent);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('designer:preview', handlePreview);
-  window.removeEventListener('designer:save', handleSave);
-  window.removeEventListener('designer:save-as', handleSaveAs);
-  window.removeEventListener('designer:print', handlePrint);
-  window.removeEventListener('designer:export-pdf', handleExport);
-  window.removeEventListener('designer:view-json', handleViewJson);
-  window.removeEventListener('designer:view-blob', handleViewImageBlob);
+  window.removeEventListener('designer:preview', handlePreviewEvent);
+  window.removeEventListener('designer:save', handleSaveEvent);
+  window.removeEventListener('designer:print', handlePrintEvent);
+  window.removeEventListener('designer:export-pdf', handleExportEvent);
+  window.removeEventListener('designer:view-json', handleViewJsonEvent);
+  window.removeEventListener('designer:view-blob', handleViewImageBlobEvent);
 });
 </script>
 

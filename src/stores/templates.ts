@@ -91,6 +91,7 @@ const withExtAvailableVariables = (ext: Record<string, any> | undefined, variabl
 
 export const useTemplateStore = defineStore('templates', {
   state: () => ({
+    crudScopeId: '__global__',
     templates: [] as Template[],
     templateDetailCache: {} as Record<string, any>,
     currentTemplateId: null as string | null,
@@ -98,12 +99,15 @@ export const useTemplateStore = defineStore('templates', {
     isLoading: false,
   }),
   actions: {
+    setCrudScopeId(scopeId: string) {
+      this.crudScopeId = String(scopeId || '').trim() || '__global__';
+    },
     async fetchTemplateDetail(id: string) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       if (mode === 'remote') {
         this.isLoading = true;
         try {
-          const url = buildEndpoint(endpoints.templates?.get, id);
+          const url = buildEndpoint(endpoints.templates?.get, id, this.crudScopeId);
           const options = buildFetchOptions(endpoints.templates?.get, 'GET', headers);
           const res = await (fetcher || fetch)(url, options);
           const payload = await res.json();
@@ -145,11 +149,11 @@ export const useTemplateStore = defineStore('templates', {
       }
     },
     async loadTemplates() {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       if (mode === 'remote') {
         this.isLoading = true;
         try {
-          const url = buildEndpoint(endpoints.templates?.list, '');
+          const url = buildEndpoint(endpoints.templates?.list, '', this.crudScopeId);
           const options = buildFetchOptions(endpoints.templates?.list, 'GET', headers);
           const res = await (fetcher || fetch)(url, options);
           const data = await res.json();
@@ -223,13 +227,13 @@ export const useTemplateStore = defineStore('templates', {
     },
     
     saveToLocalStorage() {
-      const { mode } = getCrudConfig();
+      const { mode } = getCrudConfig(this.crudScopeId);
       if (mode === 'remote') return;
       localStorage.setItem('print-designer-templates', JSON.stringify(this.templates));
     },
 
     async saveCurrentTemplate(name: string, isAutoSave = false) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const designerStore = useDesignerStore();
       // Capture current ID synchronously to prevent race conditions if template changes during async save
       const targetId = this.currentTemplateId;
@@ -293,7 +297,7 @@ export const useTemplateStore = defineStore('templates', {
               )
             };
             const payload = normalizeEntityConstraints(applyModalExtraValues(payloadBase, targetId ? 'edit' : 'create'));
-            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const url = buildEndpoint(endpoints.templates?.upsert, '', this.crudScopeId);
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
@@ -350,7 +354,7 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async updateTemplate(id: string, updates: Partial<Template>) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const existing = this.templates.find(t => t.id === id);
       let cached = this.templateDetailCache[id];
 
@@ -373,7 +377,7 @@ export const useTemplateStore = defineStore('templates', {
 
       if (mode === 'remote') {
         try {
-          const url = buildEndpoint(endpoints.templates?.upsert, '');
+          const url = buildEndpoint(endpoints.templates?.upsert, '', this.crudScopeId);
           const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, updatedTemplate);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
@@ -402,7 +406,7 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async createTemplate(name: string, data?: any, extraValues?: Record<string, any>, templateMode: 'create' | 'copy' = 'create') {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const designerStore = useDesignerStore();
       const nextData = data || {
         pages: cloneDeep(designerStore.pages),
@@ -436,7 +440,7 @@ export const useTemplateStore = defineStore('templates', {
       if (mode === 'remote') {
         this.isLoading = true;
         try {
-          const url = buildEndpoint(endpoints.templates?.upsert, '');
+          const url = buildEndpoint(endpoints.templates?.upsert, '', this.crudScopeId);
           const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
           const res = await (fetcher || fetch)(url, options);
           const result = await res.json();
@@ -475,7 +479,7 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async deleteTemplate(id: string) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const existing = this.templates.find(t => t.id === id);
       if (existing && !canDeleteEntity(existing)) {
         toast.warning(i18n.global.t('toast.templateDeleteNotAllowed'));
@@ -489,7 +493,7 @@ export const useTemplateStore = defineStore('templates', {
       if (mode === 'remote') {
         this.isLoading = true;
         try {
-          const url = buildEndpoint(endpoints.templates?.delete, id);
+          const url = buildEndpoint(endpoints.templates?.delete, id, this.crudScopeId);
           const options = buildFetchOptions(endpoints.templates?.delete, 'DELETE', headers);
           await (fetcher || fetch)(url, options);
           await this.loadTemplates();
@@ -505,7 +509,7 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async editTemplate(id: string, newName: string, extraValues?: Record<string, any>) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const t = this.templates.find(t => t.id === id);
       if (t) {
         if (!canEditEntity(t)) {
@@ -541,7 +545,7 @@ export const useTemplateStore = defineStore('templates', {
               )
             }, 'edit', extraValues);
             const payload = normalizeEntityConstraints(payloadBase);
-            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const url = buildEndpoint(endpoints.templates?.upsert, '', this.crudScopeId);
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, payload);
             await (fetcher || fetch)(url, options);
             this.templateDetailCache[id] = { ...(this.templateDetailCache[id] || {}), ...payload };
@@ -560,7 +564,7 @@ export const useTemplateStore = defineStore('templates', {
     },
 
     async copyTemplate(id: string, newName?: string, extraValues?: Record<string, any>) {
-      const { mode, endpoints, headers, fetcher } = getCrudConfig();
+      const { mode, endpoints, headers, fetcher } = getCrudConfig(this.crudScopeId);
       const t = this.templates.find(t => t.id === id);
       if (t) {
         if (!canCopyEntity(t)) {
@@ -606,7 +610,7 @@ export const useTemplateStore = defineStore('templates', {
         if (mode === 'remote') {
           this.isLoading = true;
           try {
-            const url = buildEndpoint(endpoints.templates?.upsert, '');
+            const url = buildEndpoint(endpoints.templates?.upsert, '', this.crudScopeId);
             const options = buildFetchOptions(endpoints.templates?.upsert, 'POST', headers, newTemplate);
             const res = await (fetcher || fetch)(url, options);
             const result = await res.json();
@@ -650,7 +654,7 @@ export const useTemplateStore = defineStore('templates', {
     async loadTemplate(id: string) {
       this.isLoading = true;
       try {
-        const { mode, endpoints, headers, fetcher } = getCrudConfig();
+        const { mode } = getCrudConfig(this.crudScopeId);
         if (mode === 'remote') {
           try {
             const detail = await this.fetchTemplateDetail(id);
