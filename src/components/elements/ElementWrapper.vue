@@ -18,6 +18,7 @@ const props = defineProps<{
 const { t } = useI18n();
 const store = useDesignerStore();
 const elementRef = ref<HTMLElement | null>(null);
+const isHovered = ref(false);
 
 const designerRoot = inject<Ref<HTMLElement | null>>('designer-root', ref(null));
 const getQueryRoot = () => {
@@ -29,8 +30,35 @@ const actualIsSelected = computed(() => {
   return !props.readOnly && (props.isSelected || isMultiSelected);
 });
 
+const selfBorderedTypes = [ElementType.TABLE, ElementType.LINE, ElementType.RECT, ElementType.CIRCLE];
+
+const borderOverlayStyle = computed<Record<string, any> | null>(() => {
+  if (selfBorderedTypes.includes(props.element.type)) {
+    return null;
+  }
+
+  if (props.element.style.borderStyle && props.element.style.borderStyle !== 'none') {
+    return {
+      borderStyle: props.element.style.borderStyle,
+      borderWidth: `${props.element.style.borderWidth || 1}px`,
+      borderColor: props.element.style.borderColor || '#000',
+      borderRadius: 'inherit',
+      boxSizing: 'border-box'
+    };
+  }
+
+  if (props.element.style.border) {
+    return {
+      border: props.element.style.border,
+      borderRadius: 'inherit',
+      boxSizing: 'border-box'
+    };
+  }
+
+  return null;
+});
+
 const style = computed(() => {
-  let hoverAlignedBorderWidth = 1;
   const baseStyle: Record<string, any> = {
     left: `${props.element.x}px`,
     top: `${props.element.y}px`,
@@ -41,9 +69,32 @@ const style = computed(() => {
     ...props.element.style,
   };
 
+  if (props.element.type === ElementType.TEXT) {
+    const inheritedTextKeys = [
+      'fontFamily',
+      'fontSize',
+      'fontWeight',
+      'fontStyle',
+      'textAlign',
+      'verticalAlign',
+      'textDecoration',
+      'writingMode',
+      'textOrientation',
+      'direction',
+      'letterSpacing',
+      'lineHeight',
+      'textTransform',
+      'color',
+      'padding',
+      'whiteSpace'
+    ];
+    inheritedTextKeys.forEach((key) => {
+      delete baseStyle[key];
+    });
+  }
+
   // Handle structured border properties
   // Skip border/background for self-bordered elements (Table, Line, Rect, Circle)
-  const selfBorderedTypes = [ElementType.TABLE, ElementType.LINE, ElementType.RECT, ElementType.CIRCLE];
   
   if (selfBorderedTypes.includes(props.element.type)) {
     // For these elements, background and borders are handled internally
@@ -61,32 +112,14 @@ const style = computed(() => {
     delete baseStyle.borderRadius; // Rect handles its own radius
   }
 
-  if (!selfBorderedTypes.includes(props.element.type) && props.element.style.borderStyle && props.element.style.borderStyle !== 'none') {
-    baseStyle.borderStyle = props.element.style.borderStyle;
-    baseStyle.borderWidth = `${props.element.style.borderWidth || 1}px`;
-    baseStyle.borderColor = props.element.style.borderColor || '#000';
-    hoverAlignedBorderWidth = Number(props.element.style.borderWidth || 1);
-    // Remove shorthand border to avoid override
-    delete baseStyle.border;
-  }
-  // Handle legacy string border
-  else if (!selfBorderedTypes.includes(props.element.type) && props.element.style.border) {
-    baseStyle.border = props.element.style.border;
-    const legacyBorderWidthMatch = String(props.element.style.border).match(/^(\d+(?:\.\d+)?)px/i);
-    hoverAlignedBorderWidth = legacyBorderWidthMatch ? Number(legacyBorderWidthMatch[1]) : 1;
-  }
-  // Default invisible border
-  else {
-    baseStyle.border = '1px dashed transparent';
-    hoverAlignedBorderWidth = 1;
-  }
+  // Render border with an overlay layer so it does not consume wrapper size.
+  delete baseStyle.border;
+  delete baseStyle.borderWidth;
+  delete baseStyle.borderStyle;
+  delete baseStyle.borderColor;
 
   // Keep outer width/height equal to the element size regardless of border width.
   baseStyle.boxSizing = 'border-box';
-
-  // Keep hover outline on the exact same edge as the current wrapper border.
-  baseStyle['--hover-outline-offset'] = `${-hoverAlignedBorderWidth}px`;
-  baseStyle['--hover-outline-color'] = actualIsSelected.value ? 'transparent' : 'var(--brand-300)';
 
   return baseStyle;
 });
@@ -531,15 +564,32 @@ const handleResizeStart = (e: MouseEvent) => {
     :data-repeat-per-page="element.repeatPerPage === true ? 'true' : null"
     :data-alignment-target="isAlignmentTarget ? 'true' : null"
     :class="[
-      readOnly ? 'cursor-not-allowed' : 'group theme-outline-hover',
+      readOnly ? 'cursor-not-allowed' : '',
       !readOnly && element.locked ? 'cursor-not-allowed' : '',
       !readOnly && !element.locked ? 'cursor-move' : ''
     ]"
     :style="style"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
     @mousedown="handleMouseDown"
   >
     <!-- Slot for specific element content -->
     <slot></slot>
+
+    <div
+      v-if="borderOverlayStyle"
+      class="absolute inset-0 pointer-events-none z-20"
+      :style="borderOverlayStyle"
+    ></div>
+
+    <div
+      v-if="!readOnly && !actualIsSelected"
+      :class="[
+        'absolute inset-0 box-border border pointer-events-none z-30 transition-opacity duration-75',
+        isHovered ? 'opacity-100' : 'opacity-0'
+      ]"
+      style="border-color: var(--brand-300);"
+    ></div>
 
     <div
       v-if="actualIsSelected"

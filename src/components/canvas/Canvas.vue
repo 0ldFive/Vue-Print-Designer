@@ -37,6 +37,12 @@ const marginTop = computed(() => store.pageSpacingY || 0);
 const marginBottom = computed(() => store.pageSpacingY || 0);
 const canvasSize = computed(() => store.canvasSize);
 const isTemplateEditable = computed(() => store.isTemplateEditable);
+const inverseZoom = computed(() => (zoom.value > 0 ? 1 / zoom.value : 1));
+const pageActionsStyle = computed(() => ({
+  transform: `scale(${inverseZoom.value})`,
+  transformOrigin: 'top right',
+  right: `${-48 * inverseZoom.value}px`
+}));
 
 // Header/Footer Dragging
 const isDraggingLine = ref(false);
@@ -433,7 +439,7 @@ const getGlobalElements = () => {
     }"
   >
     <div v-for="(page, index) in pages" :key="page.id" class="relative group">
-      <div class="absolute top-0 -right-12 flex flex-col gap-2 z-10">
+      <div class="absolute top-0 flex flex-col gap-2 z-10" :style="pageActionsStyle">
         <button 
           class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :title="t('canvas.addPage')"

@@ -22,7 +22,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { setCrudConfig, setCrudMode, getCrudConfig, buildEndpoint, buildFetchOptions, type CrudMode, type CrudEndpoints, type EndpointConfig } from './utils/crudConfig';
 import { loader } from '@guolao/vue-monaco-editor';
-import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig } from './types';
+import type { ListContextMenuConfig, ListContextMenuSource, ListContextMenuItem, TemplateModalFormConfig, DesignerFontOption as InternalDesignerFontOption } from './types';
 import { canDeleteEntity, canEditEntity, normalizeEntityConstraints, mergeExt } from './utils/entityConstraints';
 import { buildTestDataFromPages } from './utils/variables';
 
@@ -98,6 +98,7 @@ export interface DesignerListContextMenuConfig {
   items: DesignerListContextMenuItem[];
 }
 export type DesignerTemplateModalFormConfig = TemplateModalFormConfig;
+export type DesignerFontOption = InternalDesignerFontOption;
 
 import { toast } from './utils/toast';
 import { uiConfirm } from './utils/confirm';
@@ -116,6 +117,7 @@ class PrintDesignerElement extends HTMLElement {
   private _pendingCloudUrl: string | null = null;
   private _pendingHideClientLink: boolean | null = null;
   private _pendingHideCloudLink: boolean | null = null;
+  private _pendingFontOptions: DesignerFontOption[] | null = null;
   private _crudScopeId: string = `crud-${uuidv4()}`;
   private _headless = ref(false);
   public isReady: boolean = false;
@@ -321,6 +323,10 @@ class PrintDesignerElement extends HTMLElement {
       this.designerStore.setShowCloudLink(!this._pendingHideCloudLink);
       this._pendingHideCloudLink = null;
     }
+    if (this._pendingFontOptions !== null) {
+      this.designerStore.setFontOptions(this._pendingFontOptions);
+      this._pendingFontOptions = null;
+    }
 
     this.templateStore = useTemplateStore(pinia);
     this.templateStore.setCrudScopeId(this._crudScopeId);
@@ -460,6 +466,23 @@ class PrintDesignerElement extends HTMLElement {
       } else {
         localStorage.removeItem(designerFontStorageKey);
       }
+    }
+  }
+
+  setFontOptions(options: DesignerFontOption[] = []) {
+    const normalized = Array.isArray(options)
+      ? options
+          .filter((item): item is DesignerFontOption => Boolean(item && typeof item.value === 'string'))
+          .map((item) => ({
+            label: String(item.label ?? '').trim(),
+            value: String(item.value).trim()
+          }))
+      : [];
+
+    if (this.designerStore) {
+      this.designerStore.setFontOptions(normalized);
+    } else {
+      this._pendingFontOptions = normalized;
     }
   }
 

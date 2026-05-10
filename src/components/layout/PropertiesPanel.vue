@@ -111,6 +111,39 @@ const activeTab = ref<"properties" | "style" | "advanced">("properties");
 const copied = ref(false);
 const unit = computed(() => (store.unit || "mm") as Unit);
 const unitLabel = computed(() => store.unit || "mm");
+const defaultFontOptions = computed(() => [
+  { label: t("properties.option.default"), value: "" },
+  { label: t("properties.option.arial"), value: "Arial, sans-serif" },
+  {
+    label: t("properties.option.timesNewRoman"),
+    value: '"Times New Roman", serif',
+  },
+  { label: t("properties.option.courierNew"), value: '"Courier New", monospace' },
+  { label: t("properties.option.simSun"), value: "SimSun, serif" },
+  { label: t("properties.option.simHei"), value: "SimHei, sans-serif" },
+]);
+const dynamicFontFamilyOptions = computed(() => {
+  const customOptions = store.fontOptions || [];
+  if (!customOptions.length) {
+    return defaultFontOptions.value;
+  }
+
+  const normalizedCustom = customOptions.map((opt) => ({
+    label: (opt.label || opt.value || "").trim(),
+    value: opt.value,
+  }));
+  const hasDefaultOption = normalizedCustom.some((opt) => opt.value === "");
+
+  if (hasDefaultOption) {
+    return normalizedCustom;
+  }
+
+  return [
+    { label: t("properties.option.default"), value: "" },
+    ...normalizedCustom,
+  ];
+});
+const fontFamilyFieldKeys = new Set(["fontFamily", "labelFontFamily"]);
 const unitFieldKeys = new Set([
   "fontSize",
   "borderWidth",
@@ -133,6 +166,40 @@ const isUnitField = (field: PropertyField) => {
 const getFieldLabel = (field: PropertyField) => {
   const base = t(field.label);
   return isUnitField(field) ? `${base} (${unitLabel.value})` : base;
+};
+
+const i18nKeyPrefixes = [
+  "properties.",
+  "editor.",
+  "common.",
+  "elements.",
+  "sidebar.",
+  "help.",
+  "preview.",
+  "printDialog.",
+  "settings.",
+  "shortcuts.",
+  "toast.",
+];
+
+const isI18nKey = (value: string) =>
+  i18nKeyPrefixes.some((prefix) => value.startsWith(prefix));
+
+const resolveOptionLabel = (label: unknown) => {
+  if (typeof label !== "string") {
+    return String(label ?? "");
+  }
+  return isI18nKey(label) ? t(label) : label;
+};
+
+const getSelectOptions = (field: PropertyField) => {
+  const rawOptions = fontFamilyFieldKeys.has(field.key || "")
+    ? dynamicFontFamilyOptions.value
+    : (field.options || []);
+  return rawOptions.map((option: any) => ({
+    ...option,
+    label: resolveOptionLabel(option.label),
+  }));
 };
 
 const getFieldDisplayValue = (field: PropertyField) => {
@@ -712,12 +779,7 @@ const handleFocusOut = (e: FocusEvent) => {
                 <PropertySelect
                   v-else-if="field.type === 'select'"
                   :label="t(field.label)"
-                  :options="
-                    (field.options || []).map((o: any) => ({
-                      ...o,
-                      label: t(o.label),
-                    }))
-                  "
+                  :options="getSelectOptions(field)"
                   :disabled="isEditingDisabled"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"

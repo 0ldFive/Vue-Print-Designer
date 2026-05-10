@@ -4,6 +4,7 @@ import type {
   DesignerPrintDefaults,
   DesignerListContextMenuConfig,
   DesignerListContextMenuItem,
+  DesignerFontOption,
   DesignerTemplateTagResolver
 } from './web-component';
 import type {
@@ -48,6 +49,7 @@ export interface PrintDesignerElement extends HTMLElement {
   setBrandVars(vars: Record<string, string>, options?: { persist?: boolean }): void;
   setTheme(theme: string): void;
   setDesignerFont(fontFamily: string, options?: { persist?: boolean }): void;
+  setFontOptions(options?: DesignerFontOption[]): void;
   setLanguage(lang: 'zh' | 'en'): void;
   getPrintQuality(): 'fast' | 'normal' | 'high' | 'ultra';
   setPrintQuality(quality: 'fast' | 'normal' | 'high' | 'ultra'): void;

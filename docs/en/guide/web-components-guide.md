@@ -20,20 +20,21 @@
   - [8. Set Brand Colors (setBrandVars)](#8-set-brand-colors-setbrandvars)
   - [9. Set Theme (setTheme)](#9-set-theme-settheme)
   - [10. Set Designer Font (setDesignerFont)](#10-set-designer-font-setdesignerfont)
-  - [11. Set and Get Test Data (setTestData / getTestData)](#11-set-and-get-test-data-settestdata--gettestdata)
-  - [12. Set and Get Variables (setVariables / getVariables)](#12-set-and-get-variables-setvariables--getvariables)
-  - [13. Extract Template Variables (getTemplateVariables)](#13-extract-template-variables-gettemplatevariables)
-  - [14. Get and Load Template Data (getTemplateData / loadTemplateData)](#14-get-and-load-template-data-gettemplatedata--loadtemplatedata)
-  - [15. Template CRUD Operations](#15-template-crud-operations)
-  - [16. Custom Elements CRUD Operations](#16-custom-elements-crud-operations)
-  - [17. Set CRUD Mode (setCrudMode)](#17-set-crud-mode-setcrudmode)
-  - [18. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#18-configure-cloud-crud-endpoints-setcrudendpoints)
-  - [19. Set Language (setLanguage)](#19-set-language-setlanguage)
-  - [20. Configure Client and Cloud Print Links (setLinks)](#20-configure-client-and-cloud-print-links-setlinks)
-  - [21. Configure Extension Menu (setContextMenu)](#21-configure-extension-menu-setcontextmenu)
-  - [22. Configure Template Modal Custom Form (setTemplateModalForm)](#22-configure-template-modal-custom-form-settemplatemodalform)
-  - [23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#23-configure-custom-element-modal-custom-form-setcustomelementmodalform)
-  - [24. Configure Template List Tag Extension (setTemplateTagResolver)](#24-configure-template-list-tag-extension-settemplatetagresolver)
+  - [11. Set Font Options (setFontOptions)](#11-set-font-options-setfontoptions)
+  - [12. Set and Get Test Data (setTestData / getTestData)](#12-set-and-get-test-data-settestdata--gettestdata)
+  - [13. Set and Get Variables (setVariables / getVariables)](#13-set-and-get-variables-setvariables--getvariables)
+  - [14. Extract Template Variables (getTemplateVariables)](#14-extract-template-variables-gettemplatevariables)
+  - [15. Get and Load Template Data (getTemplateData / loadTemplateData)](#15-get-and-load-template-data-gettemplatedata--loadtemplatedata)
+  - [16. Template CRUD Operations](#16-template-crud-operations)
+  - [17. Custom Elements CRUD Operations](#17-custom-elements-crud-operations)
+  - [18. Set CRUD Mode (setCrudMode)](#18-set-crud-mode-setcrudmode)
+  - [19. Configure Cloud CRUD Endpoints (setCrudEndpoints)](#19-configure-cloud-crud-endpoints-setcrudendpoints)
+  - [20. Set Language (setLanguage)](#20-set-language-setlanguage)
+  - [21. Configure Client and Cloud Print Links (setLinks)](#21-configure-client-and-cloud-print-links-setlinks)
+  - [22. Configure Extension Menu (setContextMenu)](#22-configure-extension-menu-setcontextmenu)
+  - [23. Configure Template Modal Custom Form (setTemplateModalForm)](#23-configure-template-modal-custom-form-settemplatemodalform)
+  - [24. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#24-configure-custom-element-modal-custom-form-setcustomelementmodalform)
+  - [25. Configure Template List Tag Extension (setTemplateTagResolver)](#25-configure-template-list-tag-extension-settemplatetagresolver)
 
 - [Backend API Specifications](#backend-api-specifications)
   - [Overview](#overview)
@@ -78,6 +79,7 @@
 | `setBrandVars(vars)` | Set brand colors |
 | `setTheme(theme)` | Set theme (light/dark) |
 | `setDesignerFont(fontFamily)` | Set designer font |
+| `setFontOptions(options)` | Set available font dropdown options |
 | `setTestData(data)` | Set test data |
 | `getTestData()` | Get test data |
 | `setVariables(vars)` | Set variable data |
@@ -283,6 +285,9 @@ The component does not require a dedicated `init` method. Configure the followin
 | `setTheme` | `theme` | `'light' \| 'dark' \| 'system'` | Yes | Theme mode |
 | `setDesignerFont` | `fontFamily` | `string` | Yes | Designer font family |
 | `setDesignerFont` | `options.persist` | `boolean` | No | Persist to local storage |
+| `setFontOptions` | `options` | `{ label: string; value: string }[]` | Yes | Font option list |
+| `setFontOptions` | `options[].label` | `string` | Yes | Dropdown display label |
+| `setFontOptions` | `options[].value` | `string` | Yes | CSS font-family value |
 
 **2) Templates and Variables**
 
@@ -524,7 +529,32 @@ Parameters:
 | `fontFamily` | `string` | Yes | Font family string |
 | `options.persist` | `boolean` | No | Persist to local storage |
 
-### 11. Set and Get Test Data (setTestData / getTestData)
+### 11. Set Font Options (setFontOptions)
+
+Description: set available font options for the font dropdowns. It applies to the top toolbar, text quick toolbar, and properties panel.
+
+If no item with `value: ''` is provided, a default option is automatically prepended.
+
+```ts
+el.setFontOptions([
+  { label: 'Default', value: '' },
+  { label: 'Microsoft YaHei', value: '"Microsoft YaHei", "PingFang SC", sans-serif' },
+  { label: 'Monospace', value: '"Courier New", Consolas, monospace' }
+])
+
+// Reset to built-in default font options
+el.setFontOptions([])
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `options` | `{ label: string; value: string }[]` | Yes | Font option list |
+| `options[].label` | `string` | Yes | Label shown in dropdown |
+| `options[].value` | `string` | Yes | CSS `font-family` value |
+
+### 12. Set and Get Test Data (setTestData / getTestData)
 
 Description: set or get the test data for the current template (mainly used for previewing and testing in the designer).
 
@@ -540,7 +570,7 @@ Parameters:
 | `data` | `Record<string, any>` | Yes | Data object |
 | `options.merge` | `boolean` | No | Merge or overwrite |
 
-### 12. Set and Get Variables (setVariables / getVariables)
+### 13. Set and Get Variables (setVariables / getVariables)
 
 Description: set or get variable data.
 
@@ -556,7 +586,7 @@ Parameters:
 | `vars` | `Record<string, any>` | Yes | Variables map |
 | `options.merge` | `boolean` | No | Merge or overwrite |
 
-### 13. Extract Template Variables (getTemplateVariables)
+### 14. Extract Template Variables (getTemplateVariables)
 
 Description: Extract variables used in the current template and generate a data structure with default values.
 
@@ -565,7 +595,7 @@ const templateVars = el.getTemplateVariables()
 console.log('Variables structure for current template:', templateVars)
 ```
 
-### 14. Get and Load Template Data (getTemplateData / loadTemplateData)
+### 15. Get and Load Template Data (getTemplateData / loadTemplateData)
 
 Description: read/write current template data. In addition to `data`, template-level variable bindings are supported via `ext.availableVariables`.
 
@@ -594,7 +624,7 @@ Parameters (`loadTemplateData`):
 | `data` | `TemplateData` | Yes | Template canvas data |
 | `ext.availableVariables` | `VariableTreeItem[]` | No | Template-bound variable tree |
 
-### 15. Template CRUD Operations
+### 16. Template CRUD Operations
 
 #### 1) Get Template List (getTemplates)
 
@@ -680,7 +710,7 @@ Description: You can configure the following fields within the `permissions` obj
 }
 ```
 
-### 16. Custom Elements CRUD Operations
+### 17. Custom Elements CRUD Operations
 
 #### 1) Get Custom Element List (getCustomElements)
 
@@ -740,7 +770,7 @@ Description: You can configure the following fields within the `permissions` obj
 }
 ```
 
-### 17. Set CRUD Mode (setCrudMode)
+### 18. Set CRUD Mode (setCrudMode)
 
 Description: switch CRUD mode.
 
@@ -755,7 +785,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `mode` | `'local' \| 'remote'` | Yes | CRUD mode |
 
-### 18. Configure Cloud CRUD Endpoints (setCrudEndpoints)
+### 19. Configure Cloud CRUD Endpoints (setCrudEndpoints)
 
 Description: configure CRUD endpoints and headers. Supports passing a simple string URL, or an object to configure `url`, `method`, and additional `data`.
 
@@ -866,7 +896,7 @@ Note: The `EndpointConfig` type is defined as `string | { url: string; method?: 
 2. **For Write Requests** (e.g., `upsert`): Please place extra parameters directly into the `ext` field of the entity data object.
 3. **For Global Parameters**: It is recommended to pass them uniformly in the request headers by configuring `options.headers` (e.g., `X-Tenant-ID`).
 
-### 19. Set Language (setLanguage)
+### 20. Set Language (setLanguage)
 
 Description: switch language. You can also use `lang="en"` attribute to set initial language.
 
@@ -881,7 +911,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `lang` | `'zh' \| 'en'` | Yes | Language code |
 
-### 20. Configure Client and Cloud Print Links (setLinks)
+### 21. Configure Client and Cloud Print Links (setLinks)
 
 Description: Configure the client download link and cloud print link in the settings modal, or hide them. Can also be set via HTML attributes `client-url`, `cloud-url`, `hide-links`, `hide-client-link`, `hide-cloud-link`.
 
@@ -893,7 +923,7 @@ el.hideClientLink(true) // Hide client download link only
 el.hideCloudLink(true) // Hide cloud print link only
 ```
 
-### 21. Configure Extension Menu (setContextMenu)
+### 22. Configure Extension Menu (setContextMenu)
 
 Description: Configure the extension menu for the template list and custom element list.
 You can choose to append (`append`) to the default menu, or completely replace it (`replace`). When a menu item is clicked, the designer dispatches the custom event `eventName` you configured.
@@ -978,7 +1008,7 @@ For `setCustomElementContextMenu` (Custom Element List):
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
 
-### 22. Configure Template Modal Custom Form (setTemplateModalForm)
+### 23. Configure Template Modal Custom Form (setTemplateModalForm)
 
 Description: Configure custom form structure and default values for template `create / edit / copy` modals.
 
@@ -1053,7 +1083,7 @@ Behavior notes:
 - When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
 - `create` uses `initialValues` by default; when not configured, component default behavior applies.
 
-### 23. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
+### 24. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
 
 Description: Used to configure the custom form structure and default values for the custom element "Create / Edit" modals.
 
@@ -1076,7 +1106,7 @@ el.setCustomElementModalForm({
 el.clearCustomElementModalForm()
 ```
 
-### 24. Configure Template List Tag Extension (setTemplateTagResolver)
+### 25. Configure Template List Tag Extension (setTemplateTagResolver)
 
 Supports rendering custom tags (such as business status, categories, etc.) for each template in the left-side template list. The tag data is dynamically returned by the callback function you provide, based on the current template data.
 

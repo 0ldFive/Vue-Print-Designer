@@ -14,6 +14,11 @@ export interface BrandingSettings {
   showTitle: boolean;
   showLogo: boolean;
 }
+
+export interface DesignerFontOption {
+  label: string;
+  value: string;
+}
 export interface Position {
   x: number;
   y: number;
@@ -265,6 +270,7 @@ export interface DesignerState {
   crudScopeId?: string;
   testData: Record<string, any>;
   variables: Record<string, any>;
+  fontOptions: DesignerFontOption[];
   branding: BrandingSettings;
   editingCustomElementId?: string | null;
   customElementEditSnapshot?: CustomElementEditSnapshot | null;

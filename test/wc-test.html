@@ -239,6 +239,35 @@
           </div>
         </div>
 
+        <div class="test-btn-group">
+          <h4 class="test-btn-group-title">自定义字体 API 测试</h4>
+          <div class="test-btn-grid">
+            <button id="btn-font-set-yahei" title="API: setDesignerFont()">应用微软雅黑（不持久化）<span class="test-btn-api">setDesignerFont(..., { persist: false })</span></button>
+            <button id="btn-font-set-mono" title="API: setDesignerFont()">应用等宽字体（不持久化）<span class="test-btn-api">setDesignerFont(..., { persist: false })</span></button>
+            <button id="btn-font-reset" title="API: setDesignerFont()">恢复默认字体<span class="test-btn-api">setDesignerFont('', { persist: true })</span></button>
+            <button id="btn-font-show-storage" title="API: localStorage">查看当前字体存储<span class="test-btn-api">print-designer-font-family</span></button>
+          </div>
+          <div style="margin-top: 10px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
+            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">字体族字符串 (fontFamily)：</label>
+            <input id="txt-custom-font-family" type="text" value='"Noto Sans SC", "Microsoft YaHei", sans-serif' style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 12px;" />
+            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">可选字体 CSS 地址（需包含 @font-face）：</label>
+            <input id="txt-custom-font-css-url" type="text" value="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 12px;" />
+            <button id="btn-font-load-and-apply" title="API: setDesignerFont()" style="width: 100%; background: #fff7e6; border-color: #ffd591; color: #d46b08;">加载自定义字体并应用（持久化）<span class="test-btn-api" style="color: #faad14; margin-top: 2px;">setDesignerFont(fontFamily, { persist: true })</span></button>
+          </div>
+          <div style="margin-top: 10px; background: #f6ffed; padding: 10px; border-radius: 4px; border: 1px solid #d9f7be;">
+            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">字体选项 JSON (setFontOptions)：</label>
+            <textarea id="txt-font-options-json" rows="5" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 12px; font-family: monospace;">[
+  { "label": "默认", "value": "" },
+  { "label": "微软雅黑", "value": "\"Microsoft YaHei\", \"PingFang SC\", sans-serif" },
+  { "label": "等宽字体", "value": "\"Courier New\", Consolas, monospace" }
+]</textarea>
+            <div class="test-btn-grid">
+              <button id="btn-font-options-apply" title="API: setFontOptions()" style="background: #f6ffed; border-color: #95de64; color: #389e0d;">应用字体下拉选项<span class="test-btn-api" style="color: #73d13d; margin-top: 2px;">setFontOptions(options)</span></button>
+              <button id="btn-font-options-reset" title="API: setFontOptions()" style="background: #fff1f0; border-color: #ffa39e; color: #cf1322;">恢复内置字体下拉<span class="test-btn-api" style="color: #ff7875; margin-top: 2px;">setFontOptions([])</span></button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -256,6 +285,38 @@
     // 并且如果是生产模式，别忘了引入 css 文件（在 head 中加入 <link rel="stylesheet" href="../dist/print-designer.css">）
 
     const designer = document.querySelector('print-designer');
+    const designerFontStorageKey = 'print-designer-font-family';
+
+    const ensureFontStylesheet = (url) => {
+      const normalized = (url || '').trim();
+      if (!normalized) return Promise.resolve(false);
+
+      const existing = Array.from(document.querySelectorAll('link[data-wc-test-font-url]')).find(
+        (link) => link.dataset.wcTestFontUrl === normalized
+      );
+      if (existing) return Promise.resolve(true);
+
+      return new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = normalized;
+        link.dataset.wcTestFontUrl = normalized;
+        link.onload = () => resolve(true);
+        link.onerror = () => reject(new Error(`字体 CSS 加载失败: ${normalized}`));
+        document.head.appendChild(link);
+      });
+    };
+
+    const getToolbarFontOptionLabels = () => {
+      const root = designer.shadowRoot;
+      if (!root) return [];
+      const targetSelect = Array.from(root.querySelectorAll('select')).find((select) => {
+        const title = (select.getAttribute('title') || '').trim();
+        return title === '字体' || title === 'Font Family';
+      });
+      if (!targetSelect) return [];
+      return Array.from(targetSelect.options).map((option) => (option.textContent || '').trim());
+    };
 
     const initDesigner = () => {
       console.log('Designer is ready!');
@@ -1145,6 +1206,86 @@
         console.error('注入变量数据失败:', err);
         alert('JSON 解析失败或注入失败: ' + err.message);
       }
+    });
+
+    document.getElementById('btn-font-set-yahei').addEventListener('click', () => {
+      designer.setDesignerFont('"Microsoft YaHei", "PingFang SC", sans-serif', { persist: false });
+      alert('已应用微软雅黑（不持久化）。刷新页面后会恢复为 localStorage 中的字体或默认字体。');
+    });
+
+    document.getElementById('btn-font-set-mono').addEventListener('click', () => {
+      designer.setDesignerFont('"Courier New", Consolas, monospace', { persist: false });
+      alert('已应用等宽字体（不持久化）。');
+    });
+
+    document.getElementById('btn-font-reset').addEventListener('click', () => {
+      designer.setDesignerFont('', { persist: true });
+      alert('已恢复默认字体继承，并清除本地存储中的设计器字体。');
+    });
+
+    document.getElementById('btn-font-show-storage').addEventListener('click', () => {
+      const stored = localStorage.getItem(designerFontStorageKey);
+      alert(stored ? `当前存储字体: ${stored}` : '当前没有存储字体（将使用默认继承字体）。');
+    });
+
+    document.getElementById('btn-font-load-and-apply').addEventListener('click', async () => {
+      try {
+        const fontFamily = (document.getElementById('txt-custom-font-family').value || '').trim();
+        const fontCssUrl = (document.getElementById('txt-custom-font-css-url').value || '').trim();
+
+        if (!fontFamily) {
+          alert('请先输入字体族字符串（fontFamily）。');
+          return;
+        }
+
+        if (fontCssUrl) {
+          await ensureFontStylesheet(fontCssUrl);
+        }
+
+        designer.setDesignerFont(fontFamily, { persist: true });
+        alert([
+          '已应用自定义字体并持久化。',
+          `fontFamily: ${fontFamily}`,
+          fontCssUrl ? `字体 CSS: ${fontCssUrl}` : '字体 CSS: 未提供（依赖系统已安装字体）'
+        ].join('\n'));
+      } catch (err) {
+        console.error('自定义字体测试失败:', err);
+        alert('自定义字体测试失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-font-options-apply').addEventListener('click', () => {
+      try {
+        const jsonStr = (document.getElementById('txt-font-options-json').value || '').trim();
+        const options = JSON.parse(jsonStr);
+        if (!Array.isArray(options)) {
+          throw new Error('请传入数组格式，例如 [{"label":"默认","value":""}]');
+        }
+
+        designer.setFontOptions(options);
+
+        const labels = getToolbarFontOptionLabels();
+        alert([
+          '已调用 setFontOptions(options)。',
+          labels.length
+            ? `当前工具栏字体选项: ${labels.join(' / ')}`
+            : '未读取到工具栏字体下拉，请确认设计器已初始化完成。'
+        ].join('\n'));
+      } catch (err) {
+        console.error('setFontOptions 测试失败:', err);
+        alert('setFontOptions 测试失败: ' + err.message);
+      }
+    });
+
+    document.getElementById('btn-font-options-reset').addEventListener('click', () => {
+      designer.setFontOptions([]);
+      const labels = getToolbarFontOptionLabels();
+      alert([
+        '已恢复内置字体下拉（setFontOptions([])）。',
+        labels.length
+          ? `当前工具栏字体选项: ${labels.join(' / ')}`
+          : '未读取到工具栏字体下拉，请确认设计器已初始化完成。'
+      ].join('\n'));
     });
 
     // 浮动按钮与 Modal 的交互及拖拽逻辑

@@ -11,6 +11,7 @@ import {
   type WatermarkSettings,
   type CustomElementEditSnapshot,
   type BrandingSettings,
+  type DesignerFontOption,
   type ListContextMenuConfig,
   type ListContextMenuItem,
   type TemplateModalFormConfig,
@@ -208,6 +209,27 @@ const inferVariableFromContent = (content: string): string | null => {
   return `@${key}`;
 };
 
+const normalizeDesignerFontOptions = (
+  options: DesignerFontOption[] | null | undefined,
+): DesignerFontOption[] => {
+  if (!Array.isArray(options)) return [];
+
+  const seen = new Set<string>();
+  const normalized: DesignerFontOption[] = [];
+
+  options.forEach((option) => {
+    if (!option || typeof option.value !== "string") return;
+    const value = option.value.trim();
+    const rawLabel = typeof option.label === "string" ? option.label.trim() : "";
+    const label = rawLabel || value || i18n.global.t("editor.fonts.default");
+    if (seen.has(value)) return;
+    seen.add(value);
+    normalized.push({ label, value });
+  });
+
+  return normalized;
+};
+
 export const useDesignerStore = defineStore("designer", {
   state: (): DesignerState => ({
     unit:
@@ -235,6 +257,7 @@ export const useDesignerStore = defineStore("designer", {
     crudScopeId: "__global__",
     testData: {},
     variables: {},
+    fontOptions: [] as DesignerFontOption[],
     availableVariables: [] as import("../types").VariableTreeItem[],
     showVariablesPanel: false,
     editingCustomElementId: null,
@@ -333,6 +356,9 @@ export const useDesignerStore = defineStore("designer", {
       if (update.showLogo !== undefined)
         next.showLogo = Boolean(update.showLogo);
       this.branding = next;
+    },
+    setFontOptions(options: DesignerFontOption[] = []) {
+      this.fontOptions = normalizeDesignerFontOptions(options);
     },
     setWatermark(update: Partial<WatermarkSettings>) {
       this.watermark = { ...(this.watermark || defaultWatermark), ...update };

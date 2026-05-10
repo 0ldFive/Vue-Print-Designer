@@ -257,7 +257,7 @@ const resetRotation = () => {
   store.updateSelectedElementsStyle({ rotate: 0 });
 };
 
-const fontOptions = computed(() => [
+const defaultFontOptions = computed(() => [
   { label: t('editor.fonts.default'), value: '' },
   { label: t('editor.fonts.arial'), value: 'Arial, sans-serif' },
   { label: t('editor.fonts.timesNewRoman'), value: '"Times New Roman", serif' },
@@ -265,6 +265,25 @@ const fontOptions = computed(() => [
   { label: t('editor.fonts.simSun'), value: 'SimSun, serif' },
   { label: t('editor.fonts.simHei'), value: 'SimHei, sans-serif' }
 ]);
+
+const fontOptions = computed(() => {
+  const customOptions = store.fontOptions || [];
+  if (!customOptions.length) {
+    return defaultFontOptions.value;
+  }
+
+  const normalizedCustom = customOptions.map((opt) => ({
+    label: (opt.label || opt.value || '').trim(),
+    value: opt.value
+  }));
+  const hasDefaultOption = normalizedCustom.some((opt) => opt.value === '');
+
+  if (hasDefaultOption) {
+    return normalizedCustom;
+  }
+
+  return [{ label: t('editor.fonts.default'), value: '' }, ...normalizedCustom];
+});
 
 const handleZoomIn = () => {
   const currentPercent = Math.round(store.zoom * 100);
