@@ -365,6 +365,21 @@ const cellStyle = computed(() => ({
   borderStyle: props.element.style.borderStyle || 'solid',
 }));
 
+const hasCustomRowHeight = computed(() => {
+  const rowHeight = props.element.style.rowHeight;
+  return typeof rowHeight === 'number' && Number.isFinite(rowHeight) && rowHeight > 0;
+});
+
+const hasCustomHeaderHeight = computed(() => {
+  const headerHeight = props.element.style.headerHeight;
+  return typeof headerHeight === 'number' && Number.isFinite(headerHeight) && headerHeight > 0;
+});
+
+const hasCustomFooterHeight = computed(() => {
+  const footerHeight = props.element.style.footerHeight;
+  return typeof footerHeight === 'number' && Number.isFinite(footerHeight) && footerHeight > 0;
+});
+
 const getPrintValue = (row: any, field: string) => {
   if (!row) return '';
   const val = row[field];
@@ -545,9 +560,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
       title: 'properties.section.layoutDimensions',
       tab: 'style',
       fields: [
-        { label: 'properties.label.headerHeight', type: 'number', target: 'style', key: 'headerHeight', min: 20, max: 200, step: 1 },
-        { label: 'properties.label.rowHeight', type: 'number', target: 'style', key: 'rowHeight', min: 20, max: 200, step: 1 },
-        { label: 'properties.label.footerHeight', type: 'number', target: 'style', key: 'footerHeight', min: 20, max: 200, step: 1 },
+        { label: 'properties.label.headerHeight', type: 'number', target: 'style', key: 'headerHeight', min: 1, max: 200, step: 1 },
+        { label: 'properties.label.rowHeight', type: 'number', target: 'style', key: 'rowHeight', min: 1, max: 200, step: 1 },
+        { label: 'properties.label.footerHeight', type: 'number', target: 'style', key: 'footerHeight', min: 1, max: 200, step: 1 },
       ]
     },
     {
@@ -641,7 +656,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             :style="{ 
                ...cellStyle, 
                width: `${tempColumnWidths[col.field] || col.width}px`, 
-               height: element.style.headerHeight ? `${element.style.headerHeight}px` : undefined,
+              height: hasCustomHeaderHeight ? `${element.style.headerHeight}px` : undefined,
+              paddingTop: hasCustomHeaderHeight ? '0px' : undefined,
+              paddingBottom: hasCustomHeaderHeight ? '0px' : undefined,
+              lineHeight: hasCustomHeaderHeight ? `${element.style.headerHeight}px` : undefined,
+              overflow: hasCustomHeaderHeight ? 'hidden' : undefined,
                backgroundColor: element.style.headerBackgroundColor || '#f3f4f6',
               color: element.style.headerColor || '#000000',
               fontSize: element.style.headerFontSize ? `${element.style.headerFontSize}px` : undefined,
@@ -673,7 +692,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                :style="{
                  ...cellStyle,
                  ...getCellStyle(row, col.field),
-                 height: element.style.rowHeight ? `${element.style.rowHeight}px` : undefined,
+                 height: hasCustomRowHeight ? `${element.style.rowHeight}px` : undefined,
+                 paddingTop: hasCustomRowHeight ? '0px' : undefined,
+                 paddingBottom: hasCustomRowHeight ? '0px' : undefined,
+                 lineHeight: hasCustomRowHeight ? `${element.style.rowHeight}px` : undefined,
+                 overflow: hasCustomRowHeight ? 'hidden' : undefined,
                  textAlign: element.style.textAlign || 'left',
                  fontSize: element.style.fontSize ? `${element.style.fontSize}px` : undefined
                }"
@@ -693,7 +716,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             class="p-1 text-center text-gray-500 select-none"
             :style="{
                ...cellStyle,
-               height: element.style.rowHeight ? `${element.style.rowHeight}px` : undefined
+               height: hasCustomRowHeight ? `${element.style.rowHeight}px` : undefined,
+               paddingTop: hasCustomRowHeight ? '0px' : undefined,
+               paddingBottom: hasCustomRowHeight ? '0px' : undefined,
+               lineHeight: hasCustomRowHeight ? `${element.style.rowHeight}px` : undefined,
+               overflow: hasCustomRowHeight ? 'hidden' : undefined
             }"
           >
             ...
@@ -717,7 +744,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 :style="{ 
                   ...cellStyle,
                   ...getCellStyle(row, col.field), 
-                  height: element.style.footerHeight ? `${element.style.footerHeight}px` : undefined,
+                  height: hasCustomFooterHeight ? `${element.style.footerHeight}px` : undefined,
+                  paddingTop: hasCustomFooterHeight ? '0px' : undefined,
+                  paddingBottom: hasCustomFooterHeight ? '0px' : undefined,
+                  lineHeight: hasCustomFooterHeight ? `${element.style.footerHeight}px` : undefined,
+                  overflow: hasCustomFooterHeight ? 'hidden' : undefined,
                   backgroundColor: element.style.footerBackgroundColor || '#f9fafb',
                  color: element.style.footerColor || '#000000',
                  fontSize: element.style.footerFontSize ? `${element.style.footerFontSize}px` : undefined,
