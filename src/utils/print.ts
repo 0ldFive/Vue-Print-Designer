@@ -650,7 +650,11 @@ export const usePrint = () => {
       return flowA.localeCompare(flowB, undefined, { numeric: true, sensitivity: 'base' });
     };
 
-    const syncElementsBelowTables = () => {
+    // flowOnly=true: during intermediate splits – only reposition flow elements so the
+    // main loop can find them on the correct page. Fixed elements (QR, images, etc.)
+    // are intentionally left in place until the current element's entire split chain
+    // terminates (flowOnly=false), guaranteeing strict serial Y-axis order.
+    const syncElementsBelowTables = (flowOnly = false) => {
       let workingPages = Array.from(container.children).filter(el => !['STYLE', 'LINK', 'SCRIPT'].includes(el.tagName)) as HTMLElement[];
       if (workingPages.length === 0) return;
 
@@ -663,6 +667,13 @@ export const usePrint = () => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper][data-flow-id]')) as HTMLElement[];
 
         wrappers.forEach(wrapper => {
+          // Only finalized flow wrappers can be used as anchor sources.
+          // Mid-chain wrappers (without data-flow-paginated) may report transient bottoms
+          // and would cause downstream elements to be positioned too early.
+          if (!wrapper.hasAttribute('data-flow-paginated')) {
+            return;
+          }
+
           const flowKind = getFlowKind(wrapper);
           const table = wrapper.querySelector('table');
           const autoHeightEl = resolveAutoHeightContentEl(wrapper);
@@ -700,44 +711,84 @@ export const usePrint = () => {
         list.sort((a, b) => a.originalBottom - b.originalBottom);
       });
 
-      for (let pageIndex = 0; pageIndex < workingPages.length; pageIndex++) {
-        const page = workingPages[pageIndex];
+      const wrappersByOrigin = new Map<number, HTMLElement[]>();
+      workingPages.forEach((page, pageIndex) => {
         const wrappers = Array.from(page.querySelectorAll('[data-print-wrapper]')) as HTMLElement[];
+        wrappers.forEach(wrapper => {
+          const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
+          const list = wrappersByOrigin.get(originPage) || [];
+          list.push(wrapper);
+          wrappersByOrigin.set(originPage, list);
+        });
+      });
+
+      wrappersByOrigin.forEach((wrappers, originPage) => {
         wrappers.sort(compareWrappersByOriginalTop);
 
+        let previousOriginalBottom: number | null = null;
+        let previousFinalGlobalBottom: number | null = null;
+
         wrappers.forEach(wrapper => {
-           // Split chunks share the original top metadata and must keep their own chunk layout,
-           // so we skip shifting them here. Non-chunk flow wrappers can still be shifted even
-           // after being paginated, otherwise downstream auto-height elements may get frozen.
-          if (wrapper.hasAttribute('data-flow-id')) {
-             if (wrapper.hasAttribute('data-is-split-chunk')) {
-                 return;
-             }
+          // Split chunks share the original top metadata and must keep their own chunk layout,
+          // so we skip shifting them here. Non-chunk flow wrappers can still be shifted even
+          // after being paginated, otherwise downstream auto-height elements may get frozen.
+          if (wrapper.hasAttribute('data-flow-id') && wrapper.hasAttribute('data-is-split-chunk')) {
+            return;
           }
           if (wrapper.getAttribute('data-repeat-per-page') === 'true') return;
 
-          const originPage = parseAttrNumber(wrapper, 'data-origin-page-index', pageIndex);
-          const tableEntries = tableEntriesByOrigin.get(originPage);
-          if (!tableEntries || tableEntries.length === 0) return;
+          // In flow-only mode (called during an intermediate split), skip fixed elements.
+          // Their final position will be computed once the split chain finishes (full mode).
+          if (flowOnly && !wrapper.hasAttribute('data-flow-id')) {
+            return;
+          }
 
+          const tableEntries = tableEntriesByOrigin.get(originPage);
           const originalTop = parseAttrNumber(wrapper, 'data-original-top', parseFloat(wrapper.style.top || '') || 0);
+          const originalHeight = parseAttrNumber(wrapper, 'data-original-height', wrapper.getBoundingClientRect().height);
+          const originalBottom = originalTop + originalHeight;
+
           const isHeader = copyHeader && originalTop < (headerHeight + marginTop);
           const isFooter = copyFooter && originalTop >= (pageHeight - footerHeight - marginBottom);
           if (isHeader || isFooter) return;
 
-          let selectedTable: { originalBottom: number; finalGlobalBottom: number } | null = null;
-          for (let i = 0; i < tableEntries.length; i++) {
-            const candidate = tableEntries[i];
-            if (candidate.originalBottom <= originalTop + 0.01) {
-              selectedTable = candidate;
-            } else {
-              break;
+          const currentTop = parseFloat(wrapper.style.top || '') || 0;
+          const currentParent = wrapper.parentElement as HTMLElement | null;
+          let currentPageIndex = currentParent ? workingPages.indexOf(currentParent) : originPage;
+          if (currentPageIndex < 0) {
+            currentPageIndex = originPage;
+          }
+
+          let targetGlobalTop = currentPageIndex * pageHeight + currentTop;
+
+          // Base anchor from finalized flow entries.
+          if (tableEntries && tableEntries.length > 0) {
+            let selectedTable: { originalBottom: number; finalGlobalBottom: number } | null = null;
+            for (let i = 0; i < tableEntries.length; i++) {
+              const candidate = tableEntries[i];
+              if (candidate.originalBottom <= originalTop + 0.01) {
+                selectedTable = candidate;
+              } else {
+                break;
+              }
+            }
+
+            if (selectedTable) {
+              const gapToTable = originalTop - selectedTable.originalBottom;
+              targetGlobalTop = selectedTable.finalGlobalBottom + gapToTable;
             }
           }
-          if (!selectedTable) return;
 
-          const gapToTable = originalTop - selectedTable.originalBottom;
-          const targetGlobalTop = selectedTable.finalGlobalBottom + gapToTable;
+          // Strict serial guard: keep original spacing to the previous element in Y-order
+          // so later elements (including flow text) cannot jump above fixed elements (e.g. QR).
+          if (previousOriginalBottom !== null && previousFinalGlobalBottom !== null) {
+            const serialGap = originalTop - previousOriginalBottom;
+            const serialGlobalTop = previousFinalGlobalBottom + serialGap;
+            if (serialGlobalTop > targetGlobalTop) {
+              targetGlobalTop = serialGlobalTop;
+            }
+          }
+
           let targetPageIndex = Math.floor(targetGlobalTop / pageHeight);
           if (targetPageIndex < 0) targetPageIndex = 0;
 
@@ -791,8 +842,17 @@ export const usePrint = () => {
           if (wrapper.hasAttribute('data-flow-id') && wrapper.hasAttribute('data-flow-paginated') && (didMovePage || didMoveTop)) {
             wrapper.removeAttribute('data-flow-paginated');
           }
+
+          const finalGlobalTop = targetPageIndex * pageHeight + targetTop;
+          const flowEntry = wrapper.hasAttribute('data-flow-id')
+            ? tableEntries?.find(item => Math.abs(item.originalBottom - originalBottom) < 0.5)
+            : null;
+          const finalGlobalBottom = flowEntry ? flowEntry.finalGlobalBottom : finalGlobalTop + wrapperHeight;
+
+          previousOriginalBottom = originalBottom;
+          previousFinalGlobalBottom = finalGlobalBottom;
         });
-      }
+      });
 
       // syncElementsBelowTables may append pages while shifting wrappers.
       // Keep the outer loop's pages reference up to date so moved flow elements
@@ -995,7 +1055,7 @@ export const usePrint = () => {
                    // It is not a real text split chunk, so keep it eligible for later reflow.
                    wrapper.removeAttribute('data-is-split-chunk');
                    wrapper.removeAttribute('data-flow-paginated');
-                   syncElementsBelowTables();
+                   syncElementsBelowTables(true);
                    return;
                   }
                 }
@@ -1033,7 +1093,7 @@ export const usePrint = () => {
                 newPage.appendChild(newWrapper);
                 wrapper.setAttribute('data-flow-paginated', 'true');
                 newWrapper.setAttribute('data-is-split-chunk', 'true');
-                syncElementsBelowTables();
+                syncElementsBelowTables(true);
                 return;
              }
 
@@ -1137,7 +1197,7 @@ export const usePrint = () => {
                  wrapper.setAttribute('data-flow-paginated', 'true');
                  newWrapper.setAttribute('data-is-split-chunk', 'true');
                  
-                 syncElementsBelowTables();
+                 syncElementsBelowTables(true);
              } else {
                  if (table) updatePageSums(table);
                  wrapper.setAttribute('data-flow-paginated', 'true');
