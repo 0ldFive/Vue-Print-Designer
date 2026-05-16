@@ -1028,7 +1028,6 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               }"
               :style="{
                 ...cellStyle,
-                ...getCellStyle(row, col.field),
                 height: hasCustomRowHeight
                   ? `${element.style.rowHeight}px`
                   : undefined,
@@ -1042,6 +1041,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 fontSize: element.style.fontSize
                   ? `${element.style.fontSize}px`
                   : undefined,
+                ...getCellStyle(row, col.field),
               }"
               :rowspan="getRowSpan(row, col.field)"
               :colspan="getColSpan(row, col.field)"
@@ -1096,7 +1096,6 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               }"
               :style="{
                 ...cellStyle,
-                ...getCellStyle(row, col.field),
                 height: hasCustomFooterHeight
                   ? `${element.style.footerHeight}px`
                   : undefined,
@@ -1117,6 +1116,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   store.selectedElementId === element.id
                     ? 'pointer'
                     : 'default',
+                ...getCellStyle(row, col.field),
               }"
               :rowspan="getRowSpan(row, col.field)"
               :colspan="getColSpan(row, col.field)"

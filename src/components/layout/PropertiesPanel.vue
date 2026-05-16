@@ -28,6 +28,9 @@ import ContentCopy from "~icons/material-symbols/content-copy";
 import Check from "~icons/material-symbols/check";
 import Save from "~icons/material-symbols/save";
 import Delete from "~icons/material-symbols/delete";
+import FormatAlignLeft from "~icons/material-symbols/format-align-left";
+import FormatAlignCenter from "~icons/material-symbols/format-align-center";
+import FormatAlignRight from "~icons/material-symbols/format-align-right";
 import InputModal from "@/components/common/InputModal.vue";
 
 const { t } = useI18n();
@@ -697,38 +700,6 @@ const handleFocusOut = (e: FocusEvent) => {
           </div>
         </div>
 
-        <!-- Table Cell Operations -->
-        <div
-          v-if="
-            activeTab === 'properties' &&
-            element.type === 'table' &&
-            store.tableSelection
-          "
-          class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800"
-        >
-          <h3
-            class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            {{ t("properties.section.cellOperations") }}
-          </h3>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              @click="store.mergeSelectedCells()"
-              :disabled="!canMergeCells || isEditingDisabled"
-              class="w-full py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-200 dark:disabled:border-gray-700"
-            >
-              {{ t("properties.action.mergeCells") }}
-            </button>
-            <button
-              @click="store.splitSelectedCells()"
-              :disabled="!canSplitCells || isEditingDisabled"
-              class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ t("properties.action.splitCells") }}
-            </button>
-          </div>
-        </div>
-
         <!-- Dynamic Sections -->
         <template v-for="(section, si) in visibleSections" :key="si">
           <div
@@ -864,11 +835,77 @@ const handleFocusOut = (e: FocusEvent) => {
               </template>
             </div>
           </div>
+
+          <!-- Table Cell Operations (below layout) -->
+          <div
+            v-if="
+              section.title === 'properties.section.layoutDimensions' &&
+              element.type === 'table' &&
+              store.tableSelection
+            "
+            class="space-y-3 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800"
+          >
+            <h3
+              class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              {{ t("properties.section.cellOperations") }}
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                @click="store.mergeSelectedCells()"
+                :disabled="!canMergeCells || isEditingDisabled"
+                class="w-full py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-200 dark:disabled:border-gray-700"
+              >
+                {{ t("properties.action.mergeCells") }}
+              </button>
+              <button
+                @click="store.splitSelectedCells()"
+                :disabled="!canSplitCells || isEditingDisabled"
+                class="w-full py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ t("properties.action.splitCells") }}
+              </button>
+            </div>
+            <div class="space-y-2">
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ t("properties.label.cellTextAlign") }}
+              </p>
+              <div class="flex gap-2">
+                <button
+                  @click="store.setSelectedCellsTextAlign('left')"
+                  :disabled="isEditingDisabled"
+                  class="flex-1 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                  :title="t('properties.align.left')"
+                >
+                  <FormatAlignLeft class="w-4 h-4" />
+                  <span>{{ t("properties.align.left") }}</span>
+                </button>
+                <button
+                  @click="store.setSelectedCellsTextAlign('center')"
+                  :disabled="isEditingDisabled"
+                  class="flex-1 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                  :title="t('properties.align.center')"
+                >
+                  <FormatAlignCenter class="w-4 h-4" />
+                  <span>{{ t("properties.align.center") }}</span>
+                </button>
+                <button
+                  @click="store.setSelectedCellsTextAlign('right')"
+                  :disabled="isEditingDisabled"
+                  class="flex-1 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                  :title="t('properties.align.right')"
+                >
+                  <FormatAlignRight class="w-4 h-4" />
+                  <span>{{ t("properties.align.right") }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </template>
 
         <!-- Style Tab: Generic Appearance -->
         <div
-          v-if="activeTab === 'style' && !isSelfStyled"
+          v-if="activeTab === 'style' && !isSelfStyled && element.type !== ElementType.TABLE"
           class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800"
         >
           <h3

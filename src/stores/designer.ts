@@ -943,6 +943,74 @@ export const useDesignerStore = defineStore("designer", {
 
       this.tableSelection = null;
     },
+    setSelectedCellsTextAlign(align: "left" | "center" | "right") {
+      if (!this.isTemplateEditable) return;
+      if (!this.tableSelection || this.tableSelection.cells.length === 0) return;
+
+      const { elementId, cells } = this.tableSelection;
+      const section = cells[0].section || "body";
+
+      let element: PrintElement | null = null;
+      let pageIndex = -1;
+      let elementIndex = -1;
+
+      for (let i = 0; i < this.pages.length; i++) {
+        const idx = this.pages[i].elements.findIndex((e) => e.id === elementId);
+        if (idx !== -1) {
+          element = this.pages[i].elements[idx];
+          pageIndex = i;
+          elementIndex = idx;
+          break;
+        }
+      }
+
+      if (!element) return;
+
+      const targetDataKey = section === "footer" ? "footerData" : "data";
+
+      this.snapshot();
+
+      const newData = cloneDeep(element[targetDataKey] || []);
+
+      const allSameAlign = cells.every((c) => {
+        const row = newData[c.rowIndex];
+        if (!row) return false;
+        const val = row[c.colField];
+        if (val && typeof val === "object" && val.style && val.style.textAlign === align) return true;
+        return false;
+      });
+
+      const newAlign = allSameAlign ? undefined : align;
+
+      cells.forEach((c) => {
+        if (!newData[c.rowIndex]) newData[c.rowIndex] = {};
+
+        const row = newData[c.rowIndex];
+        let val = row[c.colField];
+
+        if (typeof val !== "object" || val === null) {
+          val = { value: val !== undefined ? val : "" };
+        }
+
+        if (!val.style) val.style = {};
+
+        if (newAlign) {
+          val.style.textAlign = newAlign;
+        } else {
+          delete val.style.textAlign;
+          if (Object.keys(val.style).length === 0) {
+            delete val.style;
+          }
+        }
+
+        row[c.colField] = val;
+      });
+
+      this.pages[pageIndex].elements[elementIndex] = {
+        ...element,
+        [targetDataKey]: newData,
+      };
+    },
     setHeaderHeight(height: number) {
       if (!this.isTemplateEditable) return;
       this.headerHeight = height;

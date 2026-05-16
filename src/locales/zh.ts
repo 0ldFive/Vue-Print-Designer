@@ -289,6 +289,7 @@ export default {
       textColor: "文本颜色",
       editCell: "编辑单元格",
       editColumn: "编辑列",
+      cellTextAlign: "单元格对齐",
       headerText: "表头文本",
       fieldKey: "字段键",
       variableField: "变量字段",

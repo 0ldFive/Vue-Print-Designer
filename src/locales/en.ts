@@ -293,6 +293,7 @@ export default {
       textColor: "Text Color",
       editCell: "Edit Cell",
       editColumn: "Edit Column",
+      cellTextAlign: "Cell Alignment",
       headerText: "Header Text",
       fieldKey: "Field Key",
       variableField: "Variable Field",
