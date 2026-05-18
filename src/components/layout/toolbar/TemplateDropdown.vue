@@ -4,6 +4,8 @@ import {
   onMounted,
   onUnmounted,
   computed,
+  nextTick,
+  watch,
   inject,
   type Component,
 } from "vue";
@@ -47,6 +49,7 @@ const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
+const dropdownMenuStyle = ref<Record<string, string>>({});
 
 // Row Menu State
 const activeMenuId = ref<string | null>(null);
@@ -306,45 +309,63 @@ const getTemplateTagOverflow = (template: Template) => {
   return templateTagDisplayMap.value[template.id]?.overflow || 0;
 };
 
+const updateDropdownMenuPosition = () => {
+  if (!isOpen.value) return;
+  const trigger = containerRef.value;
+  if (!trigger) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const menuWidth = 260;
+  const viewportPadding = 8;
+  const left = Math.min(
+    Math.max(rect.left, viewportPadding),
+    window.innerWidth - menuWidth - viewportPadding,
+  );
+  const top = Math.max(rect.bottom + 8, viewportPadding);
+  const maxHeight = Math.max(window.innerHeight - top - viewportPadding, 180);
+
+  dropdownMenuStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`,
+    maxHeight: `${maxHeight}px`,
+  };
+};
+
+const handleDropdownViewportChange = () => {
+  updateDropdownMenuPosition();
+};
+
 onMounted(async () => {
   await store.loadTemplates();
   // Auto-select first template if available and none selected
   if (!store.currentTemplateId && store.templates.length > 0) {
     store.loadTemplate(store.templates[0].id);
   }
-  document.addEventListener("click", handleClickOutside);
   window.addEventListener("designer:new-template", handleCreate);
   window.addEventListener(
     "designer:save-as",
     handleSaveAsEvent as EventListener,
   );
+  window.addEventListener("resize", handleDropdownViewportChange);
+  window.addEventListener("scroll", handleDropdownViewportChange, true);
 });
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
   window.removeEventListener("designer:new-template", handleCreate);
   window.removeEventListener(
     "designer:save-as",
     handleSaveAsEvent as EventListener,
   );
+  window.removeEventListener("resize", handleDropdownViewportChange);
+  window.removeEventListener("scroll", handleDropdownViewportChange, true);
 });
 
-const handleClickOutside = (e: MouseEvent) => {
-  const path = e.composedPath();
-  const isInsideContainer =
-    containerRef.value && path.includes(containerRef.value);
-
-  // Find menu content within the same shadow root or document
-  const root =
-    (containerRef.value?.getRootNode() as Document | ShadowRoot) || document;
-  const menuContent = root.querySelector(".row-menu-content");
-  const isInsideMenuContent = menuContent && path.includes(menuContent);
-
-  if (!isInsideContainer && !isInsideMenuContent) {
-    isOpen.value = false;
-    activeMenuId.value = null;
-  }
-};
+watch(isOpen, (val) => {
+  if (!val) return;
+  nextTick(() => {
+    updateDropdownMenuPosition();
+  });
+});
 
 const currentTemplate = computed(() => {
   return store.templates.find((t) => t.id === store.currentTemplateId) || null;
@@ -791,79 +812,93 @@ const modalTitle = computed(() => {
       <ChevronDown class="w-4 h-4 flex-shrink-0" />
     </button>
 
-    <div
-      v-if="isOpen"
-      class="absolute top-full left-0 mt-2 w-[260px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[100] flex flex-col max-h-[500px]"
-    >
-      <div class="flex-1 overflow-y-auto py-1">
-        <div
-          v-if="store.templates.length === 0"
-          class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
-        >
-          {{ t("template.noTemplates") }}
-        </div>
+    <Teleport :to="modalContainer || 'body'">
+      <div
+        v-if="isOpen"
+        class="fixed inset-0 z-[1998] pointer-events-auto"
+        @click="
+          isOpen = false;
+          activeMenuId = null;
+        "
+      ></div>
 
-        <div
-          v-for="t in store.templates"
-          :key="t.id"
-          class="relative group border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-          @click="selectTemplate(t)"
-          @contextmenu.prevent="openRowMenuByContext($event, t.id)"
-          :title="t.name"
-        >
-          <div class="flex items-center gap-2 overflow-hidden flex-1">
-            <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
-              <div
-                class="w-1.5 h-1.5 rounded-full bg-blue-500"
-                v-if="store.currentTemplateId === t.id"
-              ></div>
-            </div>
-            <span
-              v-for="tag in getVisibleTemplateTags(t)"
-              :key="`${t.id}-${tag.label}-${tag.color || ''}`"
-              class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0"
-              :style="normalizeTagColor(tag.color)"
-            >
-              {{ tag.label }}
-            </span>
-            <span
-              v-if="getTemplateTagOverflow(t) > 0"
-              class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0 bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
-            >
-              +{{ getTemplateTagOverflow(t) }}
-            </span>
-            <span
-              class="text-sm text-gray-700 dark:text-gray-200 truncate"
-              :class="{
-                'font-medium text-blue-600 dark:text-blue-400':
-                  store.currentTemplateId === t.id,
-              }"
-              >{{ t.name }}</span
-            >
+      <div
+        v-if="isOpen"
+        class="fixed w-[260px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[1999] flex flex-col pointer-events-auto"
+        :style="dropdownMenuStyle"
+        @click.stop
+      >
+        <div class="flex-1 overflow-y-auto py-1">
+          <div
+            v-if="store.templates.length === 0"
+            class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
+          >
+            {{ t("template.noTemplates") }}
           </div>
 
-          <button
-            @click.stop="toggleRowMenu($event, t.id)"
-            class="row-menu-trigger p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
-            :class="{
-              'opacity-100 bg-gray-200 dark:bg-gray-600': activeMenuId === t.id,
-            }"
+          <div
+            v-for="t in store.templates"
+            :key="t.id"
+            class="relative group border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+            @click="selectTemplate(t)"
+            @contextmenu.prevent="openRowMenuByContext($event, t.id)"
+            :title="t.name"
           >
-            <MoreVert class="w-4 h-4" />
+            <div class="flex items-center gap-2 overflow-hidden flex-1">
+              <div class="w-2 h-2 flex items-center justify-center flex-shrink-0">
+                <div
+                  class="w-1.5 h-1.5 rounded-full bg-blue-500"
+                  v-if="store.currentTemplateId === t.id"
+                ></div>
+              </div>
+              <span
+                v-for="tag in getVisibleTemplateTags(t)"
+                :key="`${t.id}-${tag.label}-${tag.color || ''}`"
+                class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0"
+                :style="normalizeTagColor(tag.color)"
+              >
+                {{ tag.label }}
+              </span>
+              <span
+                v-if="getTemplateTagOverflow(t) > 0"
+                class="inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] leading-none flex-shrink-0 bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+              >
+                +{{ getTemplateTagOverflow(t) }}
+              </span>
+              <span
+                class="text-sm text-gray-700 dark:text-gray-200 truncate"
+                :class="{
+                  'font-medium text-blue-600 dark:text-blue-400':
+                    store.currentTemplateId === t.id,
+                }"
+                >{{ t.name }}</span
+              >
+            </div>
+
+            <button
+              @click.stop="toggleRowMenu($event, t.id)"
+              class="row-menu-trigger p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+              :class="{
+                'opacity-100 bg-gray-200 dark:bg-gray-600':
+                  activeMenuId === t.id,
+              }"
+            >
+              <MoreVert class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-100 dark:border-gray-700 p-1">
+          <button
+            @click="handleCreate"
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+          >
+            <Add class="w-4 h-4" />
+            {{ t("template.new") }}
           </button>
         </div>
       </div>
-
-      <div class="border-t border-gray-100 dark:border-gray-700 p-1">
-        <button
-          @click="handleCreate"
-          class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-        >
-          <Add class="w-4 h-4" />
-          {{ t("template.new") }}
-        </button>
-      </div>
-    </div>
+    </Teleport>
 
     <!-- Row Menu Portal -->
     <Teleport :to="modalContainer || 'body'">

@@ -769,6 +769,7 @@ onUnmounted(() => {
         v-model="selectedColor"
         :disabled="isFontControlsDisabled"
         default-color="#000000"
+        :teleport-to-body="true"
       >
         <template #trigger="{ color }">
           <button
@@ -791,6 +792,7 @@ onUnmounted(() => {
         :disabled="isFontControlsDisabled"
         :allow-transparent="true"
         default-color="transparent"
+        :teleport-to-body="true"
       >
         <template #trigger="{ color }">
           <button
