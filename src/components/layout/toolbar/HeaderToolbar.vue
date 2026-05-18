@@ -3,6 +3,7 @@ import {
   ref,
   computed,
   watch,
+  nextTick,
   onMounted,
   onUnmounted,
   inject,
@@ -43,6 +44,8 @@ import Group from "~icons/material-symbols/group-work";
 import Lock from "~icons/material-symbols/lock";
 import Unlock from "~icons/material-symbols/lock-open";
 import ChevronDown from "~icons/material-symbols/expand-more";
+import KeyboardArrowLeft from "~icons/material-symbols/keyboard-arrow-left";
+import KeyboardArrowRight from "~icons/material-symbols/keyboard-arrow-right";
 import { usePrint } from "@/utils/print";
 import {
   usePrintSettings,
@@ -74,6 +77,10 @@ const templateStore = useTemplateStore();
 
 const designerRoot = inject<Ref<HTMLElement | null>>(
   "designer-root",
+  ref(null),
+);
+const modalContainer = inject<Ref<HTMLElement | null>>(
+  "modal-container",
   ref(null),
 );
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
@@ -197,6 +204,84 @@ const activePrintOptions = computed<PrintOptions>(() => {
 
 const showZoomSettings = ref(false);
 const zoomPercent = ref(Math.round(store.zoom * 100));
+const zoomTriggerRef = ref<HTMLElement | null>(null);
+const zoomSettingsMenuStyle = ref<Record<string, string>>({});
+const toolbarScrollRef = ref<HTMLElement | null>(null);
+const toolbarScrollContentRef = ref<HTMLElement | null>(null);
+const isToolbarOverflowing = ref(false);
+const canScrollToolbarLeft = ref(false);
+const canScrollToolbarRight = ref(false);
+let toolbarResizeObserver: ResizeObserver | null = null;
+let hasToolbarManualScroll = false;
+let suppressToolbarScrollEvent = false;
+
+const updateToolbarScrollState = (autoAlignRight = false) => {
+  const container = toolbarScrollRef.value;
+  if (!container) {
+    isToolbarOverflowing.value = false;
+    canScrollToolbarLeft.value = false;
+    canScrollToolbarRight.value = false;
+    return;
+  }
+
+  const maxScrollLeft = Math.max(container.scrollWidth - container.clientWidth, 0);
+  if (autoAlignRight && maxScrollLeft > 4) {
+    suppressToolbarScrollEvent = true;
+    container.scrollLeft = maxScrollLeft;
+    requestAnimationFrame(() => {
+      suppressToolbarScrollEvent = false;
+    });
+  }
+
+  isToolbarOverflowing.value = maxScrollLeft > 4;
+  canScrollToolbarLeft.value = container.scrollLeft > 2;
+  canScrollToolbarRight.value = container.scrollLeft < maxScrollLeft - 2;
+};
+
+const scrollToolbar = (direction: "backward" | "forward") => {
+  const container = toolbarScrollRef.value;
+  if (!container) return;
+
+  hasToolbarManualScroll = true;
+
+  const offset = Math.max(Math.round(container.clientWidth * 0.6), 240);
+  const delta = direction === "backward" ? -offset : offset;
+  container.scrollBy({ left: delta, behavior: "smooth" });
+};
+
+const handleToolbarScroll = () => {
+  if (suppressToolbarScrollEvent) return;
+  hasToolbarManualScroll = true;
+  updateToolbarScrollState();
+};
+
+const handleToolbarResize = () => {
+  updateToolbarScrollState(!hasToolbarManualScroll);
+};
+
+const updateZoomSettingsMenuPosition = () => {
+  if (!showZoomSettings.value) return;
+  const trigger = zoomTriggerRef.value;
+  if (!trigger) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const menuWidth = 256;
+  const viewportPadding = 8;
+  const left = Math.min(
+    Math.max(rect.left, viewportPadding),
+    window.innerWidth - menuWidth - viewportPadding,
+  );
+  const top = Math.max(rect.bottom + 8, viewportPadding);
+
+  zoomSettingsMenuStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`,
+  };
+};
+
+const handleZoomSettingsViewportChange = () => {
+  updateZoomSettingsMenuPosition();
+};
 
 // Font State
 const selectedFont = computed({
@@ -357,6 +442,22 @@ watch(
   },
 );
 
+watch(
+  () => store.selectedElementIds.length,
+  () => {
+    nextTick(() => {
+      updateToolbarScrollState(!hasToolbarManualScroll);
+    });
+  },
+);
+
+watch(showZoomSettings, (val) => {
+  if (!val) return;
+  nextTick(() => {
+    updateZoomSettingsMenuPosition();
+  });
+});
+
 const handleZoomSlider = () => {
   const clamped = Math.max(20, Math.min(500, zoomPercent.value));
   zoomPercent.value = clamped;
@@ -497,6 +598,23 @@ onMounted(() => {
   window.addEventListener("designer:export-pdf", handleExportEvent);
   window.addEventListener("designer:view-json", handleViewJsonEvent);
   window.addEventListener("designer:view-blob", handleViewImageBlobEvent);
+  window.addEventListener("resize", handleToolbarResize);
+  window.addEventListener("resize", handleZoomSettingsViewportChange);
+  window.addEventListener("scroll", handleZoomSettingsViewportChange, true);
+
+  nextTick(() => {
+    updateToolbarScrollState(true);
+    toolbarResizeObserver = new ResizeObserver(() => {
+      updateToolbarScrollState(!hasToolbarManualScroll);
+    });
+
+    if (toolbarScrollRef.value) {
+      toolbarResizeObserver.observe(toolbarScrollRef.value);
+    }
+    if (toolbarScrollContentRef.value) {
+      toolbarResizeObserver.observe(toolbarScrollContentRef.value);
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -506,12 +624,44 @@ onUnmounted(() => {
   window.removeEventListener("designer:export-pdf", handleExportEvent);
   window.removeEventListener("designer:view-json", handleViewJsonEvent);
   window.removeEventListener("designer:view-blob", handleViewImageBlobEvent);
+  window.removeEventListener("resize", handleToolbarResize);
+  window.removeEventListener("resize", handleZoomSettingsViewportChange);
+  window.removeEventListener("scroll", handleZoomSettingsViewportChange, true);
+
+  if (toolbarResizeObserver) {
+    toolbarResizeObserver.disconnect();
+    toolbarResizeObserver = null;
+  }
 });
 </script>
 
 <template>
-  <div class="flex items-center gap-4 text-gray-700 dark:text-gray-200">
-    <TemplateDropdown />
+  <div
+    class="flex min-w-0 flex-1 items-center justify-end gap-2 text-gray-700 dark:text-gray-200"
+  >
+    <button
+      v-if="isToolbarOverflowing"
+      type="button"
+      class="shrink-0 flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+      :disabled="!canScrollToolbarLeft"
+      :title="t('editor.toolbarScrollPrev')"
+      :aria-label="t('editor.toolbarScrollPrev')"
+      @click="scrollToolbar('backward')"
+    >
+      <KeyboardArrowLeft class="h-5 w-5" />
+    </button>
+
+    <div
+      ref="toolbarScrollRef"
+      class="no-scrollbar min-w-0 flex-1 overflow-x-auto"
+      @scroll="handleToolbarScroll"
+    >
+      <div
+        ref="toolbarScrollContentRef"
+        class="flex w-max min-w-max items-center gap-2 pr-1"
+        :class="{ 'ml-auto': !isToolbarOverflowing }"
+      >
+        <TemplateDropdown />
 
     <!-- Font Controls -->
     <div
@@ -845,7 +995,7 @@ onUnmounted(() => {
     <PaperSettings />
 
     <!-- Zoom Settings -->
-    <div class="relative">
+    <div class="relative" ref="zoomTriggerRef">
       <div
         class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
       >
@@ -871,10 +1021,20 @@ onUnmounted(() => {
           <ZoomIn class="w-4 h-4" />
         </button>
       </div>
+    </div>
+
+    <Teleport :to="modalContainer || 'body'">
+      <div
+        v-if="showZoomSettings"
+        class="fixed inset-0 z-[1999] pointer-events-auto"
+        @click="showZoomSettings = false"
+      ></div>
 
       <div
         v-if="showZoomSettings"
-        class="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-4 z-[1000]"
+        class="fixed w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-4 z-[2000] pointer-events-auto"
+        :style="zoomSettingsMenuStyle"
+        @click.stop
       >
         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
           {{ t("editor.zoomLevel") }}
@@ -900,20 +1060,29 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+      </div>
+    </Teleport>
 
-        <div
-          class="fixed inset-0 z-[-1]"
-          @click="showZoomSettings = false"
-        ></div>
+        <!-- Help moved to dropdown -->
       </div>
     </div>
 
-    <!-- Help moved to dropdown -->
+    <button
+      v-if="isToolbarOverflowing"
+      type="button"
+      class="shrink-0 flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+      :disabled="!canScrollToolbarRight"
+      :title="t('editor.toolbarScrollNext')"
+      :aria-label="t('editor.toolbarScrollNext')"
+      @click="scrollToolbar('forward')"
+    >
+      <KeyboardArrowRight class="h-5 w-5" />
+    </button>
 
-    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
+    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 shrink-0"></div>
 
     <!-- Save / Export Dropdown -->
-    <div class="relative">
+    <div class="relative shrink-0">
       <div class="flex items-center shadow-sm">
         <button
           @click="handleSave"

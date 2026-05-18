@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, inject } from "vue";
+import { ref, watch, computed, inject, nextTick, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDesignerStore } from "@/stores/designer";
 import { PAPER_SIZES, type PaperSizeKey } from "@/constants/paper";
@@ -19,7 +19,29 @@ const customWidth = ref(PAPER_SIZES.A4.width);
 const customHeight = ref(PAPER_SIZES.A4.height);
 const showPaperSettings = ref(false);
 const showAdvancedSettings = ref(false);
+const paperSettingsTriggerRef = ref<HTMLElement | null>(null);
+const paperSettingsMenuStyle = ref<Record<string, string>>({});
 const isPageSettingsReadOnly = computed(() => !store.isTemplateEditable);
+
+const updatePaperSettingsMenuPosition = () => {
+  if (!showPaperSettings.value) return;
+  const trigger = paperSettingsTriggerRef.value;
+  if (!trigger) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const menuWidth = 256;
+  const viewportPadding = 8;
+  const left = Math.min(
+    Math.max(rect.left, viewportPadding),
+    window.innerWidth - menuWidth - viewportPadding,
+  );
+  const top = Math.max(rect.bottom + 8, viewportPadding);
+
+  paperSettingsMenuStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`,
+  };
+};
 
 const canvasBackground = computed({
   get: () => store.canvasBackground,
@@ -149,16 +171,33 @@ watch(showAdvancedSettings, (val) => {
   store.setDisableGlobalShortcuts(val);
 });
 
+watch(showPaperSettings, (val) => {
+  if (!val) return;
+  nextTick(() => {
+    updatePaperSettingsMenuPosition();
+  });
+});
+
 watch(isPageSettingsReadOnly, (readOnly) => {
   if (readOnly) {
     showPaperSettings.value = false;
     showAdvancedSettings.value = false;
   }
 });
+
+onMounted(() => {
+  window.addEventListener("resize", updatePaperSettingsMenuPosition);
+  window.addEventListener("scroll", updatePaperSettingsMenuPosition, true);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updatePaperSettingsMenuPosition);
+  window.removeEventListener("scroll", updatePaperSettingsMenuPosition, true);
+});
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative" ref="paperSettingsTriggerRef">
     <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
       <button
         @click="togglePaperSettings"
@@ -188,10 +227,19 @@ watch(isPageSettingsReadOnly, (readOnly) => {
       </button>
     </div>
 
-    <div
-      v-if="showPaperSettings"
-      class="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-4 z-[1000]"
-    >
+    <Teleport :to="modalContainer || 'body'">
+      <div
+        v-if="showPaperSettings"
+        class="fixed inset-0 z-[1999] pointer-events-auto"
+        @click="showPaperSettings = false"
+      ></div>
+
+      <div
+        v-if="showPaperSettings"
+        class="fixed w-64 max-h-[calc(100vh-24px)] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-lg p-4 z-[2000] pointer-events-auto"
+        :style="paperSettingsMenuStyle"
+        @click.stop
+      >
       <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
         {{ t("editor.paperSettings") }}
       </h3>
@@ -602,11 +650,8 @@ watch(isPageSettingsReadOnly, (readOnly) => {
         </button>
       </div>
 
-      <div
-        class="fixed inset-0 z-[-1]"
-        @click="showPaperSettings = false"
-      ></div>
-    </div>
+      </div>
+    </Teleport>
 
     <Teleport :to="modalContainer || 'body'">
       <div

@@ -53,6 +53,8 @@ export default {
     zoomOut: "缩小",
     zoomLevel: "缩放级别",
     zoomSettings: "缩放设置",
+    toolbarScrollPrev: "向左滚动工具栏",
+    toolbarScrollNext: "向右滚动工具栏",
     unit: "单位",
     advancedSettings: "高级设置",
     watermark: "水印",

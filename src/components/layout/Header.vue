@@ -18,21 +18,25 @@ const titleText = computed(() => store.branding?.title || t("common.appTitle"));
 
 <template>
   <header
-    class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-[2000] relative shadow-sm"
+    class="h-14 bg-white border-b border-gray-200 flex items-center justify-between gap-3 px-4 z-[2000] relative shadow-sm min-w-0"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex shrink-0 items-center gap-2">
       <img
         v-if="showLogo"
         :src="logoSrc"
         alt="Logo"
         class="w-8 h-8 object-contain"
       />
-      <h1 v-if="showTitle" class="font-semibold text-gray-700">
+      <h1
+        v-if="showTitle"
+        class="hidden md:block max-w-[180px] truncate font-semibold text-gray-700"
+      >
         {{ titleText }}
       </h1>
     </div>
 
     <HeaderToolbar
+      class="flex-1 min-w-0"
       @toggle-help="store.setShowHelp(true)"
       @toggle-settings="store.setShowSettings(true)"
     />

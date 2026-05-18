@@ -54,6 +54,8 @@ export default {
     zoomOut: "Zoom Out",
     zoomLevel: "Zoom Level",
     zoomSettings: "Zoom Settings",
+    toolbarScrollPrev: "Scroll Toolbar Left",
+    toolbarScrollNext: "Scroll Toolbar Right",
     unit: "Unit",
     advancedSettings: "Advanced Settings",
     watermark: "Watermark",
