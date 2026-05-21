@@ -24,6 +24,8 @@ const PANEL_MAX_WIDTH = 520;
 const PANEL_MIN_HEIGHT = 200;
 const PANEL_Z_BASE = 2000;
 const PANEL_Z_ACTIVE = 5200;
+const VARIABLE_DRAG_MIME = "application/x-print-designer-variable";
+const DATA_VARIABLE_DRAG_MIME = "application/x-print-designer-data-variable";
 const panelZIndex = computed(() =>
   isDragging.value || isResizing.value ? PANEL_Z_ACTIVE : PANEL_Z_BASE,
 );
@@ -179,23 +181,29 @@ const handleResizeEnd = () => {
 // Handle dragging variables to canvas
 const handleVarDragStart = (event: DragEvent, item: any) => {
   if (event.dataTransfer) {
+    const variableId = String(item?.id || "");
+
     if (item.isArray) {
       event.dataTransfer.setData(
         "application/json",
         JSON.stringify({
           type: ElementType.TABLE,
-          dataVariable: item.id,
+          dataVariable: variableId,
         }),
       );
+      event.dataTransfer.setData(DATA_VARIABLE_DRAG_MIME, variableId);
     } else {
       event.dataTransfer.setData(
         "application/json",
         JSON.stringify({
           type: ElementType.TEXT,
-          variable: item.id,
+          variable: variableId,
         }),
       );
+      event.dataTransfer.setData(VARIABLE_DRAG_MIME, variableId);
     }
+
+    event.dataTransfer.setData("text/plain", variableId);
     event.dataTransfer.effectAllowed = "copy";
   }
 };

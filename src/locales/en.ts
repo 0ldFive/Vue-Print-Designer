@@ -162,6 +162,8 @@ export default {
     newText: "New Text",
     headerLabel: "Header",
     footerLabel: "Footer",
+    tableVariableModalTitle: "Select Table Variable Field",
+    tableVariableTargetLabel: "Apply to",
     defaultTableHeaders: {
       id: "ID",
       name: "Name",

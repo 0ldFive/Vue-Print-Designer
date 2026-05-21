@@ -650,7 +650,10 @@ const scrollX = ref(0);
 const scrollY = ref(0);
 const offsetX = ref(0);
 const offsetY = ref(0);
+const contentOffsetX = ref(0);
+const contentOffsetY = ref(0);
 const RULER_SIZE = 20;
+const PROJECTION_LINE_OVERDRAW = 32;
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement;
@@ -714,20 +717,26 @@ const updateOffset = () => {
       scrollHeight.value = containerClientHeight;
     }
 
+    scrollX.value = scrollContainer.value.scrollLeft;
+    scrollY.value = scrollContainer.value.scrollTop;
+
+    // Ruler offset: keep the 0 mark aligned with the canvas origin.
+    offsetX.value = canvasWrapper.value.offsetLeft;
+    offsetY.value = canvasWrapper.value.offsetTop;
+
+    // Overlay offset: derived from visual rects to stay aligned with scroll content,
+    // including scrollbar-gutter/layout differences.
     const containerRect = scrollContainer.value.getBoundingClientRect();
     const wrapperRect = canvasWrapper.value.getBoundingClientRect();
     const clientLeft = scrollContainer.value.clientLeft || 0;
     const clientTop = scrollContainer.value.clientTop || 0;
 
-    scrollX.value = scrollContainer.value.scrollLeft;
-    scrollY.value = scrollContainer.value.scrollTop;
-
-    offsetX.value =
+    contentOffsetX.value =
       wrapperRect.left -
       containerRect.left +
       scrollContainer.value.scrollLeft -
       clientLeft;
-    offsetY.value =
+    contentOffsetY.value =
       wrapperRect.top -
       containerRect.top +
       scrollContainer.value.scrollTop -
@@ -784,11 +793,11 @@ const updateGuidePosFromEvent = (e: MouseEvent) => {
   if (draggingGuideType.value === "horizontal") {
     // Relative to scrollContainer top
     const visualY = e.clientY - rect.top + scrollContainer.value.scrollTop;
-    draggingGuidePos.value = (visualY - offsetY.value) / zoom;
+    draggingGuidePos.value = (visualY - contentOffsetY.value) / zoom;
   } else {
     // Relative to scrollContainer left
     const visualX = e.clientX - rect.left + scrollContainer.value.scrollLeft;
-    draggingGuidePos.value = (visualX - offsetX.value) / zoom;
+    draggingGuidePos.value = (visualX - contentOffsetX.value) / zoom;
   }
 };
 
@@ -1136,13 +1145,16 @@ const rulerRanges = computed(() => {
                   <div
                     class="absolute w-full border-t border-blue-500 border-dashed"
                     :style="{
-                      top: `${offsetY + Math.round(dragProjection.minY * store.zoom)}px`,
-                      left: 0,
+                      top: `${contentOffsetY + dragProjection.minY * store.zoom}px`,
+                      left: `${scrollX - PROJECTION_LINE_OVERDRAW}px`,
+                      width: `${viewportWidth + PROJECTION_LINE_OVERDRAW * 2}px`,
                     }"
                   >
+                    <div class="absolute top-0 left-0 w-4 border-t border-blue-500"></div>
+                    <div class="absolute top-0 right-0 w-4 border-t border-blue-500"></div>
                     <div
                       class="absolute -top-6 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
-                      :style="{ left: `${scrollX + 10}px` }"
+                      :style="{ left: `${PROJECTION_LINE_OVERDRAW + 10}px` }"
                     >
                       {{ formatUnitValue(dragProjection.minY) }} {{ unitLabel }}
                     </div>
@@ -1151,23 +1163,27 @@ const rulerRanges = computed(() => {
                   <div
                     class="absolute w-full border-t border-dashed theme-border"
                     :style="{
-                      top: `${offsetY + Math.round(dragProjection.maxY * store.zoom)}px`,
-                      left: 0,
+                      top: `${contentOffsetY + dragProjection.maxY * store.zoom}px`,
+                      left: `${scrollX - PROJECTION_LINE_OVERDRAW}px`,
+                      width: `${viewportWidth + PROJECTION_LINE_OVERDRAW * 2}px`,
                     }"
                   >
+                    <div class="absolute top-0 left-0 w-4 border-t theme-border"></div>
+                    <div class="absolute top-0 right-0 w-4 border-t theme-border"></div>
                     <div
                       class="absolute -top-6 theme-bg text-white text-xs px-1.5 py-0.5 rounded shadow-sm"
-                      :style="{ left: `${scrollX + 10}px` }"
+                      :style="{ left: `${PROJECTION_LINE_OVERDRAW + 10}px` }"
                     >
                       {{ formatUnitValue(dragProjection.maxY) }} {{ unitLabel }}
                     </div>
                   </div>
                   <!-- Left Line -->
                   <div
-                    class="absolute h-full border-l border-dashed theme-border"
+                    class="absolute border-l border-dashed theme-border"
                     :style="{
-                      left: `${offsetX + Math.round(dragProjection.minX * store.zoom)}px`,
-                      top: 0,
+                      left: `${contentOffsetX + dragProjection.minX * store.zoom}px`,
+                      top: '-1px',
+                      height: `${scrollHeight + 2}px`,
                     }"
                   >
                     <div
@@ -1179,10 +1195,11 @@ const rulerRanges = computed(() => {
                   </div>
                   <!-- Right Line -->
                   <div
-                    class="absolute h-full border-l border-dashed theme-border"
+                    class="absolute border-l border-dashed theme-border"
                     :style="{
-                      left: `${offsetX + Math.round(dragProjection.maxX * store.zoom)}px`,
-                      top: 0,
+                      left: `${contentOffsetX + dragProjection.maxX * store.zoom}px`,
+                      top: '-1px',
+                      height: `${scrollHeight + 2}px`,
                     }"
                   >
                     <div
@@ -1200,7 +1217,7 @@ const rulerRanges = computed(() => {
                     v-if="guide.type === 'horizontal'"
                     class="absolute left-0 w-full h-3 -mt-1.5 cursor-row-resize pointer-events-auto group flex flex-col justify-center"
                     :style="{
-                      top: `${offsetY + guide.position * store.zoom}px`,
+                      top: `${contentOffsetY + guide.position * store.zoom}px`,
                     }"
                     @mousedown.stop="
                       (e) => {
@@ -1228,7 +1245,7 @@ const rulerRanges = computed(() => {
                     v-else
                     class="absolute top-0 h-full w-3 -ml-1.5 cursor-col-resize pointer-events-auto group flex flex-row justify-center"
                     :style="{
-                      left: `${offsetX + guide.position * store.zoom}px`,
+                      left: `${contentOffsetX + guide.position * store.zoom}px`,
                     }"
                     @mousedown.stop="
                       (e) => {
@@ -1266,11 +1283,11 @@ const rulerRanges = computed(() => {
                   :style="{
                     top:
                       draggingGuideType === 'horizontal'
-                        ? `${offsetY + draggingGuidePos * store.zoom}px`
+                        ? `${contentOffsetY + draggingGuidePos * store.zoom}px`
                         : undefined,
                     left:
                       draggingGuideType === 'vertical'
-                        ? `${offsetX + draggingGuidePos * store.zoom}px`
+                        ? `${contentOffsetX + draggingGuidePos * store.zoom}px`
                         : undefined,
                   }"
                 >
@@ -1294,25 +1311,25 @@ const rulerRanges = computed(() => {
                   <div
                     v-if="store.highlightedEdge === 'top'"
                     class="absolute left-0 w-full border-t theme-border"
-                    :style="{ top: `${offsetY}px` }"
+                    :style="{ top: `${contentOffsetY}px` }"
                   ></div>
                   <div
                     v-else-if="store.highlightedEdge === 'bottom'"
                     class="absolute left-0 w-full border-t theme-border"
                     :style="{
-                      top: `${offsetY + store.canvasSize.height * store.zoom}px`,
+                      top: `${contentOffsetY + store.canvasSize.height * store.zoom}px`,
                     }"
                   ></div>
                   <div
                     v-else-if="store.highlightedEdge === 'left'"
                     class="absolute top-0 h-full border-l theme-border"
-                    :style="{ left: `${offsetX}px` }"
+                    :style="{ left: `${contentOffsetX}px` }"
                   ></div>
                   <div
                     v-else-if="store.highlightedEdge === 'right'"
                     class="absolute top-0 h-full border-l theme-border"
                     :style="{
-                      left: `${offsetX + store.canvasSize.width * store.zoom}px`,
+                      left: `${contentOffsetX + store.canvasSize.width * store.zoom}px`,
                     }"
                   ></div>
                 </div>
@@ -1362,8 +1379,8 @@ const rulerRanges = computed(() => {
               :page-width="store.canvasSize.width"
               :page-height="store.canvasSize.height"
               :zoom="store.zoom"
-              :content-offset-x="offsetX"
-              :content-offset-y="offsetY"
+              :content-offset-x="contentOffsetX"
+              :content-offset-y="contentOffsetY"
               :canvas-background="store.canvasBackground"
               :show-header-line="store.showHeaderLine"
               :show-footer-line="store.showFooterLine"

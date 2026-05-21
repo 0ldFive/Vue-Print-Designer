@@ -14,6 +14,7 @@ const props = defineProps<{
   pageIndex: number;
   clipToPageBounds?: boolean;
   readOnly?: boolean;
+  forceHover?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -703,7 +704,7 @@ const handleResizeStart = (e: MouseEvent) => {
       v-if="!readOnly && !actualIsSelected"
       :class="[
         'absolute inset-0 box-border border pointer-events-none z-30 transition-opacity duration-75',
-        isHovered ? 'opacity-100' : 'opacity-0',
+        isHovered || forceHover ? 'opacity-100' : 'opacity-0',
       ]"
       style="border-color: var(--brand-300)"
     ></div>

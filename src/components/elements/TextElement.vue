@@ -35,6 +35,10 @@ const editingValue = ref("");
 const editorRef = ref<HTMLTextAreaElement | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
 const isReadOnlyWrapper = ref(false);
+const designerRoot = inject<Ref<HTMLElement | null>>(
+  "designer-root",
+  ref(null),
+);
 const modalContainer = inject<Ref<HTMLElement | null>>(
   "modal-container",
   ref(null),
@@ -111,7 +115,9 @@ const isToolbarDisabled = computed(() => {
   return !store.isTemplateEditable || props.element.locked;
 });
 
-const toolbarTeleportTarget = computed(() => modalContainer.value);
+const toolbarTeleportTarget = computed(
+  () => designerRoot.value || modalContainer.value,
+);
 
 const updateToolbarAnchorRect = () => {
   if (!showQuickToolbar.value || !rootRef.value) {
@@ -556,7 +562,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     >
       <div
         data-print-exclude="true"
-        class="z-[10010] pointer-events-auto"
+        class="z-[35] pointer-events-auto"
         :style="quickToolbarHostStyle"
         @mousedown.stop
         @click.stop

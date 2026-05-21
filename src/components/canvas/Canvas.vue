@@ -21,6 +21,7 @@ import QRCodeElement from "../elements/QRCodeElement.vue";
 import LineElement from "../elements/LineElement.vue";
 import RectElement from "../elements/RectElement.vue";
 import CircleElement from "../elements/CircleElement.vue";
+import InputModal from "../common/InputModal.vue";
 import AddIcon from "~icons/material-symbols/add";
 import DeleteIcon from "~icons/material-symbols/delete";
 import CopyIcon from "~icons/material-symbols/content-copy";
@@ -257,13 +258,271 @@ const toAtVariable = (raw: string) => {
   return normalized.startsWith("@") ? normalized : `@${normalized}`;
 };
 
+type DragPayload = {
+  type?: ElementType;
+  payload?: PrintElement;
+  variable?: string;
+  dataVariable?: string;
+};
+
+const VARIABLE_DRAG_MIME = "application/x-print-designer-variable";
+const DATA_VARIABLE_DRAG_MIME = "application/x-print-designer-data-variable";
+const DIRECT_VARIABLE_BINDING_TYPES = new Set<ElementType>([
+  ElementType.TEXT,
+  ElementType.IMAGE,
+  ElementType.BARCODE,
+  ElementType.QRCODE,
+]);
+
+type VariableDropTargetKind = "text" | "directVariable" | "table";
+type TableVariableBindingKey =
+  | "variable"
+  | "columnsVariable"
+  | "footerDataVariable"
+  | "customScriptVariable";
+
+const TABLE_VARIABLE_BINDING_KEYS: TableVariableBindingKey[] = [
+  "variable",
+  "columnsVariable",
+  "footerDataVariable",
+  "customScriptVariable",
+];
+
+const variableDropHover = ref<{
+  pageIndex: number;
+  elementId: string;
+} | null>(null);
+
+const showTableVariableTargetModal = ref(false);
+const pendingTableVariableDrop = ref<{
+  elementId: string;
+  atVariable: string;
+  suggestedTarget: TableVariableBindingKey;
+} | null>(null);
+
+const tableVariableTargetFields = computed(() => [
+  {
+    key: "target",
+    label: t("canvas.tableVariableTargetLabel"),
+    type: "select" as const,
+    required: true,
+    options: [
+      {
+        label: t("properties.label.dataVariable"),
+        value: "variable",
+      },
+      {
+        label: t("properties.label.columnsVariable"),
+        value: "columnsVariable",
+      },
+      {
+        label: t("properties.label.footerDataVariable"),
+        value: "footerDataVariable",
+      },
+      {
+        label: t("properties.label.customScriptVariable"),
+        value: "customScriptVariable",
+      },
+    ],
+  },
+]);
+
+const tableVariableTargetInitialValues = computed(() => ({
+  target: pendingTableVariableDrop.value?.suggestedTarget || "variable",
+}));
+
+const VARIABLE_TOKEN_RE = /@[A-Za-z0-9_.-]+/;
+
+const parseDragPayload = (event: DragEvent): DragPayload | null => {
+  const dataTransfer = event.dataTransfer;
+  if (!dataTransfer) return null;
+
+  const raw = dataTransfer.getData("application/json");
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as DragPayload;
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed;
+    } catch {
+      // Fallback for browsers where JSON payload is empty during dragover.
+    }
+  }
+
+  const types = Array.from(dataTransfer.types || []);
+  const hasVariableMime = types.includes(VARIABLE_DRAG_MIME);
+  const hasDataVariableMime = types.includes(DATA_VARIABLE_DRAG_MIME);
+
+  if (!hasVariableMime && !hasDataVariableMime) {
+    return null;
+  }
+
+  const plainValue = dataTransfer.getData("text/plain");
+  return {
+    variable: hasVariableMime
+      ? dataTransfer.getData(VARIABLE_DRAG_MIME) || plainValue
+      : undefined,
+    dataVariable: hasDataVariableMime
+      ? dataTransfer.getData(DATA_VARIABLE_DRAG_MIME) || plainValue
+      : undefined,
+  };
+};
+
+const isVariableDragPayload = (
+  payload: DragPayload | null,
+): payload is DragPayload => {
+  return Boolean(
+    payload &&
+      (payload.variable !== undefined || payload.dataVariable !== undefined),
+  );
+};
+
+const resolveVariableDropTarget = (
+  pageIndex: number,
+  x: number,
+  y: number,
+  payload: DragPayload,
+): { element: PrintElement; kind: VariableDropTargetKind } | null => {
+  const hasVariablePayload =
+    payload.variable !== undefined || payload.dataVariable !== undefined;
+  if (!hasVariablePayload) return null;
+
+  const page = store.pages[pageIndex];
+  if (!page) return null;
+
+  const renderableElements = getRenderableElements(page.elements);
+  for (let i = renderableElements.length - 1; i >= 0; i--) {
+    const element = renderableElements[i];
+    const isPointInside =
+      x >= element.x &&
+      x <= element.x + element.width &&
+      y >= element.y &&
+      y <= element.y + element.height;
+
+    if (!isPointInside) continue;
+
+    if (element.type === ElementType.TABLE) {
+      return { element, kind: "table" };
+    }
+
+    if (!DIRECT_VARIABLE_BINDING_TYPES.has(element.type)) continue;
+
+    if (element.type === ElementType.TEXT) {
+      return { element, kind: "text" };
+    }
+
+    return { element, kind: "directVariable" };
+  }
+
+  return null;
+};
+
+const clearVariableDropHover = () => {
+  variableDropHover.value = null;
+};
+
+onMounted(() => {
+  window.addEventListener("dragend", clearVariableDropHover);
+  window.addEventListener("drop", clearVariableDropHover);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("dragend", clearVariableDropHover);
+  window.removeEventListener("drop", clearVariableDropHover);
+});
+
+const isVariableDropHovered = (elementId: string, pageIndex: number) => {
+  const hover = variableDropHover.value;
+  return Boolean(
+    hover && hover.elementId === elementId && hover.pageIndex === pageIndex,
+  );
+};
+
+const getSuggestedTableVariableTarget = (
+  element: PrintElement,
+): TableVariableBindingKey => {
+  for (const key of TABLE_VARIABLE_BINDING_KEYS) {
+    const value = (element as any)[key];
+    if (!String(value || "").trim()) {
+      return key;
+    }
+  }
+  return "variable";
+};
+
+const openTableVariableTargetModal = (
+  element: PrintElement,
+  droppedVariable: string,
+) => {
+  const atVariable = toAtVariable(droppedVariable);
+  if (!atVariable) return;
+
+  pendingTableVariableDrop.value = {
+    elementId: element.id,
+    atVariable,
+    suggestedTarget: getSuggestedTableVariableTarget(element),
+  };
+  showTableVariableTargetModal.value = true;
+};
+
+const closeTableVariableTargetModal = () => {
+  showTableVariableTargetModal.value = false;
+  pendingTableVariableDrop.value = null;
+};
+
+const handleTableVariableTargetSave = (payload: Record<string, any>) => {
+  const pending = pendingTableVariableDrop.value;
+  if (!pending) {
+    closeTableVariableTargetModal();
+    return;
+  }
+
+  const target = String(payload?.target || "") as TableVariableBindingKey;
+  if (!TABLE_VARIABLE_BINDING_KEYS.includes(target)) {
+    closeTableVariableTargetModal();
+    return;
+  }
+
+  store.updateElement(
+    pending.elementId,
+    {
+      [target]: pending.atVariable,
+    } as Partial<PrintElement>,
+  );
+
+  closeTableVariableTargetModal();
+};
+
+const replaceDroppedVariableInContent = (
+  content: string | undefined,
+  currentVariable: string | undefined,
+  nextVariable: string,
+) => {
+  const baseContent = String(content || "");
+  if (!baseContent) return nextVariable;
+
+  const normalizedCurrentVariable = toAtVariable(currentVariable || "");
+  if (
+    normalizedCurrentVariable &&
+    baseContent.includes(normalizedCurrentVariable)
+  ) {
+    return baseContent.replace(normalizedCurrentVariable, nextVariable);
+  }
+
+  if (VARIABLE_TOKEN_RE.test(baseContent)) {
+    return baseContent.replace(VARIABLE_TOKEN_RE, nextVariable);
+  }
+
+  return `${baseContent}${nextVariable}`;
+};
+
 const handleDrop = (event: DragEvent, pageIndex: number) => {
   event.preventDefault();
+  clearVariableDropHover();
   if (!store.isTemplateEditable) return;
-  const data = event.dataTransfer?.getData("application/json");
-  if (!data) return;
+  const parsedPayload = parseDragPayload(event);
+  if (!parsedPayload) return;
 
-  const { type, payload, variable, dataVariable } = JSON.parse(data);
+  const { type, payload, variable, dataVariable } = parsedPayload;
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = (event.clientX - rect.left) / store.zoom;
   const y = (event.clientY - rect.top) / store.zoom;
@@ -283,37 +542,38 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
 
   // Handle dropping a variable directly to canvas
   if (variable || dataVariable) {
-    const page = store.pages[pageIndex];
-    if (page) {
-      // Iterate backwards to find the topmost element at drop position
-      for (let i = page.elements.length - 1; i >= 0; i--) {
-        const element = page.elements[i];
-        if (!element) continue;
+    const target = resolveVariableDropTarget(pageIndex, x, y, parsedPayload);
+    if (target) {
+      const droppedVariable = variable || dataVariable;
+      const atVariable = toAtVariable(droppedVariable || "");
+      if (!atVariable) return;
 
-        const isPointInside =
-          x >= element.x &&
-          x <= element.x + element.width &&
-          y >= element.y &&
-          y <= element.y + element.height;
+      if (target.kind === "text") {
+        const nextContent = replaceDroppedVariableInContent(
+          target.element.content,
+          target.element.variable,
+          atVariable,
+        );
+        store.updateElement(target.element.id, {
+          variable: atVariable,
+          content: nextContent,
+        });
+        return;
+      }
 
-        if (isPointInside) {
-          // Bind variable to this existing element if types match
-          if (variable && element.type === ElementType.TEXT) {
-            const atVariable = toAtVariable(variable);
-            store.updateElement(element.id, {
-              variable: atVariable,
-              content: atVariable,
-            });
-            return;
-          } else if (dataVariable && element.type === ElementType.TABLE) {
-            store.updateElement(element.id, {
-              variable: toAtVariable(dataVariable),
-            });
-            return;
-          }
-        }
+      if (target.kind === "directVariable") {
+        store.updateElement(target.element.id, {
+          variable: atVariable,
+        });
+        return;
+      }
+
+      if (target.kind === "table") {
+        openTableVariableTargetModal(target.element, atVariable);
+        return;
       }
     }
+
     // Do not create new elements if dropping a variable on empty space
     return;
   }
@@ -325,8 +585,47 @@ const handleDrop = (event: DragEvent, pageIndex: number) => {
   }
 };
 
-const handleDragOver = (event: DragEvent) => {
+const handleDragOver = (event: DragEvent, pageIndex: number) => {
   event.preventDefault();
+
+  const payload = parseDragPayload(event);
+  if (!isVariableDragPayload(payload)) {
+    if (variableDropHover.value?.pageIndex === pageIndex) {
+      clearVariableDropHover();
+    }
+    return;
+  }
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const x = (event.clientX - rect.left) / store.zoom;
+  const y = (event.clientY - rect.top) / store.zoom;
+
+  const target = resolveVariableDropTarget(pageIndex, x, y, payload);
+  if (target) {
+    variableDropHover.value = {
+      pageIndex,
+      elementId: target.element.id,
+    };
+  } else if (variableDropHover.value?.pageIndex === pageIndex) {
+    clearVariableDropHover();
+  }
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = target ? "copy" : "none";
+  }
+};
+
+const handlePageDragLeave = (event: DragEvent, pageIndex: number) => {
+  const currentTarget = event.currentTarget as HTMLElement | null;
+  const relatedTarget = event.relatedTarget as Node | null;
+
+  if (currentTarget && relatedTarget && currentTarget.contains(relatedTarget)) {
+    return;
+  }
+
+  if (variableDropHover.value?.pageIndex === pageIndex) {
+    clearVariableDropHover();
+  }
 };
 
 const handleBackgroundClick = (e: MouseEvent) => {
@@ -545,7 +844,8 @@ const getGlobalElements = () => {
           },
         ]"
         @drop="(e) => handleDrop(e, index)"
-        @dragover="handleDragOver"
+        @dragover="(e) => handleDragOver(e, index)"
+        @dragleave="(e) => handlePageDragLeave(e, index)"
         @mousedown="(e) => handlePageMouseDown(e, index)"
         @contextmenu="(e) => handleContextMenu(e, index)"
         @click.self="handleBackgroundClick"
@@ -678,6 +978,7 @@ const getGlobalElements = () => {
           :page-index="index"
           :clip-to-page-bounds="shouldClipElementToPage(index, element.id)"
           :read-only="!isTemplateEditable"
+          :force-hover="isVariableDropHovered(element.id, index)"
         >
           <component
             :is="getComponent(element.type)"
@@ -748,5 +1049,14 @@ const getGlobalElements = () => {
         </div>
       </div>
     </div>
+
+    <InputModal
+      :show="showTableVariableTargetModal"
+      :title="t('canvas.tableVariableModalTitle')"
+      :fields="tableVariableTargetFields"
+      :initial-values="tableVariableTargetInitialValues"
+      @close="closeTableVariableTargetModal"
+      @save="handleTableVariableTargetSave"
+    />
   </div>
 </template>

@@ -161,6 +161,8 @@ export default {
     newText: "新文本",
     headerLabel: "页眉",
     footerLabel: "页脚",
+    tableVariableModalTitle: "选择表格变量字段",
+    tableVariableTargetLabel: "应用到",
     defaultTableHeaders: {
       id: "ID",
       name: "名称",
