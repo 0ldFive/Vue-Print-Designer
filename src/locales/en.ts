@@ -14,6 +14,7 @@ export default {
     undo: "Undo",
     redo: "Redo",
     edit: "Edit",
+    search: "Search",
     loading: "Loading...",
     success: "Success",
     input: "Input",

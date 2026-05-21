@@ -14,6 +14,7 @@ export default {
     undo: "撤销",
     redo: "重做",
     edit: "编辑",
+    search: "搜索",
     loading: "加载中...",
     success: "成功",
     input: "输入",

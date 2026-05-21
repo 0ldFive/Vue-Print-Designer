@@ -48,6 +48,7 @@ const designerStore = useDesignerStore();
 const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
 const isOpen = ref(false);
+const searchQuery = ref("");
 const containerRef = ref<HTMLElement | null>(null);
 const dropdownMenuStyle = ref<Record<string, string>>({});
 
@@ -361,7 +362,10 @@ onUnmounted(() => {
 });
 
 watch(isOpen, (val) => {
-  if (!val) return;
+  if (!val) {
+    searchQuery.value = "";
+    return;
+  }
   nextTick(() => {
     updateDropdownMenuPosition();
   });
@@ -377,6 +381,14 @@ const currentTemplateName = computed(() => {
     : t("template.select");
 });
 
+const filteredTemplates = computed(() => {
+  if (!searchQuery.value) return store.templates;
+  const lowerQuery = searchQuery.value.toLowerCase();
+  return store.templates.filter((t) =>
+    t.name.toLowerCase().includes(lowerQuery)
+  );
+});
+
 const isEventForCurrentDesigner = (e: Event) => {
   const eventId = (e as CustomEvent)?.detail?.__designerInstanceId;
   if (!eventId || !designerInstanceId) return true;
@@ -385,7 +397,10 @@ const isEventForCurrentDesigner = (e: Event) => {
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
-  if (!isOpen.value) activeMenuId.value = null;
+  if (!isOpen.value) {
+    activeMenuId.value = null;
+    searchQuery.value = "";
+  }
 };
 
 const selectTemplate = (template: Template) => {
@@ -828,16 +843,26 @@ const modalTitle = computed(() => {
         :style="dropdownMenuStyle"
         @click.stop
       >
+        <div class="px-2 py-2 border-b border-gray-100 dark:border-gray-700">
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="t('common.search', 'Search...')"
+            class="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            @click.stop
+          />
+        </div>
+
         <div class="flex-1 overflow-y-auto py-1">
           <div
-            v-if="store.templates.length === 0"
+            v-if="filteredTemplates.length === 0"
             class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
           >
-            {{ t("template.noTemplates") }}
+            {{ store.templates.length === 0 ? t("template.noTemplates") : t("common.noData", "No results found") }}
           </div>
 
           <div
-            v-for="t in store.templates"
+            v-for="t in filteredTemplates"
             :key="t.id"
             class="relative group border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
             @click="selectTemplate(t)"
