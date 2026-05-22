@@ -403,7 +403,7 @@ const toggleDropdown = () => {
   }
 };
 
-const selectTemplate = (template: Template) => {
+const selectTemplate = async (template: Template) => {
   // Auto-save current template if it exists
   if (store.currentTemplateId) {
     const currentTemplate = store.templates.find(
@@ -414,8 +414,12 @@ const selectTemplate = (template: Template) => {
     }
   }
 
-  store.loadTemplate(template.id);
   isOpen.value = false;
+  await store.loadTemplate(template.id);
+
+  if (designerStore.autoOpenVariablesPanelOnTemplateSelect) {
+    designerStore.setShowVariablesPanel(true);
+  }
 };
 
 const positionMenuAt = (x: number, y: number, id: string) => {

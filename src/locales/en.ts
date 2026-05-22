@@ -491,6 +491,10 @@ export default {
     showMinimapDesc: "Show a draggable minimap floating panel in the canvas area.",
     showHistoryPanelDesc:
       "Show a draggable history floating panel in the canvas area.",
+    autoOpenVariablesPanelOnTemplateSelect:
+      "Auto Open Variables On Template Select",
+    autoOpenVariablesPanelOnTemplateSelectDesc:
+      "When enabled, switching templates automatically opens the Available Variables panel.",
     developerMode: "Developer Mode",
     developerModeDesc: "When off, hide Blob/JSON debug view entries.",
     printQuality: "Print Quality",

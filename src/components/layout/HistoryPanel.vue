@@ -17,6 +17,8 @@ const startPos = ref({ x: 0, y: 0 });
 const resizeStart = ref({ x: 0, y: 0, width: 300, height: 320 });
 const panelPos = ref({ x: -9999, y: -9999 });
 const panelSize = ref({ width: 300, height: 320 });
+const preferredPanelPos = ref({ x: -9999, y: -9999 });
+const preferredPanelSize = ref({ width: 300, height: 320 });
 
 const PANEL_MIN_WIDTH = 240;
 const PANEL_MAX_WIDTH = 520;
@@ -86,6 +88,7 @@ const handleDragMove = (e: MouseEvent) => {
   }
 
   panelPos.value = { x: newX, y: newY };
+  preferredPanelPos.value = { x: newX, y: newY };
 };
 
 const handleDragEnd = () => {
@@ -139,6 +142,10 @@ const handleResizeMove = (e: MouseEvent) => {
   }
 
   panelSize.value = {
+    width: nextWidth,
+    height: nextHeight,
+  };
+  preferredPanelSize.value = {
     width: nextWidth,
     height: nextHeight,
   };
@@ -211,30 +218,46 @@ const updatePosition = async () => {
       Math.min(PANEL_MAX_WIDTH, bounds.width),
     );
     const maxHeightByBounds = Math.max(PANEL_MIN_HEIGHT, bounds.height);
+    const normalizedPreferredWidth = Math.min(
+      Math.max(preferredPanelSize.value.width, PANEL_MIN_WIDTH),
+      PANEL_MAX_WIDTH,
+    );
+    const normalizedPreferredHeight = Math.max(
+      preferredPanelSize.value.height,
+      PANEL_MIN_HEIGHT,
+    );
 
-    panelSize.value = {
-      width: Math.min(
-        Math.max(panelSize.value.width, PANEL_MIN_WIDTH),
-        maxWidthByBounds,
-      ),
-      height: Math.min(
-        Math.max(panelSize.value.height, PANEL_MIN_HEIGHT),
-        maxHeightByBounds,
-      ),
+    preferredPanelSize.value = {
+      width: normalizedPreferredWidth,
+      height: normalizedPreferredHeight,
     };
 
-    const initialX = bounds.right - panelSize.value.width - 16;
-    const initialY = bounds.top + 96;
-    const seedX = panelPos.value.x < 0 ? initialX : panelPos.value.x;
-    const seedY = panelPos.value.y < 0 ? initialY : panelPos.value.y;
+    const nextWidth = Math.min(normalizedPreferredWidth, maxWidthByBounds);
+    const nextHeight = Math.min(normalizedPreferredHeight, maxHeightByBounds);
 
-    panelPos.value = clampPosition(
+    const hasPreferredPos =
+      preferredPanelPos.value.x >= 0 && preferredPanelPos.value.y >= 0;
+    const initialX = bounds.right - nextWidth - 16;
+    const initialY = bounds.top + 96;
+    const seedX = hasPreferredPos ? preferredPanelPos.value.x : initialX;
+    const seedY = hasPreferredPos ? preferredPanelPos.value.y : initialY;
+    const clampedPos = clampPosition(
       seedX,
       seedY,
-      panelSize.value.width,
-      panelSize.value.height,
+      nextWidth,
+      nextHeight,
       bounds,
     );
+
+    panelSize.value = {
+      width: nextWidth,
+      height: nextHeight,
+    };
+    panelPos.value = clampedPos;
+
+    if (!hasPreferredPos) {
+      preferredPanelPos.value = { ...clampedPos };
+    }
     return;
   }
 
@@ -242,13 +265,20 @@ const updatePosition = async () => {
     retryCount++;
     setTimeout(updatePosition, 50);
   } else {
-    if (panelPos.value.x < 0 || panelPos.value.y < 0) {
-      panelPos.value = { x: 300, y: 120 };
+    if (preferredPanelPos.value.x < 0 || preferredPanelPos.value.y < 0) {
+      preferredPanelPos.value = { x: 300, y: 120 };
     }
-    panelSize.value = {
-      width: Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, panelSize.value.width)),
-      height: Math.max(PANEL_MIN_HEIGHT, panelSize.value.height),
+
+    preferredPanelSize.value = {
+      width: Math.min(
+        PANEL_MAX_WIDTH,
+        Math.max(PANEL_MIN_WIDTH, preferredPanelSize.value.width),
+      ),
+      height: Math.max(PANEL_MIN_HEIGHT, preferredPanelSize.value.height),
     };
+
+    panelPos.value = { ...preferredPanelPos.value };
+    panelSize.value = { ...preferredPanelSize.value };
   }
 };
 

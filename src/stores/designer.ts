@@ -133,6 +133,14 @@ const loadDeveloperMode = () => {
   return stored !== "false";
 };
 
+const loadAutoOpenVariablesPanelOnTemplateSelect = () => {
+  return (
+    localStorage.getItem(
+      "print-designer-auto-open-variables-panel-on-template-select",
+    ) === "true"
+  );
+};
+
 type LayerMoveMode = "front" | "back" | "forward" | "backward";
 
 const getElementZIndex = (element: PrintElement) => element.style?.zIndex || 1;
@@ -396,6 +404,8 @@ export const useDesignerStore = defineStore("designer", {
     fontOptions: [] as DesignerFontOption[],
     availableVariables: [] as import("../types").VariableTreeItem[],
     showVariablesPanel: false,
+    autoOpenVariablesPanelOnTemplateSelect:
+      loadAutoOpenVariablesPanelOnTemplateSelect(),
     editingCustomElementId: null,
     customElementEditSnapshot: null,
     selectedElementId: null,
@@ -455,6 +465,13 @@ export const useDesignerStore = defineStore("designer", {
     },
     setShowVariablesPanel(show: boolean) {
       this.showVariablesPanel = show;
+    },
+    setAutoOpenVariablesPanelOnTemplateSelect(show: boolean) {
+      this.autoOpenVariablesPanelOnTemplateSelect = show;
+      localStorage.setItem(
+        "print-designer-auto-open-variables-panel-on-template-select",
+        show ? "true" : "false",
+      );
     },
     emitContextMenuEvent(eventName: string, detail: Record<string, any>) {
       if (!eventName || typeof eventName !== "string") return;

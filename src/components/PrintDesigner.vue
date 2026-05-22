@@ -70,12 +70,28 @@ type FloatingPanelBounds = {
 const panelsHostSize = ref({ width: 0, height: 0 });
 const sidebarPanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
 const propertiesPanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
+const sidebarPanelPreferredPos = ref({
+  x: FLOAT_PANEL_MARGIN,
+  y: FLOAT_PANEL_MARGIN,
+});
+const propertiesPanelPreferredPos = ref({
+  x: FLOAT_PANEL_MARGIN,
+  y: FLOAT_PANEL_MARGIN,
+});
 const sidebarPanelWidth = ref(FLOAT_PANEL_MIN_WIDTH);
 const propertiesPanelWidth = ref(FLOAT_PANEL_MIN_WIDTH);
+const sidebarPanelPreferredWidth = ref(FLOAT_PANEL_MIN_WIDTH);
+const propertiesPanelPreferredWidth = ref(FLOAT_PANEL_MIN_WIDTH);
 const sidebarPanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const propertiesPanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+const sidebarPanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+const propertiesPanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const minimapPanelRef = ref<HTMLElement | null>(null);
 const minimapPanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
+const minimapPanelPreferredPos = ref({
+  x: FLOAT_PANEL_MARGIN,
+  y: FLOAT_PANEL_MARGIN,
+});
 const hasInitializedFloatingPanels = ref(false);
 const hasInitializedMinimapPanel = ref(false);
 
@@ -178,6 +194,46 @@ const clampPanelHeight = (panelHeight: number, panelY: number) => {
   return Math.min(Math.max(panelHeight, FLOAT_PANEL_MIN_HEIGHT), maxAllowedHeight);
 };
 
+const clampPreferredPanelWidth = (panelWidth: number) => {
+  return Math.min(Math.max(panelWidth, FLOAT_PANEL_MIN_WIDTH), FLOAT_PANEL_MAX_WIDTH);
+};
+
+const clampPreferredPanelHeight = (panelHeight: number) => {
+  return Math.max(panelHeight, FLOAT_PANEL_MIN_HEIGHT);
+};
+
+type FloatingPanelLayout = {
+  pos: {
+    x: number;
+    y: number;
+  };
+  width: number;
+  height: number;
+};
+
+const resolvePanelLayout = (
+  preferredPos: { x: number; y: number },
+  preferredWidth: number,
+  preferredHeight: number,
+): FloatingPanelLayout => {
+  const desiredWidth = clampPreferredPanelWidth(preferredWidth);
+  const desiredHeight = clampPreferredPanelHeight(preferredHeight);
+
+  let width = clampPanelWidth(desiredWidth, preferredPos.x);
+  let height = clampPanelHeight(desiredHeight, preferredPos.y);
+  let pos = clampPanelPos(preferredPos.x, preferredPos.y, width, height);
+
+  width = clampPanelWidth(desiredWidth, pos.x);
+  height = clampPanelHeight(desiredHeight, pos.y);
+  pos = clampPanelPos(pos.x, pos.y, width, height);
+
+  return {
+    pos,
+    width,
+    height,
+  };
+};
+
 const getMinimapPanelSize = () => {
   if (!minimapPanelRef.value) {
     return {
@@ -199,9 +255,14 @@ const placeMinimapNearPropertiesPanel = () => {
     propertiesPanelPos.value.x - minimapSize.width - FLOAT_PANEL_MARGIN;
   const targetY = propertiesPanelPos.value.y;
 
+  minimapPanelPreferredPos.value = {
+    x: targetX,
+    y: targetY,
+  };
+
   minimapPanelPos.value = clampPanelPos(
-    targetX,
-    targetY,
+    minimapPanelPreferredPos.value.x,
+    minimapPanelPreferredPos.value.y,
     minimapSize.width,
     minimapSize.height,
   );
@@ -216,45 +277,49 @@ const initOrClampFloatingPanels = () => {
   const bounds = getFloatingPanelBounds();
 
   if (!hasInitializedFloatingPanels.value) {
-    sidebarPanelHeight.value = bounds.maxHeight;
-    propertiesPanelHeight.value = bounds.maxHeight;
-    sidebarPanelPos.value = { x: bounds.minX, y: bounds.minY };
-    propertiesPanelPos.value = {
-      x: Math.max(bounds.minX, bounds.maxRight - propertiesPanelWidth.value),
+    sidebarPanelPreferredHeight.value = bounds.maxHeight;
+    propertiesPanelPreferredHeight.value = bounds.maxHeight;
+    sidebarPanelPreferredPos.value = { x: bounds.minX, y: bounds.minY };
+    propertiesPanelPreferredPos.value = {
+      x: Math.max(
+        bounds.minX,
+        bounds.maxRight - propertiesPanelPreferredWidth.value,
+      ),
       y: bounds.minY,
     };
     hasInitializedFloatingPanels.value = true;
   }
 
-  sidebarPanelWidth.value = clampPanelWidth(
-    sidebarPanelWidth.value,
-    sidebarPanelPos.value.x,
+  sidebarPanelPreferredWidth.value = clampPreferredPanelWidth(
+    sidebarPanelPreferredWidth.value,
   );
-  propertiesPanelWidth.value = clampPanelWidth(
-    propertiesPanelWidth.value,
-    propertiesPanelPos.value.x,
+  propertiesPanelPreferredWidth.value = clampPreferredPanelWidth(
+    propertiesPanelPreferredWidth.value,
   );
-  sidebarPanelHeight.value = clampPanelHeight(
-    sidebarPanelHeight.value,
-    sidebarPanelPos.value.y,
+  sidebarPanelPreferredHeight.value = clampPreferredPanelHeight(
+    sidebarPanelPreferredHeight.value,
   );
-  propertiesPanelHeight.value = clampPanelHeight(
-    propertiesPanelHeight.value,
-    propertiesPanelPos.value.y,
+  propertiesPanelPreferredHeight.value = clampPreferredPanelHeight(
+    propertiesPanelPreferredHeight.value,
   );
 
-  sidebarPanelPos.value = clampPanelPos(
-    sidebarPanelPos.value.x,
-    sidebarPanelPos.value.y,
-    sidebarPanelWidth.value,
-    sidebarPanelHeight.value,
+  const sidebarLayout = resolvePanelLayout(
+    sidebarPanelPreferredPos.value,
+    sidebarPanelPreferredWidth.value,
+    sidebarPanelPreferredHeight.value,
   );
-  propertiesPanelPos.value = clampPanelPos(
-    propertiesPanelPos.value.x,
-    propertiesPanelPos.value.y,
-    propertiesPanelWidth.value,
-    propertiesPanelHeight.value,
+  sidebarPanelPos.value = sidebarLayout.pos;
+  sidebarPanelWidth.value = sidebarLayout.width;
+  sidebarPanelHeight.value = sidebarLayout.height;
+
+  const propertiesLayout = resolvePanelLayout(
+    propertiesPanelPreferredPos.value,
+    propertiesPanelPreferredWidth.value,
+    propertiesPanelPreferredHeight.value,
   );
+  propertiesPanelPos.value = propertiesLayout.pos;
+  propertiesPanelWidth.value = propertiesLayout.width;
+  propertiesPanelHeight.value = propertiesLayout.height;
 
   if (!store.showMinimap) return;
 
@@ -265,8 +330,8 @@ const initOrClampFloatingPanels = () => {
 
   const minimapSize = getMinimapPanelSize();
   minimapPanelPos.value = clampPanelPos(
-    minimapPanelPos.value.x,
-    minimapPanelPos.value.y,
+    minimapPanelPreferredPos.value.x,
+    minimapPanelPreferredPos.value.y,
     minimapSize.width,
     minimapSize.height,
   );
@@ -331,15 +396,18 @@ const handlePanelDragMove = (e: MouseEvent) => {
 
   if (draggingPanel === "sidebar") {
     sidebarPanelPos.value = nextPos;
+    sidebarPanelPreferredPos.value = { ...nextPos };
     return;
   }
 
   if (draggingPanel === "properties") {
     propertiesPanelPos.value = nextPos;
+    propertiesPanelPreferredPos.value = { ...nextPos };
     return;
   }
 
   minimapPanelPos.value = nextPos;
+  minimapPanelPreferredPos.value = { ...nextPos };
 };
 
 const stopPanelDrag = () => {
@@ -364,14 +432,19 @@ const handlePanelResizeMove = (e: MouseEvent) => {
       resizeStartHeight + deltaY,
       sidebarPanelPos.value.y,
     );
-    sidebarPanelWidth.value = nextWidth;
-    sidebarPanelHeight.value = nextHeight;
-    sidebarPanelPos.value = clampPanelPos(
+    const nextPos = clampPanelPos(
       sidebarPanelPos.value.x,
       sidebarPanelPos.value.y,
       nextWidth,
       nextHeight,
     );
+
+    sidebarPanelWidth.value = nextWidth;
+    sidebarPanelHeight.value = nextHeight;
+    sidebarPanelPos.value = nextPos;
+    sidebarPanelPreferredWidth.value = nextWidth;
+    sidebarPanelPreferredHeight.value = nextHeight;
+    sidebarPanelPreferredPos.value = { ...nextPos };
     return;
   }
 
@@ -383,14 +456,19 @@ const handlePanelResizeMove = (e: MouseEvent) => {
     resizeStartHeight + deltaY,
     propertiesPanelPos.value.y,
   );
-  propertiesPanelWidth.value = nextWidth;
-  propertiesPanelHeight.value = nextHeight;
-  propertiesPanelPos.value = clampPanelPos(
+  const nextPos = clampPanelPos(
     propertiesPanelPos.value.x,
     propertiesPanelPos.value.y,
     nextWidth,
     nextHeight,
   );
+
+  propertiesPanelWidth.value = nextWidth;
+  propertiesPanelHeight.value = nextHeight;
+  propertiesPanelPos.value = nextPos;
+  propertiesPanelPreferredWidth.value = nextWidth;
+  propertiesPanelPreferredHeight.value = nextHeight;
+  propertiesPanelPreferredPos.value = { ...nextPos };
 };
 
 const stopPanelResize = () => {

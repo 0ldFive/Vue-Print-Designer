@@ -341,6 +341,7 @@ export interface DesignerState {
     }[];
   } | null;
   showVariablesPanel?: boolean;
+  autoOpenVariablesPanelOnTemplateSelect?: boolean;
   availableVariables?: VariableTreeItem[];
 }
 

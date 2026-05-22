@@ -493,6 +493,9 @@ export default {
     autoSaveDesc: "当模版发生变更时自动保存（仅对已保存过的模版生效）。",
     showMinimapDesc: "在画布区域显示可拖拽的缩略图浮窗。",
     showHistoryPanelDesc: "在画布区域显示可拖拽的历史记录浮窗。",
+    autoOpenVariablesPanelOnTemplateSelect: "选择模板时自动打开可用变量",
+    autoOpenVariablesPanelOnTemplateSelectDesc:
+      "开启后，切换模板将自动弹出可用变量列表浮窗。",
     developerMode: "开发者模式",
     developerModeDesc: "关闭后将隐藏 Blob/JSON 调试查看入口。",
     printQuality: "打印质量",

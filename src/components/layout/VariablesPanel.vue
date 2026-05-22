@@ -7,7 +7,7 @@ import Type from "~icons/material-symbols/text-fields";
 import Table from "~icons/material-symbols/table-chart";
 import KeyboardArrowRight from "~icons/material-symbols/keyboard-arrow-right";
 import KeyboardArrowDown from "~icons/material-symbols/keyboard-arrow-down";
-import { ElementType } from "@/types";
+import { ElementType, type VariableTreeItem } from "@/types";
 
 const { t } = useI18n();
 const store = useDesignerStore();
@@ -19,6 +19,8 @@ const startPos = ref({ x: 0, y: 0 });
 const resizeStart = ref({ x: 0, y: 0, width: 280, height: 360 });
 const panelPos = ref({ x: -9999, y: -9999 }); // Default off-screen until watch calculates it
 const panelSize = ref({ width: 280, height: 360 });
+const preferredPanelPos = ref({ x: -9999, y: -9999 });
+const preferredPanelSize = ref({ width: 280, height: 360 });
 const PANEL_MIN_WIDTH = 220;
 const PANEL_MAX_WIDTH = 520;
 const PANEL_MIN_HEIGHT = 200;
@@ -31,9 +33,52 @@ const panelZIndex = computed(() =>
 );
 
 const variables = computed(() => store.availableVariables || []);
+const searchQuery = ref("");
+
+const normalizeSearchValue = (value: string | undefined) =>
+  String(value || "").trim().toLowerCase();
+
+const filterVariableTree = (
+  items: VariableTreeItem[],
+  query: string,
+): VariableTreeItem[] => {
+  return items
+    .map((item) => {
+      const children = Array.isArray(item.children)
+        ? filterVariableTree(item.children, query)
+        : [];
+      const matchesSelf =
+        normalizeSearchValue(item.label).includes(query) ||
+        normalizeSearchValue(item.id).includes(query);
+
+      if (matchesSelf) return item;
+      if (children.length > 0) {
+        return {
+          ...item,
+          children,
+        };
+      }
+      return null;
+    })
+    .filter((item): item is VariableTreeItem => item !== null);
+};
+
+const filteredVariables = computed(() => {
+  const query = normalizeSearchValue(searchQuery.value);
+  if (!query) return variables.value;
+  return filterVariableTree(variables.value, query);
+});
+
+const hasActiveSearch = computed(
+  () => normalizeSearchValue(searchQuery.value).length > 0,
+);
 
 // Expanded state for tree nodes
 const expandedNodes = ref<Set<string>>(new Set());
+
+const isNodeExpanded = (id: string) => {
+  return hasActiveSearch.value || expandedNodes.value.has(id);
+};
 
 const toggleExpand = (id: string) => {
   const newSet = new Set(expandedNodes.value);
@@ -114,6 +159,7 @@ const handleDragMove = (e: MouseEvent) => {
   }
 
   panelPos.value = { x: newX, y: newY };
+  preferredPanelPos.value = { x: newX, y: newY };
 };
 
 const handleDragEnd = () => {
@@ -167,6 +213,10 @@ const handleResizeMove = (e: MouseEvent) => {
   }
 
   panelSize.value = {
+    width: nextWidth,
+    height: nextHeight,
+  };
+  preferredPanelSize.value = {
     width: nextWidth,
     height: nextHeight,
   };
@@ -226,26 +276,45 @@ const updatePosition = async () => {
       Math.min(PANEL_MAX_WIDTH, bounds.width),
     );
     const maxHeightByBounds = Math.max(PANEL_MIN_HEIGHT, bounds.height);
-    panelSize.value = {
-      width: Math.min(
-        Math.max(panelSize.value.width, PANEL_MIN_WIDTH),
-        maxWidthByBounds,
-      ),
-      height: Math.min(
-        Math.max(panelSize.value.height, PANEL_MIN_HEIGHT),
-        maxHeightByBounds,
-      ),
+    const normalizedPreferredWidth = Math.min(
+      Math.max(preferredPanelSize.value.width, PANEL_MIN_WIDTH),
+      PANEL_MAX_WIDTH,
+    );
+    const normalizedPreferredHeight = Math.max(
+      preferredPanelSize.value.height,
+      PANEL_MIN_HEIGHT,
+    );
+
+    preferredPanelSize.value = {
+      width: normalizedPreferredWidth,
+      height: normalizedPreferredHeight,
     };
 
-    const seedX = panelPos.value.x < 0 ? bounds.left : panelPos.value.x;
-    const seedY = panelPos.value.y < 0 ? bounds.top : panelPos.value.y;
-    panelPos.value = clampPosition(
+    const nextWidth = Math.min(normalizedPreferredWidth, maxWidthByBounds);
+    const nextHeight = Math.min(normalizedPreferredHeight, maxHeightByBounds);
+
+    const hasPreferredPos =
+      preferredPanelPos.value.x >= 0 && preferredPanelPos.value.y >= 0;
+    const seedX = hasPreferredPos ? preferredPanelPos.value.x : bounds.left;
+    const seedY = hasPreferredPos ? preferredPanelPos.value.y : bounds.top;
+    const clampedPos = clampPosition(
       seedX,
       seedY,
-      panelSize.value.width,
-      panelSize.value.height,
+      nextWidth,
+      nextHeight,
       bounds,
     );
+
+    panelSize.value = {
+      width: nextWidth,
+      height: nextHeight,
+    };
+
+    panelPos.value = clampedPos;
+
+    if (!hasPreferredPos) {
+      preferredPanelPos.value = { ...clampedPos };
+    }
   } else {
     // Retry if canvasScroll not found yet
     if (retryCount < 10) {
@@ -253,16 +322,19 @@ const updatePosition = async () => {
       setTimeout(updatePosition, 50);
     } else {
       // Fallback
-      if (panelPos.value.x < 0 || panelPos.value.y < 0) {
-        panelPos.value = { x: 250, y: 100 };
+      if (preferredPanelPos.value.x < 0 || preferredPanelPos.value.y < 0) {
+        preferredPanelPos.value = { x: 250, y: 100 };
       }
-      panelSize.value = {
+      preferredPanelSize.value = {
         width: Math.min(
           PANEL_MAX_WIDTH,
-          Math.max(PANEL_MIN_WIDTH, panelSize.value.width),
+          Math.max(PANEL_MIN_WIDTH, preferredPanelSize.value.width),
         ),
-        height: Math.max(PANEL_MIN_HEIGHT, panelSize.value.height),
+        height: Math.max(PANEL_MIN_HEIGHT, preferredPanelSize.value.height),
       };
+
+      panelPos.value = { ...preferredPanelPos.value };
+      panelSize.value = { ...preferredPanelSize.value };
     }
   }
 };
@@ -290,6 +362,7 @@ watch(
         }
       });
     } else {
+      searchQuery.value = "";
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
@@ -359,6 +432,15 @@ onUnmounted(() => {
       </button>
     </div>
 
+    <div class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-700">
+      <input
+        v-model="searchQuery"
+        type="text"
+        :placeholder="t('common.search')"
+        class="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+
     <!-- Body -->
     <div class="flex-1 overflow-y-auto p-2 custom-scrollbar">
       <div
@@ -368,9 +450,9 @@ onUnmounted(() => {
         {{ t("common.noData") }}
       </div>
 
-      <div v-else class="space-y-1">
+      <div v-else-if="filteredVariables.length > 0" class="space-y-1">
         <!-- Recursive template would be better, but we can inline a simple tree for now -->
-        <template v-for="item in variables" :key="item.id">
+        <template v-for="item in filteredVariables" :key="item.id">
           <div class="flex flex-col">
             <!-- Item row -->
             <div
@@ -384,7 +466,7 @@ onUnmounted(() => {
                 @click.stop="toggleExpand(item.id)"
               >
                 <KeyboardArrowDown
-                  v-if="expandedNodes.has(item.id)"
+                  v-if="isNodeExpanded(item.id)"
                   class="w-4 h-4"
                 />
                 <KeyboardArrowRight v-else class="w-4 h-4" />
@@ -408,7 +490,7 @@ onUnmounted(() => {
               v-if="
                 item.children &&
                 item.children.length > 0 &&
-                expandedNodes.has(item.id)
+                isNodeExpanded(item.id)
               "
               class="ml-6 border-l border-gray-200 dark:border-gray-600 pl-1 mt-1 space-y-1"
             >
@@ -433,6 +515,13 @@ onUnmounted(() => {
             </div>
           </div>
         </template>
+      </div>
+
+      <div
+        v-else
+        class="text-xs text-gray-500 dark:text-gray-400 text-center py-4"
+      >
+        {{ t("common.noData") }}
       </div>
     </div>
 
