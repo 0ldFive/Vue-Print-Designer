@@ -914,7 +914,10 @@ const handleContextMenu = (e: MouseEvent, pageIndex: number) => {
   }
 
   if (targetId) {
-    store.selectElement(targetId, false, false);
+    const isAlreadySelected = store.selectedElementIds.includes(targetId);
+    if (!isAlreadySelected) {
+      store.selectElement(targetId, false, false);
+    }
   }
 };
 

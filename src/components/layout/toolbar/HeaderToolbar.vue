@@ -1011,7 +1011,7 @@ onUnmounted(() => {
     >
       <div
         ref="toolbarScrollContentRef"
-        class="flex w-max min-w-max items-center gap-2 pr-1"
+        class="flex w-max min-w-max items-center gap-1 pr-1"
         :class="{ 'ml-auto': !isToolbarOverflowing }"
       >
     <!-- Font Controls -->
@@ -1266,7 +1266,6 @@ onUnmounted(() => {
       >
         <AlignRight class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
       <button
         @click="handleAlignmentClick('top')"
         :disabled="
@@ -1346,7 +1345,6 @@ onUnmounted(() => {
       >
         <AspectRatioIcon class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
       <button
         @click="store.distributeSelectedElements('horizontal')"
         :disabled="!canDistributeSelectedElements"
@@ -1387,7 +1385,6 @@ onUnmounted(() => {
       >
         <AlignEndVertical class="w-4 h-4" />
       </button>
-      <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
       <button
         @click="handleLayerMove('forward')"
         :disabled="!canMoveLayerUp"

@@ -1391,6 +1391,8 @@ export const useDesignerStore = defineStore("designer", {
       let highlightedGuideId: string | null = null;
       let highlightedEdge: "left" | "top" | "right" | "bottom" | null = null;
       const highlightedAlignedElementIds = new Set<string>();
+      let guideSnappedX = false;
+      let guideSnappedY = false;
 
       const getCenter = (min: number, max: number) => (min + max) / 2;
 
@@ -1454,11 +1456,13 @@ export const useDesignerStore = defineStore("designer", {
           ) {
             x = guide.position - originBounds.minX;
             highlightedGuideId = guide.id;
+            guideSnappedX = true;
           } else if (
             shouldSnap(guideBounds.maxX, currentBounds.maxX, guide.position)
           ) {
             x = guide.position - originBounds.maxX;
             highlightedGuideId = guide.id;
+            guideSnappedX = true;
           }
         } else {
           const guideBounds = this.getElementBoundsAtPosition(el, x, y);
@@ -1467,11 +1471,13 @@ export const useDesignerStore = defineStore("designer", {
           ) {
             y = guide.position - originBounds.minY;
             highlightedGuideId = guide.id;
+            guideSnappedY = true;
           } else if (
             shouldSnap(guideBounds.maxY, currentBounds.maxY, guide.position)
           ) {
             y = guide.position - originBounds.maxY;
             highlightedGuideId = guide.id;
+            guideSnappedY = true;
           }
         }
       }
@@ -1616,27 +1622,30 @@ export const useDesignerStore = defineStore("designer", {
           }
         }
 
-        if (bestX) {
-          x = bestX.newPos;
+        const appliedBestX = guideSnappedX ? null : bestX;
+        const appliedBestY = guideSnappedY ? null : bestY;
+
+        if (appliedBestX) {
+          x = appliedBestX.newPos;
         }
-        if (bestY) {
-          y = bestY.newPos;
+        if (appliedBestY) {
+          y = appliedBestY.newPos;
         }
 
-        if (bestX || bestY) {
+        if (appliedBestX || appliedBestY) {
           const snappedBounds = this.getElementBoundsAtPosition(el, x, y);
-          const snappedX = !bestX
+          const snappedX = !appliedBestX
             ? null
-            : bestX.movingKey === "left"
+            : appliedBestX.movingKey === "left"
               ? snappedBounds.minX
-              : bestX.movingKey === "right"
+              : appliedBestX.movingKey === "right"
                 ? snappedBounds.maxX
                 : getCenter(snappedBounds.minX, snappedBounds.maxX);
-          const snappedY = !bestY
+          const snappedY = !appliedBestY
             ? null
-            : bestY.movingKey === "top"
+            : appliedBestY.movingKey === "top"
               ? snappedBounds.minY
-              : bestY.movingKey === "bottom"
+              : appliedBestY.movingKey === "bottom"
                 ? snappedBounds.maxY
                 : getCenter(snappedBounds.minY, snappedBounds.maxY);
 

@@ -25,6 +25,9 @@ import BringToFrontIcon from "~icons/material-symbols/vertical-align-top";
 import SendToBackIcon from "~icons/material-symbols/vertical-align-bottom";
 import MoveUpIcon from "~icons/material-symbols/arrow-upward";
 import MoveDownIcon from "~icons/material-symbols/arrow-downward";
+import CellMerge from "~icons/material-symbols/cell-merge";
+import GridViewOutline from "~icons/material-symbols/grid-view-outline";
+import { ElementType } from "@/types";
 
 const { t } = useI18n();
 const store = useDesignerStore();
@@ -55,6 +58,51 @@ const canMoveLayerUp = computed(() => {
 
 const canMoveLayerDown = computed(() => {
   return store.canMoveElementsLayer(store.selectedElementIds, "backward");
+});
+
+const selectedTableSelectionElement = computed(() => {
+  const selection = store.tableSelection;
+  if (!selection) return null;
+
+  for (const page of store.pages) {
+    const element = page.elements.find((item) => item.id === selection.elementId);
+    if (element?.type === ElementType.TABLE) return element;
+  }
+
+  return null;
+});
+
+const canMergeSelectedTableCells = computed(() => {
+  const selection = store.tableSelection;
+  const element = selectedTableSelectionElement.value;
+  if (!store.isTemplateEditable || !selection || !element || element.locked) {
+    return false;
+  }
+  if (selection.cells.length < 2) return false;
+  const section = selection.cells[0].section || "body";
+  return selection.cells.every((cell) => (cell.section || "body") === section);
+});
+
+const canSplitSelectedTableCell = computed(() => {
+  const selection = store.tableSelection;
+  const element = selectedTableSelectionElement.value;
+  if (!store.isTemplateEditable || !selection || !element || element.locked) {
+    return false;
+  }
+  if (selection.cells.length !== 1) return false;
+
+  const cell = selection.cells[0];
+  const targetData =
+    (cell.section || "body") === "footer" ? element.footerData : element.data;
+  const row = targetData?.[cell.rowIndex];
+  const value = row?.[cell.colField];
+  if (!value || typeof value !== "object") return false;
+
+  return (value.rowSpan || 1) > 1 || (value.colSpan || 1) > 1;
+});
+
+const showTableCellActions = computed(() => {
+  return !!store.tableSelection && !!selectedTableSelectionElement.value;
 });
 
 const handleLayerMove = (mode: "front" | "back" | "forward" | "backward") => {
@@ -558,6 +606,34 @@ onUnmounted(() => {
             formatShortcut(["Ctrl", "V"])
           }}</span>
         </button>
+        <template v-if="showTableCellActions">
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 flex items-center gap-2"
+            :disabled="!canMergeSelectedTableCells"
+            @click="
+              () => {
+                store.mergeSelectedCells();
+                showMenu = false;
+              }
+            "
+          >
+            <CellMerge class="w-4 h-4" />
+            <span class="flex-1">{{ t("editor.mergeCells") }}</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 flex items-center gap-2"
+            :disabled="!canSplitSelectedTableCell"
+            @click="
+              () => {
+                store.splitSelectedCells();
+                showMenu = false;
+              }
+            "
+          >
+            <GridViewOutline class="w-4 h-4" />
+            <span class="flex-1">{{ t("editor.splitCells") }}</span>
+          </button>
+        </template>
         <div class="border-t border-gray-200 my-1"></div>
         <button
           class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 flex items-center gap-2"

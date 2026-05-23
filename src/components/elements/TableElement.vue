@@ -663,6 +663,7 @@ const handleMouseDown = (
   section: "body" | "footer" = "body",
 ) => {
   if (store.selectedElementId !== props.element.id) return;
+  if (event.button !== 0) return;
   if (section === "body" && isBodyDragHandleHit(event)) {
     store.clearTableSelection();
     return;
