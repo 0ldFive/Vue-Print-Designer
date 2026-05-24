@@ -749,11 +749,7 @@ const tableOuterEdgeStyle = computed(() => {
 });
 
 const shouldRenderTableOuterEdge = computed(() => {
-  return (
-    !store.isExporting ||
-    props.element.showHeader === false ||
-    props.element.showFooter === false
-  );
+  return !store.isExporting;
 });
 
 const shouldShowBodyFooterConnectorBorder = computed(() => {
