@@ -34,6 +34,7 @@ const designerRoot = inject<Ref<HTMLElement | null>>(
   "designer-root",
   ref(null),
 );
+const designerInstanceId = inject<string | null>("designer-instance-id", null);
 const isHandPanActive = inject<Ref<boolean>>(
   "designer-hand-pan-active",
   ref(false),
@@ -44,6 +45,11 @@ type PendingTableCreateDrop = {
   y: number;
   pageIndex: number;
 };
+
+type StructurePanelHoverTarget = {
+  elementId: string;
+  pageIndex: number;
+} | null;
 
 type TableCreateMode = "testData" | "custom";
 
@@ -811,18 +817,63 @@ const clearVariableDropHover = () => {
   variableDropHover.value = null;
 };
 
+const structurePanelHoverTarget = ref<StructurePanelHoverTarget>(null);
+
+const isEventForCurrentDesigner = (e: Event) => {
+  const eventId = (e as CustomEvent)?.detail?.__designerInstanceId;
+  if (!eventId || !designerInstanceId) return true;
+  return eventId === designerInstanceId;
+};
+
+const handleStructurePanelHoverEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+
+  const detail = (e as CustomEvent)?.detail || {};
+  if (!detail.hovering) {
+    structurePanelHoverTarget.value = null;
+    return;
+  }
+
+  const elementId = String(detail.elementId || "").trim();
+  const pageIndex = Number(detail.pageIndex);
+  if (!elementId || !Number.isInteger(pageIndex) || pageIndex < 0) {
+    structurePanelHoverTarget.value = null;
+    return;
+  }
+
+  structurePanelHoverTarget.value = {
+    elementId,
+    pageIndex,
+  };
+};
+
 onMounted(() => {
   window.addEventListener("dragend", clearVariableDropHover);
   window.addEventListener("drop", clearVariableDropHover);
+  window.addEventListener(
+    "designer:structure-panel-hover-element",
+    handleStructurePanelHoverEvent,
+  );
 });
 
 onUnmounted(() => {
   window.removeEventListener("dragend", clearVariableDropHover);
   window.removeEventListener("drop", clearVariableDropHover);
+  window.removeEventListener(
+    "designer:structure-panel-hover-element",
+    handleStructurePanelHoverEvent,
+  );
 });
 
 const isVariableDropHovered = (elementId: string, pageIndex: number) => {
   const hover = variableDropHover.value;
+  return Boolean(
+    hover && hover.elementId === elementId && hover.pageIndex === pageIndex,
+  );
+};
+
+const isStructurePanelHovered = (elementId: string, pageIndex: number) => {
+  const hover = structurePanelHoverTarget.value;
   return Boolean(
     hover && hover.elementId === elementId && hover.pageIndex === pageIndex,
   );
@@ -1441,7 +1492,9 @@ const getGlobalElements = () => {
           :clip-to-page-bounds="shouldClipElementToPage(index, element.id)"
           :read-only="!isTemplateEditable || isHandPanActive"
           :force-hover="
-            !isHandPanActive && isVariableDropHovered(element.id, index)
+            !isHandPanActive &&
+            (isVariableDropHovered(element.id, index) ||
+              isStructurePanelHovered(element.id, index))
           "
         >
           <component

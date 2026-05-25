@@ -262,6 +262,19 @@ export default {
     },
     standard: "Standard",
     custom: "Custom",
+    layout: "Layout",
+    layoutSubtitle: "Browse page elements by page and layer",
+    layoutHelp: {
+      title: "Layout Structure Guide",
+      items: {
+        overview:
+          "View element hierarchy by page. Embedded elements are shown under their parent table.",
+        select:
+          "Click a list item to select an element. Ctrl/Command multi-select is supported.",
+        actions:
+          "Use the top action bar to adjust layer order, lock, copy, and delete quickly.",
+      },
+    },
     general: "General",
     dataCodes: "Data & Codes",
     shapes: "Shapes",

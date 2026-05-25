@@ -262,6 +262,19 @@ export default {
     },
     standard: "標準",
     custom: "カスタム",
+    layout: "レイアウト",
+    layoutSubtitle: "ページとレイヤーで要素構造を確認",
+    layoutHelp: {
+      title: "レイアウト構造ガイド",
+      items: {
+        overview:
+          "ページごとに要素階層を表示します。埋め込み要素は親テーブル配下に表示されます。",
+        select:
+          "リスト項目をクリックして要素を選択できます。Ctrl/Command の複数選択に対応しています。",
+        actions:
+          "上部アクションバーでレイヤー順、ロック、コピー、削除をすばやく操作できます。",
+      },
+    },
     general: "一般",
     dataCodes: "データとコード",
     shapes: "図形",

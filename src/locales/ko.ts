@@ -262,6 +262,19 @@ export default {
     },
     standard: "표준",
     custom: "사용자 지정",
+    layout: "레이아웃",
+    layoutSubtitle: "페이지와 레이어 기준으로 요소 구조 보기",
+    layoutHelp: {
+      title: "레이아웃 구조 안내",
+      items: {
+        overview:
+          "페이지별로 요소 계층을 확인할 수 있으며, 임베드 요소는 부모 테이블 아래에 표시됩니다.",
+        select:
+          "목록 항목을 클릭해 요소를 선택할 수 있고 Ctrl/Command 다중 선택을 지원합니다.",
+        actions:
+          "상단 액션 바에서 레이어 순서, 잠금, 복사, 삭제를 빠르게 처리할 수 있습니다.",
+      },
+    },
     general: "일반",
     dataCodes: "데이터 및 코드",
     shapes: "도형",

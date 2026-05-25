@@ -60,6 +60,7 @@ import ListIcon from "~icons/material-symbols/list";
 import GridView from "~icons/material-symbols/grid-view";
 import GridViewOutline from "~icons/material-symbols/grid-view-outline";
 import History from "~icons/material-symbols/history";
+import AppsIcon from "~icons/material-symbols/apps";
 import TranslateIcon from "~icons/material-symbols/translate";
 import SettingsBrightness from "~icons/material-symbols/settings-brightness";
 import LightMode from "~icons/material-symbols/light-mode";
@@ -148,6 +149,28 @@ const languageSelectTitle = computed(() => {
 });
 
 type ThemeMode = "system" | "light" | "dark";
+
+type ToolbarGroupKey =
+  | "editor"
+  | "paper"
+  | "zoom"
+  | "hand"
+  | "panel"
+  | "quick"
+  | "system";
+
+const toolbarGroupOrderDefaults: ToolbarGroupKey[] = [
+  "editor",
+  "paper",
+  "zoom",
+  "hand",
+  "panel",
+  "quick",
+  "system",
+];
+const toolbarGroupOrderStorageKey =
+  "print-designer-toolbar-group-order-v1";
+const toolbarGroupLongPressMs = 3000;
 
 const currentThemeMode = computed<ThemeMode>(() => {
   if (theme.value === "light" || theme.value === "dark") {
@@ -252,6 +275,7 @@ const activePrintOptions = computed<PrintOptions>(() => {
 
 const showZoomSettings = ref(false);
 const showLanguageMenu = ref(false);
+const showPanelMenu = ref(false);
 const zoomPercent = ref(Math.round(store.zoom * 100));
 const isHandPanActive = inject<Ref<boolean>>(
   "designer-hand-pan-active",
@@ -260,19 +284,31 @@ const isHandPanActive = inject<Ref<boolean>>(
 const isElementsPanelVisible = ref(false);
 const isTemplatePanelVisible = ref(true);
 const isPropertiesPanelVisible = ref(true);
+const isStructurePanelVisible = ref(true);
 const zoomTriggerRef = ref<HTMLElement | null>(null);
 const languageTriggerRef = ref<HTMLElement | null>(null);
 const languageMenuRef = ref<HTMLElement | null>(null);
+const panelTriggerRef = ref<HTMLElement | null>(null);
+const panelMenuRef = ref<HTMLElement | null>(null);
 const zoomSettingsMenuStyle = ref<Record<string, string>>({});
 const languageMenuStyle = ref<Record<string, string>>({});
+const panelMenuStyle = ref<Record<string, string>>({});
+const toolbarRootRef = ref<HTMLElement | null>(null);
 const toolbarScrollRef = ref<HTMLElement | null>(null);
 const toolbarScrollContentRef = ref<HTMLElement | null>(null);
 const isToolbarOverflowing = ref(false);
 const canScrollToolbarLeft = ref(false);
 const canScrollToolbarRight = ref(false);
+const toolbarGroupOrder = ref<ToolbarGroupKey[]>([
+  ...toolbarGroupOrderDefaults,
+]);
+const isToolbarGroupReorderMode = ref(false);
+const draggingToolbarGroup = ref<ToolbarGroupKey | null>(null);
+const hoverToolbarGroup = ref<ToolbarGroupKey | null>(null);
 let toolbarResizeObserver: ResizeObserver | null = null;
 let hasToolbarManualScroll = false;
 let suppressToolbarScrollEvent = false;
+let toolbarGroupLongPressTimer: ReturnType<typeof setTimeout> | null = null;
 
 const updateToolbarScrollState = (autoAlignStart = false) => {
   const container = toolbarScrollRef.value;
@@ -319,6 +355,156 @@ const handleToolbarScroll = () => {
 
 const handleToolbarResize = () => {
   updateToolbarScrollState(!hasToolbarManualScroll);
+};
+
+const isValidToolbarGroupOrder = (
+  value: unknown,
+): value is ToolbarGroupKey[] => {
+  if (!Array.isArray(value)) return false;
+  if (value.length !== toolbarGroupOrderDefaults.length) return false;
+
+  const valueSet = new Set(value);
+  if (valueSet.size !== toolbarGroupOrderDefaults.length) return false;
+
+  return toolbarGroupOrderDefaults.every((group) => valueSet.has(group));
+};
+
+const loadToolbarGroupOrder = () => {
+  if (typeof window === "undefined") return;
+
+  const raw = window.localStorage.getItem(toolbarGroupOrderStorageKey);
+  if (!raw) return;
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (isValidToolbarGroupOrder(parsed)) {
+      toolbarGroupOrder.value = [...parsed];
+    }
+  } catch {
+    window.localStorage.removeItem(toolbarGroupOrderStorageKey);
+  }
+};
+
+const persistToolbarGroupOrder = () => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    toolbarGroupOrderStorageKey,
+    JSON.stringify(toolbarGroupOrder.value),
+  );
+};
+
+const getToolbarGroupStyle = (group: ToolbarGroupKey) => {
+  return { order: toolbarGroupOrder.value.indexOf(group) };
+};
+
+const isToolbarGroupFirst = (group: ToolbarGroupKey) => {
+  return toolbarGroupOrder.value[0] === group;
+};
+
+const clearToolbarGroupLongPressTimer = () => {
+  if (!toolbarGroupLongPressTimer) return;
+  clearTimeout(toolbarGroupLongPressTimer);
+  toolbarGroupLongPressTimer = null;
+};
+
+const exitToolbarGroupReorderMode = () => {
+  isToolbarGroupReorderMode.value = false;
+  draggingToolbarGroup.value = null;
+  hoverToolbarGroup.value = null;
+  clearToolbarGroupLongPressTimer();
+};
+
+const startToolbarGroupLongPress = (group: ToolbarGroupKey) => {
+  if (isToolbarGroupReorderMode.value) return;
+
+  clearToolbarGroupLongPressTimer();
+  toolbarGroupLongPressTimer = setTimeout(() => {
+    isToolbarGroupReorderMode.value = true;
+    draggingToolbarGroup.value = null;
+    hoverToolbarGroup.value = group;
+  }, toolbarGroupLongPressMs);
+};
+
+const stopToolbarGroupLongPress = () => {
+  clearToolbarGroupLongPressTimer();
+};
+
+const moveToolbarGroup = (from: ToolbarGroupKey, to: ToolbarGroupKey) => {
+  const current = [...toolbarGroupOrder.value];
+  const fromIndex = current.indexOf(from);
+  const toIndex = current.indexOf(to);
+
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+  current.splice(fromIndex, 1);
+  current.splice(toIndex, 0, from);
+  toolbarGroupOrder.value = current;
+};
+
+const handleToolbarGroupDragStart = (e: DragEvent, group: ToolbarGroupKey) => {
+  if (!isToolbarGroupReorderMode.value) {
+    e.preventDefault();
+    return;
+  }
+
+  draggingToolbarGroup.value = group;
+  hoverToolbarGroup.value = group;
+
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.setData("text/plain", group);
+  }
+};
+
+const handleToolbarGroupDragOver = (e: DragEvent, group: ToolbarGroupKey) => {
+  if (!isToolbarGroupReorderMode.value || !draggingToolbarGroup.value) return;
+  e.preventDefault();
+
+  if (group !== draggingToolbarGroup.value) {
+    hoverToolbarGroup.value = group;
+  }
+};
+
+const handleToolbarGroupDrop = (e: DragEvent, group: ToolbarGroupKey) => {
+  if (!isToolbarGroupReorderMode.value || !draggingToolbarGroup.value) return;
+  e.preventDefault();
+
+  moveToolbarGroup(draggingToolbarGroup.value, group);
+  hoverToolbarGroup.value = group;
+};
+
+const handleToolbarGroupDragEnd = () => {
+  draggingToolbarGroup.value = null;
+  hoverToolbarGroup.value = null;
+};
+
+const handleToolbarReorderOutsidePointerDown = (e: Event) => {
+  if (!isToolbarGroupReorderMode.value) return;
+
+  const target = e.target;
+  if (!(target instanceof Node)) {
+    exitToolbarGroupReorderMode();
+    return;
+  }
+
+  if (toolbarRootRef.value?.contains(target)) return;
+  exitToolbarGroupReorderMode();
+};
+
+const handleToolbarReorderEscape = (e: KeyboardEvent) => {
+  if (e.key !== "Escape" || !isToolbarGroupReorderMode.value) return;
+  exitToolbarGroupReorderMode();
+};
+
+const getToolbarGroupStateClass = (group: ToolbarGroupKey) => {
+  return {
+    "toolbar-reorder-mode": isToolbarGroupReorderMode.value,
+    "toolbar-reorder-dragging": draggingToolbarGroup.value === group,
+    "toolbar-reorder-target":
+      hoverToolbarGroup.value === group && draggingToolbarGroup.value !== group,
+  };
 };
 
 const updateZoomSettingsMenuPosition = () => {
@@ -398,10 +584,61 @@ const updateLanguageMenuPosition = () => {
   };
 };
 
+const updatePanelMenuPosition = () => {
+  if (!showPanelMenu.value) return;
+  const trigger = panelTriggerRef.value;
+  if (!trigger) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const viewportPadding = 8;
+  const menuGap = 8;
+  const fallbackWidth = 268;
+  const fallbackHeight = 44;
+  const menuEl = panelMenuRef.value;
+  const menuWidth = menuEl?.offsetWidth ?? fallbackWidth;
+  const menuHeight = menuEl?.offsetHeight ?? fallbackHeight;
+
+  let left = rect.left + rect.width / 2 - menuWidth / 2;
+  if (left + menuWidth > window.innerWidth - viewportPadding) {
+    left = window.innerWidth - menuWidth - viewportPadding;
+  }
+  if (left < viewportPadding) {
+    left = viewportPadding;
+  }
+
+  const topBelow = rect.bottom + menuGap;
+  const topAbove = rect.top - menuHeight - menuGap;
+  let top = topBelow;
+
+  if (
+    topBelow + menuHeight > window.innerHeight - viewportPadding &&
+    topAbove >= viewportPadding
+  ) {
+    top = topAbove;
+  }
+
+  panelMenuStyle.value = {
+    left: `${Math.round(left)}px`,
+    top: `${Math.round(top)}px`,
+  };
+};
+
 const handleZoomSettingsViewportChange = () => {
   updateZoomSettingsMenuPosition();
   updateLanguageMenuPosition();
+  updatePanelMenuPosition();
 };
+
+const panelMenuTitle = computed(() => {
+  return [
+    t("elementsPanel.elements"),
+    t("editor.templates"),
+    t("properties.title"),
+    t("elementsPanel.layout"),
+    t("editor.showMinimap"),
+    t("editor.showHistoryPanel"),
+  ].join(" / ");
+});
 
 const selectedTableSelectionElement = computed(() => {
   const selection = store.tableSelection;
@@ -904,6 +1141,7 @@ watch(
 watch(showZoomSettings, (val) => {
   if (!val) return;
   showLanguageMenu.value = false;
+  showPanelMenu.value = false;
   nextTick(() => {
     updateZoomSettingsMenuPosition();
   });
@@ -912,9 +1150,31 @@ watch(showZoomSettings, (val) => {
 watch(showLanguageMenu, (val) => {
   if (!val) return;
   showZoomSettings.value = false;
+  showPanelMenu.value = false;
   nextTick(() => {
     updateLanguageMenuPosition();
   });
+});
+
+watch(showPanelMenu, (val) => {
+  if (!val) return;
+  showZoomSettings.value = false;
+  showLanguageMenu.value = false;
+  nextTick(() => {
+    updatePanelMenuPosition();
+  });
+});
+
+watch(toolbarGroupOrder, () => {
+  persistToolbarGroupOrder();
+});
+
+watch(isToolbarGroupReorderMode, (active) => {
+  if (active) {
+    showZoomSettings.value = false;
+    showLanguageMenu.value = false;
+    showPanelMenu.value = false;
+  }
 });
 
 const handleZoomSlider = () => {
@@ -946,12 +1206,44 @@ const togglePropertiesPanel = () => {
   dispatchDesignerEvent("designer:toggle-properties-panel");
 };
 
+const toggleStructurePanel = () => {
+  dispatchDesignerEvent("designer:toggle-structure-panel");
+};
+
 const toggleMinimapPanel = () => {
   store.setShowMinimap(!store.showMinimap);
 };
 
 const toggleHistoryPanel = () => {
   store.setShowHistoryPanel(!store.showHistoryPanel);
+};
+
+const togglePanelMenu = () => {
+  showPanelMenu.value = !showPanelMenu.value;
+};
+
+type PanelMenuAction =
+  | "elements"
+  | "templates"
+  | "properties"
+  | "structure"
+  | "minimap"
+  | "history";
+
+const togglePanelMenuAction = (action: PanelMenuAction) => {
+  if (action === "elements") {
+    toggleElementsPanel();
+  } else if (action === "templates") {
+    toggleTemplatePanel();
+  } else if (action === "properties") {
+    togglePropertiesPanel();
+  } else if (action === "structure") {
+    toggleStructurePanel();
+  } else if (action === "minimap") {
+    toggleMinimapPanel();
+  } else {
+    toggleHistoryPanel();
+  }
 };
 
 const toggleLanguageMenu = () => {
@@ -1132,7 +1424,16 @@ const handlePropertiesPanelVisibilityEvent = (e: Event) => {
   isPropertiesPanelVisible.value = visible;
 };
 
+const handleStructurePanelVisibilityEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  const visible = (e as CustomEvent)?.detail?.visible;
+  if (typeof visible !== "boolean") return;
+  isStructurePanelVisible.value = visible;
+};
+
 onMounted(() => {
+  loadToolbarGroupOrder();
+
   window.addEventListener("designer:preview", handlePreviewEvent);
   window.addEventListener("designer:save", handleSaveEvent);
   window.addEventListener("designer:print", handlePrintEvent);
@@ -1154,9 +1455,19 @@ onMounted(() => {
     "designer:properties-panel-visibility",
     handlePropertiesPanelVisibilityEvent,
   );
+  window.addEventListener(
+    "designer:structure-panel-visibility",
+    handleStructurePanelVisibilityEvent,
+  );
   window.addEventListener("resize", handleToolbarResize);
   window.addEventListener("resize", handleZoomSettingsViewportChange);
   window.addEventListener("scroll", handleZoomSettingsViewportChange, true);
+  window.addEventListener(
+    "pointerdown",
+    handleToolbarReorderOutsidePointerDown,
+    true,
+  );
+  window.addEventListener("keydown", handleToolbarReorderEscape);
 
   dispatchDesignerEvent("designer:set-hand-pan-mode", {
     active: isHandPanActive.value,
@@ -1178,6 +1489,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  exitToolbarGroupReorderMode();
+
   dispatchDesignerEvent("designer:set-hand-pan-mode", {
     active: false,
   });
@@ -1203,9 +1516,19 @@ onUnmounted(() => {
     "designer:properties-panel-visibility",
     handlePropertiesPanelVisibilityEvent,
   );
+  window.removeEventListener(
+    "designer:structure-panel-visibility",
+    handleStructurePanelVisibilityEvent,
+  );
   window.removeEventListener("resize", handleToolbarResize);
   window.removeEventListener("resize", handleZoomSettingsViewportChange);
   window.removeEventListener("scroll", handleZoomSettingsViewportChange, true);
+  window.removeEventListener(
+    "pointerdown",
+    handleToolbarReorderOutsidePointerDown,
+    true,
+  );
+  window.removeEventListener("keydown", handleToolbarReorderEscape);
 
   if (toolbarResizeObserver) {
     toolbarResizeObserver.disconnect();
@@ -1216,34 +1539,55 @@ onUnmounted(() => {
 
 <template>
   <div
+    ref="toolbarRootRef"
     class="flex min-w-0 flex-1 items-stretch justify-end gap-0 text-gray-700 dark:text-gray-200"
   >
-    <button
-      v-if="isToolbarOverflowing"
-      type="button"
-      class="shrink-0 self-stretch relative z-10 w-10 overflow-hidden flex items-center justify-center rounded-none border-r border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-      :disabled="!canScrollToolbarLeft"
-      :title="t('editor.toolbarScrollPrev')"
-      :aria-label="t('editor.toolbarScrollPrev')"
-      @click="scrollToolbar('backward')"
-    >
-      <KeyboardArrowLeft class="relative z-10 h-4 w-4" />
-    </button>
-
     <div
-      ref="toolbarScrollRef"
-      class="no-scrollbar min-w-0 flex-1 overflow-x-auto flex items-center"
-      @scroll="handleToolbarScroll"
+      class="toolbar-reorder-group flex min-w-0 flex-1 items-stretch"
+      :class="getToolbarGroupStateClass('editor')"
+      :style="getToolbarGroupStyle('editor')"
+      :draggable="isToolbarGroupReorderMode"
+      @dragstart="handleToolbarGroupDragStart($event, 'editor')"
+      @dragover="handleToolbarGroupDragOver($event, 'editor')"
+      @drop="handleToolbarGroupDrop($event, 'editor')"
+      @dragend="handleToolbarGroupDragEnd"
+      @mousedown.left="startToolbarGroupLongPress('editor')"
+      @mouseup="stopToolbarGroupLongPress"
+      @mouseleave="stopToolbarGroupLongPress"
+      @touchstart.passive="startToolbarGroupLongPress('editor')"
+      @touchend="stopToolbarGroupLongPress"
+      @touchcancel="stopToolbarGroupLongPress"
     >
       <div
-        ref="toolbarScrollContentRef"
-        class="flex w-max min-w-max items-center gap-1 pr-1"
-        :class="{ 'ml-auto': !isToolbarOverflowing }"
+        class="flex min-w-0 flex-1 items-stretch"
+        :class="{ 'pointer-events-none select-none': isToolbarGroupReorderMode }"
       >
-        <!-- Font Controls -->
-        <div
-          class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 px-2"
+        <button
+          v-if="isToolbarOverflowing"
+          type="button"
+          class="shrink-0 self-stretch relative z-10 w-10 overflow-hidden flex items-center justify-center rounded-none border-r border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          :disabled="!canScrollToolbarLeft"
+          :title="t('editor.toolbarScrollPrev')"
+          :aria-label="t('editor.toolbarScrollPrev')"
+          @click="scrollToolbar('backward')"
         >
+          <KeyboardArrowLeft class="relative z-10 h-4 w-4" />
+        </button>
+
+        <div
+          ref="toolbarScrollRef"
+          class="no-scrollbar min-w-0 flex-1 overflow-x-auto flex items-center"
+          @scroll="handleToolbarScroll"
+        >
+          <div
+            ref="toolbarScrollContentRef"
+            class="flex w-max min-w-max items-center gap-1 pr-1"
+            :class="{ 'ml-auto': !isToolbarOverflowing }"
+          >
+            <!-- Font Controls -->
+            <div
+              class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 px-2"
+            >
           <div class="w-px h-4 bg-gray-300 dark:bg-gray-700"></div>
 
           <!-- Font Family -->
@@ -1727,22 +2071,24 @@ onUnmounted(() => {
           >
             <Trash2 class="w-4 h-4" />
           </button>
+            </div>
+
+          </div>
         </div>
 
+        <button
+          v-if="isToolbarOverflowing"
+          type="button"
+          class="shrink-0 self-stretch relative z-10 w-10 overflow-hidden flex items-center justify-center rounded-none border-l border-r border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          :disabled="!canScrollToolbarRight"
+          :title="t('editor.toolbarScrollNext')"
+          :aria-label="t('editor.toolbarScrollNext')"
+          @click="scrollToolbar('forward')"
+        >
+          <KeyboardArrowRight class="relative z-10 h-4 w-4" />
+        </button>
       </div>
     </div>
-
-    <button
-      v-if="isToolbarOverflowing"
-      type="button"
-      class="shrink-0 self-stretch relative z-10 w-10 overflow-hidden flex items-center justify-center rounded-none border-l border-r border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-      :disabled="!canScrollToolbarRight"
-      :title="t('editor.toolbarScrollNext')"
-      :aria-label="t('editor.toolbarScrollNext')"
-      @click="scrollToolbar('forward')"
-    >
-      <KeyboardArrowRight class="relative z-10 h-4 w-4" />
-    </button>
 
     <div class="ml-1 flex shrink-0 items-center gap-1">
         <div
@@ -1804,64 +2150,25 @@ onUnmounted(() => {
 
         <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
-        <div
-          class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
-        >
-          <button
-            @click="toggleElementsPanel"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :class="{
-              'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
-                isElementsPanelVisible,
-            }"
-            :title="t('elementsPanel.elements')"
+        <div class="relative" ref="panelTriggerRef">
+          <div
+            class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
           >
-            <ViewSidebar class="w-4 h-4" />
-          </button>
-          <button
-            @click="toggleTemplatePanel"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :class="{
-              'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
-                isTemplatePanelVisible,
-            }"
-            :title="t('editor.templates')"
-          >
-            <ListIcon class="w-4 h-4" />
-          </button>
-          <button
-            @click="togglePropertiesPanel"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :class="{
-              'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
-                isPropertiesPanelVisible,
-            }"
-            :title="t('properties.title')"
-          >
-            <Tune class="w-4 h-4" />
-          </button>
-          <button
-            @click="toggleMinimapPanel"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :class="{
-              'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
-                store.showMinimap,
-            }"
-            :title="t('editor.showMinimap')"
-          >
-            <GridView class="w-4 h-4" />
-          </button>
-          <button
-            @click="toggleHistoryPanel"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :class="{
-              'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
-                store.showHistoryPanel,
-            }"
-            :title="t('editor.showHistoryPanel')"
-          >
-            <History class="w-4 h-4" />
-          </button>
+            <button
+              @click="togglePanelMenu"
+              class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-300 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  showPanelMenu,
+              }"
+              :title="panelMenuTitle"
+              :aria-label="panelMenuTitle"
+              :aria-expanded="showPanelMenu"
+              aria-haspopup="menu"
+            >
+              <AppsIcon class="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
@@ -1870,28 +2177,6 @@ onUnmounted(() => {
         <div
           class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
         >
-          <button
-            @click="handlePreview"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :title="
-              t('editor.preview') +
-              ' (' +
-              formatShortcut(['Ctrl', 'Shift', 'P']) +
-              ')'
-            "
-          >
-            <Preview class="w-4 h-4" />
-          </button>
-          <button
-            @click="handlePrint"
-            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            :title="
-              t('editor.print') + ' (' + formatShortcut(['Ctrl', 'P']) + ')'
-            "
-          >
-            <Printer class="w-4 h-4" />
-          </button>
-          <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
           <button
             @click="handleExport"
             class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
@@ -1912,6 +2197,28 @@ onUnmounted(() => {
             :title="t('editor.exportImage')"
           >
             <Image class="w-4 h-4" />
+          </button>
+          <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+          <button
+            @click="handlePreview"
+            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+            :title="
+              t('editor.preview') +
+              ' (' +
+              formatShortcut(['Ctrl', 'Shift', 'P']) +
+              ')'
+            "
+          >
+            <Preview class="w-4 h-4" />
+          </button>
+          <button
+            @click="handlePrint"
+            class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+            :title="
+              t('editor.print') + ' (' + formatShortcut(['Ctrl', 'P']) + ')'
+            "
+          >
+            <Printer class="w-4 h-4" />
           </button>
         </div>
 
@@ -1969,6 +2276,93 @@ onUnmounted(() => {
         </div>
 
         <Teleport :to="modalContainer || 'body'">
+          <div
+            v-if="showPanelMenu"
+            class="fixed inset-0 z-[1999] pointer-events-auto"
+            @click="showPanelMenu = false"
+          ></div>
+
+          <div
+            v-if="showPanelMenu"
+            ref="panelMenuRef"
+            class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[2000] flex items-center gap-1 p-1.5 pointer-events-auto"
+            :style="panelMenuStyle"
+            @click.stop
+          >
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  isElementsPanelVisible,
+              }"
+              :title="t('elementsPanel.elements')"
+              @click="togglePanelMenuAction('elements')"
+            >
+              <ViewSidebar class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  isTemplatePanelVisible,
+              }"
+              :title="t('editor.templates')"
+              @click="togglePanelMenuAction('templates')"
+            >
+              <ListIcon class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  isPropertiesPanelVisible,
+              }"
+              :title="t('properties.title')"
+              @click="togglePanelMenuAction('properties')"
+            >
+              <Tune class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  isStructurePanelVisible,
+              }"
+              :title="t('elementsPanel.layout')"
+              @click="togglePanelMenuAction('structure')"
+            >
+              <GridViewOutline class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  store.showMinimap,
+              }"
+              :title="t('editor.showMinimap')"
+              @click="togglePanelMenuAction('minimap')"
+            >
+              <GridView class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  store.showHistoryPanel,
+              }"
+              :title="t('editor.showHistoryPanel')"
+              @click="togglePanelMenuAction('history')"
+            >
+              <History class="w-4 h-4" />
+            </button>
+          </div>
+
           <div
             v-if="showLanguageMenu"
             class="fixed inset-0 z-[1999] pointer-events-auto"

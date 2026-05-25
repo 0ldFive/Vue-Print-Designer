@@ -8,6 +8,7 @@ import {
   ElementType,
   type ElementPropertiesSchema,
   type PropertyField,
+  type PrintElement,
 } from "@/types";
 import { elementPropertiesSchema as TextSchema } from "@/components/elements/TextElement.vue";
 import { elementPropertiesSchema as ImageSchema } from "@/components/elements/ImageElement.vue";
@@ -49,6 +50,42 @@ const isMultiSelected = computed(() => store.selectedElementIds.length > 1);
 const selectedElementId = computed(() => element.value?.id || "");
 const selectedElementType = computed(() => element.value?.type || "");
 const isLocked = computed(() => element.value?.locked || false);
+const selectedElements = computed<PrintElement[]>(() => {
+  if (store.selectedElementIds.length === 0) return [];
+
+  const selectedIdSet = new Set(store.selectedElementIds);
+  const elements: PrintElement[] = [];
+
+  for (const page of store.pages) {
+    for (const item of page.elements) {
+      if (selectedIdSet.has(item.id)) {
+        elements.push(item);
+      }
+    }
+  }
+
+  return elements;
+});
+const allSelectedLocked = computed(() => {
+  if (selectedElements.value.length === 0) return false;
+  return selectedElements.value.every((item) => Boolean(item.locked));
+});
+const hasUnlockedSelectedElements = computed(() => {
+  return selectedElements.value.some((item) => !item.locked);
+});
+const shouldShowLockedBadge = computed(() => {
+  if (isMultiSelected.value) {
+    return allSelectedLocked.value;
+  }
+  return isLocked.value;
+});
+const isDeleteSelectedDisabled = computed(() => {
+  if (!store.isTemplateEditable) return true;
+  if (isMultiSelected.value) {
+    return !hasUnlockedSelectedElements.value;
+  }
+  return isLocked.value;
+});
 const isEditingDisabled = computed(
   () => isLocked.value || !store.isTemplateEditable,
 );
@@ -720,19 +757,21 @@ const closePropertiesPanel = () => {
       data-floating-panel-drag-handle="true"
     >
       <div class="min-w-0">
-        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          {{ t("properties.title") }}
-        </h2>
+        <div class="flex items-center gap-2 min-w-0">
+          <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {{ t("properties.title") }}
+          </h2>
+          <div
+            v-if="shouldShowLockedBadge"
+            class="inline-flex items-center gap-1.5 text-red-500 dark:text-red-400 text-xs font-medium leading-none bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded border border-red-100 dark:border-red-800 shrink-0"
+          >
+            <Lock class="w-3.5 h-3.5 shrink-0" />
+            <span>{{ t("properties.locked") }}</span>
+          </div>
+        </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
           {{ t("properties.subtitle") }}
         </p>
-        <div
-          v-if="isLocked"
-          class="mt-2 inline-flex items-center text-red-500 dark:text-red-400 gap-1 text-xs font-medium bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded border border-red-100 dark:border-red-800"
-        >
-          <Lock class="w-3 h-3" />
-          <span>{{ t("properties.locked") }}</span>
-        </div>
       </div>
       <div class="absolute right-0 top-0 z-50 flex items-center gap-0">
         <button
@@ -827,7 +866,7 @@ const closePropertiesPanel = () => {
       </div>
       <button
         @click="handleDeleteSelected"
-        :disabled="!store.isTemplateEditable"
+        :disabled="isDeleteSelectedDisabled"
         class="w-full py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ t("properties.deleteSelected") }}

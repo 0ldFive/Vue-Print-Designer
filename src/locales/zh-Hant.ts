@@ -258,6 +258,16 @@ export default {
       },
     },
     standard: "標準元素",
+    layout: "佈局結構",
+    layoutSubtitle: "按頁面與層級查看頁面元素",
+    layoutHelp: {
+      title: "佈局結構說明",
+      items: {
+        overview: "按頁面分組查看元素層級，嵌入元素會顯示在所屬表格下。",
+        select: "點擊列表項可選中元素，支持 Ctrl/Command 多選。",
+        actions: "可在頂部快捷操作圖層順序、鎖定、複製和刪除。",
+      },
+    },
     general: "通用",
     dataCodes: "數據 & 條碼",
     shapes: "圖形",

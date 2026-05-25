@@ -258,6 +258,16 @@ export default {
       },
     },
     standard: "标准元素",
+    layout: "布局结构",
+    layoutSubtitle: "按页面与层级查看页面元素",
+    layoutHelp: {
+      title: "布局结构说明",
+      items: {
+        overview: "按页面分组查看元素层级，嵌入元素会显示在所属表格下。",
+        select: "点击列表项可选中元素，支持 Ctrl/Command 多选。",
+        actions: "可在顶部快捷操作图层顺序、锁定、复制和删除。",
+      },
+    },
     general: "通用",
     dataCodes: "数据 & 条码",
     shapes: "图形",

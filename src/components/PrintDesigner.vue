@@ -20,6 +20,7 @@ import Shortcuts from "./layout/Shortcuts.vue";
 import MinimapPanel from "./layout/MinimapPanel.vue";
 import HistoryPanel from "./layout/HistoryPanel.vue";
 import TemplateListPanel from "./layout/TemplateListPanel.vue";
+import ElementStructurePanel from "./layout/ElementStructurePanel.vue";
 import InputModal from "@/components/common/InputModal.vue";
 import { toast } from "@/utils/toast";
 import Save from "~icons/material-symbols/save";
@@ -62,6 +63,9 @@ const brandTick = ref(0);
 const showTemplateHelpTooltip = ref(false);
 const templateHelpButtonRef = ref<HTMLElement | null>(null);
 const templateHelpTooltipRef = ref<HTMLElement | null>(null);
+const showStructureHelpTooltip = ref(false);
+const structureHelpButtonRef = ref<HTMLElement | null>(null);
+const structureHelpTooltipRef = ref<HTMLElement | null>(null);
 const templatePanelHelp = computed(() => ({
   title: t("template.help.title"),
   items: [
@@ -81,8 +85,32 @@ const {
   templateHelpTooltipRef,
   { width: 288 },
 );
+const structurePanelHelp = computed(() => ({
+  title: t("elementsPanel.layoutHelp.title"),
+  items: [
+    t("elementsPanel.layoutHelp.items.overview"),
+    t("elementsPanel.layoutHelp.items.select"),
+    t("elementsPanel.layoutHelp.items.actions"),
+  ],
+}));
+const {
+  arrowStyle: structureHelpArrowStyle,
+  placement: structureHelpPlacement,
+  toggleTooltip: toggleStructureHelpTooltip,
+  tooltipStyle: structureHelpTooltipStyle,
+} = useFloatingTooltip(
+  showStructureHelpTooltip,
+  structureHelpButtonRef,
+  structureHelpTooltipRef,
+  { width: 288 },
+);
 
-type FloatingPanelKey = "sidebar" | "templates" | "properties" | "minimap";
+type FloatingPanelKey =
+  | "sidebar"
+  | "templates"
+  | "properties"
+  | "structure"
+  | "minimap";
 type FloatingPanelLayerKey = FloatingPanelKey | "history";
 type ResizablePanelKey = Exclude<FloatingPanelKey, "minimap">;
 type FloatingPanelHorizontalAnchor = "left" | "right" | "free";
@@ -95,10 +123,13 @@ const FLOAT_PANEL_MIN_HEIGHT = 280;
 const FLOAT_PANEL_EDGE_SNAP_TOLERANCE = 16;
 const TEMPLATE_PANEL_DEFAULT_WIDTH = 320;
 const PROPERTIES_PANEL_DEFAULT_WIDTH = 296;
+const STRUCTURE_PANEL_DEFAULT_WIDTH = 300;
 const TEMPLATE_PANEL_LAYOUT_STORAGE_KEY =
   "print-designer-template-panel-layout";
 const ELEMENTS_PANEL_VISIBILITY_STORAGE_KEY =
   "print-designer-elements-panel-visibility";
+const STRUCTURE_PANEL_VISIBILITY_STORAGE_KEY =
+  "print-designer-structure-panel-visibility";
 const MINIMAP_PANEL_FALLBACK_WIDTH = 212;
 const MINIMAP_PANEL_FALLBACK_HEIGHT = 252;
 const MINIMAP_PANEL_MIN_WIDTH = 160;
@@ -135,6 +166,31 @@ const persistElementsPanelVisibility = (visible: boolean) => {
   }
 };
 
+const loadStructurePanelVisibility = () => {
+  if (typeof window === "undefined") return true;
+  try {
+    const raw = window.localStorage.getItem(
+      STRUCTURE_PANEL_VISIBILITY_STORAGE_KEY,
+    );
+    if (raw === null) return true;
+    return raw === "true";
+  } catch {
+    return true;
+  }
+};
+
+const persistStructurePanelVisibility = (visible: boolean) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      STRUCTURE_PANEL_VISIBILITY_STORAGE_KEY,
+      String(visible),
+    );
+  } catch {
+    // ignore storage failures
+  }
+};
+
 type FloatingPanelBounds = {
   minX: number;
   minY: number;
@@ -150,6 +206,7 @@ const propertiesPanelPos = ref({
   x: FLOAT_PANEL_MARGIN,
   y: FLOAT_PANEL_MARGIN,
 });
+const structurePanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
 const sidebarPanelPreferredPos = ref({
   x: FLOAT_PANEL_MARGIN,
   y: FLOAT_PANEL_MARGIN,
@@ -162,22 +219,31 @@ const propertiesPanelPreferredPos = ref({
   x: FLOAT_PANEL_MARGIN,
   y: FLOAT_PANEL_MARGIN,
 });
+const structurePanelPreferredPos = ref({
+  x: FLOAT_PANEL_MARGIN,
+  y: FLOAT_PANEL_MARGIN,
+});
 const sidebarPanelWidth = ref(FLOAT_PANEL_MIN_WIDTH);
 const templatePanelWidth = ref(TEMPLATE_PANEL_DEFAULT_WIDTH);
 const propertiesPanelWidth = ref(PROPERTIES_PANEL_DEFAULT_WIDTH);
+const structurePanelWidth = ref(STRUCTURE_PANEL_DEFAULT_WIDTH);
 const sidebarPanelPreferredWidth = ref(FLOAT_PANEL_MIN_WIDTH);
 const templatePanelPreferredWidth = ref(TEMPLATE_PANEL_DEFAULT_WIDTH);
 const propertiesPanelPreferredWidth = ref(PROPERTIES_PANEL_DEFAULT_WIDTH);
+const structurePanelPreferredWidth = ref(STRUCTURE_PANEL_DEFAULT_WIDTH);
 const sidebarPanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const templatePanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const propertiesPanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+const structurePanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const sidebarPanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const templatePanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const propertiesPanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+const structurePanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
 const minimapPanelRef = ref<HTMLElement | null>(null);
 const showElementsPanel = ref(loadElementsPanelVisibility());
 const showTemplatePanel = ref(true);
 const showPropertiesPanel = ref(true);
+const showStructurePanel = ref(loadStructurePanelVisibility());
 const minimapPanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
 const minimapPanelPreferredPos = ref({
   x: FLOAT_PANEL_MARGIN,
@@ -195,9 +261,12 @@ const templatePanelAnchorX = ref<FloatingPanelHorizontalAnchor>("left");
 const templatePanelAnchorY = ref<FloatingPanelVerticalAnchor>("top");
 const propertiesPanelAnchorX = ref<FloatingPanelHorizontalAnchor>("right");
 const propertiesPanelAnchorY = ref<FloatingPanelVerticalAnchor>("top");
+const structurePanelAnchorX = ref<FloatingPanelHorizontalAnchor>("free");
+const structurePanelAnchorY = ref<FloatingPanelVerticalAnchor>("top");
 const sidebarPanelHeightMode = ref<FloatingPanelHeightMode>("fit");
 const templatePanelHeightMode = ref<FloatingPanelHeightMode>("fit");
 const propertiesPanelHeightMode = ref<FloatingPanelHeightMode>("fit");
+const structurePanelHeightMode = ref<FloatingPanelHeightMode>("fit");
 const restoredTemplatePanelLayout = ref({
   x: false,
   y: false,
@@ -225,6 +294,7 @@ const floatingPanelLayerOrder = ref<FloatingPanelLayerKey[]>([
   "sidebar",
   "templates",
   "properties",
+  "structure",
   "minimap",
   "history",
 ]);
@@ -267,6 +337,29 @@ const emitPropertiesPanelVisibility = () => {
   emitPanelVisibility(
     "designer:properties-panel-visibility",
     showPropertiesPanel.value,
+  );
+};
+
+const emitStructurePanelVisibility = () => {
+  emitPanelVisibility(
+    "designer:structure-panel-visibility",
+    showStructurePanel.value,
+  );
+};
+
+const clearStructurePanelCanvasHover = () => {
+  const detail: Record<string, unknown> = {
+    hovering: false,
+    elementId: null,
+    pageIndex: null,
+  };
+  if (designerInstanceId) {
+    detail.__designerInstanceId = designerInstanceId;
+  }
+  window.dispatchEvent(
+    new CustomEvent("designer:structure-panel-hover-element", {
+      detail,
+    }),
   );
 };
 
@@ -420,6 +513,25 @@ const handleTogglePropertiesPanelEvent = (e: Event) => {
   });
 };
 
+const handleToggleStructurePanelEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  const wasVisible = showStructurePanel.value;
+  showStructurePanel.value = !showStructurePanel.value;
+  if (wasVisible && !showStructurePanel.value) {
+    showStructureHelpTooltip.value = false;
+    clearStructurePanelCanvasHover();
+  }
+  persistStructurePanelVisibility(showStructurePanel.value);
+  emitStructurePanelVisibility();
+  nextTick(() => {
+    initOrClampFloatingPanels();
+    if (!wasVisible && showStructurePanel.value) {
+      bringPanelToFront("structure");
+      initOrClampFloatingPanels();
+    }
+  });
+};
+
 const handleCloseElementsPanelEvent = (e: Event) => {
   if (!isEventForCurrentDesigner(e)) return;
   if (!showElementsPanel.value) return;
@@ -443,6 +555,24 @@ const handleClosePropertiesPanelEvent = (e: Event) => {
   if (!showPropertiesPanel.value) return;
   showPropertiesPanel.value = false;
   emitPropertiesPanelVisibility();
+  nextTick(() => {
+    initOrClampFloatingPanels();
+  });
+};
+
+const closeStructurePanel = () => {
+  if (!showStructurePanel.value) return;
+  showStructureHelpTooltip.value = false;
+  clearStructurePanelCanvasHover();
+  showStructurePanel.value = false;
+  persistStructurePanelVisibility(false);
+  emitStructurePanelVisibility();
+};
+
+const handleCloseStructurePanelEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  if (!showStructurePanel.value) return;
+  closeStructurePanel();
   nextTick(() => {
     initOrClampFloatingPanels();
   });
@@ -666,6 +796,13 @@ const getPanelAnchors = (panel: ResizablePanelKey) => {
     };
   }
 
+  if (panel === "structure") {
+    return {
+      x: structurePanelAnchorX.value,
+      y: structurePanelAnchorY.value,
+    };
+  }
+
   return {
     x: propertiesPanelAnchorX.value,
     y: propertiesPanelAnchorY.value,
@@ -691,6 +828,12 @@ const setPanelAnchors = (
     return;
   }
 
+  if (panel === "structure") {
+    structurePanelAnchorX.value = anchors.x;
+    structurePanelAnchorY.value = anchors.y;
+    return;
+  }
+
   propertiesPanelAnchorX.value = anchors.x;
   propertiesPanelAnchorY.value = anchors.y;
 };
@@ -706,6 +849,11 @@ const setPanelHeightMode = (
 
   if (panel === "templates") {
     templatePanelHeightMode.value = heightMode;
+    return;
+  }
+
+  if (panel === "structure") {
+    structurePanelHeightMode.value = heightMode;
     return;
   }
 
@@ -980,12 +1128,16 @@ const initOrClampFloatingPanels = () => {
       : "top";
     propertiesPanelAnchorX.value = "right";
     propertiesPanelAnchorY.value = "top";
+    structurePanelAnchorX.value = "free";
+    structurePanelAnchorY.value = "top";
 
     sidebarPanelHeightMode.value = "fit";
     propertiesPanelHeightMode.value = "fit";
+    structurePanelHeightMode.value = "fit";
 
     sidebarPanelPreferredHeight.value = bounds.maxHeight;
     propertiesPanelPreferredHeight.value = bounds.maxHeight;
+    structurePanelPreferredHeight.value = bounds.maxHeight;
     sidebarPanelPreferredPos.value = {
       x: Math.max(
         bounds.minX,
@@ -1027,6 +1179,17 @@ const initOrClampFloatingPanels = () => {
       ),
       y: bounds.minY,
     };
+
+    structurePanelPreferredPos.value = {
+      x: Math.max(
+        bounds.minX,
+        bounds.maxRight -
+          propertiesPanelPreferredWidth.value -
+          structurePanelPreferredWidth.value -
+          FLOAT_PANEL_MARGIN,
+      ),
+      y: bounds.minY,
+    };
     hasInitializedFloatingPanels.value = true;
   }
 
@@ -1039,6 +1202,9 @@ const initOrClampFloatingPanels = () => {
   propertiesPanelPreferredWidth.value = clampPreferredPanelWidth(
     propertiesPanelPreferredWidth.value,
   );
+  structurePanelPreferredWidth.value = clampPreferredPanelWidth(
+    structurePanelPreferredWidth.value,
+  );
   sidebarPanelPreferredHeight.value = clampPreferredPanelHeight(
     sidebarPanelPreferredHeight.value,
   );
@@ -1047,6 +1213,9 @@ const initOrClampFloatingPanels = () => {
   );
   propertiesPanelPreferredHeight.value = clampPreferredPanelHeight(
     propertiesPanelPreferredHeight.value,
+  );
+  structurePanelPreferredHeight.value = clampPreferredPanelHeight(
+    structurePanelPreferredHeight.value,
   );
 
   const sidebarLayout = resolvePanelLayout(
@@ -1090,6 +1259,20 @@ const initOrClampFloatingPanels = () => {
   propertiesPanelPos.value = propertiesLayout.pos;
   propertiesPanelWidth.value = propertiesLayout.width;
   propertiesPanelHeight.value = propertiesLayout.height;
+
+  const structureLayout = resolvePanelLayout(
+    structurePanelPreferredPos.value,
+    structurePanelPreferredWidth.value,
+    structurePanelPreferredHeight.value,
+    {
+      horizontalAnchor: structurePanelAnchorX.value,
+      verticalAnchor: structurePanelAnchorY.value,
+      heightMode: structurePanelHeightMode.value,
+    },
+  );
+  structurePanelPos.value = structureLayout.pos;
+  structurePanelWidth.value = structureLayout.width;
+  structurePanelHeight.value = structureLayout.height;
 
   if (!store.showMinimap) return;
 
@@ -1136,6 +1319,15 @@ const propertiesPanelStyle = computed(() => {
   };
 });
 
+const structurePanelStyle = computed(() => {
+  return {
+    left: `${structurePanelPos.value.x}px`,
+    top: `${structurePanelPos.value.y}px`,
+    width: `${structurePanelWidth.value}px`,
+    height: `${structurePanelHeight.value}px`,
+  };
+});
+
 const minimapPanelStyle = computed(() => {
   return {
     left: `${minimapPanelPos.value.x}px`,
@@ -1164,6 +1356,7 @@ const isFloatingPanelLayerKey = (
     value === "sidebar" ||
     value === "templates" ||
     value === "properties" ||
+    value === "structure" ||
     value === "minimap" ||
     value === "history"
   );
@@ -1370,6 +1563,8 @@ const handlePanelDragMove = (e: MouseEvent) => {
         ? templatePanelWidth.value
         : draggingPanel === "properties"
           ? propertiesPanelWidth.value
+          : draggingPanel === "structure"
+            ? structurePanelWidth.value
           : getMinimapPanelSize().width;
   const panelHeight =
     draggingPanel === "sidebar"
@@ -1378,6 +1573,8 @@ const handlePanelDragMove = (e: MouseEvent) => {
         ? templatePanelHeight.value
         : draggingPanel === "properties"
           ? propertiesPanelHeight.value
+          : draggingPanel === "structure"
+            ? structurePanelHeight.value
           : getMinimapPanelSize().height;
   const nextPos = clampPanelPos(
     dragStartPanelPos.x + deltaX,
@@ -1426,6 +1623,21 @@ const handlePanelDragMove = (e: MouseEvent) => {
         nextPos,
         propertiesPanelWidth.value,
         propertiesPanelHeight.value,
+      ),
+    );
+    return;
+  }
+
+  if (draggingPanel === "structure") {
+    structurePanelPos.value = nextPos;
+    structurePanelPreferredPos.value = { ...nextPos };
+    setPanelAnchors(
+      "structure",
+      detectPanelAnchors(
+        "structure",
+        nextPos,
+        structurePanelWidth.value,
+        structurePanelHeight.value,
       ),
     );
     return;
@@ -1524,6 +1736,35 @@ const handlePanelResizeMove = (e: MouseEvent) => {
     return;
   }
 
+  if (resizingPanel === "structure") {
+    const resizedLayout = resolvePanelResizeLayout(
+      resizeStartPanelPos,
+      resizeStartWidth,
+      resizeStartHeight,
+      deltaX,
+      deltaY,
+      resizeStartPanelAnchors,
+    );
+
+    structurePanelWidth.value = resizedLayout.width;
+    structurePanelHeight.value = resizedLayout.height;
+    structurePanelPos.value = resizedLayout.pos;
+    structurePanelPreferredWidth.value = resizedLayout.width;
+    structurePanelPreferredHeight.value = resizedLayout.height;
+    structurePanelPreferredPos.value = { ...resizedLayout.pos };
+    setPanelHeightMode("structure", "fixed");
+    setPanelAnchors(
+      "structure",
+      detectPanelAnchors(
+        "structure",
+        resizedLayout.pos,
+        resizedLayout.width,
+        resizedLayout.height,
+      ),
+    );
+    return;
+  }
+
   const resizedLayout = resolvePanelResizeLayout(
     resizeStartPanelPos,
     resizeStartWidth,
@@ -1572,6 +1813,8 @@ const startPanelResize = (panel: FloatingPanelKey, e: MouseEvent) => {
         ? templatePanelWidth.value
         : panel === "properties"
           ? propertiesPanelWidth.value
+          : panel === "structure"
+            ? structurePanelWidth.value
           : minimapPanelWidth.value;
   resizeStartHeight =
     panel === "sidebar"
@@ -1580,6 +1823,8 @@ const startPanelResize = (panel: FloatingPanelKey, e: MouseEvent) => {
         ? templatePanelHeight.value
         : panel === "properties"
           ? propertiesPanelHeight.value
+          : panel === "structure"
+            ? structurePanelHeight.value
           : minimapPanelHeight.value;
   resizeStartPanelPos =
     panel === "sidebar"
@@ -1588,6 +1833,8 @@ const startPanelResize = (panel: FloatingPanelKey, e: MouseEvent) => {
         ? { ...templatePanelPos.value }
         : panel === "properties"
           ? { ...propertiesPanelPos.value }
+          : panel === "structure"
+            ? { ...structurePanelPos.value }
           : { ...minimapPanelPos.value };
   resizeStartPanelAnchors =
     panel === "minimap"
@@ -1612,6 +1859,8 @@ const startPanelDrag = (panel: FloatingPanelKey, e: MouseEvent) => {
         ? { ...templatePanelPos.value }
         : panel === "properties"
           ? { ...propertiesPanelPos.value }
+          : panel === "structure"
+            ? { ...structurePanelPos.value }
           : { ...minimapPanelPos.value };
 
   window.addEventListener("mousemove", handlePanelDragMove);
@@ -1708,6 +1957,7 @@ onMounted(() => {
   emitElementsPanelVisibility();
   emitTemplatePanelVisibility();
   emitPropertiesPanelVisibility();
+  emitStructurePanelVisibility();
 
   nextTick(() => {
     updateOffset();
@@ -1756,8 +2006,16 @@ onMounted(() => {
     handleTogglePropertiesPanelEvent as EventListener,
   );
   window.addEventListener(
+    "designer:toggle-structure-panel",
+    handleToggleStructurePanelEvent as EventListener,
+  );
+  window.addEventListener(
     "designer:close-properties-panel",
     handleClosePropertiesPanelEvent as EventListener,
+  );
+  window.addEventListener(
+    "designer:close-structure-panel",
+    handleCloseStructurePanelEvent as EventListener,
   );
   window.addEventListener(
     "designer:panel-bring-to-front",
@@ -2162,8 +2420,16 @@ onUnmounted(() => {
     handleTogglePropertiesPanelEvent as EventListener,
   );
   window.removeEventListener(
+    "designer:toggle-structure-panel",
+    handleToggleStructurePanelEvent as EventListener,
+  );
+  window.removeEventListener(
     "designer:close-properties-panel",
     handleClosePropertiesPanelEvent as EventListener,
+  );
+  window.removeEventListener(
+    "designer:close-structure-panel",
+    handleCloseStructurePanelEvent as EventListener,
   );
   window.removeEventListener(
     "designer:panel-bring-to-front",
@@ -3066,6 +3332,141 @@ const rulerRanges = computed(() => {
           title="Resize panel"
           class="absolute bottom-0.5 right-0.5 z-20 h-4 w-4 cursor-se-resize bg-transparent p-0 text-gray-400 pointer-events-auto hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
           @mousedown.stop.prevent="(e) => startPanelResize('properties', e)"
+        >
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6.5 14L14 6.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
+            <path
+              d="M3 14L14 3"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
+            <path
+              d="M9.8 14L14 9.8"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div
+        v-show="showStructurePanel"
+        data-floating-panel-surface="true"
+        data-floating-panel-key="structure"
+        class="absolute pointer-events-none"
+        :style="[
+          structurePanelStyle,
+          { zIndex: getPanelZIndex('structure') },
+        ]"
+      >
+        <div
+          class="relative h-full w-full pointer-events-auto rounded-lg overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col"
+          @mousedown="(e) => handleFloatingPanelMouseDown('structure', e)"
+        >
+          <div
+            class="relative p-4 pr-20 min-h-[72px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-move select-none"
+            data-floating-panel-drag-handle="true"
+          >
+            <div class="min-w-0">
+              <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {{ t("elementsPanel.layout") }}
+              </h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ t("elementsPanel.layoutSubtitle") }}
+              </p>
+            </div>
+            <div class="absolute right-0 top-0 z-50 flex items-center gap-0">
+              <button
+                ref="structureHelpButtonRef"
+                type="button"
+                :class="[
+                  'panel-help-btn h-8 w-8 inline-flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200',
+                  showStructureHelpTooltip
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+                    : '',
+                ]"
+                :aria-label="t('elementsPanel.layoutHelp.title')"
+                :aria-pressed="showStructureHelpTooltip"
+                @mousedown.stop.prevent="toggleStructureHelpTooltip"
+              >
+                <Help class="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                class="panel-close-btn h-8 w-8 inline-flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
+                @mousedown.stop
+                @click.stop="closeStructurePanel"
+              >
+                <Close class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <Teleport :to="modalContainer || 'body'">
+            <div
+              v-if="showStructureHelpTooltip"
+              ref="structureHelpTooltipRef"
+              role="tooltip"
+              class="pointer-events-auto select-text rounded border border-gray-200 bg-white text-left shadow-xl dark:border-gray-700 dark:bg-gray-900"
+              :style="structureHelpTooltipStyle"
+              @click.stop
+            >
+              <div
+                v-if="structureHelpPlacement === 'bottom'"
+                class="absolute -top-1.5 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+                :style="structureHelpArrowStyle"
+              ></div>
+              <div
+                v-else
+                class="absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+                :style="structureHelpArrowStyle"
+              ></div>
+              <div
+                class="overflow-y-auto p-3"
+                :style="{ maxHeight: structureHelpTooltipStyle.maxHeight }"
+              >
+                <div class="flex items-start gap-2">
+                  <Help
+                    class="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300"
+                  />
+                  <div class="min-w-0">
+                    <h3
+                      class="text-sm font-semibold text-gray-900 dark:text-gray-100"
+                    >
+                      {{ structurePanelHelp.title }}
+                    </h3>
+                    <ul
+                      class="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-gray-600 dark:text-gray-300"
+                    >
+                      <li v-for="item in structurePanelHelp.items" :key="item">
+                        {{ item }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Teleport>
+          <div class="min-h-0 flex-1">
+            <ElementStructurePanel />
+          </div>
+        </div>
+        <button
+          type="button"
+          title="Resize panel"
+          class="absolute bottom-0.5 right-0.5 z-20 h-4 w-4 cursor-se-resize bg-transparent p-0 text-gray-400 pointer-events-auto hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+          @mousedown.stop.prevent="(e) => startPanelResize('structure', e)"
         >
           <svg
             class="h-4 w-4"

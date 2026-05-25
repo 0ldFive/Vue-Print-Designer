@@ -264,6 +264,19 @@ export default {
     },
     standard: "Standard",
     custom: "Benutzerdefiniert",
+    layout: "Layout",
+    layoutSubtitle: "Seitenelemente nach Seite und Ebene anzeigen",
+    layoutHelp: {
+      title: "Leitfaden zur Layoutstruktur",
+      items: {
+        overview:
+          "Die Elementhierarchie wird nach Seiten dargestellt. Eingebettete Elemente erscheinen unter ihrer übergeordneten Tabelle.",
+        select:
+          "Klicken Sie auf einen Listeneintrag, um ein Element auszuwählen. Mehrfachauswahl mit Ctrl/Command wird unterstützt.",
+        actions:
+          "Über die Aktionsleiste oben können Ebenenreihenfolge, Sperren, Kopieren und Löschen schnell gesteuert werden.",
+      },
+    },
     general: "Allgemein",
     dataCodes: "Daten & Codes",
     shapes: "Formen",
