@@ -943,7 +943,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const limitBottom =
             pageRect.top + pageHeight - effectiveFooterHeight - marginBottom;
           const wrapperRect = wrapper.getBoundingClientRect();
-          const wrapperTop = wrapperRect.top;
+          const wrapperTopInPage = wrapperRect.top - pageRect.top;
 
           if (isAutoHeight) {
             if (!autoHeightEl) return;
@@ -972,7 +972,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
             if (splitIndex <= 0) {
               const startY = resolveFlowChunkStartY(wrapper);
-              if (wrapperTop <= startY + 5) {
+              if (wrapperTopInPage <= startY + 5) {
                 splitIndex = 1;
               } else {
                 const newPage = createFlowOverflowPage(page, i);
@@ -1065,34 +1065,34 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             // 预留 1px 缓冲，避免浮点误差。
             if (rowRect.bottom + currentFooterHeight > limitBottom + 1) {
               splitIndex = r;
-
-              // 防止死循环：若首行已超限且表格已贴近页首，
-              // 必须至少保留一行在当前页。
-              if (splitIndex === 0) {
-                const marginTop = store.pageSpacingY || 0;
-                const minTop =
-                  copyHeader && headerHeight > 0
-                    ? headerHeight + marginTop
-                    : marginTop;
-                let startY = minTop;
-                const originalTopVal = parseAttrNumber(
-                  wrapper,
-                  "data-original-top",
-                  parseFloat(wrapper.style.top || "") || 0,
-                );
-                if (
-                  originalTopVal >= minTop &&
-                  originalTopVal <= minTop + 100
-                ) {
-                  startY = originalTopVal;
-                }
-
-                // 若当前位置已接近页首，强制保留一行。
-                if (wrapperTop <= startY + 5) {
-                  splitIndex = 1; // 强制保留一行
-                }
-              }
               break;
+            }
+          }
+
+          const resolvedStartY = resolveFlowChunkStartY(wrapper);
+
+          if (splitIndex === 0) {
+            // 防止死循环：若首行已超限且表格已贴近页首，
+            // 必须至少保留一行在当前页。
+            if (wrapperTopInPage <= resolvedStartY + 5) {
+              splitIndex = 1; // 强制保留一行
+            }
+          }
+
+          // 如果根据行累加计算没超限，但表格整体(包含border等)超限，
+          // 也应当触发分页。整体移入下一页或者将最后一行移入。
+          if (splitIndex === -1 && rows.length > 0) {
+            const tableRect = table.getBoundingClientRect();
+            if (tableRect.bottom > limitBottom + 2) {
+              if (wrapperTopInPage > resolvedStartY + 5) {
+                // 距离页首有空间，整体移入下一页
+                splitIndex = 0;
+              } else if (rows.length > 1) {
+                // 贴近页首且有多行，把最后一行移走
+                splitIndex = rows.length - 1;
+              } else {
+                splitIndex = 1; // 仅1行且贴近页首，强制保留
+              }
             }
           }
 
