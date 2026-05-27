@@ -1044,16 +1044,26 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const tfoot = table.querySelector("tfoot");
           const isFooterRepeated =
             table.getAttribute("data-tfoot-repeat") === "true";
-          let requiredFooterHeight = 0;
-          if (tfoot && isFooterRepeated) {
-            requiredFooterHeight = tfoot.getBoundingClientRect().height;
+          let repeatedFooterHeight = 0;
+          let totalFooterHeight = 0;
+          if (tfoot) {
+            totalFooterHeight = tfoot.getBoundingClientRect().height;
+            if (isFooterRepeated) {
+              repeatedFooterHeight = totalFooterHeight;
+            }
           }
 
           for (let r = 0; r < rows.length; r++) {
             const row = rows[r];
             const rowRect = row.getBoundingClientRect();
+            
+            let currentFooterHeight = repeatedFooterHeight;
+            if (!isFooterRepeated && r === rows.length - 1) {
+              currentFooterHeight = totalFooterHeight;
+            }
+
             // 预留 1px 缓冲，避免浮点误差。
-            if (rowRect.bottom + requiredFooterHeight > limitBottom + 1) {
+            if (rowRect.bottom + currentFooterHeight > limitBottom + 1) {
               splitIndex = r;
 
               // 防止死循环：若首行已超限且表格已贴近页首，
