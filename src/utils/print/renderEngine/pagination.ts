@@ -428,9 +428,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           );
           const originalBottom = originalTop + originalHeight;
 
-          const isHeader = copyHeader && originalTop < headerHeight + marginTop;
+          const isHeader =
+            headerHeight > 0 && originalTop < headerHeight + marginTop;
           const isFooter =
-            copyFooter &&
+            footerHeight > 0 &&
             originalTop >= pageHeight - footerHeight - marginBottom;
           if (isHeader || isFooter) return;
 
@@ -483,12 +484,11 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           if (targetPageIndex < 0) targetPageIndex = 0;
 
           let targetTop = targetGlobalTop - targetPageIndex * pageHeight;
-          const minContentTop =
-            copyHeader && headerHeight > 0
-              ? headerHeight + marginTop
-              : marginTop;
+          const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
+          const minContentTop = marginTop + effectiveHeaderHeight;
+          const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
           const maxContentBottom =
-            pageHeight - (copyFooter ? footerHeight : 0) - marginBottom;
+            pageHeight - effectiveFooterHeight - marginBottom;
           const availableContentHeight = maxContentBottom - minContentTop;
           const isFlowWrapper = wrapper.hasAttribute("data-flow-id");
           const wrapperRectHeight = wrapper.getBoundingClientRect().height;
@@ -613,8 +613,8 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     // 计算流式块在新页中的起始 Y 坐标。
     const resolveFlowChunkStartY = (wrapper: HTMLElement) => {
       const marginTop = store.pageSpacingY || 0;
-      const minTop =
-        copyHeader && headerHeight > 0 ? headerHeight + marginTop : marginTop;
+      const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
+      const minTop = marginTop + effectiveHeaderHeight;
       let startY = minTop;
       const originalTopVal = parseAttrNumber(
         wrapper,
@@ -745,7 +745,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       pages.forEach((page) => {
         const pageRect = page.getBoundingClientRect();
         const marginBottom = store.pageSpacingY || 0;
-        const effectiveFooterHeight = copyFooter ? footerHeight : 0;
+        const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
         const limitBottom =
           pageYToViewportY(
             pageRect,
@@ -958,7 +958,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           // 使用 getBoundingClientRect 计算位置，提升亚像素场景精度。
           const pageRect = page.getBoundingClientRect();
           const marginBottom = store.pageSpacingY || 0;
-          const effectiveFooterHeight = copyFooter ? footerHeight : 0;
+          const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
           const limitBottom =
             pageYToViewportY(
               pageRect,
@@ -1098,10 +1098,8 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           }
 
           const resolvedStartY = resolveFlowChunkStartY(wrapper);
-          const minTop =
-            copyHeader && headerHeight > 0
-              ? headerHeight + (store.pageSpacingY || 0)
-              : (store.pageSpacingY || 0);
+          const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
+          const minTop = (store.pageSpacingY || 0) + effectiveHeaderHeight;
 
           if (splitIndex === 0) {
             // 防止死循环：若首行已超限且表格已贴近当前可用页首，
@@ -1237,9 +1235,9 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         if (isRepeatPerPage) return false;
 
         const top = parseFloat(w.style.top) || 0;
-        const isHeader = copyHeader && top < headerHeight + marginTop;
+        const isHeader = headerHeight > 0 && top < headerHeight + marginTop;
         const isFooter =
-          copyFooter && top >= pageHeight - footerHeight - marginBottom;
+          footerHeight > 0 && top >= pageHeight - footerHeight - marginBottom;
 
         if (isHeader || isFooter) return false;
 
