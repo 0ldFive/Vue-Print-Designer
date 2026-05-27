@@ -171,6 +171,19 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       return Number.isFinite(value) ? value : fallback;
     };
 
+    const getPageScaleY = (pageRect: DOMRect) => {
+      if (pageHeight <= 0 || pageRect.height <= 0) return 1;
+      return pageRect.height / pageHeight;
+    };
+
+    const pageYToViewportY = (pageRect: DOMRect, pageY: number) => {
+      return pageRect.top + pageY * getPageScaleY(pageRect);
+    };
+
+    const viewportYToPageY = (pageRect: DOMRect, viewportY: number) => {
+      return (viewportY - pageRect.top) / getPageScaleY(pageRect);
+    };
+
     // 获取流式元素类型（table / auto-height）。
     const getFlowKind = (wrapper: HTMLElement) =>
       wrapper.getAttribute("data-flow-kind") || "";
@@ -334,7 +347,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           );
           const originalBottom = originalTop + originalHeight;
           const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
-          const finalBottomInPage = contentRect.bottom - pageRect.top;
+          const finalBottomInPage = viewportYToPageY(
+            pageRect,
+            contentRect.bottom,
+          );
           const finalGlobalBottom = pageIndex * pageHeight + finalBottomInPage;
 
           const list = tableEntriesByOrigin.get(originPage) || [];
@@ -731,7 +747,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         const marginBottom = store.pageSpacingY || 0;
         const effectiveFooterHeight = copyFooter ? footerHeight : 0;
         const limitBottom =
-          pageRect.top + pageHeight - effectiveFooterHeight - marginBottom;
+          pageYToViewportY(
+            pageRect,
+            pageHeight - effectiveFooterHeight - marginBottom,
+          );
         const wrappers = Array.from(
           page.querySelectorAll(
             "[data-print-wrapper][data-flow-id][data-flow-paginated]",
@@ -941,9 +960,12 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const marginBottom = store.pageSpacingY || 0;
           const effectiveFooterHeight = copyFooter ? footerHeight : 0;
           const limitBottom =
-            pageRect.top + pageHeight - effectiveFooterHeight - marginBottom;
+            pageYToViewportY(
+              pageRect,
+              pageHeight - effectiveFooterHeight - marginBottom,
+            );
           const wrapperRect = wrapper.getBoundingClientRect();
-          const wrapperTopInPage = wrapperRect.top - pageRect.top;
+          const wrapperTopInPage = viewportYToPageY(pageRect, wrapperRect.top);
 
           if (isAutoHeight) {
             if (!autoHeightEl) return;
