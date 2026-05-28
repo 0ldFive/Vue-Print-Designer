@@ -313,7 +313,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     let nextLeft: number;
     let nextTop: number;
     const wrapperRect = wrapper.getBoundingClientRect();
-    nextWidth = Math.min(cellWidth, Math.max(0, wrapperRect.width));
+    nextWidth = Math.max(0, wrapperRect.width);
     nextHeight = Math.max(0, wrapperRect.height);
 
     if (
@@ -324,23 +324,15 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     ) {
       if (fillsWidth) nextWidth = cellWidth;
       if (fillsHeight) nextHeight = cellHeight;
-      nextLeft = Math.max(0, cellWidth - nextWidth) * offsetXRatio;
-      nextTop = Math.max(0, cellHeight - nextHeight) * offsetYRatio;
+      nextLeft = wrapperRect.left - cellRect.left;
+      nextTop = wrapperRect.top - cellRect.top;
     } else {
-      nextLeft = clamp(
-        wrapperRect.left - cellRect.left,
-        0,
-        Math.max(0, cellWidth - nextWidth),
-      );
-      nextTop = clamp(
-        wrapperRect.top - cellRect.top,
-        0,
-        Math.max(0, cellHeight - nextHeight),
-      );
+      nextLeft = wrapperRect.left - cellRect.left;
+      nextTop = wrapperRect.top - cellRect.top;
     }
 
     matchedCell.style.position = "relative";
-    matchedCell.style.overflow = "hidden";
+    matchedCell.style.overflow = "visible";
     wrapper.setAttribute("data-print-embedded-wrapper", "true");
     wrapper.removeAttribute("data-print-wrapper");
     wrapper.removeAttribute("data-flow-id");
@@ -356,12 +348,6 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     wrapper.style.right = "auto";
     wrapper.style.bottom = "auto";
     wrapper.style.clipPath = "none";
-
-    const requiredCellHeight = Math.max(cellHeight, nextTop + nextHeight);
-    if (requiredCellHeight > cellHeight + 0.01) {
-      matchedCell.style.height = `${requiredCellHeight}px`;
-      matchedCell.style.minHeight = `${requiredCellHeight}px`;
-    }
 
     matchedCell.appendChild(wrapper);
     return true;

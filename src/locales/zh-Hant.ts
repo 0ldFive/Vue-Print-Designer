@@ -653,6 +653,9 @@ export default {
     showHistoryPanelDesc: "在畫布區域顯示可拖拽的歷史記錄浮窗。",
     developerMode: "開發者模式",
     developerModeDesc: "關閉後將隱藏 Blob/JSON 調試查看入口。",
+    paginationDebugLogs: "分頁調試日誌",
+    paginationDebugLogsDesc:
+      "開啓後會在控制台輸出分頁拆分與回流日誌，建議僅在排查問題時使用。",
     printQuality: "打印質量",
     printQualityFast: "極速",
     printQualityNormal: "普通",

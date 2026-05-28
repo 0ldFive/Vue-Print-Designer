@@ -171,6 +171,46 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       return Number.isFinite(value) ? value : fallback;
     };
 
+    const hasHeaderRegion = copyHeader && headerHeight > 0;
+    const hasFooterRegion = copyFooter && footerHeight > 0;
+    const effectiveHeaderHeight = hasHeaderRegion ? headerHeight : 0;
+    const effectiveFooterHeight = hasFooterRegion ? footerHeight : 0;
+    const paginationLogger = globalThis.console?.info?.bind(globalThis.console);
+
+    const isPaginationDebugEnabled = () => {
+      return (
+        store.showDeveloperMode === true &&
+        store.showPaginationDebugLogs === true
+      );
+    };
+
+    const getWrapperDebugId = (wrapper: HTMLElement) => {
+      return (
+        wrapper.getAttribute("data-flow-id") ||
+        wrapper.getAttribute("data-wrapper-seq") ||
+        wrapper.getAttribute("data-element-id") ||
+        "unknown"
+      );
+    };
+
+    const paginationDebug = (event: string, detail?: Record<string, unknown>) => {
+      if (!isPaginationDebugEnabled()) return;
+      if (!paginationLogger) return;
+      if (detail) {
+        paginationLogger("[print-pagination]", event, detail);
+        return;
+      }
+      paginationLogger("[print-pagination]", event);
+    };
+
+    paginationDebug("start", {
+      pageHeight,
+      headerHeight,
+      footerHeight,
+      hasHeaderRegion,
+      hasFooterRegion,
+    });
+
     const getPageScaleY = (pageRect: DOMRect) => {
       if (pageHeight <= 0 || pageRect.height <= 0) return 1;
       return pageRect.height / pageHeight;
@@ -194,6 +234,19 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         wrapper.querySelector(
           '[data-text-content="true"]',
         )) as HTMLElement | null;
+    };
+
+    const isAxisAlignedWrapper = (wrapper: HTMLElement) => {
+      const transform = window.getComputedStyle(wrapper).transform;
+      if (!transform || transform === "none") return true;
+      if (!transform.startsWith("matrix")) return false;
+
+      const values = transform.substring(7, transform.length - 1).split(",");
+      if (values.length < 4) return false;
+
+      const b = parseFloat(values[1]);
+      const c = parseFloat(values[2]);
+      return Math.abs(b) <= 0.001 && Math.abs(c) <= 0.001;
     };
 
     // 获取元素初始 top（优先原始元数据）。
@@ -430,9 +483,9 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const originalBottom = originalTop + originalHeight;
 
           const isHeader =
-            headerHeight > 0 && originalTop < headerHeight + marginTop;
+            hasHeaderRegion && originalTop < headerHeight + marginTop;
           const isFooter =
-            footerHeight > 0 &&
+            hasFooterRegion &&
             originalTop >= pageHeight - footerHeight - marginBottom;
           if (isHeader || isFooter) return;
 
@@ -485,9 +538,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           if (targetPageIndex < 0) targetPageIndex = 0;
 
           let targetTop = targetGlobalTop - targetPageIndex * pageHeight;
-          const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
           const minContentTop = marginTop + effectiveHeaderHeight;
-          const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
           const maxContentBottom =
             pageHeight - effectiveFooterHeight - marginBottom;
           const availableContentHeight = maxContentBottom - minContentTop;
@@ -614,7 +665,6 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     // 计算流式块在新页中的起始 Y 坐标。
     const resolveFlowChunkStartY = (wrapper: HTMLElement) => {
       const marginTop = store.pageSpacingY || 0;
-      const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
       const minTop = marginTop + effectiveHeaderHeight;
       let startY = minTop;
       const originalTopVal = parseAttrNumber(
@@ -666,13 +716,49 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     ) => {
       if (!tableEl) return;
 
-      const tableHeight = Math.max(0, tableEl.getBoundingClientRect().height);
+      const tableRect = tableEl.getBoundingClientRect();
       const rightEdgeLines = wrapper.querySelectorAll<HTMLElement>(
         '[data-print-table-right-edge="true"]',
       );
 
       rightEdgeLines.forEach((line) => {
-        line.style.setProperty("top", "0px");
+        const offsetParent = line.offsetParent as HTMLElement | null;
+        const offsetParentRect = (offsetParent || wrapper).getBoundingClientRect();
+        const tableHeight = Math.max(0, Math.round(tableRect.height));
+        const topOffset = Math.max(
+          0,
+          Math.round(tableRect.top - offsetParentRect.top),
+        );
+        const rightInset = Math.max(
+          0,
+          Math.round(offsetParentRect.right - tableRect.right),
+        );
+
+        const lineComputedStyle = window.getComputedStyle(line);
+        const tableComputedStyle = window.getComputedStyle(tableEl);
+        const borderLeftWidth = parseFloat(lineComputedStyle.borderLeftWidth || "0");
+        const hasVisibleBorder =
+          Number.isFinite(borderLeftWidth) &&
+          borderLeftWidth > 0 &&
+          lineComputedStyle.borderLeftStyle !== "none";
+        if (!hasVisibleBorder) {
+          const fallbackWidth =
+            parseFloat(tableComputedStyle.borderRightWidth || "0") || 1;
+          line.style.setProperty("border-left-width", `${Math.max(1, fallbackWidth)}px`);
+          line.style.setProperty(
+            "border-left-style",
+            tableComputedStyle.borderRightStyle || "solid",
+          );
+          line.style.setProperty(
+            "border-left-color",
+            tableComputedStyle.borderRightColor || "#000",
+          );
+        }
+
+        line.style.setProperty("top", `${topOffset}px`);
+        line.style.setProperty("left", "auto");
+        line.style.setProperty("width", "0px");
+        line.style.setProperty("right", `${rightInset}px`);
         line.style.setProperty("bottom", "auto");
         line.style.setProperty("height", `${tableHeight}px`);
         line.style.setProperty("max-height", "none");
@@ -746,7 +832,6 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       pages.forEach((page) => {
         const pageRect = page.getBoundingClientRect();
         const marginBottom = store.pageSpacingY || 0;
-        const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
         const limitBottom =
           pageYToViewportY(
             pageRect,
@@ -817,21 +902,8 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
           // 为保证收敛性，跳过旋转/斜切元素：
           // runFlowPaginationPass 中本就不会处理这类变换场景。
-          const transform = window.getComputedStyle(wrapper).transform;
-          if (transform && transform !== "none") {
-            if (!transform.startsWith("matrix")) {
-              return;
-            }
-            const values = transform
-              .substring(7, transform.length - 1)
-              .split(",");
-            if (values.length >= 4) {
-              const b = parseFloat(values[1]);
-              const c = parseFloat(values[2]);
-              if (Math.abs(b) > 0.001 || Math.abs(c) > 0.001) {
-                return;
-              }
-            }
+          if (!isAxisAlignedWrapper(wrapper)) {
+            return;
           }
 
           pending += 1;
@@ -872,22 +944,8 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           }
 
           // 检查旋转/斜切变换；当前分页算法基于 Y 轴，不处理旋转场景。
-          const wrapperStyle = window.getComputedStyle(wrapper);
-          const transform = wrapperStyle.transform;
-          if (transform && transform !== "none") {
-            // 简单矩阵判定：matrix(a, b, c, d, tx, ty)，b/c 非 0 视为旋转或斜切。
-            if (transform.startsWith("matrix")) {
-              const values = transform
-                .substring(7, transform.length - 1)
-                .split(",");
-              if (values.length >= 4) {
-                const b = parseFloat(values[1]);
-                const c = parseFloat(values[2]);
-                if (Math.abs(b) > 0.001 || Math.abs(c) > 0.001) {
-                  return;
-                }
-              }
-            }
+          if (!isAxisAlignedWrapper(wrapper)) {
+            return;
           }
 
           // 后续流式元素必须等待前序流式元素完整分页并收敛，
@@ -959,7 +1017,6 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           // 使用 getBoundingClientRect 计算位置，提升亚像素场景精度。
           const pageRect = page.getBoundingClientRect();
           const marginBottom = store.pageSpacingY || 0;
-          const effectiveFooterHeight = footerHeight > 0 ? footerHeight : 0;
           const limitBottom =
             pageYToViewportY(
               pageRect,
@@ -1001,7 +1058,14 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
                 const newPage = createFlowOverflowPage(page, i);
                 wrapper.style.removeProperty("top");
                 wrapper.style.setProperty("top", `${startY}px`, "important");
+                // 标记为强制换页，避免在中间回流阶段又被拉回上一页导致循环。
+                wrapper.setAttribute("data-flow-forced-page-break", "true");
                 newPage.appendChild(wrapper);
+                paginationDebug("auto-height.move-next-page", {
+                  flowId: getWrapperDebugId(wrapper),
+                  fromPageIndex: i,
+                  startY: Number(startY.toFixed(2)),
+                });
                 // 此分支仅将同一包装元素整体移到下一页，
                 // 不属于真实文本拆分块，需保留后续重排资格。
                 wrapper.removeAttribute("data-is-split-chunk");
@@ -1023,9 +1087,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
             const newPage = createFlowOverflowPage(page, i);
             const newWrapper = wrapper.cloneNode(true) as HTMLElement;
-            const newTextEl = newWrapper.querySelector(
-              '[data-auto-height="true"]',
-            ) as HTMLElement | null;
+            const newTextEl = resolveAutoHeightContentEl(newWrapper);
             if (newTextEl) {
               newTextEl.classList.remove("h-full", "overflow-hidden");
               newTextEl.style.height = "auto";
@@ -1044,8 +1106,17 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             newWrapper.style.setProperty("top", `${startY}px`, "important");
 
             newPage.appendChild(newWrapper);
+            paginationDebug("auto-height.split", {
+              flowId: getWrapperDebugId(wrapper),
+              pageIndex: i,
+              splitIndex,
+              currentLength: currentText.length,
+              overflowLength: overflowText.length,
+            });
             wrapper.setAttribute("data-flow-paginated", "true");
+            wrapper.removeAttribute("data-flow-forced-page-break");
             newWrapper.setAttribute("data-is-split-chunk", "true");
+            newWrapper.removeAttribute("data-flow-forced-page-break");
             syncElementsBelowTables(true);
             return;
           }
@@ -1078,12 +1149,11 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           }
 
           const tableRect = table.getBoundingClientRect();
-          const effectiveHeaderHeight = headerHeight > 0 ? headerHeight : 0;
           const minTop = (store.pageSpacingY || 0) + effectiveHeaderHeight;
           const availableContentHeight =
             pageHeight -
             minTop -
-            (footerHeight > 0 ? footerHeight : 0) -
+            effectiveFooterHeight -
             marginBottom;
           const tableFitsFreshPage =
             tableRect.height <= availableContentHeight * getPageScaleY(pageRect) + 1;
@@ -1214,6 +1284,13 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
               newWrapper.removeAttribute("data-flow-forced-page-break");
             }
 
+            paginationDebug("table.split", {
+              flowId: getWrapperDebugId(wrapper),
+              pageIndex: i,
+              splitIndex,
+              rowCount: rows.length,
+            });
+
             syncElementsBelowTables(true);
           } else {
             syncTableRightEdgeLines(wrapper, table);
@@ -1226,18 +1303,120 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     };
 
     const maxPaginationPasses = 60;
-    for (let pass = 0; pass < maxPaginationPasses; pass++) {
-      runFlowPaginationPass();
-      const repairedCount = markOverflowedPaginatedFlows();
-      const pendingCount = countPendingFlowWrappers();
-      if (repairedCount === 0 && pendingCount === 0) {
-        break;
+    const runFlowPaginationLoop = () => {
+      for (let pass = 0; pass < maxPaginationPasses; pass++) {
+        runFlowPaginationPass();
+        const repairedCount = markOverflowedPaginatedFlows();
+        const pendingCount = countPendingFlowWrappers();
+        paginationDebug("pass.summary", {
+          pass: pass + 1,
+          repairedCount,
+          pendingCount,
+          pageCount: pages.length,
+        });
+        if (repairedCount === 0 && pendingCount === 0) {
+          break;
+        }
       }
-    }
+    };
+
+    const promoteFooterOverflowTextWrappers = () => {
+      let promoted = 0;
+      pages = Array.from(container.children).filter(
+        (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
+      ) as HTMLElement[];
+
+      pages.forEach((page, pageIndex) => {
+        const pageRect = page.getBoundingClientRect();
+        const marginTop = store.pageSpacingY || 0;
+        const marginBottom = store.pageSpacingY || 0;
+        const limitBottom = pageYToViewportY(
+          pageRect,
+          pageHeight - effectiveFooterHeight - marginBottom,
+        );
+
+        const wrappers = Array.from(
+          page.querySelectorAll("[data-print-wrapper]:not([data-flow-id])"),
+        ) as HTMLElement[];
+
+        wrappers.forEach((wrapper) => {
+          if (wrapper.getAttribute("data-repeat-per-page") === "true") return;
+          if (wrapper.querySelector("table")) return;
+          if (wrapper.querySelector('[data-print-type="page-number"]')) return;
+          if (!isAxisAlignedWrapper(wrapper)) return;
+
+          const textEl = resolveAutoHeightContentEl(wrapper);
+          if (!textEl) return;
+
+          const originalTop = parseAttrNumber(
+            wrapper,
+            "data-original-top",
+            parseFloat(wrapper.style.top || "") || 0,
+          );
+          const isOriginalHeader =
+            hasHeaderRegion && originalTop < headerHeight + marginTop;
+          const isOriginalFooter =
+            hasFooterRegion &&
+            originalTop >= pageHeight - footerHeight - marginBottom;
+          if (isOriginalHeader || isOriginalFooter) return;
+
+          const textRect = textEl.getBoundingClientRect();
+          const wrapperRect = wrapper.getBoundingClientRect();
+          const renderedBottom = Math.max(textRect.bottom, wrapperRect.bottom);
+          if (renderedBottom <= limitBottom + 1) return;
+
+          const flowId =
+            wrapper.getAttribute("data-wrapper-seq") ||
+            `${pageIndex}-promoted-text-${promoted}`;
+          wrapper.setAttribute("data-flow-id", flowId);
+          wrapper.setAttribute("data-flow-kind", "auto-height");
+          wrapper.removeAttribute("data-flow-paginated");
+          paginationDebug("promote.footer-overflow-text", {
+            flowId,
+            pageIndex,
+            overflowPx: Number((renderedBottom - limitBottom).toFixed(2)),
+          });
+          promoted += 1;
+        });
+      });
+
+      return promoted;
+    };
+
+    runFlowPaginationLoop();
 
     // 最终收敛：根据流式结果修正固定元素，不再移动流式元素，
     // 因为此调用之后不会再进入分页循环。
+    for (let settle = 0; settle < 3; settle++) {
+      syncElementsBelowTables(false, true);
+      const promotedCount = promoteFooterOverflowTextWrappers();
+      if (promotedCount === 0) {
+        break;
+      }
+      paginationDebug("settle.promoted-text", {
+        settlePass: settle + 1,
+        promotedCount,
+      });
+      runFlowPaginationLoop();
+    }
+
     syncElementsBelowTables(false, true);
+
+    // 最终校准导出态右侧补线：
+    // 覆盖“非自动分页表格未进入 flow 分支”以及 wrapper 宽于 table 时的定位偏差。
+    pages = Array.from(container.children).filter(
+      (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
+    ) as HTMLElement[];
+    pages.forEach((page) => {
+      const wrappers = Array.from(
+        page.querySelectorAll("[data-print-wrapper]"),
+      ) as HTMLElement[];
+      wrappers.forEach((wrapper) => {
+        const table = wrapper.querySelector("table") as HTMLElement | null;
+        if (!table) return;
+        syncTableRightEdgeLines(wrapper, table);
+      });
+    });
 
     // 清理分页位移过程中可能产生的空页面。
     pages = Array.from(container.children).filter(
@@ -1261,9 +1440,9 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         if (isRepeatPerPage) return false;
 
         const top = parseFloat(w.style.top) || 0;
-        const isHeader = headerHeight > 0 && top < headerHeight + marginTop;
+        const isHeader = hasHeaderRegion && top < headerHeight + marginTop;
         const isFooter =
-          footerHeight > 0 && top >= pageHeight - footerHeight - marginBottom;
+          hasFooterRegion && top >= pageHeight - footerHeight - marginBottom;
 
         if (isHeader || isFooter) return false;
 
@@ -1281,6 +1460,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     ) as HTMLElement[];
     pages.forEach((p, idx) => {
       p.style.top = `${idx * pageHeight}px`;
+    });
+
+    paginationDebug("complete", {
+      pageCount: pages.length,
     });
 
     return pages.length;

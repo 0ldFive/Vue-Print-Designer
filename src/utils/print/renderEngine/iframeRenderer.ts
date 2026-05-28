@@ -156,8 +156,6 @@ export const createIframeRenderer = ({
         const height = Math.min(cellHeight, Math.max(0, wrapperRect.height));
         const widthRatio = clamp(width / cellWidth, 0, 1);
         const heightRatio = clamp(height / cellHeight, 0, 1);
-        const maxOffsetX = Math.max(0, cellWidth - width);
-        const maxOffsetY = Math.max(0, cellHeight - height);
         const fillTolerance = 2;
         const cellStyle =
           cell.ownerDocument.defaultView?.getComputedStyle(cell) ||
@@ -209,14 +207,12 @@ export const createIframeRenderer = ({
 
         const anchor: EmbeddedInTableAnchor = {
           offsetXRatio:
-            maxOffsetX > 0
-              ? clamp(wrapperRect.left - cellRect.left, 0, maxOffsetX) /
-                maxOffsetX
+            cellWidth > 0
+              ? (wrapperRect.left - cellRect.left) / cellWidth
               : 0,
           offsetYRatio:
-            maxOffsetY > 0
-              ? clamp(wrapperRect.top - cellRect.top, 0, maxOffsetY) /
-                maxOffsetY
+            cellHeight > 0
+              ? (wrapperRect.top - cellRect.top) / cellHeight
               : 0,
           widthRatio,
           heightRatio,

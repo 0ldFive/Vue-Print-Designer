@@ -884,6 +884,10 @@ const shouldRenderDesignSpacerRow = computed(() => {
   );
 });
 
+const shouldFillElementBox = computed(() => {
+  return !store.isExporting || props.element.autoPaginate !== true;
+});
+
 const CELL_VALUE_VARIABLE_RE = /@[A-Za-z0-9_.-]+/g;
 
 const resolveCellValueVariable = (token: string) => {
@@ -964,6 +968,36 @@ const getColSpan = (row: any, field: string) => {
     return val.colSpan;
   }
   return 1;
+};
+
+const getExportRightEdgeCellStyle = (
+  row: any,
+  colIndex: number | string,
+  field?: string,
+  section: "header" | "body" | "footer" = "body",
+): CSSProperties => {
+  if (!store.isExporting || !shouldRenderExportTableRightEdge.value) {
+    return {};
+  }
+
+  const totalColumns = processedData.value.columns.length;
+  if (totalColumns <= 0) return {};
+
+  const normalizedColIndex = Number(colIndex);
+  if (!Number.isFinite(normalizedColIndex)) return {};
+
+  const colSpan =
+    section === "header"
+      ? 1
+      : Math.max(1, Number(getColSpan(row, field || "")) || 1);
+  const isRightEdgeCell = normalizedColIndex + colSpan >= totalColumns;
+
+  if (!isRightEdgeCell) return {};
+
+  return {
+    borderRightWidth: "0px",
+    borderRightStyle: "none",
+  };
 };
 
 const shouldRenderCell = (row: any, field: string) => {
@@ -1095,11 +1129,152 @@ const getRowHeightCellStyle = (
   };
 };
 
-const hasRenderedRowHeight = (
+const overflowAdaptiveRows = ref<Set<string>>(new Set());
+let overflowAdaptiveSyncFrame: number | null = null;
+
+const getOverflowAdaptiveRowKey = (
+  section: RowResizeSection,
+  rowIndex: number,
+) => `${section}:${rowIndex}`;
+
+const isOverflowAdaptiveRow = (section: RowResizeSection, rowIndex: number) => {
+  return overflowAdaptiveRows.value.has(getOverflowAdaptiveRowKey(section, rowIndex));
+};
+
+const getOverflowAdaptiveCellStyle = (
   section: RowResizeSection,
   rowIndex: number,
   row?: any,
-) => getRenderedRowHeight(section, rowIndex, row) > 0;
+): CSSProperties => {
+  if (!isOverflowAdaptiveRow(section, rowIndex)) return {};
+
+  const baseHeight = getRenderedRowHeight(section, rowIndex, row);
+  if (!baseHeight) {
+    return {
+      height: "auto",
+      lineHeight: "normal",
+      overflow: "visible",
+    };
+  }
+
+  return {
+    height: "auto",
+    minHeight: `${baseHeight}px`,
+    lineHeight: "normal",
+    overflow: "visible",
+  };
+};
+
+const getCellMeasureText = (cell: HTMLElement) => {
+  const textarea = cell.querySelector("textarea") as HTMLTextAreaElement | null;
+  if (textarea) return textarea.value || "";
+
+  const textSpan = cell.querySelector("span");
+  if (textSpan) return textSpan.textContent || "";
+
+  return cell.textContent || "";
+};
+
+const measureMaxLineWidth = (text: string, measureEl: HTMLSpanElement) => {
+  const normalized = text.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  let maxWidth = 0;
+
+  lines.forEach((line) => {
+    measureEl.textContent = line || " ";
+    const width = measureEl.getBoundingClientRect().width;
+    if (width > maxWidth) {
+      maxWidth = width;
+    }
+  });
+
+  return maxWidth;
+};
+
+const refreshOverflowAdaptiveRows = () => {
+  const host = tableHostRef.value;
+  if (!host) {
+    overflowAdaptiveRows.value = new Set();
+    return;
+  }
+
+  const next = new Set<string>();
+  const measureEl = document.createElement("span");
+  measureEl.style.position = "fixed";
+  measureEl.style.left = "-99999px";
+  measureEl.style.top = "-99999px";
+  measureEl.style.visibility = "hidden";
+  measureEl.style.pointerEvents = "none";
+  measureEl.style.whiteSpace = "nowrap";
+  measureEl.style.padding = "0";
+  measureEl.style.margin = "0";
+  measureEl.style.border = "0";
+  measureEl.style.lineHeight = "normal";
+  document.body.appendChild(measureEl);
+
+  try {
+    const candidateCells = host.querySelectorAll<HTMLElement>(
+      "th[data-table-cell-section='header'][data-table-row-index][data-field],td[data-field][data-row-index][data-section]",
+    );
+
+    candidateCells.forEach((cell) => {
+      const rawSection =
+        cell.dataset.section || cell.dataset.tableCellSection || "body";
+      const section: RowResizeSection =
+        rawSection === "header"
+          ? "header"
+          : rawSection === "footer"
+            ? "footer"
+            : "body";
+
+      const rowIndexRaw = cell.dataset.rowIndex || cell.dataset.tableRowIndex || "0";
+      const rowIndex = Number.parseInt(rowIndexRaw, 10);
+      const field = cell.dataset.field || "";
+      if (!Number.isFinite(rowIndex) || !field) return;
+
+      const rowData =
+        section === "body"
+          ? displayBodyRows.value[rowIndex]
+          : section === "footer"
+            ? processedData.value.footerData[rowIndex]
+            : undefined;
+      const baseHeight = getRenderedRowHeight(section, rowIndex, rowData);
+      if (baseHeight <= 0) return;
+
+      const text = getCellMeasureText(cell).trim();
+      if (!text) return;
+
+      const computed = window.getComputedStyle(cell);
+      measureEl.style.fontFamily = computed.fontFamily;
+      measureEl.style.fontSize = computed.fontSize;
+      measureEl.style.fontWeight = computed.fontWeight;
+      measureEl.style.fontStyle = computed.fontStyle;
+      measureEl.style.letterSpacing = computed.letterSpacing;
+      measureEl.style.textTransform = computed.textTransform;
+
+      const maxLineWidth = measureMaxLineWidth(text, measureEl);
+      const availableWidth = Math.max(0, cell.clientWidth - 1);
+
+      if (maxLineWidth > availableWidth + 0.5) {
+        next.add(getOverflowAdaptiveRowKey(section, rowIndex));
+      }
+    });
+  } finally {
+    measureEl.remove();
+  }
+
+  overflowAdaptiveRows.value = next;
+};
+
+const scheduleOverflowAdaptiveSync = () => {
+  if (overflowAdaptiveSyncFrame !== null) return;
+
+  overflowAdaptiveSyncFrame = requestAnimationFrame(async () => {
+    overflowAdaptiveSyncFrame = null;
+    await nextTick();
+    refreshOverflowAdaptiveRows();
+  });
+};
 
 const isResizingRow = (section: RowResizeSection, rowIndex: number) => {
   return (
@@ -1356,6 +1531,16 @@ watch(
   async () => {
     await nextTick();
     syncEmbeddedElementsByCellGeometryDelta();
+    refreshOverflowAdaptiveRows();
+  },
+  { flush: "post" },
+);
+
+watch(
+  () => inlineEditingValue.value,
+  () => {
+    if (!inlineEditingCell.value) return;
+    scheduleOverflowAdaptiveSync();
   },
   { flush: "post" },
 );
@@ -1449,6 +1634,7 @@ onMounted(() => {
 
   nextTick(() => {
     resetEmbeddedGeometryBaseline();
+    refreshOverflowAdaptiveRows();
   });
 });
 
@@ -1461,6 +1647,11 @@ onUnmounted(() => {
     cancelAnimationFrame(embeddedGeometrySyncFrame);
     embeddedGeometrySyncFrame = null;
   }
+  if (overflowAdaptiveSyncFrame !== null) {
+    cancelAnimationFrame(overflowAdaptiveSyncFrame);
+    overflowAdaptiveSyncFrame = null;
+  }
+  overflowAdaptiveRows.value = new Set();
   hasCellGeometryBaseline.value = false;
   previousCellGeometryByKey.value = new Map();
 });
@@ -1783,10 +1974,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     class="relative w-full h-full overflow-hidden"
     :style="{ backgroundColor: element.style.backgroundColor || 'transparent' }"
   >
-    <div class="relative w-full" :class="{ 'h-full': !store.isExporting }">
+    <div class="relative w-full" :class="{ 'h-full': shouldFillElementBox }">
       <table
         class="w-full border-collapse"
-        :class="{ 'h-full': !store.isExporting }"
+        :class="{ 'h-full': shouldFillElementBox }"
         :style="{ tableLayout: 'fixed' }"
         :data-tfoot-repeat="element.tfootRepeat"
         :data-auto-paginate="element.autoPaginate"
@@ -1805,6 +1996,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
             v-for="(col, index) in processedData.columns"
             :key="col.field"
             class="p-1 font-bold text-sm relative group select-none"
+            :data-field="col.field"
+            data-table-cell-section="header"
+            data-table-row-index="0"
             :style="{
               ...cellStyle,
               width: `${getColumnPixelWidth(col.field, col.width)}px`,
@@ -1813,14 +2007,22 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 : undefined,
               paddingTop: hasCustomHeaderHeight ? '0px' : undefined,
               paddingBottom: hasCustomHeaderHeight ? '0px' : undefined,
-              lineHeight: hasCustomHeaderHeight
-                ? `${element.style.headerHeight}px`
-                : undefined,
+              lineHeight: isOverflowAdaptiveRow('header', 0)
+                ? 'normal'
+                : hasCustomHeaderHeight
+                  ? `${element.style.headerHeight}px`
+                  : undefined,
               overflow: shouldShowRowResizeHandle()
                 ? 'visible'
-                : hasCustomHeaderHeight
-                  ? 'hidden'
-                  : undefined,
+                : isOverflowAdaptiveRow('header', 0)
+                  ? 'visible'
+                  : hasCustomHeaderHeight
+                    ? 'hidden'
+                    : undefined,
+              whiteSpace: 'normal',
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+              verticalAlign: 'top',
               backgroundColor: element.style.headerBackgroundColor || '#f3f4f6',
               color: element.style.headerColor || '#000000',
               fontSize: element.style.headerFontSize
@@ -1830,6 +2032,8 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               cursor:
                 store.selectedElementId === element.id ? 'pointer' : 'default',
               ...getRowHeightCellStyle('header', 0),
+              ...getOverflowAdaptiveCellStyle('header', 0),
+              ...getExportRightEdgeCellStyle(null, index, '', 'header'),
             }"
             @dblclick="(e) => handleHeaderDblClick(e, index)"
           >
@@ -1886,18 +2090,24 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   : undefined,
                 paddingTop: hasCustomRowHeight ? '0px' : undefined,
                 paddingBottom: hasCustomRowHeight ? '0px' : undefined,
-                lineHeight: hasCustomRowHeight
-                  ? `${element.style.rowHeight}px`
-                  : undefined,
+                lineHeight: isOverflowAdaptiveRow('body', i)
+                  ? 'normal'
+                  : hasCustomRowHeight
+                    ? `${element.style.rowHeight}px`
+                    : undefined,
                 overflow:
                   shouldShowBodyColumnResizeHandle(i, colIndex) ||
                   shouldShowBodyRowResizeHandle(i)
                     ? 'visible'
-                    : hasRenderedRowHeight('body', i, row)
-                      ? 'hidden'
-                      : undefined,
+                    : isOverflowAdaptiveRow('body', i)
+                      ? 'visible'
+                      : getRenderedRowHeight('body', i, row) > 0
+                        ? 'hidden'
+                        : undefined,
+                whiteSpace: 'normal',
                 overflowWrap: 'anywhere',
                 wordBreak: 'break-word',
+                verticalAlign: 'top',
                 textAlign: element.style.textAlign || 'left',
                 fontSize: element.style.fontSize
                   ? `${element.style.fontSize}px`
@@ -1905,7 +2115,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 cursor: shouldUseBodyCellDragCursor ? 'move' : 'default',
                 ...getCellStyle(row, col.field),
                 ...getRowHeightCellStyle('body', i, row),
+                ...getOverflowAdaptiveCellStyle('body', i, row),
                 ...getCellTextPositionStyle(i, col.field, 'body'),
+                ...getExportRightEdgeCellStyle(row, colIndex, col.field, 'body'),
               }"
               :rowspan="getRowSpan(row, col.field)"
               :colspan="getColSpan(row, col.field)"
@@ -2037,18 +2249,24 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   : undefined,
                 paddingTop: hasCustomFooterHeight ? '0px' : undefined,
                 paddingBottom: hasCustomFooterHeight ? '0px' : undefined,
-                lineHeight: hasCustomFooterHeight
-                  ? `${element.style.footerHeight}px`
-                  : undefined,
+                lineHeight: isOverflowAdaptiveRow('footer', i)
+                  ? 'normal'
+                  : hasCustomFooterHeight
+                    ? `${element.style.footerHeight}px`
+                    : undefined,
                 overflow:
                   shouldShowFooterColumnResizeHandle(i, colIndex) ||
                   shouldShowFooterRowResizeHandle(i)
                     ? 'visible'
-                    : hasRenderedRowHeight('footer', i, row)
-                      ? 'hidden'
-                      : undefined,
+                    : isOverflowAdaptiveRow('footer', i)
+                      ? 'visible'
+                      : getRenderedRowHeight('footer', i, row) > 0
+                        ? 'hidden'
+                        : undefined,
+                whiteSpace: 'normal',
                 overflowWrap: 'anywhere',
                 wordBreak: 'break-word',
+                verticalAlign: 'top',
                 backgroundColor:
                   element.style.footerBackgroundColor || '#f9fafb',
                 color: element.style.footerColor || '#000000',
@@ -2062,7 +2280,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                     : 'default',
                 ...getCellStyle(row, col.field),
                 ...getRowHeightCellStyle('footer', i, row),
+                ...getOverflowAdaptiveCellStyle('footer', i, row),
                 ...getCellTextPositionStyle(i, col.field, 'footer'),
+                ...getExportRightEdgeCellStyle(row, colIndex, col.field, 'footer'),
               }"
               :rowspan="getRowSpan(row, col.field)"
               :colspan="getColSpan(row, col.field)"

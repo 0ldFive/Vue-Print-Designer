@@ -681,6 +681,9 @@ export default {
       "Ein ziehbares Verlaufs-Schwebefenster im Canvas-Bereich anzeigen.",
     developerMode: "Entwicklermodus",
     developerModeDesc: "Wenn aus, werden Blob/JSON-Debugansichten ausgeblendet.",
+    paginationDebugLogs: "Paginierungs-Debug-Logs",
+    paginationDebugLogsDesc:
+      "Wenn aktiviert, werden Protokolle zur Seitentrennung und Neuverteilung in der Konsole ausgegeben. Nur zur Fehlersuche verwenden.",
     printQuality: "Druckqualität",
     printQualityFast: "Schnell",
     printQualityNormal: "Normal",

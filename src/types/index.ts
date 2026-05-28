@@ -353,6 +353,7 @@ export interface DesignerState {
   showHistoryPanel: boolean;
   showTextQuickToolbar: boolean;
   showDeveloperMode: boolean;
+  showPaginationDebugLogs: boolean;
   showHelp: boolean;
   showSettings: boolean;
   canvasBackground: string;

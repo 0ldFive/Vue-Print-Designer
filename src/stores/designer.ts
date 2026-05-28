@@ -134,6 +134,12 @@ const loadDeveloperMode = () => {
   return stored !== "false";
 };
 
+const loadPaginationDebugLogs = () => {
+  const stored = localStorage.getItem("print-designer-pagination-debug-logs");
+  if (stored === null) return false;
+  return stored === "true";
+};
+
 const loadTextQuickToolbarEnabled = () => {
   const stored = localStorage.getItem("print-designer-show-text-quick-toolbar");
   if (stored === null) return true;
@@ -598,6 +604,7 @@ export const useDesignerStore = defineStore("designer", {
     showHistoryPanel: false,
     showTextQuickToolbar: loadTextQuickToolbarEnabled(),
     showDeveloperMode: loadDeveloperMode(),
+    showPaginationDebugLogs: loadDeveloperMode() && loadPaginationDebugLogs(),
     showHelp: false,
     showSettings: false,
     canvasBackground: "#ffffff",
@@ -1676,6 +1683,19 @@ export const useDesignerStore = defineStore("designer", {
       localStorage.setItem(
         "print-designer-developer-mode",
         show ? "true" : "false",
+      );
+
+      if (!show) {
+        this.showPaginationDebugLogs = false;
+        localStorage.setItem("print-designer-pagination-debug-logs", "false");
+      }
+    },
+    setShowPaginationDebugLogs(show: boolean) {
+      const next = this.showDeveloperMode && show;
+      this.showPaginationDebugLogs = next;
+      localStorage.setItem(
+        "print-designer-pagination-debug-logs",
+        next ? "true" : "false",
       );
     },
     setShowHelp(show: boolean) {

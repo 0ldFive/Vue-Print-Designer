@@ -672,6 +672,9 @@ export default {
       "Show a draggable history floating panel in the canvas area.",
     developerMode: "Developer Mode",
     developerModeDesc: "When off, hide Blob/JSON debug view entries.",
+    paginationDebugLogs: "Pagination Debug Logs",
+    paginationDebugLogsDesc:
+      "When enabled, output pagination split and reflow logs in the console. Use only while troubleshooting.",
     printQuality: "Print Quality",
     printQualityFast: "Fast",
     printQualityNormal: "Normal",

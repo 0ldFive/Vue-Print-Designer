@@ -72,11 +72,6 @@ const waitForImages = async (timeoutMs = 2000) => {
   ]);
 };
 
-const clamp = (value: number, min: number, max: number) => {
-  if (!Number.isFinite(value)) return min;
-  return Math.min(Math.max(value, min), max);
-};
-
 const getCellBorderInsetRect = (cellEl: HTMLElement, wrapperRect: DOMRect) => {
   const rect = cellEl.getBoundingClientRect();
   const style = getWin().getComputedStyle(cellEl);
@@ -157,18 +152,14 @@ const syncEmbeddedAnchorsToRenderedCells = () => {
       const fillsCellHeight = anchor.fillsHeight === true;
       const nextWidth = fillsCellWidth
         ? cellWidth
-        : Math.min(cellWidth, Math.max(0, element.width));
+        : Math.max(0, element.width);
       const nextHeight = fillsCellHeight
         ? cellHeight
         : Math.max(0, element.height);
       const nextX =
-        cellRect.left -
-        pageRect.left +
-        Math.max(0, cellWidth - nextWidth) * clamp(anchor.offsetXRatio, 0, 1);
+        cellRect.left - pageRect.left + cellWidth * anchor.offsetXRatio;
       const nextY =
-        cellRect.top -
-        pageRect.top +
-        Math.max(0, cellHeight - nextHeight) * clamp(anchor.offsetYRatio, 0, 1);
+        cellRect.top - pageRect.top + cellHeight * anchor.offsetYRatio;
 
       const changed =
         Math.abs(element.x - nextX) > epsilon ||

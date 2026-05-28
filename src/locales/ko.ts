@@ -671,6 +671,9 @@ export default {
       "캔버스 영역에 드래그 가능한 히스토리 플로팅 패널을 표시합니다.",
     developerMode: "개발자 모드",
     developerModeDesc: "끄면 Blob/JSON 디버그 보기 항목을 숨깁니다.",
+    paginationDebugLogs: "페이지네이션 디버그 로그",
+    paginationDebugLogsDesc:
+      "활성화하면 페이지 분할 및 재배치 로그를 콘솔에 출력합니다. 문제 분석 시에만 사용하세요.",
     printQuality: "인쇄 품질",
     printQualityFast: "빠름",
     printQualityNormal: "보통",

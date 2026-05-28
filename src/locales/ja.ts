@@ -671,6 +671,9 @@ export default {
       "キャンバス領域にドラッグ可能な履歴フローティングパネルを表示します。",
     developerMode: "開発者モード",
     developerModeDesc: "オフの場合、Blob/JSON デバッグ表示項目を非表示にします。",
+    paginationDebugLogs: "ページネーション デバッグログ",
+    paginationDebugLogsDesc:
+      "有効時、ページ分割と再配置のログをコンソールに出力します。調査時のみ使用してください。",
     printQuality: "印刷品質",
     printQualityFast: "高速",
     printQualityNormal: "標準",
