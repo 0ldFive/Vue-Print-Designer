@@ -303,7 +303,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       return true;
     };
 
-    const hasUnresolvedEarlierFlow = (wrapper: HTMLElement) => {
+    const hasUnresolvedEarlierFlow = (
+      wrapper: HTMLElement,
+      preComputedFlowWrappers?: HTMLElement[],
+    ) => {
       const currentFlowId = wrapper.getAttribute("data-flow-id") || "";
       const currentOrigin = parseAttrNumber(
         wrapper,
@@ -311,9 +314,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         0,
       );
 
-      const flowWrappers = Array.from(
+      // 优先使用外部预计算列表，避免在循环内重复 querySelectorAll 导致 O(n²)
+      const flowWrappers = preComputedFlowWrappers ?? (Array.from(
         container.querySelectorAll("[data-print-wrapper][data-flow-id]"),
-      ) as HTMLElement[];
+      ) as HTMLElement[]);
 
       return flowWrappers.some((candidate) => {
         if (candidate === wrapper) return false;
@@ -440,9 +444,34 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         });
       });
 
-      wrappersByOrigin.forEach((wrappers, originPage) => {
-        wrappers.sort(compareWrappersByOriginalTop);
+      // 排序提前到写操作之前，使预批量读取可以安全在任何写操作之前完成。
+      wrappersByOrigin.forEach((list) => list.sort(compareWrappersByOriginalTop));
 
+      // O(1) 页面下标查找，替代写循环内每次 O(P) 的 workingPages.indexOf。
+      let pageIndexMap = new Map<HTMLElement, number>(
+        workingPages.map((p, i) => [p, i] as [HTMLElement, number]),
+      );
+
+      // 批量预读流式包装元素当前高度：在任何 DOM 写操作（style.top / appendChild）
+      // 开始前统一读取，消除读写交错引发的强制回流（布局颠簸）。
+      // freezeFlow 模式下流式元素被跳过，无需预读。
+      const flowWrapperHeightCache = new Map<HTMLElement, number>();
+      if (!freezeFlow) {
+        wrappersByOrigin.forEach((wrappers) => {
+          wrappers.forEach((wrapper) => {
+            if (!wrapper.hasAttribute("data-flow-id")) return;
+            if (
+              wrapper.hasAttribute("data-is-split-chunk") ||
+              wrapper.hasAttribute("data-flow-forced-page-break")
+            ) return;
+            if (wrapper.getAttribute("data-repeat-per-page") === "true") return;
+            flowWrapperHeightCache.set(wrapper, wrapper.getBoundingClientRect().height);
+          });
+        });
+      }
+
+      wrappersByOrigin.forEach((wrappers, originPage) => {
+        // 排序已在上方完成，无需重复排序。
         let previousOriginalBottom: number | null = null;
         let previousFinalGlobalBottom: number | null = null;
 
@@ -475,11 +504,13 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             "data-original-top",
             parseFloat(wrapper.style.top || "") || 0,
           );
-          const originalHeight = parseAttrNumber(
-            wrapper,
-            "data-original-height",
-            wrapper.getBoundingClientRect().height,
-          );
+          // data-original-height 在分页前已由 imageRenderer 写入所有 wrapper。
+          // 避免把 getBoundingClientRect() 作为 parseAttrNumber 第三参数直接传入：
+          // JS 预先求值所有函数参数，无论属性是否存在都会触发强制回流。
+          const storedOriginalHeight = parseAttrNumber(wrapper, "data-original-height", -1);
+          const originalHeight = storedOriginalHeight >= 0
+            ? storedOriginalHeight
+            : wrapper.getBoundingClientRect().height;
           const originalBottom = originalTop + originalHeight;
 
           const isHeader =
@@ -492,7 +523,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const currentTop = parseFloat(wrapper.style.top || "") || 0;
           const currentParent = wrapper.parentElement as HTMLElement | null;
           let currentPageIndex = currentParent
-            ? workingPages.indexOf(currentParent)
+            ? (pageIndexMap.get(currentParent) ?? workingPages.indexOf(currentParent))
             : originPage;
           if (currentPageIndex < 0) {
             currentPageIndex = originPage;
@@ -543,14 +574,11 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             pageHeight - effectiveFooterHeight - marginBottom;
           const availableContentHeight = maxContentBottom - minContentTop;
           const isFlowWrapper = wrapper.hasAttribute("data-flow-id");
-          const wrapperRectHeight = wrapper.getBoundingClientRect().height;
+          // 流式元素使用预批量缓存的当前高度，固定元素直接复用 storedOriginalHeight；
+          // 两者均不在写操作之后调用 getBoundingClientRect，避免布局颠簸。
           const wrapperHeight = isFlowWrapper
-            ? wrapperRectHeight
-            : parseAttrNumber(
-                wrapper,
-                "data-original-height",
-                wrapperRectHeight,
-              );
+            ? (flowWrapperHeightCache.get(wrapper) ?? wrapper.getBoundingClientRect().height)
+            : storedOriginalHeight >= 0 ? storedOriginalHeight : wrapper.getBoundingClientRect().height;
 
           if (wrapperHeight > 0) {
             if (targetTop < minContentTop) {
@@ -614,6 +642,10 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             workingPages = Array.from(container.children).filter(
               (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
             ) as HTMLElement[];
+            // 同步更新页面下标映射，确保新增页可被 O(1) 查到。
+            pageIndexMap = new Map<HTMLElement, number>(
+              workingPages.map((p, i) => [p, i] as [HTMLElement, number]),
+            );
           }
 
           const targetPage = workingPages[targetPageIndex];
@@ -822,9 +854,12 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       return best;
     };
 
-    // 修复已标记分页但仍溢出的流式元素状态。
-    const markOverflowedPaginatedFlows = () => {
-      let repaired = 0;
+    // 合并两个后置检查为一趟遍历，避免每 pass 做两次独立的全量 querySelectorAll。
+    // 同时返回 repairedCount（已标记但仍溢出 → 清除标记）和 pendingCount（仍待处理）。
+    const checkFlowWrapperStatus = (): { repairedCount: number; pendingCount: number } => {
+      let repairedCount = 0;
+      let pendingCount = 0;
+
       pages = Array.from(container.children).filter(
         (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
       ) as HTMLElement[];
@@ -832,55 +867,14 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       pages.forEach((page) => {
         const pageRect = page.getBoundingClientRect();
         const marginBottom = store.pageSpacingY || 0;
-        const limitBottom =
-          pageYToViewportY(
-            pageRect,
-            pageHeight - effectiveFooterHeight - marginBottom,
-          );
+        const limitBottom = pageYToViewportY(
+          pageRect,
+          pageHeight - effectiveFooterHeight - marginBottom,
+        );
+
+        // 一次 querySelectorAll 取出所有 flow wrappers，按 paginated 状态分流处理
         const wrappers = Array.from(
-          page.querySelectorAll(
-            "[data-print-wrapper][data-flow-id][data-flow-paginated]",
-          ),
-        ) as HTMLElement[];
-
-        wrappers.forEach((wrapper) => {
-          const flowKind = getFlowKind(wrapper);
-          const table = wrapper.querySelector("table") as HTMLElement | null;
-          const autoHeightEl = resolveAutoHeightContentEl(wrapper);
-          const isAutoHeight =
-            flowKind === "auto-height" || (!table && !!autoHeightEl);
-
-          if (!table && !autoHeightEl) return;
-
-          if (table && !isAutoHeight) {
-            const autoPaginate =
-              table.getAttribute("data-auto-paginate") === "true";
-            if (!autoPaginate) return;
-          }
-
-          const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
-          if (contentRect.bottom > limitBottom + 1) {
-            wrapper.removeAttribute("data-flow-paginated");
-            repaired += 1;
-          }
-        });
-      });
-
-      return repaired;
-    };
-
-    // 统计仍待处理的流式包装元素数量。
-    const countPendingFlowWrappers = () => {
-      let pending = 0;
-      pages = Array.from(container.children).filter(
-        (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
-      ) as HTMLElement[];
-
-      pages.forEach((page) => {
-        const wrappers = Array.from(
-          page.querySelectorAll(
-            "[data-print-wrapper][data-flow-id]:not([data-flow-paginated])",
-          ),
+          page.querySelectorAll("[data-print-wrapper][data-flow-id]"),
         ) as HTMLElement[];
 
         wrappers.forEach((wrapper) => {
@@ -889,32 +883,39 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const flowKind = getFlowKind(wrapper);
           const table = wrapper.querySelector("table") as HTMLElement | null;
           const autoHeightEl = resolveAutoHeightContentEl(wrapper);
-          const isAutoHeight =
-            flowKind === "auto-height" || (!table && !!autoHeightEl);
+          const isAutoHeight = flowKind === "auto-height" || (!table && !!autoHeightEl);
 
           if (!table && !autoHeightEl) return;
-
           if (table && !isAutoHeight) {
-            const autoPaginate =
-              table.getAttribute("data-auto-paginate") === "true";
-            if (!autoPaginate) return;
+            if (table.getAttribute("data-auto-paginate") !== "true") return;
           }
 
-          // 为保证收敛性，跳过旋转/斜切元素：
-          // runFlowPaginationPass 中本就不会处理这类变换场景。
-          if (!isAxisAlignedWrapper(wrapper)) {
-            return;
+          if (wrapper.hasAttribute("data-flow-paginated")) {
+            // 已标记分页 → 检查是否仍溢出（需修复）
+            const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
+            if (contentRect.bottom > limitBottom + 1) {
+              wrapper.removeAttribute("data-flow-paginated");
+              repairedCount += 1;
+            }
+          } else {
+            // 未标记分页 → 统计待处理
+            if (!isAxisAlignedWrapper(wrapper)) return;
+            pendingCount += 1;
           }
-
-          pending += 1;
         });
       });
 
-      return pending;
+      return { repairedCount, pendingCount };
     };
 
     // 执行一轮流式元素分页，处理表格与自动高度文本拆分。
+    // 返回本轮中预计算的全量 flow wrappers 列表，供调用方复用。
     const runFlowPaginationPass = () => {
+      // 预计算一次，避免 hasUnresolvedEarlierFlow 在循环内 O(n²) 重复查询
+      const allFlowWrappers = Array.from(
+        container.querySelectorAll("[data-print-wrapper][data-flow-id]"),
+      ) as HTMLElement[];
+
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
 
@@ -950,7 +951,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
           // 后续流式元素必须等待前序流式元素完整分页并收敛，
           // 否则会先生成一批过时拆分页块，前序表格扩展后就可能互相重叠。
-          if (hasUnresolvedEarlierFlow(wrapper)) return;
+          if (hasUnresolvedEarlierFlow(wrapper, allFlowWrappers)) return;
 
           // 解除高度限制：允许包装元素随内容自适应展开。
           wrapper.style.height = "auto";
@@ -1176,21 +1177,30 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             return;
           }
 
-          for (let r = 0; r < rows.length; r++) {
-            const row = rows[r];
-            const rowRect = row.getBoundingClientRect();
+          // 二分查找第一个溢出行，将 getBoundingClientRect() 调用从 O(n) 降至 O(log n)。
+          // 前提：行在 Y 轴上单调递增（标准表格布局保证）。
+          const rowCount = rows.length;
+          if (rowCount > 0) {
+            // 快速判断是否有溢出（检查最末行 / 表格整体底端）
+            const lastOverflows = !isFooterRepeated
+              ? tableRect.bottom > limitBottom + 1
+              : rows[rowCount - 1].getBoundingClientRect().bottom + repeatedFooterHeight > limitBottom + 1;
 
-            // 预留 1px 缓冲，避免浮点误差。
-            if (!isFooterRepeated && r === rows.length - 1) {
-              // 对于最后一行（且非重复页脚），用表格的实际最底端探测更精准（覆盖所有margin/border及因为折行增加的差距）
-              if (tableRect.bottom > limitBottom + 1) {
-                splitIndex = r;
-                break;
-              }
-            } else {
-              if (rowRect.bottom + repeatedFooterHeight > limitBottom + 1) {
-                splitIndex = r;
-                break;
+            if (lastOverflows) {
+              // 二分查找：在 rows[0..rowCount-2] 中找第一个溢出行
+              // （最后一行的判断条件不同，已由 lastOverflows 覆盖）
+              let lo = 0;
+              let hi = rowCount - 2;
+              splitIndex = rowCount - 1; // 默认：最末行溢出
+
+              while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                if (rows[mid].getBoundingClientRect().bottom + repeatedFooterHeight > limitBottom + 1) {
+                  splitIndex = mid; // mid 溢出，记录并向前找
+                  hi = mid - 1;
+                } else {
+                  lo = mid + 1; // mid 不溢出，向后找
+                }
               }
             }
           }
@@ -1306,8 +1316,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
     const runFlowPaginationLoop = () => {
       for (let pass = 0; pass < maxPaginationPasses; pass++) {
         runFlowPaginationPass();
-        const repairedCount = markOverflowedPaginatedFlows();
-        const pendingCount = countPendingFlowWrappers();
+        const { repairedCount, pendingCount } = checkFlowWrapperStatus();
         paginationDebug("pass.summary", {
           pass: pass + 1,
           repairedCount,
