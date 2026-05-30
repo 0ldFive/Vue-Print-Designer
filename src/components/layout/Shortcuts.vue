@@ -388,9 +388,10 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 
   // ignore when typing in inputs
-  const target = e.target as Element | null;
+  const target = (typeof e.composedPath === "function" && e.composedPath().length > 0 ? e.composedPath()[0] : e.target) as Element | null;
   if (
     target &&
+    target.closest &&
     target.closest('input, textarea, select, [contenteditable="true"]')
   )
     return;
