@@ -40,9 +40,30 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     updatePageNumbers,
   } = deps;
 
+  const yieldToMainThread = () =>
+    new Promise<void>((resolve) => setTimeout(resolve, 0));
+
   // 生成打印预览 HTML：兼容字符串与 DOM 节点两种输入。
-  const getPrintHtml = async (content?: HTMLElement[]): Promise<string> => {
+  const getPrintHtml = async (
+    content?: HTMLElement[],
+    options: {
+      onStageProgress?: (progress: {
+        current: number;
+        total: number;
+        message?: string;
+      }) => void;
+    } = {},
+  ): Promise<string> => {
     const startTime = performance.now();
+    const reportStageProgress = (
+      current: number,
+      message?: string,
+      total = 100,
+    ) => {
+      options.onStageProgress?.({ current, total, message });
+    };
+
+    reportStageProgress(42);
     if (store.showRenderDebugLogs) {
       console.log("[Render Debug] Starting getPrintHtml");
     }
@@ -63,16 +84,31 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     let cleanup: (() => void) | null = null;
 
     try {
+      reportStageProgress(48);
       const source = await resolveRenderSource(targetContent);
       cleanup = source.cleanup;
 
       const processStart = performance.now();
+      reportStageProgress(52);
       const result = await processContentForImage(
         source.content,
         width,
         height,
         true,
         source.getComputedStyleFn,
+        {
+          onPagePrepared: (current, total) => {
+            const ratio = total > 0 ? current / total : 1;
+            const stageValue = 52 + Math.round(Math.min(1, ratio) * 26);
+            reportStageProgress(Math.min(78, stageValue));
+          },
+          onPaginationStart: () => {
+            reportStageProgress(82);
+          },
+          onPaginationDone: () => {
+            reportStageProgress(90);
+          },
+        },
       );
       if (store.showRenderDebugLogs) {
         console.log(`[Render Debug] processContentForImage took ${(performance.now() - processStart).toFixed(2)}ms`); // 包括克隆DOM、清洗、等20ms以及处理分页的耗时
@@ -105,6 +141,8 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
         previewContainer.appendChild(clone);
       });
+
+      reportStageProgress(96);
 
       const totalTime = performance.now() - startTime;
       if (store.showRenderDebugLogs) {
@@ -398,6 +436,11 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     getComputedStyleFn: (
       elt: Element,
     ) => CSSStyleDeclaration = window.getComputedStyle,
+    options: {
+      onPagePrepared?: (current: number, total: number) => void;
+      onPaginationStart?: () => void;
+      onPaginationDone?: () => void;
+    } = {},
   ) => {
     const doc = document;
     const tempHost = doc.createElement("div");
@@ -441,7 +484,9 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     // 跨页共享样式缓存：同模板多页文档结构相同，第 2+ 页几乎全部命中缓存，
     // 将后续页的 getComputedStyle 调用量从 ~N 降至接近 0。
     const sharedStyleCache = createCloneStyleCache();
-    pages.forEach((page, idx) => {
+    const totalPages = pages.length || 1;
+    for (let idx = 0; idx < pages.length; idx++) {
+      const page = pages[idx];
       const clone = cloneElementWithStyles(page, getComputedStyleFn, sharedStyleCache);
 
       // 修复：原生 cloneNode 无法克隆 Canvas 内容，导致图表/条形码等打印空白
@@ -574,7 +619,13 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
           if (h) svg.style.height = h.includes("px") ? h : `${h}px`;
         }
       });
-    });
+      options.onPagePrepared?.(idx + 1, totalPages);
+
+      // 大文档时主动让出主线程，避免外层进度 ticker 长时间无法触发。
+      if (idx < pages.length - 1 || wrappers.length > 32) {
+        await yieldToMainThread();
+      }
+    }
 
     if (store.showRenderDebugLogs) {
       console.log(`[Render Debug] 1. DOM cloning & pre-processing took ${(performance.now() - cloneStart).toFixed(2)}ms`);
@@ -582,7 +633,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
     // 让出一个宏任务帧，确保浏览器完成挂载后的样式刷新
     const waitStart = performance.now();
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await yieldToMainThread();
     if (store.showRenderDebugLogs) {
       console.log(`[Render Debug] 2. DOM wait took ${(performance.now() - waitStart).toFixed(2)}ms`);
     }
@@ -596,6 +647,8 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     }
 
     const paginStart = performance.now();
+    options.onPaginationStart?.();
+    await yieldToMainThread();
     const pagesCount = handleTablePagination(
       container,
       height,
@@ -604,6 +657,8 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       store.showHeaderLine,
       store.showFooterLine,
     );
+    options.onPaginationDone?.();
+    await yieldToMainThread();
 
     updatePageNumbers(container, pagesCount);
     container.style.height = `${height * pagesCount}px`;

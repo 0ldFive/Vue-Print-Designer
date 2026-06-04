@@ -544,6 +544,21 @@ class PrintDesignerElement extends HTMLElement {
         renderTicker = null;
       }
     };
+    const emitPreviewProgress = (next: number) => {
+      const normalized = Math.max(0, Math.min(100, Math.round(next)));
+      if (normalized <= renderProgress) return;
+      renderProgress = normalized;
+      this.emitProgress(
+        "preview",
+        {
+          phase: "preview",
+          current: renderProgress,
+          total: 100,
+          message: renderingMessage,
+        },
+        request.onProgress,
+      );
+    };
 
     try {
       this.emitProgress(
@@ -574,34 +589,18 @@ class PrintDesignerElement extends HTMLElement {
         }
 
         const step = renderProgress < 70 ? 4 : renderProgress < 86 ? 2 : 1;
-        renderProgress = Math.min(94, renderProgress + step);
-        this.emitProgress(
-          "preview",
-          {
-            phase: "preview",
-            current: renderProgress,
-            total: 100,
-            message: renderingMessage,
-          },
-          request.onProgress,
-        );
+        emitPreviewProgress(Math.min(94, renderProgress + step));
       }, 140);
 
-      const html = await this.printApi.getPrintHtml(this.getPrintPages());
+      const html = await this.printApi.getPrintHtml(this.getPrintPages(), {
+        onStageProgress: (progress) => {
+          emitPreviewProgress(progress.current);
+        },
+      });
       stopRenderTicker();
 
       if (renderProgress < 98) {
-        renderProgress = 98;
-        this.emitProgress(
-          "preview",
-          {
-            phase: "preview",
-            current: renderProgress,
-            total: 100,
-            message: renderingMessage,
-          },
-          request.onProgress,
-        );
+        emitPreviewProgress(98);
       }
 
       this.emitProgress(
