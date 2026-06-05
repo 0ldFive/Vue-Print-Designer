@@ -236,6 +236,69 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         )) as HTMLElement | null;
     };
 
+    // 自动高度文本解除固定高度后，flex 垂直居中的效果会消失，
+    // 需要用第一行文字的真实 rect 计算并补回首行偏移，保证与同排文本对齐。
+    const getFirstTextLineRect = (element: HTMLElement) => {
+      const textWalker = element.ownerDocument.createTreeWalker(element, 4);
+      let textNode = textWalker.nextNode() as Text | null;
+      while (textNode && !textNode.textContent?.trim()) {
+        textNode = textWalker.nextNode() as Text | null;
+      }
+      if (!textNode || !textNode.textContent) return null;
+
+      const range = element.ownerDocument.createRange();
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, textNode.textContent.length);
+      const rect = Array.from(range.getClientRects())[0] || null;
+      range.detach();
+      return rect;
+    };
+
+    const applyAutoHeightFirstLineAlignment = (
+      wrapper: HTMLElement,
+      textEl: HTMLElement,
+      originalContentHeight: number,
+    ) => {
+      if (originalContentHeight <= 0) return;
+
+      const computed = window.getComputedStyle(textEl);
+      const justifyContent = computed.justifyContent;
+      const isMiddleAligned = justifyContent === "center";
+      const isBottomAligned =
+        justifyContent === "flex-end" || justifyContent === "end";
+      if (!isMiddleAligned && !isBottomAligned) return;
+
+      const firstLineRect = getFirstTextLineRect(textEl);
+      if (!firstLineRect || firstLineRect.height <= 0) return;
+
+      // 以解除高度前的内容框为参照，把首行恢复到原本 middle/bottom 对齐的位置。
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const currentTopOffset = firstLineRect.top - wrapperRect.top;
+      const targetTopOffset = isMiddleAligned
+        ? Math.max(0, (originalContentHeight - firstLineRect.height) / 2)
+        : Math.max(0, originalContentHeight - firstLineRect.height);
+      const alignmentOffset = targetTopOffset - currentTopOffset;
+      if (alignmentOffset <= 0.1) return;
+
+      const currentPaddingTop = parseFloat(computed.paddingTop || "0") || 0;
+      textEl.style.paddingTop = `${currentPaddingTop + alignmentOffset}px`;
+      textEl.setAttribute(
+        "data-auto-height-align-offset-y",
+        `${alignmentOffset}`,
+      );
+    };
+
+    // 拆分出的续页文本不再处于原始固定文本框中，需移除首块专用的对齐补偿。
+    const clearAutoHeightFirstLineAlignment = (textEl: HTMLElement) => {
+      const rawOffset = textEl.getAttribute("data-auto-height-align-offset-y");
+      const alignmentOffset = rawOffset ? parseFloat(rawOffset) : 0;
+      textEl.removeAttribute("data-auto-height-align-offset-y");
+      if (!Number.isFinite(alignmentOffset) || alignmentOffset <= 0) return;
+
+      const currentPaddingTop = parseFloat(textEl.style.paddingTop || "0") || 0;
+      textEl.style.paddingTop = `${Math.max(0, currentPaddingTop - alignmentOffset)}px`;
+    };
+
     const isAxisAlignedWrapper = (wrapper: HTMLElement) => {
       let isAligned = wrapper.getAttribute("data-axis-aligned");
       if (isAligned !== null) {
@@ -564,16 +627,18 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             }
           }
 
-          // 严格串行顺序保护：保持与前一元素在原始 Y 顺序中的间距，
-          // 防止后续元素（含流式文本）跨越到固定元素（如二维码）上方。
+          // 严格串行顺序保护：仅约束原始位置位于前一元素下方的节点，
+          // 避免同一行或重叠摆放的元素被前一个 auto-height 元素推开。
           if (
             previousOriginalBottom !== null &&
             previousFinalGlobalBottom !== null
           ) {
             const serialGap = originalTop - previousOriginalBottom;
-            const serialGlobalTop = previousFinalGlobalBottom + serialGap;
-            if (serialGlobalTop > targetGlobalTop) {
-              targetGlobalTop = serialGlobalTop;
+            if (serialGap >= -0.01) {
+              const serialGlobalTop = previousFinalGlobalBottom + serialGap;
+              if (serialGlobalTop > targetGlobalTop) {
+                targetGlobalTop = serialGlobalTop;
+              }
             }
           }
 
@@ -1044,6 +1109,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           } else if (isAutoHeight && autoHeightEl) {
             // 去除元素自身 h-full/overflow-hidden，允许自动高度扩展。
             const htmlEl = autoHeightEl;
+            const originalContentHeight = htmlEl.getBoundingClientRect().height;
             htmlEl.classList.remove("h-full", "overflow-hidden");
             htmlEl.style.height = "auto";
             htmlEl.style.overflow = "visible";
@@ -1054,6 +1120,12 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
               textRoot.style.height = "auto";
               textRoot.style.overflow = "visible";
             }
+
+            applyAutoHeightFirstLineAlignment(
+              wrapper,
+              htmlEl,
+              originalContentHeight,
+            );
           }
 
           // 使用 getBoundingClientRect 计算位置，提升亚像素场景精度。
@@ -1134,6 +1206,9 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
               newTextEl.classList.remove("h-full", "overflow-hidden");
               newTextEl.style.height = "auto";
               newTextEl.style.overflow = "visible";
+              // 只有首个 auto-height chunk 需要保留原文本框的首行对齐补偿；
+              // 续分页块应从页内起始位置自然排版，避免顶部多出空白。
+              clearAutoHeightFirstLineAlignment(newTextEl);
               newTextEl.textContent = overflowText;
 
               const newTextRoot = newTextEl.parentElement as HTMLElement | null;
