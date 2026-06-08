@@ -773,8 +773,7 @@ const shouldRenderTableOuterEdge = computed(() => {
 const shouldShowBodyFooterConnectorBorder = computed(() => {
   return (
     Boolean(props.element.showFooter) &&
-    shouldRenderDesignSpacerRow.value &&
-    processedData.value.footerData.length > 0
+    shouldRenderDesignSpacerRow.value
   );
 });
 
