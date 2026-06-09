@@ -919,10 +919,12 @@ const createAlignmentCycle = (): Record<AlignmentType, AlignmentCycleStep> => ({
 
 const alignmentCycle = ref(createAlignmentCycle());
 const isContentAlignmentMode = ref(false);
+const hasAppliedContentAlignment = ref(false);
 
 const resetAlignmentCycle = () => {
   alignmentCycle.value = createAlignmentCycle();
   isContentAlignmentMode.value = false;
+  hasAppliedContentAlignment.value = false;
 };
 
 const isHorizontalAlignment = (
@@ -966,17 +968,19 @@ const handleAlignmentClick = (type: AlignmentType) => {
 
   if (isContentAlignmentMode.value) {
     if (isHorizontalAlignment(type)) {
-      if (selectedToolbarTextStyle.value.textAlign === type) {
+      if (hasAppliedContentAlignment.value && selectedToolbarTextStyle.value.textAlign === type) {
         updateToolbarTextStyle({ textAlign: "" });
         resetAlignmentCycle();
       } else {
         updateToolbarTextStyle({ textAlign: type });
+        hasAppliedContentAlignment.value = true;
       }
-    } else if (selectedToolbarTextStyle.value.verticalAlign === type) {
+    } else if (hasAppliedContentAlignment.value && selectedToolbarTextStyle.value.verticalAlign === type) {
       updateToolbarTextStyle({ verticalAlign: "" });
       resetAlignmentCycle();
     } else {
       updateToolbarTextStyle({ verticalAlign: type });
+      hasAppliedContentAlignment.value = true;
     }
     return;
   }
@@ -986,6 +990,7 @@ const handleAlignmentClick = (type: AlignmentType) => {
   if (step === "element") {
     store.alignSelectedElements(type);
     setNextAlignmentCycleStep(type, "content");
+    isContentAlignmentMode.value = true;
     return;
   }
 
@@ -996,6 +1001,7 @@ const handleAlignmentClick = (type: AlignmentType) => {
       updateToolbarTextStyle({ verticalAlign: type });
     }
     isContentAlignmentMode.value = true;
+    hasAppliedContentAlignment.value = true;
     return;
   }
 };

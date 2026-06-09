@@ -11,6 +11,18 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
+const contentJustify = computed(() => {
+  if (props.element.style.textAlign === "center") return "center";
+  if (props.element.style.textAlign === "right") return "flex-end";
+  return "flex-start";
+});
+
+const contentAlignItems = computed(() => {
+  if (props.element.style.verticalAlign === "top") return "flex-start";
+  if (props.element.style.verticalAlign === "bottom") return "flex-end";
+  return "center";
+});
+
 const pageText = computed(() => {
   const current = props.pageIndex + 1;
   const total = props.totalPages || 1;
@@ -263,6 +275,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     :data-page-format="element.format || '1'"
     :data-page-template="pageText"
     :style="{
+      display: 'flex',
+      alignItems: contentAlignItems,
+      justifyContent: contentJustify,
       fontSize: `${element.style.fontSize}px`,
       fontFamily: element.style.fontFamily,
       fontWeight: element.style.fontWeight,

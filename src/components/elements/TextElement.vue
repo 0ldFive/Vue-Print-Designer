@@ -84,6 +84,13 @@ const resolvedText = computed(() => {
   if (resolvedValue !== null) {
     const targetToReplace = variable.startsWith("@") ? variable : `@${key}`;
     if (baseContent.includes(targetToReplace)) {
+      const staticPrefix = baseContent.slice(
+        0,
+        baseContent.indexOf(targetToReplace),
+      );
+      if (staticPrefix && resolvedValue.startsWith(staticPrefix)) {
+        return resolvedValue;
+      }
       return baseContent.replace(targetToReplace, resolvedValue);
     }
     return resolvedValue;
@@ -238,10 +245,12 @@ const createAlignmentCycle = (): Record<AlignmentType, AlignmentCycleStep> => ({
 
 const alignmentCycle = ref(createAlignmentCycle());
 const isContentAlignmentMode = ref(false);
+const hasAppliedContentAlignment = ref(false);
 
 const resetAlignmentCycle = () => {
   alignmentCycle.value = createAlignmentCycle();
   isContentAlignmentMode.value = false;
+  hasAppliedContentAlignment.value = false;
 };
 
 const isHorizontalAlignment = (
@@ -262,23 +271,25 @@ const setNextAlignmentCycleStep = (
 
 const updateContentAlignment = (type: AlignmentType, toggle = true) => {
   if (isHorizontalAlignment(type)) {
-    if (toggle && activeTextAlign.value === type) {
+    if (toggle && hasAppliedContentAlignment.value && activeTextAlign.value === type) {
       store.updateSelectedElementsStyle({ textAlign: "" });
       resetAlignmentCycle();
       return;
     }
 
     store.updateSelectedElementsStyle({ textAlign: type });
+    hasAppliedContentAlignment.value = true;
     return;
   }
 
-  if (toggle && activeVerticalAlign.value === type) {
+  if (toggle && hasAppliedContentAlignment.value && activeVerticalAlign.value === type) {
     store.updateSelectedElementsStyle({ verticalAlign: "" });
     resetAlignmentCycle();
     return;
   }
 
   store.updateSelectedElementsStyle({ verticalAlign: type });
+  hasAppliedContentAlignment.value = true;
 };
 
 const handleAlignmentClick = (type: AlignmentType) => {
@@ -291,6 +302,7 @@ const handleAlignmentClick = (type: AlignmentType) => {
   if (step === "element") {
     store.alignSelectedElements(type);
     setNextAlignmentCycleStep(type, "content");
+    isContentAlignmentMode.value = true;
     return;
   }
 

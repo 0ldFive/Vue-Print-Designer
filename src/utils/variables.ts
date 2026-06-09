@@ -45,6 +45,15 @@ export const buildTestDataFromElement = (
   const result: TestData = { ...existing };
   if (!elementSupportsVariables(element)) return result;
 
+  const getTextVariableSample = (rawVar: string) => {
+    const key = normalizeVariableKey(rawVar);
+    if (!key) return element.content ?? "";
+
+    const token = rawVar.trim().startsWith("@") ? rawVar.trim() : `@${key}`;
+    const content = element.content ?? "";
+    return content.includes(token) ? token : content;
+  };
+
   const extractVariable = (
     rawVar: string,
     type: "text" | "tableData" | "tableColumns" | "tableFooterData",
@@ -66,7 +75,7 @@ export const buildTestDataFromElement = (
           ? cloneDeep(element.footerData)
           : [];
     } else {
-      result[key] = element.content ?? "";
+      result[key] = getTextVariableSample(rawVar);
     }
   };
 
