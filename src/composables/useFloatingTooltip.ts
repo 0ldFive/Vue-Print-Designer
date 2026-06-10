@@ -84,6 +84,27 @@ export const useFloatingTooltip = (
     return false;
   };
 
+  const isEventOnPanelDragHandle = (event: Event) => {
+    const path =
+      typeof event.composedPath === "function" ? event.composedPath() : [];
+
+    for (const node of path) {
+      if (!(node instanceof Element)) continue;
+
+      const closestHandle = node.closest(
+        '[data-floating-panel-drag-handle="true"]',
+      );
+      if (!closestHandle) continue;
+
+      if (node.closest(".panel-help-btn")) return false;
+      if (node.closest(".panel-close-btn")) return false;
+
+      return true;
+    }
+
+    return false;
+  };
+
   const updateTooltipPosition = async () => {
     await nextTick();
 
@@ -180,6 +201,19 @@ export const useFloatingTooltip = (
     if (!isOpen.value) return;
 
     pointerDownStartedInside.value = isEventInsideTooltipOrButton(event);
+
+    // Close the tooltip immediately when the user starts dragging any
+    // floating panel (mousedown on its drag handle). This works in both
+    // regular mount and web component (shadow DOM) mode because the check
+    // walks `composedPath`, which is shadow-DOM aware.
+    if (
+      !pointerDownStartedInside.value &&
+      isEventOnPanelDragHandle(event)
+    ) {
+      isOpen.value = false;
+      pointerDownStartedInside.value = false;
+      suppressNextOutsideClose.value = false;
+    }
   };
 
   const handleWindowClick = (event: MouseEvent) => {
