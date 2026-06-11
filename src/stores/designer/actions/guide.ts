@@ -552,9 +552,13 @@ export const guideActions = {
       const marginX = this.pageSpacingX || 0;
       const marginY = this.pageSpacingY || 0;
       const contentX = marginX;
-      const contentY = marginY;
       const contentW = Math.max(0, canvasW - marginX * 2);
-      const contentH = Math.max(0, canvasH - marginY * 2);
+      // Body area: excludes header/footer ranges when they are enabled
+      const bodyY = this.showHeaderLine ? marginY + this.headerHeight : marginY;
+      const bodyBottom = this.showFooterLine
+        ? canvasH - (this.footerHeight + marginY)
+        : canvasH - marginY;
+      const bodyH = Math.max(0, bodyBottom - bodyY);
       const isVerticalAlignment =
         type === "top" || type === "middle" || type === "bottom";
       const headerBoundary = marginY + this.headerHeight;
@@ -579,6 +583,10 @@ export const guideActions = {
 
         return null;
       };
+      const getBodyVerticalArea = () => ({
+        y: bodyY,
+        height: bodyH,
+      });
       let handledAsGroupAlignment = false;
 
       if (elements.length > 1) {
@@ -603,8 +611,8 @@ export const guideActions = {
             ? normalVerticalAreas[0]
             : null;
         const verticalTargetArea = sharedVerticalArea || {
-          y: contentY,
-          height: contentH,
+          y: bodyY,
+          height: bodyH,
         };
         let offsetX = 0;
         let offsetY = 0;
@@ -659,10 +667,7 @@ export const guideActions = {
       } else if (normalElements.length === 1) {
         // Align to canvas (respecting margins)
         const el = normalElements[0];
-        const verticalArea = getVerticalAlignmentArea(el) || {
-          y: contentY,
-          height: contentH,
-        };
+        const verticalArea = getVerticalAlignmentArea(el) || getBodyVerticalArea();
 
         switch (type) {
           case "left":
