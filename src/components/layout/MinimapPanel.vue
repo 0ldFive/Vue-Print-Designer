@@ -103,7 +103,8 @@ const viewportStyle = computed(() => {
     width: `${rect.width}px`,
     height: `${rect.height}px`,
     zIndex: MINIMAP_VIEWPORT_Z_INDEX,
-    boxShadow: `inset 0 0 0 ${VIEWPORT_BORDER_PX}px #3b82f6`,
+    boxShadow: `inset 0 0 0 ${VIEWPORT_BORDER_PX}px var(--brand-500)`,
+    backgroundColor: "var(--brand-500-alpha-10, rgb(59 130 246 / 0.1))",
   };
 });
 
@@ -793,7 +794,7 @@ const handleMouseDown = (e: MouseEvent) => {
 
       <!-- Viewport: inset box-shadow 边框完全在元素内部绘制，不会被 overflow:hidden 裁切 -->
       <div
-        class="absolute bg-blue-500/10 cursor-move"
+        class="absolute cursor-move"
         :style="viewportStyle"
       ></div>
     </div>
