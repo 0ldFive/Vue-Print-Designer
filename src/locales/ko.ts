@@ -744,6 +744,19 @@ export default {
     cloudPrint: "클라우드 인쇄",
     localClientDesc:
       "장치 내 인쇄를 위해 로컬 클라이언트 WebSocket과 시크릿 키를 설정합니다.",
+    localClientPreview: "클라이언트 미리보기 사용",
+    localClientPreviewDesc:
+      "미리보기 버튼이 클라이언트로 전송합니다. 연결이 끊기면 페이지 내 미리보기로 돌아갑니다.",
+    localClientPreviewDisabled:
+      "먼저 로컬 클라이언트를 연결한 후 이 옵션을 활성화하세요.",
+    localClientPreviewFallback:
+      "클라이언트 미리보기에 실패하여 브라우저 미리보기로 대체되었습니다.",
+    localClientPreviewMode: "미리보기 모드",
+    localClientPreviewModePdf: "PDF",
+    localClientPreviewModeHtml: "HTML",
+    localClientPreviewModeJson: "JSON",
+    localClientPreviewModeDesc:
+      "PDF: Base64로 인코딩된 PDF 전송. HTML: 렌더링된 HTML 전송. JSON: 템플릿 구조 전송.",
     remoteClient: "기본 클라이언트",
     remoteClientPlaceholder: "클라이언트 선택",
     remoteAuthHint:

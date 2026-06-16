@@ -233,13 +233,25 @@ const isEventForCurrentDesigner = (e: Event) => {
   return eventId === designerInstanceId;
 };
 
-const { printMode, silentPrint, localPrintOptions, remotePrintOptions } =
-  usePrintSettings();
+const {
+  printMode,
+  silentPrint,
+  localClientPreview,
+  localClientPreviewMode,
+  localStatus,
+  localPrintOptions,
+  remotePrintOptions,
+} = usePrintSettings();
 const printModeValue = computed(() => printMode.value || "browser");
+const localConnected = computed(() => localStatus.value === "connected");
+const useClientPreview = computed(
+  () => localClientPreview.value && localConnected.value,
+);
 
 const {
   getPrintHtml,
   print,
+  preview,
   exportPdf,
   exportHtml,
   getPdfBlob,
@@ -1267,6 +1279,23 @@ const handlePreview = async () => {
       const pages = Array.from(
         getQueryRoot().querySelectorAll(".print-page"),
       ) as HTMLElement[];
+
+      if (useClientPreview.value) {
+        try {
+          await preview(pages, { mode: localClientPreviewMode.value });
+          return;
+        } catch (clientErr) {
+          console.warn(
+            "Client preview failed, fallback to in-page preview",
+            clientErr,
+          );
+          toast.error(
+            t("settings.localClientPreviewFallback") ||
+              "Client preview failed, fallback to browser preview",
+          );
+        }
+      }
+
       store.setPrintProgress({
         phase: "preview",
         current: 1,

@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, watch, computed, onMounted, onUnmounted, inject } from "vue";
 import { useI18n } from "@/locales";
 import { useTheme } from "@/composables/useTheme";
@@ -33,6 +33,8 @@ const {
   silentPrint,
   exportImageMerged,
   printQuality,
+  localClientPreview,
+  localClientPreviewMode,
   localSettings,
   remoteSettings,
   localStatus,
@@ -1074,6 +1076,118 @@ onUnmounted(() => {
                   >{{ t("settings.connectionUrl") }}:
                 </span>
                 <span>{{ localWsUrl }}</span>
+              </div>
+
+              <div class="border-t border-gray-200 pt-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium text-gray-900">
+                      {{ t("settings.localClientPreview") }}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                      {{ t("settings.localClientPreviewDesc") }}
+                    </p>
+                  </div>
+                  <button
+                    @click="
+                      localClientPreview = !localClientPreview
+                    "
+                    :disabled="!localConnected"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="[
+                      localClientPreview ? 'bg-blue-600' : 'bg-gray-200',
+                      !localConnected ? 'bg-gray-200' : '',
+                    ]"
+                    :title="
+                      localConnected
+                        ? ''
+                        : t('settings.localClientPreviewDisabled')
+                    "
+                  >
+                    <span class="sr-only">{{
+                      t("settings.localClientPreview")
+                    }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="
+                        localClientPreview
+                          ? 'translate-x-5'
+                          : 'translate-x-0'
+                      "
+                    />
+                  </button>
+                </div>
+
+                <div
+                  class="pl-1 pt-1"
+                  :class="
+                    !localConnected ? 'opacity-50 pointer-events-none' : ''
+                  "
+                >
+                  <div class="mb-1 text-xs text-gray-500">
+                    {{ t("settings.localClientPreviewMode") }}
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <label
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
+                      :class="
+                        localClientPreviewMode === 'pdf'
+                          ? 'border-blue-600 text-blue-700'
+                          : 'border-gray-300'
+                      "
+                    >
+                      <input
+                        type="radio"
+                        value="pdf"
+                        v-model="localClientPreviewMode"
+                        :disabled="!localConnected"
+                      />
+                      <span>{{
+                        t("settings.localClientPreviewModePdf")
+                      }}</span>
+                    </label>
+                    <label
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
+                      :class="
+                        localClientPreviewMode === 'html'
+                          ? 'border-blue-600 text-blue-700'
+                          : 'border-gray-300'
+                      "
+                    >
+                      <input
+                        type="radio"
+                        value="html"
+                        v-model="localClientPreviewMode"
+                        :disabled="!localConnected"
+                      />
+                      <span>{{
+                        t("settings.localClientPreviewModeHtml")
+                      }}</span>
+                    </label>
+                    <label
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
+                      :class="
+                        localClientPreviewMode === 'json'
+                          ? 'border-blue-600 text-blue-700'
+                          : 'border-gray-300'
+                      "
+                    >
+                      <input
+                        type="radio"
+                        value="json"
+                        v-model="localClientPreviewMode"
+                        :disabled="!localConnected"
+                      />
+                      <span>{{
+                        t("settings.localClientPreviewModeJson")
+                      }}</span>
+                    </label>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2">
+                    {{ t("settings.localClientPreviewModeDesc") }}
+                  </p>
+                </div>
               </div>
             </div>
 

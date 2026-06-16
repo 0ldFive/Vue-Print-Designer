@@ -745,6 +745,19 @@ export default {
     cloudPrint: "Cloud Print",
     localClientDesc:
       "Configure the local client WebSocket and secret key for on-device printing.",
+    localClientPreview: "Use Client Preview",
+    localClientPreviewDesc:
+      "Preview button sends content to the client; falls back when disconnected.",
+    localClientPreviewDisabled:
+      "Connect the local client first to enable client preview.",
+    localClientPreviewFallback:
+      "Client preview failed, fell back to browser preview.",
+    localClientPreviewMode: "Preview Mode",
+    localClientPreviewModePdf: "PDF",
+    localClientPreviewModeHtml: "HTML",
+    localClientPreviewModeJson: "JSON",
+    localClientPreviewModeDesc:
+      "PDF: send a base64 PDF. HTML: send rendered HTML. JSON: send the template structure.",
     remoteClient: "Default Client",
     remoteClientPlaceholder: "Select a client",
     remoteAuthHint:

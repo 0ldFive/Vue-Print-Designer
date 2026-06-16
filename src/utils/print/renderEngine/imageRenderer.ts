@@ -477,11 +477,30 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     tempHost.appendChild(container);
 
     let pages: HTMLElement[] = [];
+    let layoutHostCleanup: (() => void) | null = null;
     if (typeof content === "string") {
-      container.innerHTML = content;
-      pages = Array.from(container.children).filter(
-        (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
-      ) as HTMLElement[];
+      // 字符串内容先注入到不受尺寸约束的临时容器，让浏览器完成布局，
+      // 避免 flex 等布局在固定尺寸 absolute 容器中崩塌
+      // 注意：layoutHost 必须有正常的视口宽度，否则外层 flex 容器
+      // （width: 100%）会解析为 0，导致 .print-page 被压缩成不可见内容
+      const layoutHost = doc.createElement("div");
+      layoutHost.style.cssText =
+        `position:fixed;left:0;top:0;width:${width}px;z-index:-9999;visibility:hidden;pointer-events:none;`;
+      doc.body.appendChild(layoutHost);
+      layoutHost.innerHTML = content;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      // 优先提取 .print-page 元素；若外层有包裹容器则深入其子元素
+      const printPages = layoutHost.querySelectorAll(".print-page");
+      if (printPages.length > 0) {
+        pages = Array.from(printPages) as HTMLElement[];
+      } else {
+        pages = Array.from(layoutHost.children).filter(
+          (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
+        ) as HTMLElement[];
+      }
+      // 延迟清理：cloneElementWithStyles 需要 layoutHost 仍在 DOM 中
+      // 才能正确读取 getComputedStyle
+      layoutHostCleanup = () => layoutHost.remove();
     } else if (Array.isArray(content)) {
       pages = content;
     } else {
@@ -638,6 +657,9 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         await yieldToMainThread();
       }
     }
+
+    // 字符串内容的 layoutHost 在克隆完成后方可移除
+    layoutHostCleanup?.();
 
     if (store.showRenderDebugLogs) {
       console.log(`[Render Debug] 1. DOM cloning & pre-processing took ${(performance.now() - cloneStart).toFixed(2)}ms`);

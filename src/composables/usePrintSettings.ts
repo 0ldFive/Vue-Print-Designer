@@ -74,12 +74,15 @@ export interface LocalPrinterCaps {
 }
 
 export type PrintQuality = "fast" | "normal" | "high" | "ultra";
+export type PreviewMode = "pdf" | "html" | "json";
 
 interface PrintSettingsState {
   printMode: ReturnType<typeof ref<PrintMode>>;
   silentPrint: ReturnType<typeof ref<boolean>>;
   exportImageMerged: ReturnType<typeof ref<boolean>>;
   printQuality: ReturnType<typeof ref<PrintQuality>>;
+  localClientPreview: ReturnType<typeof ref<boolean>>;
+  localClientPreviewMode: ReturnType<typeof ref<PreviewMode>>;
   localSettings: LocalConnectionSettings;
   remoteSettings: RemoteConnectionSettings;
   localStatus: ReturnType<typeof ref<ConnectionStatus>>;
@@ -108,6 +111,14 @@ interface PrintSettingsState {
     payload: Record<string, any>,
     timeoutMs?: number,
   ) => Promise<any>;
+  sendLocalPreview: (
+    payload: Record<string, any>,
+    timeoutMs?: number,
+  ) => Promise<{
+    type: "preview_result";
+    status: "success" | "error";
+    message?: string;
+  }>;
   cancelLocalRetry: () => void;
   cancelRemoteRetry: () => void;
   connectLocal: () => Promise<void>;
@@ -122,6 +133,8 @@ const storageKeys = {
   silentPrint: "print-designer-silent-print",
   exportImageMerged: "print-designer-export-image-merged",
   printQuality: "print-designer-print-quality",
+  localClientPreview: "print-designer-local-client-preview",
+  localClientPreviewMode: "print-designer-local-client-preview-mode",
   localSettings: "print-designer-local-settings",
   remoteSettings: "print-designer-remote-settings",
   localPrintOptions: "print-designer-local-print-options",
@@ -280,6 +293,18 @@ const createState = (): PrintSettingsState => {
   const exportImageMerged = ref(
     localStorage.getItem(storageKeys.exportImageMerged) !== "false",
   );
+  const localClientPreview = ref(
+    localStorage.getItem(storageKeys.localClientPreview) === "true",
+  );
+  const validPreviewModes: PreviewMode[] = ["pdf", "html", "json"];
+  const storedPreviewMode = localStorage.getItem(
+    storageKeys.localClientPreviewMode,
+  ) as PreviewMode | null;
+  const localClientPreviewMode = ref<PreviewMode>(
+    storedPreviewMode && validPreviewModes.includes(storedPreviewMode)
+      ? storedPreviewMode
+      : "pdf",
+  );
   const printQualityStr = localStorage.getItem(storageKeys.printQuality) as
     | string
     | null;
@@ -397,6 +422,23 @@ const createState = (): PrintSettingsState => {
   watch(exportImageMerged, (value) => {
     localStorage.setItem(storageKeys.exportImageMerged, String(value));
   });
+
+  watch(localClientPreview, (value) => {
+    localStorage.setItem(storageKeys.localClientPreview, String(value));
+  });
+
+  watch(localClientPreviewMode, (value) => {
+    localStorage.setItem(storageKeys.localClientPreviewMode, value);
+  });
+
+  watch(
+    () => localStatus.value,
+    (status) => {
+      if (status !== "connected" && localClientPreview.value) {
+        localClientPreview.value = false;
+      }
+    },
+  );
 
   watch(printQuality, (value) => {
     localStorage.setItem(storageKeys.printQuality, value.toString());
@@ -966,6 +1008,30 @@ const createState = (): PrintSettingsState => {
     );
   };
 
+  const sendLocalPreview = async (
+    payload: Record<string, any>,
+    timeoutMs: number = 15000,
+  ) => {
+    await connectLocal();
+    return await sendWithWait<{
+      type: "preview_result";
+      status: "success" | "error";
+      message?: string;
+    }>(
+      localSocket,
+      localWaiters,
+      payload,
+      (
+        msg,
+      ): msg is {
+        type: "preview_result";
+        status: "success" | "error";
+        message?: string;
+      } => msg?.type === "preview_result",
+      timeoutMs,
+    );
+  };
+
   const stopRemoteClientsPolling = () => {
     if (remoteClientsPoller.value) {
       window.clearInterval(remoteClientsPoller.value);
@@ -1012,6 +1078,8 @@ const createState = (): PrintSettingsState => {
     silentPrint,
     exportImageMerged,
     printQuality,
+    localClientPreview,
+    localClientPreviewMode,
     localSettings,
     remoteSettings,
     localStatus,
@@ -1035,6 +1103,7 @@ const createState = (): PrintSettingsState => {
     fetchRemotePrinters,
     fetchLocalPrinterCaps,
     submitRemoteTask,
+    sendLocalPreview,
     cancelLocalRetry,
     cancelRemoteRetry,
     connectLocal,

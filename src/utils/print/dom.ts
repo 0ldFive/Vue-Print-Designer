@@ -95,7 +95,7 @@ const PRINT_CSS_PROPS = [
   "width", "height", "max-width", "max-height", "min-width", "min-height",
   "box-sizing", "margin-top", "margin-right", "margin-bottom", "margin-left", 
   "padding-top", "padding-right", "padding-bottom", "padding-left",
-  "flex-direction", "justify-content", "align-items", "align-content", "align-self", "flex-wrap", "flex-grow", "flex-shrink", "flex-basis",
+  "flex-direction", "justify-content", "align-items", "align-content", "align-self", "flex-wrap", "flex-grow", "flex-shrink", "flex-basis", "order", "gap", "row-gap", "column-gap",
   "grid-template-columns", "grid-template-rows", "grid-column", "grid-row", "gap",
   "background-color", "background-image", "background-size", "background-position", "background-repeat",
   "color", "font-size", "font-family", "font-weight", "font-style", "text-align", "text-decoration", "text-transform", "line-height",
@@ -107,7 +107,13 @@ const PRINT_CSS_PROPS = [
   "box-shadow", "opacity", "transform", "transform-origin", "visibility", "overflow", "clip-path",
   "table-layout", "border-collapse", "border-spacing", "empty-cells", "vertical-align",
   "object-fit", "object-position",
-  "fill", "stroke", "stroke-width"
+  "fill", "stroke", "stroke-width",
+  "text-shadow", "outline", "outline-color", "outline-width", "outline-style", "outline-offset",
+  "filter", "backdrop-filter", "mix-blend-mode",
+  "aspect-ratio",
+  "list-style", "list-style-type", "list-style-position", "list-style-image",
+  "content", "quotes", "counter-increment", "counter-reset",
+  "page-break-before", "page-break-after", "page-break-inside", "break-before", "break-after", "break-inside"
 ];
 
 const DEFAULT_PRINT_CSS_VALUES: Record<string, string> = {

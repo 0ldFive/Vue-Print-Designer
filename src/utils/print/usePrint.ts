@@ -26,6 +26,7 @@ export const usePrint = () => {
     fetchRemoteClients,
     fetchRemotePrinters,
     submitRemoteTask,
+    sendLocalPreview,
     exportImageMerged,
   } = usePrintSettings();
 
@@ -718,9 +719,204 @@ export const usePrint = () => {
     },
   });
 
+  type PreviewMode = "pdf" | "html" | "json";
+
+  type PreviewOptions = {
+    mode?: PreviewMode;
+    title?: string;
+    key?: string;
+    timeoutMs?: number;
+    rawHtml?: string;
+    rawJson?: string | object;
+  };
+
+  const blobToDataUrl = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read PDF blob"));
+      reader.readAsDataURL(blob);
+    });
+
+  const preview = async (
+    content: HTMLElement | string | HTMLElement[] | undefined,
+    request: PreviewOptions = {},
+  ) => {
+    if (localStatus.value !== "connected") {
+      throw new Error("Local client is not connected");
+    }
+
+    const mode: PreviewMode = request.mode || "pdf";
+    const title = request.title || "";
+    const key = request.key || localSettings.secretKey.trim();
+
+    let previewContent = "";
+    let renderTicker: number | ReturnType<typeof setInterval> | null = null;
+    let reachedComplete = false;
+    let renderValue = 8;
+
+    try {
+      store.setPrintProgress({
+        phase: "preview",
+        current: renderValue,
+        total: 100,
+        message: i18n.global.t("statusBar.progress.preparing"),
+      });
+      renderTicker = window.setInterval(() => {
+        renderValue = Math.min(70, renderValue + 4);
+        store.setPrintProgress({
+          phase: "preview",
+          current: renderValue,
+          total: 100,
+          message: i18n.global.t("statusBar.progress.rendering"),
+        });
+        if (renderValue >= 70 && renderTicker !== null) {
+          window.clearInterval(renderTicker);
+          renderTicker = null;
+        }
+      }, 120);
+
+      if (mode === "pdf") {
+        const targetContent =
+          content ||
+          (Array.from(
+            document.querySelectorAll(".print-page"),
+          ) as HTMLElement[]);
+        const pdfBlob = await getPdfBlob(targetContent, { showProgress: false });
+        if (renderTicker !== null) {
+          window.clearInterval(renderTicker);
+          renderTicker = null;
+        }
+        const dataUrl = await blobToDataUrl(pdfBlob);
+        previewContent = dataUrl;
+        store.setPrintProgress({
+          phase: "preview",
+          current: 80,
+          total: 100,
+          message: i18n.global.t("statusBar.progress.rendering"),
+        });
+      } else if (mode === "html") {
+        if (renderTicker !== null) {
+          window.clearInterval(renderTicker);
+          renderTicker = null;
+        }
+        if (typeof request.rawHtml === "string" && request.rawHtml) {
+          previewContent = request.rawHtml;
+        } else if (typeof content === "string" && content) {
+          previewContent = content;
+        } else {
+          const targetContent =
+            content ||
+            (Array.from(
+              document.querySelectorAll(".print-page"),
+            ) as HTMLElement[]);
+          previewContent = await getPrintHtml(targetContent as HTMLElement[]);
+        }
+        store.setPrintProgress({
+          phase: "preview",
+          current: 80,
+          total: 100,
+          message: i18n.global.t("statusBar.progress.rendering"),
+        });
+      } else if (mode === "json") {
+        if (renderTicker !== null) {
+          window.clearInterval(renderTicker);
+          renderTicker = null;
+        }
+        if (request.rawJson !== undefined) {
+          previewContent =
+            typeof request.rawJson === "string"
+              ? request.rawJson
+              : JSON.stringify(request.rawJson);
+        } else {
+          previewContent = JSON.stringify({
+            pages: cloneDeep(store.pages),
+            canvasSize: cloneDeep(store.canvasSize),
+            testData: cloneDeep(store.testData || {}),
+            variables: cloneDeep(store.variables || {}),
+            headerHeight: store.headerHeight,
+            footerHeight: store.footerHeight,
+            showHeaderLine: store.showHeaderLine,
+            showFooterLine: store.showFooterLine,
+            enableHeaderFooterLineRendering:
+              store.enableHeaderFooterLineRendering,
+            headerLineStyle: store.headerLineStyle,
+            footerLineStyle: store.footerLineStyle,
+            headerLineColor: store.headerLineColor,
+            footerLineColor: store.footerLineColor,
+            headerLineWidth: store.headerLineWidth,
+            footerLineWidth: store.footerLineWidth,
+            headerLineSpanMode: store.headerLineSpanMode,
+            footerLineSpanMode: store.footerLineSpanMode,
+            headerLineSpan: store.headerLineSpan,
+            footerLineSpan: store.footerLineSpan,
+            pageSpacingX: store.pageSpacingX,
+            pageSpacingY: store.pageSpacingY,
+            canvasBackground: store.canvasBackground,
+            watermark: cloneDeep(store.watermark),
+            unit: store.unit,
+          });
+        }
+        store.setPrintProgress({
+          phase: "preview",
+          current: 80,
+          total: 100,
+          message: i18n.global.t("statusBar.progress.rendering"),
+        });
+      } else {
+        throw new Error(`Unsupported preview mode: ${mode}`);
+      }
+
+      const payload: Record<string, any> = {
+        type: "preview",
+        mode,
+        content: previewContent,
+      };
+      if (title) payload.title = title;
+      if (key) payload.key = key;
+
+      store.setPrintProgress({
+        phase: "preview",
+        current: 92,
+        total: 100,
+        message: i18n.global.t("statusBar.progress.saving"),
+      });
+
+      const result = await sendLocalPreview(
+        payload,
+        request.timeoutMs || 15000,
+      );
+
+      if (result?.status === "error") {
+        throw new Error(result?.message || "Preview failed");
+      }
+
+      reachedComplete = true;
+      store.setPrintProgress({
+        phase: "preview",
+        current: 100,
+        total: 100,
+        message: i18n.global.t("statusBar.progress.saving"),
+      });
+      return result;
+    } catch (error) {
+      console.error("Preview failed", error);
+      throw error;
+    } finally {
+      if (renderTicker !== null) {
+        window.clearInterval(renderTicker);
+      }
+      if (reachedComplete) {
+        await new Promise((resolve) => setTimeout(resolve, 180));
+      }
+      store.setPrintProgress(null);
+    }
+  };
+
   return {
     getPrintHtml,
     print,
+    preview,
     exportPdf,
     exportHtml,
     exportImages,

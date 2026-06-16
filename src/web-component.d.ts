@@ -1,6 +1,8 @@
 import type {
   DesignerExportRequest,
   DesignerPreviewRequest,
+  DesignerClientPreviewRequest,
+  DesignerClientPreviewResult,
   DesignerPrintRequest,
   DesignerPrintDefaults,
   DesignerListContextMenuConfig,
@@ -43,6 +45,9 @@ export interface PrintDesignerElement extends HTMLElement {
   print(request?: DesignerPrintRequest): Promise<any>;
   export(request: DesignerExportRequest): Promise<void | Blob>;
   getPreviewHtml(request?: DesignerPreviewRequest): Promise<string>;
+  preview(
+    request?: DesignerClientPreviewRequest,
+  ): Promise<DesignerClientPreviewResult>;
   setPrintDefaults(payload?: DesignerPrintDefaults): void;
   fetchLocalPrinters(): Promise<LocalPrinterInfo[]>;
   fetchLocalPrinterCaps(printer: string): Promise<LocalPrinterCaps | undefined>;

@@ -87,6 +87,22 @@ export type DesignerPreviewRequest = {
   onProgress?: DesignerProgressCallback;
 };
 
+export type DesignerClientPreviewRequest = {
+  mode?: "pdf" | "html" | "json";
+  title?: string;
+  key?: string;
+  timeoutMs?: number;
+  html?: string;
+  json?: string | object;
+  onProgress?: DesignerProgressCallback;
+};
+
+export type DesignerClientPreviewResult = {
+  type: "preview_result";
+  status: "success" | "error";
+  message?: string;
+};
+
 export type DesignerPrintDefaults = {
   printMode?: PrintMode;
   silentPrint?: boolean;
@@ -623,6 +639,97 @@ class PrintDesignerElement extends HTMLElement {
       throw error;
     } finally {
       stopRenderTicker();
+      stopProgress();
+    }
+  }
+
+  async preview(request: DesignerClientPreviewRequest = {}) {
+    if (!this.printApi) {
+      throw new Error("Designer is not ready");
+    }
+
+    const stopProgress = this.bindProgressReporter(
+      "preview",
+      request.onProgress,
+    );
+    const preparingMessage =
+      this.i18n?.global.t("statusBar.progress.preparing") || "Preparing";
+    const renderingMessage =
+      this.i18n?.global.t("statusBar.progress.rendering") || "Rendering";
+    let progress = 8;
+    let ticker: number | ReturnType<typeof setInterval> | null = null;
+
+    const stopTicker = () => {
+      if (ticker !== null) {
+        window.clearInterval(ticker);
+        ticker = null;
+      }
+    };
+
+    const emitProgress = (next: number, message?: string) => {
+      const normalized = Math.max(0, Math.min(100, Math.round(next)));
+      if (normalized <= progress) return;
+      progress = normalized;
+      this.emitProgress(
+        "preview",
+        {
+          phase: "preview",
+          current: progress,
+          total: 100,
+          message: message || renderingMessage,
+        },
+        request.onProgress,
+      );
+    };
+
+    try {
+      this.dispatchEvent(
+        new CustomEvent("preview", { detail: { request } }),
+      );
+      this.emitProgress(
+        "preview",
+        {
+          phase: "preview",
+          current: 0,
+          total: 100,
+          message: preparingMessage,
+        },
+        request.onProgress,
+      );
+
+      ticker = window.setInterval(() => {
+        if (progress >= 70) {
+          stopTicker();
+          return;
+        }
+        emitProgress(progress + 4);
+      }, 120);
+
+      const result = (await this.printApi.preview(this.getPrintPages(), {
+        mode: request.mode,
+        title: request.title,
+        key: request.key,
+        timeoutMs: request.timeoutMs,
+        rawHtml: request.html,
+        rawJson: request.json,
+      })) as DesignerClientPreviewResult;
+      stopTicker();
+      emitProgress(100, renderingMessage);
+
+      this.dispatchEvent(
+        new CustomEvent("previewed", { detail: { request, result } }),
+      );
+      return result;
+    } catch (error) {
+      stopTicker();
+      this.dispatchEvent(
+        new CustomEvent("error", {
+          detail: { scope: "preview", error },
+        }),
+      );
+      throw error;
+    } finally {
+      stopTicker();
       stopProgress();
     }
   }

@@ -757,6 +757,19 @@ export default {
     cloudPrint: "Cloud-Druck",
     localClientDesc:
       "Konfigurieren Sie den WebSocket des lokalen Clients und den geheimen Schlüssel für das Drucken auf dem Gerät.",
+    localClientPreview: "Client-Vorschau verwenden",
+    localClientPreviewDesc:
+      "Vorschau sendet an den Client; bei Trennung zurück auf In-Page-Vorschau.",
+    localClientPreviewDisabled:
+      "Bitte zuerst den lokalen Client verbinden, um die Client-Vorschau zu aktivieren.",
+    localClientPreviewFallback:
+      "Client-Vorschau fehlgeschlagen, auf Browser-Vorschau zurückgefallen.",
+    localClientPreviewMode: "Vorschaumodus",
+    localClientPreviewModePdf: "PDF",
+    localClientPreviewModeHtml: "HTML",
+    localClientPreviewModeJson: "JSON",
+    localClientPreviewModeDesc:
+      "PDF: Base64-kodiertes PDF senden. HTML: gerendertes HTML senden. JSON: Vorlagenstruktur senden.",
     remoteClient: "Standard-Client",
     remoteClientPlaceholder: "Client auswählen",
     remoteAuthHint:

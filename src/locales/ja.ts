@@ -745,6 +745,19 @@ export default {
     cloudPrint: "クラウド印刷",
     localClientDesc:
       "端末内印刷のために、ローカルクライアント WebSocket とシークレットキーを設定します。",
+    localClientPreview: "クライアントプレビューを使用",
+    localClientPreviewDesc:
+      "プレビューボタンがクライアントに送信します。切断時はページ内プレビューへ戻ります。",
+    localClientPreviewDisabled:
+      "先にローカルクライアントを接続してください。",
+    localClientPreviewFallback:
+      "クライアントプレビューに失敗したため、ブラウザプレビューにフォールバックしました。",
+    localClientPreviewMode: "プレビューモード",
+    localClientPreviewModePdf: "PDF",
+    localClientPreviewModeHtml: "HTML",
+    localClientPreviewModeJson: "JSON",
+    localClientPreviewModeDesc:
+      "PDF: Base64 エンコードされた PDF を送信。HTML: レンダリング済み HTML を送信。JSON: テンプレート構造を送信。",
     remoteClient: "デフォルトクライアント",
     remoteClientPlaceholder: "クライアントを選択",
     remoteAuthHint:
