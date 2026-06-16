@@ -13,6 +13,7 @@
   - [1. Execute Print (print)](#1-execute-print-print)
   - [2. Export PDF/Images/HTML (export)](#2-export-pdfimageshtml-export)
   - [3. Generate and Get HTML Preview Code (getPreviewHtml)](#3-generate-and-get-html-preview-code-getpreviewhtml)
+  - [3.1. Send to Local Client Preview (preview)](#31-send-to-local-client-preview-preview)
   - [4. Set Default Print Options (setPrintDefaults)](#4-set-default-print-options-setprintdefaults)
   - [5. Print Quality Settings (getPrintQuality/setPrintQuality)](#5-print-quality-settings-getprintqualitysetprintquality)
   - [6. Get Printers and Clients (fetchPrinters)](#6-get-printers-and-clients-fetchprinters)
@@ -68,6 +69,7 @@
 | `print(request)`                      | Execute print                                                |
 | `export(request)`                     | Export PDF/Images/HTML                                       |
 | `getPreviewHtml(options?)`            | Generate and get HTML preview code                           |
+| `preview(request?)`                   | Send content to the local client preview window              |
 | `setPrintDefaults(payload)`           | Set default print options                                    |
 | `getPrintQuality()`                   | Get current print quality                                    |
 | `setPrintQuality(quality)`            | Set print quality                                            |
@@ -437,6 +439,60 @@ Progress payload:
 | `total` | `number` | Total progress value. |
 | `percent` | `number` | Percentage value from 0 to 100. |
 | `message` | `string` | Human-readable phase message. |
+
+### 3.1. Send to Local Client Preview (preview)
+
+Description: send preview content to the configured local client through WebSocket and let the client open the system preview window. Use this API when the host application wants to reuse the client-side PDF preview capability instead of hosting the preview window in the browser.
+
+Prerequisite: the local client must be running, and `localSettings.wsAddress` / `localSettings.secretKey` must be configured through `setPrintDefaults`, or configured in the designer settings UI.
+
+```ts
+const result = await el.preview({
+  mode: "html",
+  title: "Order Preview",
+  printQuality: "high",
+  onProgress: (progress) => {
+    console.log("Client preview progress", progress.percent, progress.message);
+  },
+});
+
+console.log(result.status);
+```
+
+Parameters:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `mode` | `'pdf' \| 'html' \| 'json'` | No | Preview mode. Defaults to `'pdf'`. |
+| `title` | `string` | No | Client preview window title. |
+| `key` | `string` | No | Local client secret key for this request. Defaults to `localSettings.secretKey`. |
+| `timeoutMs` | `number` | No | Timeout for waiting for the client preview acknowledgment. Defaults to `15000`. |
+| `html` | `string` | No | Raw HTML to send when `mode: 'html'`; if omitted, the current designer preview HTML is generated and sent. |
+| `json` | `string \| object` | No | Template JSON to send when `mode: 'json'`; if omitted, the current designer template data is sent. |
+| `printQuality` | `'fast' \| 'normal' \| 'high' \| 'ultra'` | No | Quality used by the client when rendering HTML/JSON into PDF. If omitted, the current `getPrintQuality()` value is used. |
+| `onProgress` | `(progress: DesignerProgressPayload) => void` | No | Progress callback fired when progress changes. |
+
+Returns: `Promise<{ type: 'preview_result'; status: 'success' | 'error'; message?: string }>`. `status: 'success'` means the client has accepted the preview request and opened the preview window; the actual PDF rendering happens inside the client preview window.
+
+Content flow by `mode`:
+
+| mode | Content sent to the client | Client preview result |
+| --- | --- | --- |
+| `pdf` | The designer generates a PDF first, then sends a PDF data URL/base64. | Display the PDF directly. |
+| `html` | Send pre-paginated HTML, or the HTML passed in `request.html`. | The client renders the HTML into PDF using `printQuality`, then displays the PDF. |
+| `json` | Send the current template JSON, or the JSON passed in `request.json`. | The client loads the template JSON and renders it into PDF using `printQuality`, then displays the PDF. |
+
+The preview message sent to the client has the following shape. Client implementations should preserve and use `printQuality` in the `preview` pipeline:
+
+```json
+{
+  "type": "preview",
+  "mode": "html",
+  "content": "<div>...</div>",
+  "title": "Order Preview",
+  "printQuality": "high"
+}
+```
 
 ### 4. Set Default Print Options (setPrintDefaults)
 

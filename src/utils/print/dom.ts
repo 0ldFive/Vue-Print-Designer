@@ -308,13 +308,27 @@ export const deduplicateInlineStyles = (root: HTMLElement): void => {
   const rules: string[] = [];
   let counter = 0;
 
+  const existingClasses = new Set<string>();
+  for (const el of [root, ...Array.from(root.querySelectorAll<HTMLElement>("*"))]) {
+    el.classList.forEach((cls) => existingClasses.add(cls));
+  }
+
+  let prefixCounter = 0;
+  let classPrefix = "_pd";
+  while (
+    Array.from(existingClasses).some((cls) => cls.startsWith(classPrefix))
+  ) {
+    prefixCounter += 1;
+    classPrefix = `_pd${prefixCounter}_`;
+  }
+
   for (const el of root.querySelectorAll<HTMLElement>("[style]")) {
     const cssText = el.style.cssText;
     if (!cssText) continue;
 
     let cls = styleMap.get(cssText);
     if (cls === undefined) {
-      cls = `_p${counter++}`;
+      cls = `${classPrefix}${counter++}`;
       styleMap.set(cssText, cls);
       // cssText 末尾通常已带分号，直接放入规则块合法
       rules.push(`.${cls}{${cssText}}`);

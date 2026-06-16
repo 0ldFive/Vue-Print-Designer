@@ -477,6 +477,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     tempHost.appendChild(container);
 
     let pages: HTMLElement[] = [];
+    let preservePrePaginatedPages = false;
     let layoutHostCleanup: (() => void) | null = null;
     if (typeof content === "string") {
       // 字符串内容先注入到不受尺寸约束的临时容器，让浏览器完成布局，
@@ -485,7 +486,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       // （width: 100%）会解析为 0，导致 .print-page 被压缩成不可见内容
       const layoutHost = doc.createElement("div");
       layoutHost.style.cssText =
-        `position:fixed;left:0;top:0;width:${width}px;z-index:-9999;visibility:hidden;pointer-events:none;`;
+        `position:fixed;left:-100000px;top:0;width:${width}px;z-index:-9999;opacity:0;pointer-events:none;`;
       doc.body.appendChild(layoutHost);
       layoutHost.innerHTML = content;
       await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -493,6 +494,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       const printPages = layoutHost.querySelectorAll(".print-page");
       if (printPages.length > 0) {
         pages = Array.from(printPages) as HTMLElement[];
+        preservePrePaginatedPages = true;
       } else {
         pages = Array.from(layoutHost.children).filter(
           (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
@@ -683,14 +685,18 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     const paginStart = performance.now();
     options.onPaginationStart?.();
     await yieldToMainThread();
-    const pagesCount = handleTablePagination(
-      container,
-      height,
-      store.headerHeight,
-      store.footerHeight,
-      store.showHeaderLine,
-      store.showFooterLine,
-    );
+    const pagesCount = preservePrePaginatedPages
+      ? Array.from(container.children).filter(
+          (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
+        ).length
+      : handleTablePagination(
+          container,
+          height,
+          store.headerHeight,
+          store.footerHeight,
+          store.showHeaderLine,
+          store.showFooterLine,
+        );
     options.onPaginationDone?.();
     await yieldToMainThread();
 

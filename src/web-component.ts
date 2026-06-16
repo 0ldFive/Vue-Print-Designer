@@ -9,6 +9,7 @@ import {
   usePrintSettings,
   type PrintMode,
   type PrintOptions,
+  type PrintQuality,
   type LocalConnectionSettings,
   type RemoteConnectionSettings,
   type LocalPrinterInfo,
@@ -94,6 +95,7 @@ export type DesignerClientPreviewRequest = {
   timeoutMs?: number;
   html?: string;
   json?: string | object;
+  printQuality?: PrintQuality;
   onProgress?: DesignerProgressCallback;
 };
 
@@ -712,6 +714,7 @@ class PrintDesignerElement extends HTMLElement {
         timeoutMs: request.timeoutMs,
         rawHtml: request.html,
         rawJson: request.json,
+        printQuality: request.printQuality,
       })) as DesignerClientPreviewResult;
       stopTicker();
       emitProgress(100, renderingMessage);

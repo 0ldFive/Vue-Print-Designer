@@ -3,7 +3,10 @@ import cloneDeep from "lodash/cloneDeep";
 import { uuidv4 } from "@/utils/uuid";
 import { useDesignerStore } from "@/stores/designer";
 import { ElementType, type Page } from "@/types";
-import { usePrintSettings } from "@/composables/usePrintSettings";
+import {
+  usePrintSettings,
+  type PrintQuality,
+} from "@/composables/usePrintSettings";
 import { toast } from "@/utils/toast";
 import i18n from "@/locales";
 import { isShadowDomContent, lockViewportScroll } from "./dom";
@@ -28,6 +31,7 @@ export const usePrint = () => {
     submitRemoteTask,
     sendLocalPreview,
     exportImageMerged,
+    printQuality,
   } = usePrintSettings();
 
   const createRepeatedPages = (originalPages: Page[]): Page[] => {
@@ -728,6 +732,7 @@ export const usePrint = () => {
     timeoutMs?: number;
     rawHtml?: string;
     rawJson?: string | object;
+    printQuality?: PrintQuality;
   };
 
   const blobToDataUrl = (blob: Blob) =>
@@ -749,6 +754,7 @@ export const usePrint = () => {
     const mode: PreviewMode = request.mode || "pdf";
     const title = request.title || "";
     const key = request.key || localSettings.secretKey.trim();
+    const previewPrintQuality = request.printQuality || printQuality.value;
 
     let previewContent = "";
     let renderTicker: number | ReturnType<typeof setInterval> | null = null;
@@ -871,6 +877,7 @@ export const usePrint = () => {
         type: "preview",
         mode,
         content: previewContent,
+        printQuality: previewPrintQuality,
       };
       if (title) payload.title = title;
       if (key) payload.key = key;
