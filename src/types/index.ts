@@ -80,6 +80,9 @@ export interface ElementStyle {
   borderRadius?: number;
   // Text specific
   autoHeight?: boolean;
+  // Image specific
+  objectFit?: "contain" | "cover" | "fill" | "none";
+  opacity?: number;
 }
 
 export interface TableColumn {
@@ -131,6 +134,7 @@ export interface PrintElement {
   embeddedInTableCell?: TableCellRef;
   embeddedInTableAnchor?: EmbeddedInTableAnchor;
   repeatPerPage?: boolean;
+  printable?: boolean;
   style: ElementStyle;
   // Pagination-specific (optional)
   labelText?: string;

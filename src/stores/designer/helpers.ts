@@ -58,6 +58,7 @@ export const HISTORY_ACTION = {
   PAGE_ADD: "editor.historyAction.pageAdd",
   PAGE_REMOVE: "editor.historyAction.pageRemove",
   PAGE_PASTE: "editor.historyAction.pagePaste",
+  PAGE_REORDER: "editor.historyAction.pageReorder",
   ELEMENT_ADD: "editor.historyAction.elementAdd",
   ELEMENT_MOVE: "editor.historyAction.elementMove",
   ELEMENT_NUDGE: "editor.historyAction.elementNudge",
