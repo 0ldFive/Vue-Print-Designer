@@ -559,6 +559,63 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
         });
       }
 
+      type FixedWrapperBand = {
+        originalTop: number;
+        originalBottom: number;
+        height: number;
+      };
+      const fixedBandByWrapper = new Map<HTMLElement, FixedWrapperBand>();
+      const fixedBandPlacementCache = new Map<
+        FixedWrapperBand,
+        { pageIndex: number; top: number }
+      >();
+      wrappersByOrigin.forEach((wrappers) => {
+        let currentBand: FixedWrapperBand | null = null;
+
+        wrappers.forEach((wrapper) => {
+          if (wrapper.hasAttribute("data-flow-id")) return;
+          if (wrapper.getAttribute("data-repeat-per-page") === "true") return;
+
+          const originalTop = parseAttrNumber(
+            wrapper,
+            "data-original-top",
+            parseFloat(wrapper.style.top || "") || 0,
+          );
+          const storedOriginalHeight = parseAttrNumber(
+            wrapper,
+            "data-original-height",
+            -1,
+          );
+          const originalHeight =
+            storedOriginalHeight >= 0
+              ? storedOriginalHeight
+              : wrapper.getBoundingClientRect().height;
+          const originalBottom = originalTop + originalHeight;
+          const isHeader =
+            hasHeaderRegion && originalTop < headerHeight + marginTop;
+          const isFooter =
+            hasFooterRegion &&
+            originalTop >= pageHeight - footerHeight - marginBottom;
+          if (isHeader || isFooter) return;
+
+          if (!currentBand || originalTop > currentBand.originalBottom + 0.5) {
+            currentBand = {
+              originalTop,
+              originalBottom,
+              height: Math.max(0, originalHeight),
+            };
+          } else if (originalBottom > currentBand.originalBottom) {
+            currentBand.originalBottom = originalBottom;
+            currentBand.height = Math.max(
+              0,
+              currentBand.originalBottom - currentBand.originalTop,
+            );
+          }
+
+          fixedBandByWrapper.set(wrapper, currentBand);
+        });
+      });
+
       wrappersByOrigin.forEach((wrappers, originPage) => {
         // 排序已在上方完成，无需重复排序。
         let previousOriginalBottom: number | null = null;
@@ -670,13 +727,20 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           const wrapperHeight = isFlowWrapper
             ? (flowWrapperHeightCache.get(wrapper) ?? wrapper.getBoundingClientRect().height)
             : storedOriginalHeight >= 0 ? storedOriginalHeight : wrapper.getBoundingClientRect().height;
+          const fixedBand = !isFlowWrapper
+            ? fixedBandByWrapper.get(wrapper) || null
+            : null;
+          const fixedBandOffsetTop = fixedBand
+            ? originalTop - fixedBand.originalTop
+            : 0;
+          const fixedBandHeight = fixedBand ? fixedBand.height : wrapperHeight;
 
-          if (wrapperHeight > 0) {
-            if (targetTop < minContentTop) {
-              targetTop = minContentTop;
-            }
-
+          if (wrapperHeight > 0 || fixedBandHeight > 0) {
             if (isFlowWrapper) {
+              if (targetTop < minContentTop) {
+                targetTop = minContentTop;
+              }
+
               // 流式包装元素（自动高度文本/表格）允许从当前页开始并跨页续拆。
               // 当起点进入页脚区域时，向后翻页并传递超出量，
               // 以保持与前序流式元素之间的设计间距（而非强制贴到页顶）。
@@ -691,10 +755,57 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
                   targetTop = minContentTop + Math.max(overflow, 0);
                 }
               }
+            } else if (fixedBand) {
+              const cachedPlacement = fixedBandPlacementCache.get(fixedBand);
+
+              if (cachedPlacement) {
+                targetPageIndex = cachedPlacement.pageIndex;
+                targetTop = cachedPlacement.top + fixedBandOffsetTop;
+              } else {
+                const bandGlobalTop = targetGlobalTop - fixedBandOffsetTop;
+                let bandPageIndex = Math.floor(bandGlobalTop / pageHeight);
+                if (bandPageIndex < 0) bandPageIndex = 0;
+                let bandTop = bandGlobalTop - bandPageIndex * pageHeight;
+
+                if (bandTop < minContentTop) {
+                  bandTop = minContentTop;
+                }
+
+                if (
+                  fixedBandHeight <= availableContentHeight &&
+                  bandTop + fixedBandHeight > maxContentBottom
+                ) {
+                  let overflow = Math.max(0, bandTop - maxContentBottom);
+                  bandPageIndex += 1;
+                  bandTop = minContentTop + Math.max(overflow, 0);
+
+                  while (
+                    bandTop + fixedBandHeight >
+                    maxContentBottom + 0.5
+                  ) {
+                    overflow = Math.max(0, bandTop - maxContentBottom);
+                    bandPageIndex += 1;
+                    bandTop = minContentTop + Math.max(overflow, 0);
+                  }
+                } else if (fixedBandHeight > availableContentHeight) {
+                  bandTop = minContentTop;
+                }
+
+                fixedBandPlacementCache.set(fixedBand, {
+                  pageIndex: bandPageIndex,
+                  top: bandTop,
+                });
+                targetPageIndex = bandPageIndex;
+                targetTop = bandTop + fixedBandOffsetTop;
+              }
             } else if (
               wrapperHeight <= availableContentHeight &&
               targetTop + wrapperHeight > maxContentBottom
             ) {
+              if (targetTop < minContentTop) {
+                targetTop = minContentTop;
+              }
+
               // 固定元素跨页时保留溢出量，避免多个元素在新页顶端重叠。
               let overflow = targetTop + wrapperHeight - maxContentBottom;
               targetPageIndex += 1;
@@ -708,8 +819,14 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
                 targetTop = minContentTop + Math.max(overflow, 0);
               }
             } else if (wrapperHeight > availableContentHeight) {
+              if (targetTop < minContentTop) {
+                targetTop = minContentTop;
+              }
+
               // 超高固定元素无法完整放入可打印区时，
               // 固定到内容顶部边界，优先避免与页脚重叠。
+              targetTop = minContentTop;
+            } else if (targetTop < minContentTop) {
               targetTop = minContentTop;
             }
           }
@@ -767,10 +884,19 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             : null;
           const hasReliableSerialBottom = !isFlowWrapper || !!flowEntry;
           if (hasReliableSerialBottom) {
+            const fixedBandPlacement = fixedBand
+              ? fixedBandPlacementCache.get(fixedBand)
+              : null;
             const finalGlobalBottom = flowEntry
               ? flowEntry.finalGlobalBottom
+              : fixedBand && fixedBandPlacement
+                ? fixedBandPlacement.pageIndex * pageHeight +
+                  fixedBandPlacement.top +
+                  fixedBand.height
               : finalGlobalTop + wrapperHeight;
-            previousOriginalBottom = originalBottom;
+            previousOriginalBottom = fixedBand
+              ? fixedBand.originalBottom
+              : originalBottom;
             previousFinalGlobalBottom = finalGlobalBottom;
           }
         });

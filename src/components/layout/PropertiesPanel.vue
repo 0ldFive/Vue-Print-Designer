@@ -1247,6 +1247,30 @@ const closePropertiesPanel = () => {
             :value="element.style.backgroundColor || '#ffffff'"
             @update:value="(v) => handleStyleChange('backgroundColor', v)"
           />
+          <template v-if="element.type === ElementType.IMAGE">
+            <PropertySelect
+              :label="t('properties.label.imageObjectFit')"
+              :disabled="isStyleEditingDisabled"
+              :value="element.style.objectFit || 'contain'"
+              :options="[
+                { label: t('properties.option.imageFitCover'), value: 'cover' },
+                { label: t('properties.option.imageFitContain'), value: 'contain' },
+                { label: t('properties.option.imageFitFill'), value: 'fill' },
+                { label: t('properties.option.imageFitNone'), value: 'none' },
+              ]"
+              @update:value="(v) => handleStyleChange('objectFit', v)"
+            />
+            <PropertyInput
+              :label="t('properties.label.opacity')"
+              type="number"
+              :disabled="isStyleEditingDisabled"
+              :value="element.style.opacity ?? 100"
+              :min="0"
+              :max="100"
+              :step="1"
+              @update:value="(v) => handleStyleChange('opacity', Number(v))"
+            />
+          </template>
         </div>
 
         <!-- Advanced Tab Content -->
