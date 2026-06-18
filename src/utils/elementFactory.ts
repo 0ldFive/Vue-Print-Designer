@@ -146,7 +146,12 @@ export const elementConfigRegistry: Partial<
   }),
 
   [ElementType.IMAGE]: () => ({
-    style: { backgroundColor: "transparent", borderColor: "transparent" },
+    style: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      objectFit: "contain",
+      opacity: 100,
+    },
   }),
 
   [ElementType.BARCODE]: () => ({
@@ -269,6 +274,7 @@ export function createNewElement(
     width: 200,
     height: 100,
     variable: "",
+    printable: true,
     style: {
       fontSize: 14,
       color: "#000000",

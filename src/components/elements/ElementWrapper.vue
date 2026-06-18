@@ -427,6 +427,7 @@ const style = computed(() => {
   delete baseStyle.borderWidth;
   delete baseStyle.borderStyle;
   delete baseStyle.borderColor;
+  delete baseStyle.opacity;
 
   // Keep outer width/height equal to the element size regardless of border width.
   baseStyle.boxSizing = "border-box";
@@ -1528,6 +1529,7 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
     :data-element-id="element.id"
     :data-read-only="readOnly ? 'true' : 'false'"
     :data-repeat-per-page="element.repeatPerPage === true ? 'true' : null"
+    :data-print-exclude="element.printable === false ? 'true' : null"
     :data-embedded-table-id="element.embeddedInTableId || null"
     :data-embedded-cell-row-index="
       element.embeddedInTableCell

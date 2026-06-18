@@ -168,6 +168,26 @@ export const pageActions = {
       }
     },
 
+  movePage(fromIndex: number, toIndex: number) {
+      if (!this.isTemplateEditable) return;
+      if (fromIndex === toIndex) return;
+      if (fromIndex < 0 || toIndex < 0) return;
+      if (fromIndex >= this.pages.length || toIndex >= this.pages.length) return;
+
+      this.snapshot(HISTORY_ACTION.PAGE_REORDER);
+
+      const currentPageId = this.pages[this.currentPageIndex]?.id;
+      const [page] = this.pages.splice(fromIndex, 1);
+      this.pages.splice(toIndex, 0, page);
+
+      if (currentPageId) {
+        const newIndex = this.pages.findIndex((p) => p.id === currentPageId);
+        if (newIndex !== -1) {
+          this.currentPageIndex = newIndex;
+        }
+      }
+    },
+
   setCanvasBackground(color: string) {
       this.canvasBackground = color;
     },

@@ -14,12 +14,31 @@ const { t } = useI18n();
 const store = useDesignerStore();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
+const OBJECT_FIT_CLASS: Record<string, string> = {
+  contain: "object-contain",
+  cover: "object-cover",
+  fill: "object-fill",
+  none: "object-none",
+};
+
 const shouldFillForEmbeddedCell = computed(() => {
   if (!props.element.embeddedInTableId) return false;
   const anchor = props.element.embeddedInTableAnchor;
   if (!anchor) return false;
 
   return anchor.fillsWidth === true && anchor.fillsHeight === true;
+});
+
+const imageObjectFitClass = computed(() => {
+  if (shouldFillForEmbeddedCell.value) return "object-fill";
+  const fit = props.element.style?.objectFit ?? "contain";
+  return OBJECT_FIT_CLASS[fit] ?? "object-contain";
+});
+
+const imageOpacity = computed(() => {
+  const value = props.element.style?.opacity;
+  if (value === undefined || value === null) return 1;
+  return Math.min(100, Math.max(0, value)) / 100;
 });
 
 const resolvedContent = computed(() => {
@@ -114,6 +133,29 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           key: "variable",
           placeholder: "@variable",
         },
+        {
+          label: "properties.label.imageObjectFit",
+          type: "select",
+          target: "style",
+          key: "objectFit",
+          defaultValue: "contain",
+          options: [
+            { label: "properties.option.imageFitCover", value: "cover" },
+            { label: "properties.option.imageFitContain", value: "contain" },
+            { label: "properties.option.imageFitFill", value: "fill" },
+            { label: "properties.option.imageFitNone", value: "none" },
+          ],
+        },
+        {
+          label: "properties.label.opacity",
+          type: "number",
+          target: "style",
+          key: "opacity",
+          defaultValue: 100,
+          min: 0,
+          max: 100,
+          step: 1,
+        },
       ],
     },
     {
@@ -161,10 +203,8 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
     <img
       v-if="resolvedContent"
       :src="resolvedContent"
-      :class="[
-        'w-full h-full pointer-events-none',
-        shouldFillForEmbeddedCell ? 'object-fill' : 'object-contain',
-      ]"
+      :class="['w-full h-full pointer-events-none', imageObjectFitClass]"
+      :style="{ opacity: imageOpacity }"
       alt="Element"
     />
     <span v-else class="text-gray-400 text-xs">{{ t("elements.noImage") }}</span>

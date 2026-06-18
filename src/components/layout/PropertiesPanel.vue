@@ -566,7 +566,7 @@ const visibleSections = computed(() => {
     (s) => (s.tab || "properties") === activeTab.value,
   );
 
-  if (activeTab.value === "properties" && showRepeatPerPage.value) {
+  if (activeTab.value === "properties") {
     const clonedSections = JSON.parse(JSON.stringify(sections));
     let dataBehavior = clonedSections.find(
       (s: any) => s.title === "properties.section.dataBehavior",
@@ -580,7 +580,20 @@ const visibleSections = computed(() => {
       clonedSections.push(dataBehavior);
     }
 
-    if (!dataBehavior.fields.some((f: any) => f.key === "repeatPerPage")) {
+    if (!dataBehavior.fields.some((f: any) => f.key === "printable")) {
+      dataBehavior.fields.push({
+        label: "properties.label.printable",
+        type: "switch",
+        target: "element",
+        key: "printable",
+        defaultValue: true,
+      });
+    }
+
+    if (
+      showRepeatPerPage.value &&
+      !dataBehavior.fields.some((f: any) => f.key === "repeatPerPage")
+    ) {
       dataBehavior.fields.unshift({
         label: "properties.label.repeatPerPage",
         type: "switch",

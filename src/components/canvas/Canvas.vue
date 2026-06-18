@@ -28,6 +28,8 @@ import AddIcon from "~icons/material-symbols/add";
 import DeleteIcon from "~icons/material-symbols/delete";
 import CopyIcon from "~icons/material-symbols/content-copy";
 import PasteIcon from "~icons/material-symbols/content-paste";
+import MoveUpIcon from "~icons/material-symbols/arrow-upward";
+import MoveDownIcon from "~icons/material-symbols/arrow-downward";
 import { createNewElement } from "../../utils/elementFactory";
 import { buildWatermarkPatternSvg } from "@/svg/templates";
 
@@ -86,6 +88,17 @@ const pageActionsStyle = computed(() => ({
   transformOrigin: "top right",
   right: `${-48 * inverseZoom.value}px`,
 }));
+
+const handlePageOrderInput = (fromIndex: number, event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const targetOrder = Number.parseInt(input.value, 10);
+  if (!Number.isFinite(targetOrder)) return;
+  const toIndex = Math.max(
+    0,
+    Math.min(pages.value.length - 1, targetOrder - 1),
+  );
+  store.movePage(fromIndex, toIndex);
+};
 const showTableCreateModal = ref(false);
 const pendingTableCreateDrop = ref<PendingTableCreateDrop | null>(null);
 const tableCreateInitialValues = computed(() => ({
@@ -1342,6 +1355,32 @@ const getGlobalElements = () => {
           @click="store.pastePage(index)"
         >
           <PasteIcon />
+        </button>
+        <button
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :title="t('canvas.movePageUp')"
+          :disabled="index === 0 || !isTemplateEditable"
+          @click="store.movePage(index, index - 1)"
+        >
+          <MoveUpIcon />
+        </button>
+        <input
+          type="number"
+          class="w-8 h-8 text-center text-xs bg-white border border-gray-200 rounded shadow text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          :title="t('canvas.pageOrder')"
+          :value="index + 1"
+          :min="1"
+          :max="pages.length"
+          :disabled="!isTemplateEditable"
+          @change="(e) => handlePageOrderInput(index, e)"
+        />
+        <button
+          class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded shadow hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :title="t('canvas.movePageDown')"
+          :disabled="index >= pages.length - 1 || !isTemplateEditable"
+          @click="store.movePage(index, index + 1)"
+        >
+          <MoveDownIcon />
         </button>
         <button
           v-if="index > 0"
