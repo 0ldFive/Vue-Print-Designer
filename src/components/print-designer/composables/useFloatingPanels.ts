@@ -58,6 +58,14 @@ type FloatingPanelLayout = {
   height: number;
 };
 
+type PersistedTemplatePanelLayout = Partial<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  heightMode: FloatingPanelHeightMode;
+}>;
+
 type FloatingPanelLayoutOptions = {
   horizontalAnchor: FloatingPanelHorizontalAnchor;
   verticalAnchor: FloatingPanelVerticalAnchor;
@@ -460,12 +468,7 @@ export const useFloatingPanels = ({
       const raw = window.localStorage.getItem(TEMPLATE_PANEL_LAYOUT_STORAGE_KEY);
       if (!raw) return;
 
-      const parsed = JSON.parse(raw) as Partial<{
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }>;
+      const parsed = JSON.parse(raw) as PersistedTemplatePanelLayout;
       const isFiniteNumber = (value: unknown): value is number =>
         typeof value === "number" && Number.isFinite(value);
 
@@ -483,7 +486,7 @@ export const useFloatingPanels = ({
         templatePanelWidth.value = width;
         restoredTemplatePanelLayout.value.width = true;
       }
-      if (isFiniteNumber(parsed.height)) {
+      if (parsed.heightMode === "fixed" && isFiniteNumber(parsed.height)) {
         const height = clampPreferredPanelHeight(parsed.height);
         templatePanelPreferredHeight.value = height;
         templatePanelHeight.value = height;
@@ -504,6 +507,7 @@ export const useFloatingPanels = ({
           y: templatePanelPreferredPos.value.y,
           width: templatePanelPreferredWidth.value,
           height: templatePanelPreferredHeight.value,
+          heightMode: templatePanelHeightMode.value,
         }),
       );
     } catch (error) {
