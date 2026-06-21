@@ -1,4 +1,4 @@
-﻿# Web Components API Guide
+# Web Components API Guide
 
 ## Contents
 
@@ -505,9 +505,9 @@ el.setPrintDefaults({
   printMode: "local",
   silentPrint: true,
   exportImageMerged: true,
-  localSettings: { wsAddress: "ws://localhost:1122/ws", secretKey: "xxx" },
+  localSettings: { wsAddress: "wss://localhost:1122/ws", secretKey: "xxx" },
   remoteSettings: {
-    wsAddress: "ws://localhost:8080/ws/request",
+    wsAddress: "wss://localhost:8080/ws/request",
     apiBaseUrl: "http://localhost:8080/api/login",
     username: "u",
     password: "p",

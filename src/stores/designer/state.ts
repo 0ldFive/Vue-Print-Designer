@@ -128,7 +128,7 @@ export const state = (): DesignerState => ({
     disableGlobalShortcuts: false,
     disableShortcutsCount: 0,
     tableSelection: null,
-    clientUrl: "https://github.com/0ldFive/PrintDot-Client/releases",
+    clientUrl: "https://printdot.cc/client",
     cloudUrl: "https://printdot.cc/cloud-print",
     showClientLink: true,
     showCloudLink: true,

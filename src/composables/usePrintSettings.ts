@@ -145,12 +145,12 @@ const storageKeys = {
 };
 
 const defaultLocalSettings: LocalConnectionSettings = {
-  wsAddress: "ws://localhost:1122/ws",
+  wsAddress: "wss://localhost:1122/ws",
   secretKey: "",
 };
 
 const defaultRemoteSettings: RemoteConnectionSettings = {
-  wsAddress: "ws://localhost:8080/ws/request",
+  wsAddress: "wss://localhost:8080/ws/request",
   apiBaseUrl: "http://localhost:8080/api/login",
   username: "",
   password: "",
@@ -200,9 +200,9 @@ const normalizeWsAddress = (address: string) => address.trim();
 
 const buildWsUrlFromAddress = (address: string) => {
   const normalized = normalizeWsAddress(address);
-  if (!normalized) return "ws://";
+  if (!normalized) return "wss://";
   if (/^wss?:\/\//i.test(normalized)) return normalized;
-  return `ws://${normalized.replace(/^\/+/, "")}`;
+  return `wss://${normalized.replace(/^\/+/, "")}`;
 };
 
 const appendQueryParam = (url: string, key: string, value: string) => {
@@ -331,7 +331,7 @@ const createState = (): PrintSettingsState => {
       const host = legacy.host || "localhost";
       const portPart = legacy.port ? `:${legacy.port}` : "";
       const path = legacy.path || "/ws";
-      const protocol = legacy.protocol || "ws";
+      const protocol = legacy.protocol || "wss";
       localSettings.wsAddress = `${protocol}://${host}${portPart}${path}`;
     }
   }
