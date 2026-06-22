@@ -79,6 +79,35 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
 
 ---
 
+## Companion Print Client (PrintDot Client)
+
+PrintDot Client is the companion desktop app for this project. It connects to your local printers and handles silent print jobs, so you can print straight from the browser without any pop-up dialogs.
+
+- **Platforms**: Windows / macOS / Linux
+- **Key capabilities**: Automatic device discovery, stable connection & forwarding queue, lightweight background mode, print job history and update notifications
+- **Download**: [https://printdot.cc/client](https://printdot.cc/client)
+
+<table width="100%">
+  <tr>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" height="180" /></td>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" height="180" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Main view - service control and available printers</b></td>
+    <td align="center"><b>Settings - cloud relay and connection config</b></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" height="180" /></td>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" height="180" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Job history - task status and retry</b></td>
+    <td align="center"><b>Update notification - check for latest client</b></td>
+  </tr>
+</table>
+
+---
+
 ## Integration Example
 
 A complete integration example based on **Vue 3 + Element Plus**, demonstrating how to embed the print designer into a real-world business application.
@@ -99,27 +128,6 @@ A complete integration example based on **Vue 3 + Element Plus**, demonstrating 
 - **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
 - **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
 - **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
-
----
-
-## Companion Print Client (PrintDot Client)
-
-PrintDot Client is the companion desktop print helper (Wails + Vue) for device discovery, connection management, and job forwarding. Paired with this project it provides a stable local client print pipeline.
-
-- **Platforms**: Windows / macOS / Linux
-- **Key capabilities**: Automatic device discovery, stable connection & forwarding queue, lightweight background mode
-- **Project**: [https://github.com/0ldFive/PrintDot-Client](https://github.com/0ldFive/PrintDot-Client)
-
-<table width="100%">
-  <tr>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/7.png" alt="PrintDot main view" height="180" /></td>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/8.png" alt="PrintDot settings" height="180" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Main view - device status &amp; connection</b></td>
-    <td align="center"><b>Settings - preferences &amp; options</b></td>
-  </tr>
-</table>
 
 ---
 
