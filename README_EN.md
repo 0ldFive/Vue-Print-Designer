@@ -89,11 +89,11 @@ PrintDot Client is the companion desktop app for this project. It connects to yo
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" height="180" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" height="180" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" height="180" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" height="180" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot print preview" height="180" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" width="100%" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" width="100%" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" width="100%" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" width="100%" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot print preview" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>Main view - service control and available printers</b></td>
