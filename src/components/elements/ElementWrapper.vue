@@ -519,6 +519,31 @@ const resizeHandleStyles = computed(() => {
   } as const;
 });
 
+// Resize handle cursors must follow the element's rotation: CSS cursors never rotate
+// with transforms, so on a rotated element the static arrows no longer match where each
+// handle visually sits. Each handle has an outward angle (degrees, clockwise from the
+// +x/east axis, matching screen coordinates where +y points down). Adding the element's
+// rotation and snapping (angle mod 180) to the nearest 45° bucket yields the on-screen
+// resize axis. At rotation 0 this reproduces the original static cursors exactly.
+const resizeHandleCursors = computed(() => {
+  const rotation = props.element.style.rotate || 0;
+  const cursors = ["ew-resize", "nwse-resize", "ns-resize", "nesw-resize"];
+  const cursorFor = (baseAngle: number) => {
+    const angle = (((baseAngle + rotation) % 180) + 180) % 180;
+    return cursors[Math.round(angle / 45) % 4];
+  };
+  return {
+    right: cursorFor(0),
+    bottomRight: cursorFor(45),
+    bottom: cursorFor(90),
+    bottomLeft: cursorFor(135),
+    left: cursorFor(180),
+    topLeft: cursorFor(225),
+    top: cursorFor(270),
+    topRight: cursorFor(315),
+  } as const;
+});
+
 // Dragging Logic
 let startX = 0;
 let startY = 0;
@@ -1391,16 +1416,28 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
   store.setHighlightedAlignedElements([]);
 
   const handleResizeMove = (moveEvent: MouseEvent) => {
-    const dx = (moveEvent.clientX - startX) / props.zoom;
-    const dy = (moveEvent.clientY - startY) / props.zoom;
+    const rawDx = (moveEvent.clientX - startX) / props.zoom;
+    const rawDy = (moveEvent.clientY - startY) / props.zoom;
 
     if (!hasSnapshot) {
       store.snapshot("editor.historyAction.elementResize");
       hasSnapshot = true;
     }
 
-    let newX = initialLeft;
-    let newY = initialTop;
+    // Resize must follow the element's current orientation. The wrapper is rotated via
+    // CSS transform, so a screen-space mouse delta has to be projected onto the element's
+    // local width/height axes; and the opposite anchor (corner/edge) must stay fixed in
+    // SCREEN space, otherwise the element drifts because rotation pivots around its center.
+    // At rotation 0 (cos=1, sin=0) every formula below reduces to the original behavior.
+    const rotationDeg = props.element.style.rotate || 0;
+    const normalizedRotation = ((rotationDeg % 360) + 360) % 360;
+    const isRotated = normalizedRotation > 0.01 && normalizedRotation < 359.99;
+    const rad = (rotationDeg * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const dx = rawDx * cos + rawDy * sin; // delta along local width axis
+    const dy = -rawDx * sin + rawDy * cos; // delta along local height axis
+
     let newWidth = initialWidth;
     let newHeight = initialHeight;
 
@@ -1417,54 +1454,58 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         effectiveDy = dy;
         effectiveDx = Math.abs(dy) * aspectRatio * Math.sign(dx || dy);
       }
-      if (resizesFromRight) {
-        newWidth = initialWidth + effectiveDx;
-      } else {
-        newX = initialLeft + effectiveDx;
-        newWidth = initialRight - newX;
-      }
-      if (resizesFromBottom) {
-        newHeight = initialHeight + effectiveDy;
-      } else {
-        newY = initialTop + effectiveDy;
-        newHeight = initialBottom - newY;
-      }
+      newWidth = resizesFromRight
+        ? initialWidth + effectiveDx
+        : initialWidth - effectiveDx;
+      newHeight = resizesFromBottom
+        ? initialHeight + effectiveDy
+        : initialHeight - effectiveDy;
     } else {
       // --- Normal resize ---
-      if (resizesFromRight) {
-        newWidth = initialWidth + dx;
-      } else if (resizesFromLeft) {
-        newX = initialLeft + dx;
-        newWidth = initialRight - newX;
-      }
+      if (resizesFromRight) newWidth = initialWidth + dx;
+      else if (resizesFromLeft) newWidth = initialWidth - dx;
 
-      if (resizesFromBottom) {
-        newHeight = initialHeight + dy;
-      } else if (resizesFromTop) {
-        newY = initialTop + dy;
-        newHeight = initialBottom - newY;
-      }
+      if (resizesFromBottom) newHeight = initialHeight + dy;
+      else if (resizesFromTop) newHeight = initialHeight - dy;
     }
 
-    if (newWidth < MIN_SIZE) {
-      if (resizesFromLeft) {
-        newX = initialRight - MIN_SIZE;
-      }
-      newWidth = MIN_SIZE;
-    }
+    if (newWidth < MIN_SIZE) newWidth = MIN_SIZE;
+    if (newHeight < MIN_SIZE) newHeight = MIN_SIZE;
 
-    if (newHeight < MIN_SIZE) {
-      if (resizesFromTop) {
-        newY = initialBottom - MIN_SIZE;
-      }
-      newHeight = MIN_SIZE;
-    }
+    // Keep the opposite anchor fixed in screen space. ax/ay are the anchor's sign along
+    // the element's local axes relative to its center (the edge that should NOT move).
+    const ax = resizesFromLeft ? 1 : resizesFromRight ? -1 : 0;
+    const ay = resizesFromTop ? 1 : resizesFromBottom ? -1 : 0;
+    const cx0 = initialLeft + initialWidth / 2;
+    const cy0 = initialTop + initialHeight / 2;
+    const ah0x = (ax * initialWidth) / 2;
+    const ah0y = (ay * initialHeight) / 2;
+    const anchorScreenX = cx0 + (ah0x * cos - ah0y * sin);
+    const anchorScreenY = cy0 + (ah0x * sin + ah0y * cos);
+    const ahNx = (ax * newWidth) / 2;
+    const ahNy = (ay * newHeight) / 2;
+    const cxNew = anchorScreenX - (ahNx * cos - ahNy * sin);
+    const cyNew = anchorScreenY - (ahNx * sin + ahNy * cos);
+    const newX = cxNew - newWidth / 2;
+    const newY = cyNew - newHeight / 2;
 
     const isProportional = moveEvent.shiftKey && isCornerHandle;
 
-    const snapped = getResizeSnapResult(newX, newY, newWidth, newHeight);
+    // Model-space snapping (guides/edges/sibling alignment) only makes sense for an
+    // axis-aligned (unrotated) bounding box; skip it once the element is rotated.
+    const snapped = isRotated
+      ? {
+          x: newX,
+          y: newY,
+          width: newWidth,
+          height: newHeight,
+          highlightedEdge: null as ResizeEdge | null,
+          highlightedGuideId: null as string | null,
+          highlightedAlignedElementIds: [] as string[],
+        }
+      : getResizeSnapResult(newX, newY, newWidth, newHeight);
 
-    if (isProportional && initialWidth > 0 && initialHeight > 0) {
+    if (!isRotated && isProportional && initialWidth > 0 && initialHeight > 0) {
       const aspectRatio = initialWidth / initialHeight;
       // Recompute non-driving axis from the snapped driving-axis value.
       // Also fix the anchor position for edges that move (left/top).
@@ -1673,65 +1714,65 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         <!-- Edge handles -->
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-ew-resize theme-bg opacity-85 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.left"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.left, { cursor: resizeHandleCursors.left }]"
           @mousedown="(e) => handleResizeStart(e, 'left')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-ew-resize theme-bg opacity-85 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.right"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.right, { cursor: resizeHandleCursors.right }]"
           @mousedown="(e) => handleResizeStart(e, 'right')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-ns-resize theme-bg opacity-85 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.top"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.top, { cursor: resizeHandleCursors.top }]"
           @mousedown="(e) => handleResizeStart(e, 'top')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-ns-resize theme-bg opacity-85 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.bottom"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.bottom, { cursor: resizeHandleCursors.bottom }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom')"
         ></div>
 
         <!-- Corner L-handles -->
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-nwse-resize opacity-90 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.topLeftCorner"
+          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.topLeftCorner, { cursor: resizeHandleCursors.topLeft }]"
           @mousedown="(e) => handleResizeStart(e, 'top-left')"
         >
-          <span class="absolute theme-bg cursor-nwse-resize" :style="resizeHandleStyles.topLeftCornerH"></span>
-          <span class="absolute theme-bg cursor-nwse-resize" :style="resizeHandleStyles.topLeftCornerV"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.topLeftCornerH"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.topLeftCornerV"></span>
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-nesw-resize opacity-90 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.topRightCorner"
+          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.topRightCorner, { cursor: resizeHandleCursors.topRight }]"
           @mousedown="(e) => handleResizeStart(e, 'top-right')"
         >
-          <span class="absolute theme-bg cursor-nesw-resize" :style="resizeHandleStyles.topRightCornerH"></span>
-          <span class="absolute theme-bg cursor-nesw-resize" :style="resizeHandleStyles.topRightCornerV"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.topRightCornerH"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.topRightCornerV"></span>
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-nesw-resize opacity-90 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.bottomLeftCorner"
+          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.bottomLeftCorner, { cursor: resizeHandleCursors.bottomLeft }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom-left')"
         >
-          <span class="absolute theme-bg cursor-nesw-resize" :style="resizeHandleStyles.bottomLeftCornerH"></span>
-          <span class="absolute theme-bg cursor-nesw-resize" :style="resizeHandleStyles.bottomLeftCornerV"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.bottomLeftCornerH"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.bottomLeftCornerV"></span>
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute cursor-nwse-resize opacity-90 hover:opacity-100 transition-opacity"
-          :style="resizeHandleStyles.bottomRightCorner"
+          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          :style="[resizeHandleStyles.bottomRightCorner, { cursor: resizeHandleCursors.bottomRight }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom-right')"
         >
-          <span class="absolute theme-bg cursor-nwse-resize" :style="resizeHandleStyles.bottomRightCornerH"></span>
-          <span class="absolute theme-bg cursor-nwse-resize" :style="resizeHandleStyles.bottomRightCornerV"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.bottomRightCornerH"></span>
+          <span class="absolute theme-bg" :style="resizeHandleStyles.bottomRightCornerV"></span>
         </div>
 
       <!-- Rotation Handle (top right, no background) -->

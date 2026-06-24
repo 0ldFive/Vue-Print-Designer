@@ -19,6 +19,43 @@ export interface DomToImageOptions {
  * → 绘入 Canvas → toDataURL("image/jpeg")
  * → 按 batchSize 并发执行，减少主线程卡顿。
  */
+// 判断（内联）transform 字符串是否包含旋转（rotate()/matrix/matrix3d 非对角分量）。
+const transformHasRotation = (transform?: string | null) => {
+  if (!transform || transform === "none") return false;
+  if (/\brotate/i.test(transform)) return true;
+  const matrix = transform.match(/matrix\(([^)]+)\)/);
+  if (matrix) {
+    const p = matrix[1].split(",").map((v) => Number.parseFloat(v));
+    if (p.length >= 4) return Math.abs(p[1]) > 1e-4 || Math.abs(p[2]) > 1e-4;
+  }
+  const matrix3d = transform.match(/matrix3d\(([^)]+)\)/);
+  if (matrix3d) {
+    const p = matrix3d[1].split(",").map((v) => Number.parseFloat(v));
+    if (p.length >= 6) return Math.abs(p[1]) > 1e-4 || Math.abs(p[4]) > 1e-4;
+  }
+  return false;
+};
+
+// 处于旋转上下文中的表格，其外层 overflow:hidden 容器会在 foreignObject→canvas
+// 光栅化时把表格右/下外边框裁掉。导出态行列尺寸已固化、内容不会真正溢出，
+// 故解除 table 到 page 之间祖先的 overflow 裁剪。仅对旋转表格生效，未旋转零回归。
+const unclipRotatedTableAncestors = (page: HTMLElement) => {
+  for (const table of Array.from(page.querySelectorAll<HTMLElement>("table"))) {
+    const ancestors: HTMLElement[] = [];
+    let rotated = false;
+    let node: HTMLElement | null = table;
+    while (node && node !== page) {
+      if (transformHasRotation(node.style.transform)) rotated = true;
+      ancestors.push(node);
+      node = node.parentElement;
+    }
+    if (!rotated) continue;
+    for (const el of ancestors) {
+      el.style.setProperty("overflow", "visible");
+    }
+  }
+};
+
 export const generatePageImages = async (
   container: HTMLElement,
   width: number,
@@ -82,6 +119,9 @@ export const generatePageImages = async (
   try {
     // 渲染单页为图片数据。
     const generatePageImage = async (page: HTMLElement): Promise<string> => {
+      // 旋转表格光栅化前解除外层 overflow 裁剪，避免右/下外边框被 foreignObject 裁掉。
+      unclipRotatedTableAncestors(page);
+
       // 0+1. 单次遍历完成两件事：移除 link/style + 将 <canvas> 转为 base64 img。
       // 两次独立的 querySelectorAll 合并为一次，减少 DOM 树遍历。
       for (const el of Array.from(

@@ -57,6 +57,41 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     return Number.isFinite(fontSize) && fontSize > 0 ? fontSize * 1.2 : 0;
   };
 
+  // 判断 CSS transform 是否包含旋转（rotate()/matrix/matrix3d 的非对角分量）。
+  const cssTransformHasRotation = (transform: string | null | undefined) => {
+    if (!transform || transform === "none") return false;
+    if (/\brotate/i.test(transform)) return true;
+    const matrix = transform.match(/matrix\(([^)]+)\)/);
+    if (matrix) {
+      const parts = matrix[1].split(",").map((v) => Number.parseFloat(v));
+      if (parts.length >= 4) {
+        return Math.abs(parts[1]) > 1e-4 || Math.abs(parts[2]) > 1e-4;
+      }
+    }
+    const matrix3d = transform.match(/matrix3d\(([^)]+)\)/);
+    if (matrix3d) {
+      const parts = matrix3d[1].split(",").map((v) => Number.parseFloat(v));
+      if (parts.length >= 6) {
+        return Math.abs(parts[1]) > 1e-4 || Math.abs(parts[4]) > 1e-4;
+      }
+    }
+    return false;
+  };
+
+  // 沿祖先链（直到所在 page）检测元素是否处于旋转上下文中。
+  const isWithinRotatedContext = (el: HTMLElement, boundary: HTMLElement) => {
+    const win = el.ownerDocument.defaultView || window;
+    let node: HTMLElement | null = el;
+    while (node) {
+      if (cssTransformHasRotation(win.getComputedStyle(node).transform)) {
+        return true;
+      }
+      if (node === boundary) break;
+      node = node.parentElement;
+    }
+    return false;
+  };
+
   // 独立 HTML 会在客户端 WebView 中重新排版表格；序列化前固化当前浏览器测得的几何，
   // 避免表格高度被目标渲染器撑大后覆盖后续绝对定位元素。
   const stabilizeStandaloneHtmlTableLayout = (pages: HTMLElement[]) => {
@@ -64,22 +99,29 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       const tables = Array.from(page.querySelectorAll<HTMLTableElement>("table"));
 
       tables.forEach((table) => {
+        // 旋转表格的 getBoundingClientRect 返回旋转后的外接矩形（90° 时宽高互换），
+        // 用它固化会破坏 table-layout:fixed 的列宽行高。旋转时改用与 transform 无关的
+        // offsetWidth/offsetHeight（布局尺寸）；未旋转保持原 getBoundingClientRect 行为。
+        const rotated = isWithinRotatedContext(table, page);
         const tableRect = table.getBoundingClientRect();
-        if (tableRect.width <= 0 || tableRect.height <= 0) return;
+        const tableWidth = rotated ? table.offsetWidth : tableRect.width;
+        const tableHeight = rotated ? table.offsetHeight : tableRect.height;
+        if (tableWidth <= 0 || tableHeight <= 0) return;
 
         table.style.setProperty("table-layout", "fixed");
         table.style.setProperty("box-sizing", "border-box");
-        table.style.setProperty("width", toFixedCssPx(tableRect.width));
-        table.style.setProperty("min-width", toFixedCssPx(tableRect.width));
-        table.style.setProperty("height", toFixedCssPx(tableRect.height));
-        table.style.setProperty("min-height", toFixedCssPx(tableRect.height));
+        table.style.setProperty("width", toFixedCssPx(tableWidth));
+        table.style.setProperty("min-width", toFixedCssPx(tableWidth));
+        table.style.setProperty("height", toFixedCssPx(tableHeight));
+        table.style.setProperty("min-height", toFixedCssPx(tableHeight));
 
         const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>("tr"));
         rows.forEach((row) => {
           const rowRect = row.getBoundingClientRect();
-          if (rowRect.height > 0) {
-            row.style.setProperty("height", toFixedCssPx(rowRect.height));
-            row.style.setProperty("min-height", toFixedCssPx(rowRect.height));
+          const rowHeight = rotated ? row.offsetHeight : rowRect.height;
+          if (rowHeight > 0) {
+            row.style.setProperty("height", toFixedCssPx(rowHeight));
+            row.style.setProperty("min-height", toFixedCssPx(rowHeight));
           }
 
           const cells = Array.from(row.children).filter(
@@ -89,13 +131,15 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
           cells.forEach((cell) => {
             const cellRect = cell.getBoundingClientRect();
-            if (cellRect.width > 0) {
-              cell.style.setProperty("width", toFixedCssPx(cellRect.width));
-              cell.style.setProperty("min-width", toFixedCssPx(cellRect.width));
+            const cellWidth = rotated ? cell.offsetWidth : cellRect.width;
+            const cellHeight = rotated ? cell.offsetHeight : cellRect.height;
+            if (cellWidth > 0) {
+              cell.style.setProperty("width", toFixedCssPx(cellWidth));
+              cell.style.setProperty("min-width", toFixedCssPx(cellWidth));
             }
-            if (cellRect.height > 0) {
-              cell.style.setProperty("height", toFixedCssPx(cellRect.height));
-              cell.style.setProperty("min-height", toFixedCssPx(cellRect.height));
+            if (cellHeight > 0) {
+              cell.style.setProperty("height", toFixedCssPx(cellHeight));
+              cell.style.setProperty("min-height", toFixedCssPx(cellHeight));
             }
 
             const lineHeight = resolveNumericLineHeight(cell);
@@ -112,6 +156,45 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
             cell.style.setProperty("box-sizing", "border-box");
           });
         });
+      });
+    });
+  };
+
+  // 旋转表格在屏幕端（非打印）预览渲染器里，collapse 折叠的外边框会因半像素取整被丢弃，
+  // 表现为旋转后“缺两条外边”。打印走干净 iframe、导出图片走高保真光栅化，均不受影响，
+  // 故此修复仅作用于 preview 模式：在表格容器内补一个非折叠的 box-border 叠层，稳定绘制
+  // 完整外边框（不依赖 collapse 折叠边）。
+  const addRotatedTableEdgeOverlayForPreview = (pages: HTMLElement[]) => {
+    pages.forEach((page) => {
+      const tables = Array.from(
+        page.querySelectorAll<HTMLTableElement>("table"),
+      );
+      tables.forEach((table) => {
+        if (!isWithinRotatedContext(table, page)) return;
+        const parent = table.parentElement;
+        if (!parent) return;
+        if (
+          parent.querySelector(':scope > [data-print-table-edge-overlay="true"]')
+        ) {
+          return;
+        }
+        const cell = table.querySelector<HTMLElement>("td, th");
+        if (!cell) return;
+        const cellStyle = window.getComputedStyle(cell);
+        const width = cellStyle.borderTopWidth;
+        const style = cellStyle.borderTopStyle;
+        const color = cellStyle.borderTopColor;
+        if (style === "none" || !(Number.parseFloat(width) > 0)) return;
+        if (window.getComputedStyle(parent).position === "static") {
+          parent.style.setProperty("position", "relative");
+        }
+        const overlay = parent.ownerDocument.createElement("div");
+        overlay.setAttribute("data-print-table-edge-overlay", "true");
+        overlay.style.cssText =
+          "position:absolute;left:0;top:0;width:100%;height:100%;" +
+          `box-sizing:border-box;border:${width} ${style} ${color};` +
+          "pointer-events:none;";
+        parent.appendChild(overlay);
       });
     });
   };
@@ -204,6 +287,11 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       ) as HTMLElement[];
 
       stabilizeStandaloneHtmlTableLayout(paginatedPages);
+
+      // 仅预览模式补旋转表格外边框叠层（打印 mode="export" 不受影响，避免与折叠边重叠变粗）。
+      if (mode === "preview") {
+        addRotatedTableEdgeOverlayForPreview(paginatedPages);
+      }
 
       paginatedPages.forEach((page, index) => {
         const clone = page.cloneNode(true) as HTMLElement;

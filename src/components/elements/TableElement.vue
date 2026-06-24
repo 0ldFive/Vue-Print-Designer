@@ -1000,9 +1000,28 @@ const shouldUseBodyCellDragCursor = computed(
     canDragTableElement.value && store.selectedElementId !== props.element.id,
 );
 const columnResizeHandleClass =
-  "absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity";
+  "absolute -right-1 top-0 bottom-0 w-2 hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity";
 const rowResizeHandleClass =
-  "absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 rounded cursor-row-resize hover:bg-blue-400 opacity-0 hover:opacity-100 z-20 transition-opacity";
+  "absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 rounded hover:bg-blue-400 opacity-0 hover:opacity-100 z-20 transition-opacity";
+
+// Column-width / row-height resize cursors must follow the table's rotation (CSS cursors
+// never rotate with transforms). Column handles resize along the table's local X axis
+// (base angle 0); row handles along the local Y axis (base angle 90). Adding the element
+// rotation and snapping (angle mod 180) to the nearest 45° bucket keeps the arrow aligned
+// with where the handle visually sits. At rotation 0 this stays col-resize / row-resize.
+const TABLE_RESIZE_CURSORS = [
+  "col-resize",
+  "nwse-resize",
+  "row-resize",
+  "nesw-resize",
+];
+const tableResizeCursorForAngle = (baseAngle: number) => {
+  const rotation = props.element.style.rotate || 0;
+  const angle = (((baseAngle + rotation) % 180) + 180) % 180;
+  return TABLE_RESIZE_CURSORS[Math.round(angle / 45) % 4];
+};
+const columnHandleCursor = computed(() => tableResizeCursorForAngle(0));
+const rowHandleCursor = computed(() => tableResizeCursorForAngle(90));
 
 const getRowResizeKey = (section: RowResizeSection, rowIndex: number) => {
   return `${section}:${rowIndex}`;
@@ -1287,6 +1306,7 @@ const handleResizeStart = (e: MouseEvent, index: number) => {
   resetEmbeddedGeometryBaseline();
   resizingColIndex.value = index;
   startResizeX.value = e.clientX;
+  startResizeY.value = e.clientY;
   const col = processedData.value.columns[index];
   startResizeWidth.value = col.width || 100;
 
@@ -1296,7 +1316,12 @@ const handleResizeStart = (e: MouseEvent, index: number) => {
 
 const handleResizeMove = (e: MouseEvent) => {
   if (resizingColIndex.value === null) return;
-  const dx = e.clientX - startResizeX.value;
+  // Project the screen-space drag onto the table's local width axis so resizing a column
+  // follows the table's current orientation. At rotation 0 this reduces to the raw dx.
+  const rawDx = e.clientX - startResizeX.value;
+  const rawDy = e.clientY - startResizeY.value;
+  const rad = ((props.element.style.rotate || 0) * Math.PI) / 180;
+  const dx = rawDx * Math.cos(rad) + rawDy * Math.sin(rad);
   const newWidth = Math.max(20, startResizeWidth.value + dx);
   const col = processedData.value.columns[resizingColIndex.value];
   tempColumnWidths.value[col.field] = newWidth;
@@ -1367,6 +1392,7 @@ const handleRowResizeStart = (
   e.stopPropagation();
   resetEmbeddedGeometryBaseline();
   resizingRow.value = { section, rowIndex };
+  startResizeX.value = e.clientX;
   startResizeY.value = e.clientY;
   startResizeHeight.value =
     getResizeTargetCellHeight(e) || getCurrentRowHeight(section, rowIndex, row);
@@ -1377,7 +1403,12 @@ const handleRowResizeStart = (
 
 const handleRowResizeMove = (e: MouseEvent) => {
   if (!resizingRow.value) return;
-  const dy = e.clientY - startResizeY.value;
+  // Project the screen-space drag onto the table's local height axis so resizing a row
+  // follows the table's current orientation. At rotation 0 this reduces to the raw dy.
+  const rawDx = e.clientX - startResizeX.value;
+  const rawDy = e.clientY - startResizeY.value;
+  const rad = ((props.element.style.rotate || 0) * Math.PI) / 180;
+  const dy = -rawDx * Math.sin(rad) + rawDy * Math.cos(rad);
   const newHeight = Math.max(20, startResizeHeight.value + dy);
   tempRowHeights.value[
     getRowResizeKey(resizingRow.value.section, resizingRow.value.rowIndex)
@@ -2063,6 +2094,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 columnResizeHandleClass,
                 { 'bg-blue-400 opacity-100': resizingColIndex === index },
               ]"
+              :style="{ cursor: columnHandleCursor }"
               @mousedown="(e) => handleResizeStart(e, index)"
               @click.stop
             ></div>
@@ -2072,6 +2104,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 rowResizeHandleClass,
                 { 'bg-blue-400 opacity-100': isResizingRow('header', 0) },
               ]"
+              :style="{ cursor: rowHandleCursor }"
               @mousedown="(e) => handleRowResizeStart(e, 'header', 0)"
               @click.stop
             ></div>
@@ -2172,6 +2205,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   columnResizeHandleClass,
                   { 'bg-blue-400 opacity-100': resizingColIndex === colIndex },
                 ]"
+                :style="{ cursor: columnHandleCursor }"
                 @mousedown="(e) => handleResizeStart(e, colIndex)"
                 @click.stop
               ></div>
@@ -2181,6 +2215,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   rowResizeHandleClass,
                   { 'bg-blue-400 opacity-100': isResizingRow('body', i) },
                 ]"
+                :style="{ cursor: rowHandleCursor }"
                 @mousedown="(e) => handleRowResizeStart(e, 'body', i, row)"
                 @click.stop
               ></div>
@@ -2313,6 +2348,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   columnResizeHandleClass,
                   { 'bg-blue-400 opacity-100': resizingColIndex === colIndex },
                 ]"
+                :style="{ cursor: columnHandleCursor }"
                 @mousedown="(e) => handleResizeStart(e, colIndex)"
                 @click.stop
               ></div>
@@ -2322,6 +2358,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                   rowResizeHandleClass,
                   { 'bg-blue-400 opacity-100': isResizingRow('footer', i) },
                 ]"
+                :style="{ cursor: rowHandleCursor }"
                 @mousedown="(e) => handleRowResizeStart(e, 'footer', i, row)"
                 @click.stop
               ></div>
