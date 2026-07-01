@@ -35,6 +35,10 @@ import {
 } from "../../../utils/entityConstraints";
 import { useTemplateStore } from "../../templates";
 import { normalizeVariableKey } from "../../../utils/variables";
+import {
+  classifyLabelElements,
+  multiLabelSettingsFromElement,
+} from "../../../utils/multiLabel";
 import i18n from "../../../locales";
 import { defaultWatermark, defaultBranding, HISTORY_ACTION, hasOwn, inferElementUpdateHistoryAction, loadWatermark, loadDeveloperMode, loadPaginationDebugLogs, loadRenderDebugLogs, loadTextQuickToolbarEnabled, loadStatusBarVisible, getElementZIndex, getLayerSortedElements, buildLayerAssignments, canLayerMoveInPage, normalizeContextMenuConfig, normalizeTemplateModalFields, normalizeTemplateModalFormConfig, inferVariableFromContent, normalizeDesignerFontOptions, getEffectiveTableColumns, getNumericCellStyleHeight, getTableRowExplicitHeight, isHeaderFooterLineStyle, normalizeHeaderFooterLineStyle, normalizeHeaderFooterLineColor, normalizeHeaderFooterLineWidth, normalizeHeaderFooterLineSpanMode, normalizeHeaderFooterLineSpan, normalizeHeaderFooterLineRenderingEnabled, escapeAttributeSelectorValue, getCellBorderInsetRect, querySelectorAcrossDocumentAndShadowRoots } from '../helpers';
 import type { LayerMoveMode, HeaderFooterLineStyle, HeaderFooterLineSpanMode, EmbeddedCellBounds, EffectiveTableRows } from '../helpers';
@@ -543,6 +547,17 @@ export const elementActions = {
 
       this.snapshot(HISTORY_ACTION.ELEMENT_REMOVE);
       const idsToRemove = this.collectElementIdsWithEmbeddedChildren([id]);
+
+      // When deleting a MULTI_LABEL container, also remove all elements
+      // inside the label #1 region (the per-label template elements).
+      if (targetElement.type === ElementType.MULTI_LABEL) {
+        const ml = multiLabelSettingsFromElement(targetElement);
+        for (const page of this.pages) {
+          const { labelElements } = classifyLabelElements(page.elements, ml);
+          labelElements.forEach((el) => idsToRemove.add(el.id));
+        }
+      }
+
       for (const page of this.pages) {
         for (let index = page.elements.length - 1; index >= 0; index -= 1) {
           if (idsToRemove.has(page.elements[index].id)) {

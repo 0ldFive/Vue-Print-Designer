@@ -778,6 +778,8 @@ export const useTemplateStore = defineStore("templates", {
       delete this.templateDetailCache[id];
       if (this.currentTemplateId === id) {
         this.currentTemplateId = null;
+        const designerStore = useDesignerStore();
+        designerStore.resetCanvas();
       }
       if (mode === "remote") {
         this.isLoading = true;
