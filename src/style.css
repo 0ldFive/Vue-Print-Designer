@@ -16,6 +16,18 @@
     --brand-900: #1e3a8a;
     --brand-950: #172554;
     --brand-500-alpha-10: rgb(59 130 246 / 0.1);
+    /* RGB channels for Tailwind opacity modifiers (bg-blue-500/30 etc.) */
+    --brand-50-rgb: 239 246 255;
+    --brand-100-rgb: 219 234 254;
+    --brand-200-rgb: 191 219 254;
+    --brand-300-rgb: 147 197 253;
+    --brand-400-rgb: 96 165 250;
+    --brand-500-rgb: 59 130 246;
+    --brand-600-rgb: 37 99 235;
+    --brand-700-rgb: 29 78 216;
+    --brand-800-rgb: 30 64 175;
+    --brand-900-rgb: 30 58 138;
+    --brand-950-rgb: 23 37 84;
   }
   input[type="radio"] {
     accent-color: var(--brand-600);
