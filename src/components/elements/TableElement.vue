@@ -495,9 +495,15 @@ const saveHeaderEdit = () => {
       closeEditForm();
       return;
     }
-    if (editingColIndex.value < currentColumns.length) {
-      currentColumns[editingColIndex.value] = {
-        ...currentColumns[editingColIndex.value],
+    // Map rendered (visible) column index back to raw columns index by field,
+    // since hidden columns are skipped during rendering.
+    const visibleCol = processedData.value.columns[editingColIndex.value];
+    const rawIndex = currentColumns.findIndex(
+      (c) => c.field === visibleCol?.field,
+    );
+    if (rawIndex !== -1) {
+      currentColumns[rawIndex] = {
+        ...currentColumns[rawIndex],
         header: editForm.value.header,
         field: editForm.value.field,
       };
@@ -628,6 +634,9 @@ const processedData = computed(() => {
     }
   }
 
+  // Hidden columns are excluded from rendering and all column-index based logic
+  cols = cols.filter((c: any) => !c?.hidden);
+
   // Footer Data Variable
   if (store.isExporting && props.element.footerDataVariable) {
     const key = normalizeVariableKey(props.element.footerDataVariable);
@@ -694,7 +703,11 @@ const processedData = computed(() => {
       if (result) {
         if (result.data) data = result.data;
         if (result.footerData) footerData = result.footerData;
-        if (result.columns) return { ...result, columns: result.columns };
+        if (result.columns)
+          return {
+            ...result,
+            columns: (result.columns as any[]).filter((c: any) => !c?.hidden),
+          };
       }
     } catch (e) {
       console.error("Custom script error", e);
@@ -703,7 +716,9 @@ const processedData = computed(() => {
 
   // Calculate footer values based on field variable
   const computedFooterData = cloneDeep(footerData);
-  const columnFields = cols.map((c: any) => c.field);
+  const columnFieldMap = new Map<string, any>(
+    cols.map((c: any) => [c.field, c]),
+  );
 
   computedFooterData.forEach((row: any) => {
     Object.keys(row).forEach((key) => {
@@ -712,16 +727,56 @@ const processedData = computed(() => {
         cell &&
         typeof cell === "object" &&
         cell.field &&
-        columnFields.includes(cell.field)
+        columnFieldMap.has(cell.field)
       ) {
         const fieldKey = cell.field;
-        // Simple SUM aggregation by default
-        const sum = data.reduce((acc: number, curr: any) => {
-          const val = parseFloat(curr[fieldKey]);
-          return acc + (isNaN(val) ? 0 : val);
-        }, 0);
+        const aggregate =
+          (columnFieldMap.get(fieldKey).aggregate as string) || "SUM";
+        if (aggregate === "NONE") return;
+        const values = data
+          .map((row: any) => row?.[fieldKey])
+          .map((v: any) =>
+            typeof v === "object" && v !== null && "value" in v ? v.value : v,
+          );
+        const numericValues = values.map((v: any) => parseFloat(v));
+        let result: number | undefined;
+        switch (aggregate) {
+          case "SUM":
+            result = numericValues.reduce(
+              (acc: number, v: number) => acc + (isNaN(v) ? 0 : v),
+              0,
+            );
+            break;
+          case "AVG": {
+            const valid = numericValues.filter((v: number) => !isNaN(v));
+            result =
+              valid.length > 0
+                ? valid.reduce((acc: number, v: number) => acc + v, 0) /
+                  valid.length
+                : undefined;
+            break;
+          }
+          case "COUNT":
+            result = values.filter(
+              (v: any) => v !== null && v !== undefined && v !== "",
+            ).length;
+            break;
+          case "MIN":
+          case "MAX": {
+            const valid = numericValues.filter((v: number) => !isNaN(v));
+            if (valid.length > 0) {
+              result =
+                aggregate === "MIN"
+                  ? Math.min(...valid)
+                  : Math.max(...valid);
+            }
+            break;
+          }
+        }
         // Store result in 'result' property, not overwriting value (which is static text)
-        cell.result = sum;
+        if (result !== undefined) {
+          cell.result = result;
+        }
       }
     });
   });
@@ -1334,9 +1389,11 @@ const handleResizeEnd = () => {
     const finalWidth = tempColumnWidths.value[col.field];
     if (finalWidth) {
       const newCols = [...(props.element.columns || [])];
-      if (newCols[resizingColIndex.value]) {
-        newCols[resizingColIndex.value] = {
-          ...newCols[resizingColIndex.value],
+      // Map rendered (visible) column index back to raw columns index by field
+      const rawIndex = newCols.findIndex((c) => c.field === col.field);
+      if (rawIndex !== -1) {
+        newCols[rawIndex] = {
+          ...newCols[rawIndex],
           width: finalWidth,
         };
         store.updateElement(props.element.id, { columns: newCols });
@@ -1770,13 +1827,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           placeholder: "@customScriptVariable",
         },
         {
-          label: "properties.label.columns",
-          type: "code",
-          language: "json",
+          label: "properties.label.columnManager",
+          type: "tableColumns",
           target: "element",
           key: "columns",
-          height: 100,
-          placeholder: "properties.label.columnsPlaceholder",
+          defaultValue: [],
         },
         {
           label: "properties.label.data",
@@ -1789,12 +1844,10 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
         },
         {
           label: "properties.label.footerData",
-          type: "code",
-          language: "json",
+          type: "tableFooterRows",
           target: "element",
           key: "footerData",
-          height: 100,
-          placeholder: "properties.label.footerDataPlaceholder",
+          defaultValue: [],
         },
         {
           label: "properties.label.customScript",
@@ -2072,7 +2125,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               fontSize: element.style.headerFontSize
                 ? `${element.style.headerFontSize}px`
                 : undefined,
-              textAlign: element.style.headerTextAlign || 'left',
+              textAlign: col.align || element.style.headerTextAlign || 'left',
               cursor:
                 store.selectedElementId === element.id ? 'pointer' : 'default',
               ...getRowHeightCellStyle('header', 0),
@@ -2154,7 +2207,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 overflowWrap: 'anywhere',
                 wordBreak: 'break-word',
                 verticalAlign: 'top',
-                textAlign: element.style.textAlign || 'left',
+                textAlign: col.align || element.style.textAlign || 'left',
                 fontSize: element.style.fontSize
                   ? `${element.style.fontSize}px`
                   : undefined,
@@ -2321,7 +2374,7 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 fontSize: element.style.footerFontSize
                   ? `${element.style.footerFontSize}px`
                   : undefined,
-                textAlign: element.style.footerTextAlign || 'left',
+                textAlign: col.align || element.style.footerTextAlign || 'left',
                 cursor:
                   store.selectedElementId === element.id
                     ? 'pointer'

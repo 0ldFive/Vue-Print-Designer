@@ -421,7 +421,8 @@ export const getEffectiveTableColumns = (
     }
   }
 
-  return effectiveColumns;
+  // Keep in sync with the rendered table: hidden columns are not laid out.
+  return effectiveColumns.filter((column) => !column?.hidden);
 };
 
 export const getNumericCellStyleHeight = (cellValue: any) => {

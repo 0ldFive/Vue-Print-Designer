@@ -126,6 +126,10 @@ export interface TableColumn {
   field: string;
   header: string;
   width: number;
+  align?: "left" | "center" | "right"; // Column-level text align
+  hidden?: boolean; // Hidden at render time (design data preserved)
+  aggregate?: "SUM" | "AVG" | "COUNT" | "MIN" | "MAX" | "NONE"; // Footer aggregation for cells bound to this field
+  format?: string; // Value format hint, e.g. "0.00" / "YYYY-MM-DD"
 }
 
 export interface TableCellRef {
@@ -133,6 +137,25 @@ export interface TableCellRef {
   colField: string;
   section?: "body" | "footer";
 }
+
+/** A footer cell: either a plain display string or an object carrying display/aggregate metadata. */
+export type TableFooterCell =
+  | string
+  | number
+  | {
+      value?: string;
+      /** Column field whose body values are aggregated into this cell. */
+      field?: string;
+      /** Computed aggregate result, written at render time. */
+      result?: number;
+      rowSpan?: number;
+      colSpan?: number;
+      style?: Record<string, any>;
+      [key: string]: any;
+    };
+
+/** One footer row, keyed by column field. */
+export type TableFooterRow = Record<string, TableFooterCell>;
 
 export interface EmbeddedInTableAnchor {
   offsetXRatio: number;
@@ -466,7 +489,9 @@ export interface PropertyField {
     | "select"
     | "switch"
     | "code"
-    | "image";
+    | "image"
+    | "tableColumns"
+    | "tableFooterRows";
   target: "element" | "style" | "data";
   key?: string;
   placeholder?: string;

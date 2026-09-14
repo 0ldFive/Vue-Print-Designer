@@ -26,6 +26,8 @@ import PropertySelect from "@/components/properties/PropertySelect.vue";
 import PropertyColor from "@/components/properties/PropertyColor.vue";
 import PropertyCode from "@/components/properties/PropertyCode.vue";
 import PropertyImage from "@/components/properties/PropertyImage.vue";
+import PropertyTableColumns from "@/components/properties/PropertyTableColumns.vue";
+import PropertyTableFooterRows from "@/components/properties/PropertyTableFooterRows.vue";
 import Lock from "~icons/material-symbols/lock";
 import ContentCopy from "~icons/material-symbols/content-copy";
 import Check from "~icons/material-symbols/check";
@@ -1120,6 +1122,27 @@ const closePropertiesPanel = () => {
                   "
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
+                />
+
+                <!-- Table Columns Manager -->
+                <PropertyTableColumns
+                  v-else-if="field.type === 'tableColumns'"
+                  :label="t(field.label)"
+                  :disabled="isFieldDisabled(field)"
+                  :columns="(getFieldValue(field) as any) || []"
+                  :data-variable="(element as any)?.variable || ''"
+                  :element-data="(element as any)?.data || []"
+                  @update:columns="(cols) => handleFieldChange(field, cols)"
+                />
+
+                <!-- Table Footer Rows Manager -->
+                <PropertyTableFooterRows
+                  v-else-if="field.type === 'tableFooterRows'"
+                  :label="t(field.label)"
+                  :disabled="isFieldDisabled(field)"
+                  :rows="(getFieldValue(field) as any) || []"
+                  :columns="((element as any)?.columns as any) || []"
+                  @update:rows="(rows) => handleFieldChange(field, rows)"
                 />
 
                 <!-- Code Editor -->

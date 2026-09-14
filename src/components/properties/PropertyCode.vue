@@ -17,13 +17,20 @@ const Editor = defineAsyncComponent(() =>
   import("@guolao/vue-monaco-editor").then((m) => m.Editor),
 );
 
-const props = defineProps<{
-  label: string;
-  value: string;
-  language: string;
-  disabled?: boolean;
-  height?: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    label: string;
+    value: string;
+    language: string;
+    disabled?: boolean;
+    height?: number;
+    /** Hide the built-in title bar when the caller renders its own header. */
+    showHeader?: boolean;
+  }>(),
+  // Explicit default: a boolean prop that is absent would otherwise be cast to
+  // false by Vue, hiding the header for every caller.
+  { showHeader: true },
+);
 
 const emit = defineEmits(["update:value"]);
 const store = useDesignerStore();
@@ -63,11 +70,14 @@ const handleModalClose = () => {
 const handleModalUpdate = (val: string) => {
   emit("update:value", val);
 };
+
+// Let callers that hide the built-in header trigger the expanded editor.
+defineExpose({ toggleExpand, isExpanded });
 </script>
 
 <template>
   <div class="flex flex-col gap-1">
-    <div class="flex justify-between items-center">
+    <div v-if="showHeader !== false" class="flex justify-between items-center">
       <label class="text-xs text-gray-500 font-medium">{{ label }}</label>
       <div class="flex items-center gap-2">
         <span class="text-[10px] text-gray-400 uppercase">{{ language }}</span>
