@@ -21,6 +21,7 @@ import { useDesignerStore } from "./stores/designer";
 import { useTemplateStore } from "./stores/templates";
 import cloneDeep from "lodash/cloneDeep";
 import { uuidv4 } from "@/utils/uuid";
+import { expandBrandVars } from "@/utils/color";
 import {
   setCrudConfig,
   setCrudMode,
@@ -151,7 +152,7 @@ const applyStoredBrandVars = () => {
     const vars = JSON.parse(stored) as Record<string, string>;
     if (!vars || typeof vars !== "object") return;
     const root = document.documentElement;
-    Object.entries(vars).forEach(([key, value]) => {
+    Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
   } catch {
@@ -944,7 +945,7 @@ class PrintDesignerElement extends HTMLElement {
   ) {
     if (!vars || typeof vars !== "object") return;
     const root = document.documentElement;
-    Object.entries(vars).forEach(([key, value]) => {
+    Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
     if (options.persist !== false) {

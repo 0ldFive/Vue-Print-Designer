@@ -177,3 +177,42 @@ export function toRgbaString(
   const { r, g, b } = hsvToRgb(h, s, v);
   return `rgba(${r}, ${g}, ${b}, ${parseFloat(a.toFixed(2))})`;
 }
+
+/**
+ * Convert a hex color to space-separated RGB channels (e.g. "59 130 246"),
+ * the format required by Tailwind colors declared as
+ * `rgb(var(--x) / <alpha-value>)`.
+ */
+export function hexToRgbChannels(hex: string): string | null {
+  const raw = (hex || "").trim().replace(/^#/, "");
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return null;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `${r} ${g} ${b}`;
+}
+
+/**
+ * Expand brand hex variables with their matching RGB channel variables, so
+ * Tailwind opacity modifiers (bg-blue-500/30 etc.) follow the active theme.
+ * Entries that are not plain `--brand-<scale>` colors are kept untouched.
+ */
+export function expandBrandVars(
+  vars: Record<string, string>,
+): Record<string, string> {
+  const expanded: Record<string, string> = { ...vars };
+  Object.entries(vars).forEach(([key, value]) => {
+    const match = /^--brand-(\d+)$/.exec(key);
+    if (!match) return;
+    const channels = hexToRgbChannels(value);
+    if (channels) expanded[`--brand-${match[1]}-rgb`] = channels;
+  });
+  return expanded;
+}

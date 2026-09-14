@@ -6,7 +6,7 @@ import { useAutoSave } from "@/composables/useAutoSave";
 import { usePrintSettings } from "@/composables/usePrintSettings";
 import { useDesignerStore } from "@/stores/designer";
 import ColorPicker from "@/components/common/ColorPicker.vue";
-import { parseColor, hsvToRgb } from "@/utils/color";
+import { parseColor, hsvToRgb, expandBrandVars } from "@/utils/color";
 import X from "~icons/material-symbols/close";
 import SettingsIcon from "~icons/material-symbols/settings";
 import TranslateIcon from "~icons/material-symbols/translate";
@@ -283,7 +283,7 @@ const brandPresets = computed(() => [
 
 const applyBrandVars = (vars: Record<string, string>) => {
   const root = document.documentElement;
-  Object.entries(vars).forEach(([key, value]) => {
+  Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
   window.dispatchEvent(new CustomEvent("brand-theme-updated"));

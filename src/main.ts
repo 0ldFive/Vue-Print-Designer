@@ -4,6 +4,7 @@ import i18n from "./locales";
 import "./style.css";
 import App from "./App.vue";
 import { useTheme } from "./composables/useTheme";
+import { expandBrandVars } from "./utils/color";
 import { loader } from "@guolao/vue-monaco-editor";
 
 loader.config({
@@ -27,7 +28,7 @@ const applyStoredBrandVars = () => {
     const vars = JSON.parse(stored) as Record<string, string>;
     if (!vars || typeof vars !== "object") return;
     const root = document.documentElement;
-    Object.entries(vars).forEach(([key, value]) => {
+    Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
   } catch {
