@@ -476,6 +476,8 @@ export default {
           "Custom scripts receive data, footerData, columns, and type; type is global or page.",
         tableScriptReturn:
           "Scripts can return ｛ data, footerData, columns ｝ to rewrite rows, footers, or dynamic columns.",
+        tableScriptFooter:
+          "The footerData argument is the table footer data; each cell is a ｛ value, field ｝ object, and footer variable fields use built-in tokens in the ｛#name｝ format (e.g. ｛#pageSum｝/｛#pageQty｝ for page totals, ｛#totalSum｝/｛#totalQty｝/｛#totalCap｝ for grand totals). The footerData in the returned ｛ data, footerData, columns ｝ overrides the footer display. During print/preview pagination the script runs once per page (type is page and data holds that page's rows), and its footerData is written back as that page's footer — useful for per-page summaries.",
         tableSelectedCell:
           "When cells are selected, row height in the property panel applies to the selected rows.",
         pageFormat:

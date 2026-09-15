@@ -481,6 +481,8 @@ export default {
           "Benutzerdefinierte Skripte erhalten data, footerData, columns und type; type ist global oder page.",
         tableScriptReturn:
           "Skripte können ｛ data, footerData, columns ｝ zurückgeben, um Zeilen, Fußzeilen oder dynamische Spalten neu zu schreiben.",
+        tableScriptFooter:
+          "Das Argument footerData enthält die Tabellenfuß-Daten; jede Zelle ist ein ｛ value, field ｝-Objekt, und Fußvariablenfelder verwenden integrierte Tokens im Format ｛#Name｝ (z. B. ｛#pageSum｝/｛#pageQty｝ für Seitensummen, ｛#totalSum｝/｛#totalQty｝/｛#totalCap｝ für Gesamtsummen). Das footerData im zurückgegebenen ｛ data, footerData, columns ｝ überschreibt die Fußzeile. Beim Druck/Druckvorschau wird das Skript pro Seite erneut ausgeführt (type ist page, data enthält die Zeilen der Seite) und das zurückgegebene footerData wird als Fußzeile dieser Seite zurückgeschrieben – nützlich für Seitensummen.",
         tableSelectedCell:
           "Wenn Zellen ausgewählt sind, gilt die Zeilenhöhe im Eigenschaftenpanel für die ausgewählten Zeilen.",
         pageFormat:

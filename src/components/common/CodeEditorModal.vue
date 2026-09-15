@@ -11,10 +11,12 @@ import {
 import { useI18n } from "@/locales";
 import { useDesignerStore } from "@/stores/designer";
 import { useTheme } from "@/composables/useTheme";
+import { useFloatingTooltip } from "@/composables/useFloatingTooltip";
 import Close from "~icons/material-symbols/close";
 import Save from "~icons/material-symbols/save";
 import ContentCopy from "~icons/material-symbols/content-copy";
 import Check from "~icons/material-symbols/check";
+import Help from "~icons/material-symbols/help";
 
 const Editor = defineAsyncComponent(() =>
   import("@guolao/vue-monaco-editor").then((m) => m.Editor),
@@ -32,6 +34,8 @@ const props = defineProps<{
   readOnly?: boolean;
   showCopyButton?: boolean;
   showSaveButton?: boolean;
+  /** Translated help items; when set, a help tooltip is available in the header. */
+  helpItems?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -42,6 +46,18 @@ const emit = defineEmits<{
 }>();
 
 const store = useDesignerStore();
+
+const showHelp = ref(false);
+const helpButtonRef = ref<HTMLElement | null>(null);
+const helpTooltipRef = ref<HTMLElement | null>(null);
+const {
+  arrowStyle: helpArrowStyle,
+  placement: helpPlacement,
+  toggleTooltip: toggleHelp,
+  tooltipStyle: helpTooltipStyle,
+} = useFloatingTooltip(showHelp, helpButtonRef, helpTooltipRef, {
+  width: 320,
+});
 
 const editorOptions = computed(() => ({
   minimap: { enabled: true },
@@ -205,6 +221,17 @@ onUnmounted(() => {
             >
               {{ title }}
             </h3>
+            <button
+              v-if="helpItems && helpItems.length"
+              ref="helpButtonRef"
+              type="button"
+              class="inline-flex items-center justify-center p-0.5 rounded text-gray-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
+              :aria-label="title"
+              :aria-expanded="showHelp"
+              @mousedown.stop.prevent="toggleHelp"
+            >
+              <Help class="w-4 h-4" />
+            </button>
             <span
               class="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-mono uppercase"
               >{{ language }}</span
@@ -267,6 +294,42 @@ onUnmounted(() => {
             <Close class="w-4 h-4" />
             {{ t("common.close") }}
           </button>
+        </div>
+      </div>
+
+      <!-- Header Help Tooltip (sibling of the dialog so it stays on top) -->
+      <div
+        v-if="helpItems && helpItems.length && showHelp"
+        ref="helpTooltipRef"
+        role="tooltip"
+        class="pointer-events-auto select-text rounded border border-gray-200 bg-white text-left shadow-xl dark:border-gray-700 dark:bg-gray-900"
+        :style="helpTooltipStyle"
+        @click.stop
+      >
+        <div
+          v-if="helpPlacement === 'bottom'"
+          class="absolute -top-1.5 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+          :style="helpArrowStyle"
+        ></div>
+        <div
+          v-else
+          class="absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+          :style="helpArrowStyle"
+        ></div>
+        <div
+          class="overflow-y-auto p-3"
+          :style="{ maxHeight: helpTooltipStyle.maxHeight }"
+        >
+          <div class="flex items-start gap-2">
+            <Help
+              class="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300"
+            />
+            <ul
+              class="min-w-0 list-disc space-y-1 pl-4 text-xs leading-5 text-gray-600 dark:text-gray-300"
+            >
+              <li v-for="item in helpItems" :key="item">{{ item }}</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

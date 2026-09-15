@@ -503,6 +503,10 @@ export interface PropertyField {
   options?: PropertyFieldOption[];
   defaultValue?: any;
   language?: string; // for code editor
+  /** i18n key rendered as a help tooltip next to the field label. */
+  helpText?: string;
+  /** i18n keys shown in the expanded code editor modal's help tooltip. */
+  helpItems?: string[];
   /** Render this field at half width so two fields share one row. */
   half?: boolean;
 }

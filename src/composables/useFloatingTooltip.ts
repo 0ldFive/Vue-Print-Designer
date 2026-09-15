@@ -16,6 +16,10 @@ interface FloatingTooltipOptions {
   padding?: number;
   minHeight?: number;
   zIndex?: number;
+  /** Preferred vertical placement; falls back to the other side when it does not fit. */
+  preferredPlacement?: TooltipPlacement;
+  /** Anchor alignment: "right" (default) aligns tooltip right edge to the button, "left" aligns left edges. */
+  horizontalAlign?: "left" | "right";
 }
 
 const clamp = (value: number, min: number, max: number) => {
@@ -123,9 +127,18 @@ export const useFloatingTooltip = (
     const spaceBelow = viewportHeight - rect.bottom - gap - padding;
     const spaceAbove = rect.top - gap - padding;
     const measuredHeight = tooltipRef.value?.offsetHeight ?? 240;
-    const shouldPlaceAbove =
-      spaceBelow < Math.min(measuredHeight, minHeight) &&
-      spaceAbove > spaceBelow;
+    const fitsAbove = spaceAbove >= Math.min(measuredHeight, minHeight);
+    const fitsBelow = spaceBelow >= Math.min(measuredHeight, minHeight);
+    let shouldPlaceAbove: boolean;
+    if (options.preferredPlacement === "top") {
+      shouldPlaceAbove = fitsAbove || !fitsBelow;
+    } else if (options.preferredPlacement === "bottom") {
+      shouldPlaceAbove = !fitsBelow && fitsAbove;
+    } else {
+      shouldPlaceAbove =
+        spaceBelow < Math.min(measuredHeight, minHeight) &&
+        spaceAbove > spaceBelow;
+    }
     const availableHeight = Math.max(
       minHeight,
       shouldPlaceAbove ? spaceAbove : spaceBelow,
@@ -141,7 +154,10 @@ export const useFloatingTooltip = (
       padding,
       window.innerWidth - tooltipWidth - padding,
     );
-    const left = clamp(rect.right - tooltipWidth, padding, maxLeft);
+    const left =
+      options.horizontalAlign === "left"
+        ? clamp(rect.left, padding, maxLeft)
+        : clamp(rect.right - tooltipWidth, padding, maxLeft);
     const arrowLeft = clamp(
       rect.left + rect.width / 2 - left,
       12,

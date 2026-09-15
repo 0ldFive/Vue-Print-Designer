@@ -4,20 +4,35 @@ interface Option {
   value: string | number | boolean;
 }
 
+interface OptionGroup {
+  label: string;
+  options: Option[];
+}
+
 const props = defineProps<{
   label: string;
   value?: string | number | boolean;
-  options: Option[];
+  options?: Option[];
+  groups?: OptionGroup[];
   disabled?: boolean;
 }>();
 
 const emit = defineEmits(["update:value"]);
 
+const flatOptions = (): Option[] => {
+  const result: Option[] = [];
+  if (props.options) result.push(...props.options);
+  if (props.groups) {
+    props.groups.forEach((group) => result.push(...group.options));
+  }
+  return result;
+};
+
 const handleChange = (e: Event) => {
   const target = e.target as HTMLSelectElement;
   const val = target.value;
   // Find the option to get the correct type (number/boolean)
-  const option = props.options.find((opt) => String(opt.value) === val);
+  const option = flatOptions().find((opt) => String(opt.value) === val);
   emit("update:value", option ? option.value : val);
 };
 </script>
@@ -33,14 +48,32 @@ const handleChange = (e: Event) => {
       @change="handleChange"
       class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
     >
-      <option
-        v-for="opt in options"
-        :key="String(opt.value)"
-        :value="opt.value"
-        class="dark:bg-gray-800 dark:text-gray-200"
-      >
-        {{ opt.label }}
-      </option>
+      <template v-if="groups">
+        <optgroup
+          v-for="group in groups"
+          :key="group.label"
+          :label="group.label"
+        >
+          <option
+            v-for="opt in group.options"
+            :key="String(opt.value)"
+            :value="opt.value"
+            class="dark:bg-gray-800 dark:text-gray-200"
+          >
+            {{ opt.label }}
+          </option>
+        </optgroup>
+      </template>
+      <template v-else>
+        <option
+          v-for="opt in options"
+          :key="String(opt.value)"
+          :value="opt.value"
+          class="dark:bg-gray-800 dark:text-gray-200"
+        >
+          {{ opt.label }}
+        </option>
+      </template>
     </select>
   </div>
 </template>

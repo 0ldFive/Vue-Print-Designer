@@ -1857,6 +1857,11 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           key: "customScript",
           height: 100,
           placeholder: "properties.label.customScriptPlaceholder",
+          helpText: "properties.help.items.tableScriptFooter",
+          helpItems: [
+            "properties.help.items.tableScript",
+            "properties.help.items.tableScriptReturn",
+          ],
         },
       ],
     },

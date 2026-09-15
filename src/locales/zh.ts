@@ -458,6 +458,8 @@ export default {
           "自定义脚本会收到 data、footerData、columns、type；type 为 global 或 page。",
         tableScriptReturn:
           "脚本可返回 ｛ data, footerData, columns ｝，用于改写行数据、表脚和动态列。",
+        tableScriptFooter:
+          "脚本入参 footerData 即表脚数据，每个单元格为 ｛ value, field ｝ 结构；表脚变量字段使用 ｛#变量名｝ 格式的内置占位符（如 ｛#pageSum｝/｛#pageQty｝ 表示本页汇总，｛#totalSum｝/｛#totalQty｝/｛#totalCap｝ 表示总汇总）。返回 ｛ data, footerData, columns ｝ 中的 footerData 会覆盖表脚显示；打印/预览分页时脚本还会逐页执行（type 为 page，data 为当前页行数据），返回的 footerData 会回写为该页表脚，适合页内汇总。",
         tableSelectedCell:
           "当前选中单元格时，属性面板的行高会应用到所选单元格所在整行。",
         pageFormat: "页码格式支持当前页、总页数和标签文本组合。",

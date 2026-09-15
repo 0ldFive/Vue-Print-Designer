@@ -589,20 +589,6 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           type: "select",
           target: "style",
           key: "fontFamily",
-          options: [
-            { label: "properties.option.default", value: "" },
-            { label: "properties.option.arial", value: "Arial, sans-serif" },
-            {
-              label: "properties.option.timesNewRoman",
-              value: '"Times New Roman", serif',
-            },
-            {
-              label: "properties.option.courierNew",
-              value: '"Courier New", monospace',
-            },
-            { label: "properties.option.simSun", value: "SimSun, serif" },
-            { label: "properties.option.simHei", value: "SimHei, sans-serif" },
-          ],
         },
         {
           label: "properties.label.fontWeight",

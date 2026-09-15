@@ -476,6 +476,8 @@ export default {
           "カスタムスクリプトには data、footerData、columns、type が渡されます。type は global または page です。",
         tableScriptReturn:
           "スクリプトは ｛ data, footerData, columns ｝ を返して、行、フッター、または動的列を書き換えられます。",
+        tableScriptFooter:
+          "引数 footerData は表脚データで、各セルは ｛ value, field ｝ の構造です。表脚の変数フィールドは ｛#変数名｝ 形式の組み込みトークン（例: ページ合計は ｛#pageSum｝/｛#pageQty｝、総合計は ｛#totalSum｝/｛#totalQty｝/｛#totalCap｝）を使用します。戻り値 ｛ data, footerData, columns ｝ の footerData が表脚の表示を上書きします。印刷/プレビューのページ分割時はページごとに再実行され（type は page、data はそのページの行データ）、戻り値の footerData がそのページの表脚へ書き戻されます。ページ内集計に利用できます。",
         tableSelectedCell:
           "セルが選択されている場合、プロパティパネルの行高は選択行に適用されます。",
         pageFormat:

@@ -21,6 +21,7 @@ import { elementPropertiesSchema as RectSchema } from "@/components/elements/Rec
 import { elementPropertiesSchema as CircleSchema } from "@/components/elements/CircleElement.vue";
 import { elementPropertiesSchema as MultiLabelSchema } from "@/components/elements/MultiLabelElement.vue";
 import { pxToUnit, unitToPx, type Unit } from "@/utils/units";
+import { createFontGroups } from "@/utils/fonts";
 import PropertyInput from "@/components/properties/PropertyInput.vue";
 import PropertySelect from "@/components/properties/PropertySelect.vue";
 import PropertyColor from "@/components/properties/PropertyColor.vue";
@@ -326,41 +327,7 @@ const activeTab = ref<"properties" | "style" | "advanced">("properties");
 const copied = ref(false);
 const unit = computed(() => (store.unit || "mm") as Unit);
 const unitLabel = computed(() => store.unit || "mm");
-const defaultFontOptions = computed(() => [
-  { label: t("properties.option.default"), value: "" },
-  { label: t("properties.option.arial"), value: "Arial, sans-serif" },
-  {
-    label: t("properties.option.timesNewRoman"),
-    value: '"Times New Roman", serif',
-  },
-  {
-    label: t("properties.option.courierNew"),
-    value: '"Courier New", monospace',
-  },
-  { label: t("properties.option.simSun"), value: "SimSun, serif" },
-  { label: t("properties.option.simHei"), value: "SimHei, sans-serif" },
-]);
-const dynamicFontFamilyOptions = computed(() => {
-  const customOptions = store.fontOptions || [];
-  if (!customOptions.length) {
-    return defaultFontOptions.value;
-  }
-
-  const normalizedCustom = customOptions.map((opt) => ({
-    label: (opt.label || opt.value || "").trim(),
-    value: opt.value,
-  }));
-  const hasDefaultOption = normalizedCustom.some((opt) => opt.value === "");
-
-  if (hasDefaultOption) {
-    return normalizedCustom;
-  }
-
-  return [
-    { label: t("properties.option.default"), value: "" },
-    ...normalizedCustom,
-  ];
-});
+const defaultFontGroups = computed(() => createFontGroups(t, store.fontOptions));
 const fontFamilyFieldKeys = new Set(["fontFamily", "labelFontFamily"]);
 const unitFieldKeys = new Set([
   "fontSize",
@@ -412,15 +379,18 @@ const resolveOptionLabel = (label: unknown) => {
   return isI18nKey(label) ? t(label) : label;
 };
 
+const isFontFamilyField = (field: PropertyField) =>
+  fontFamilyFieldKeys.has(field.key || "");
+
 const getSelectOptions = (field: PropertyField) => {
-  const rawOptions = fontFamilyFieldKeys.has(field.key || "")
-    ? dynamicFontFamilyOptions.value
-    : field.options || [];
-  return rawOptions.map((option: any) => ({
+  return (field.options || []).map((option: any) => ({
     ...option,
     label: resolveOptionLabel(option.label),
   }));
 };
+
+const getSelectGroups = (field: PropertyField) =>
+  isFontFamilyField(field) ? defaultFontGroups.value : undefined;
 
 const getFieldDisplayValue = (field: PropertyField) => {
   const value = getFieldValue(field);
@@ -1094,6 +1064,7 @@ const closePropertiesPanel = () => {
                   v-else-if="field.type === 'select'"
                   :label="t(field.label)"
                   :options="getSelectOptions(field)"
+                  :groups="getSelectGroups(field)"
                   :disabled="isFieldDisabled(field)"
                   :value="getFieldValue(field)"
                   @update:value="(v) => handleFieldChange(field, v)"
@@ -1152,6 +1123,14 @@ const closePropertiesPanel = () => {
                   :language="field.language || 'javascript'"
                   :disabled="isFieldDisabled(field)"
                   :height="field.height"
+                  :help-text="
+                    field.helpText ? t(field.helpText) : undefined
+                  "
+                  :modal-help-items="
+                    field.helpItems
+                      ? field.helpItems.map((key: string) => t(key))
+                      : undefined
+                  "
                   :value="getCodeValue(field)"
                   @update:value="(v) => handleCodeChange(field, v)"
                 />

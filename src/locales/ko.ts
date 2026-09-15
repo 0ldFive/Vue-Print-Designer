@@ -474,6 +474,8 @@ export default {
           "사용자 지정 스크립트는 data, footerData, columns, type을 전달받으며, type은 global 또는 page입니다.",
         tableScriptReturn:
           "스크립트는 ｛ data, footerData, columns ｝를 반환하여 행, 바닥글, 동적 열을 재작성할 수 있습니다.",
+        tableScriptFooter:
+          "인자 footerData는 표 바닥글 데이터이며 각 셀은 ｛ value, field ｝ 구조입니다. 바닥글 변수 필드는 ｛#변수명｝ 형식의 내장 토큰(예: 페이지 합계 ｛#pageSum｝/｛#pageQty｝, 전체 합계 ｛#totalSum｝/｛#totalQty｝/｛#totalCap｝)을 사용합니다. 반환값 ｛ data, footerData, columns ｝의 footerData가 바닥글 표시를 대체합니다. 인쇄/미리보기 페이지 분할 시 페이지별로 다시 실행되며(type은 page, data는 해당 페이지의 행 데이터), 반환된 footerData가 해당 페이지 바닥글로 기록되어 페이지 내 합계에 활용됩니다.",
         tableSelectedCell:
           "셀을 선택한 경우 속성 패널의 행 높이는 선택된 행에 적용됩니다.",
         pageFormat:
