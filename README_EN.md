@@ -131,24 +131,7 @@ A complete integration example based on **Vue 3 + Element Plus**, demonstrating 
 
 ## Quick Start
 
-### Option A: Build from Source and Integrate Your API
-
-Best for teams with deep customization requirements.
-
-#### Requirements
-
-- Node.js >= 16.0.0
-- npm >= 7.0.0 or yarn / pnpm
-
-#### Recommended integration points
-
-- Template CRUD: `useTemplateStore` (replace with your API)
-- Custom elements CRUD: `customElements` in `useDesignerStore`
-- Variables and template data: instance methods `setVariables` / `loadTemplateData`
-
-Custom element extension guide: [custom-element.md](https://printdot.cc/docs)
-
-### Option B: npm Package (Web Components) [Learn Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
+### Option A: npm Package (Web Components) [Learn Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 
 Works with any stack (Vue / React / Angular / Vanilla). Web Components **supports Vue 2** as a custom element — no Vue 2 component adapter required.
 
@@ -227,48 +210,22 @@ el.addEventListener("error", (e) => {
 });
 ```
 
----
+### Option B: Build from Source and Integrate Your API
 
-## Project Structure
+Best for teams with deep customization requirements.
 
-```
-src/                      # Project source root
-├── App.vue               # Root application component
-├── main.ts               # App bootstrap entry
-├── style.css             # Global styles
-├── web-component.ts      # Web Components registration entry
-├── web-component.d.ts    # Web Components type declarations
-├── vite-env.d.ts         # Vite environment type declarations
-├── assets/               # Static assets
-├── components/           # UI and editor components
-│   ├── PrintDesigner.vue # Main designer container component
-│   ├── canvas/           # Canvas area components
-│   ├── common/           # Shared UI components (modals, pickers)
-│   ├── elements/         # Print element components (text/image/table)
-│   ├── layout/           # Layout components (header/sidebar/panels)
-│   ├── print/            # Print rendering components
-│   └── properties/       # Property editor components
-├── composables/          # Reusable Vue composables
-├── constants/            # Constants
-├── locales/              # i18n resources
-├── stores/               # Pinia stores
-├── types/                # Type declarations
-└── utils/                # Shared utility functions
-    ├── print.ts          # Compatibility export entry
-    ├── print/            # Print capability main modules
-    │   ├── index.ts      # Print module unified exports
-    │   ├── usePrint.ts   # Print/export orchestration entry
-    │   ├── dom.ts        # Print-related DOM helpers
-    │   ├── printChannel.ts # Local/remote print channels
-    │   ├── renderEngine.ts # Render engine compatibility export entry
-    │   └── renderEngine/ # Render engine submodules
-    │       ├── index.ts  # Render engine composition entry
-    │       ├── types.ts  # Shared render types
-    │       ├── pagination.ts # Pagination and layout correction logic
-    │       ├── iframeRenderer.ts # iframe rendering implementation
-    │       └── imageRenderer.ts # Image/PDF rendering implementation
-    └── ...               # Other shared utility helpers
-```
+#### Requirements
+
+- Node.js >= 16.0.0
+- npm >= 7.0.0 or yarn / pnpm
+
+#### Recommended integration points
+
+- Template CRUD: `useTemplateStore` (replace with your API)
+- Custom elements CRUD: `customElements` in `useDesignerStore`
+- Variables and template data: instance methods `setVariables` / `loadTemplateData`
+
+Custom element extension guide: [custom-element.md](https://printdot.cc/docs)
 
 ---
 

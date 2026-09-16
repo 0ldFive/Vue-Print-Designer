@@ -131,24 +131,7 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
 
 ## 快速开始
 
-### 方式一：下载源码自行改造与集成 API
-
-适合有深度定制需求的团队。
-
-#### 环境要求
-
-- Node.js >= 16.0.0
-- npm >= 7.0.0 或 yarn / pnpm
-
-#### 建议接入点
-
-- 模板 CRUD：`useTemplateStore`（可替换为接口读写）
-- 自定义元素 CRUD：`useDesignerStore` 中的 `customElements`
-- 变量与模板数据：组件实例方法 `setVariables` / `loadTemplateData`
-
-自定义元素扩展请查看：[自定义元素扩展指南](https://printdot.cc/docs)
-
-### 方式二：npm 组件（Web Components）[了解 Web Components](https://developer.mozilla.org/zh-CN/docs/Web/API/Web_components)
+### 方式一：npm 组件（Web Components）[了解 Web Components](https://developer.mozilla.org/zh-CN/docs/Web/API/Web_components)
 
 适合任何技术栈（Vue / React / Angular / 原生）。Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。
 
@@ -227,48 +210,22 @@ el.addEventListener("error", (e) => {
 });
 ```
 
----
+### 方式二：下载源码自行改造与集成 API
 
-## 项目结构
+适合有深度定制需求的团队。
 
-```
-src/                      # 项目源码目录
-├── App.vue               # 应用根组件
-├── main.ts               # 应用启动入口
-├── style.css             # 全局样式
-├── web-component.ts      # Web Components 注册入口
-├── web-component.d.ts    # Web Components 类型声明
-├── vite-env.d.ts         # Vite 环境类型声明
-├── assets/               # 静态资源
-├── components/           # 页面与编辑器组件
-│   ├── PrintDesigner.vue # 设计器主容器组件
-│   ├── canvas/           # 画布区域组件
-│   ├── common/           # 通用组件（弹窗、选择器等）
-│   ├── elements/         # 打印元素组件（文本、图片、表格等）
-│   ├── layout/           # 布局组件（头部、侧栏、面板等）
-│   ├── print/            # 打印渲染组件
-│   └── properties/       # 属性配置组件
-├── composables/          # 组合式状态与行为封装
-├── constants/            # 常量定义
-├── locales/              # 国际化语言包
-├── stores/               # Pinia 状态管理
-├── types/                # 类型声明
-└── utils/                # 通用工具函数
-    ├── print.ts          # 兼容导出入口
-    ├── print/            # 打印能力主目录
-    │   ├── index.ts      # 打印模块统一导出
-    │   ├── usePrint.ts   # 打印/导出流程编排入口
-    │   ├── dom.ts        # 打印相关 DOM 处理工具
-    │   ├── printChannel.ts # 本地/远程打印通道
-    │   ├── renderEngine.ts # 渲染引擎兼容导出入口
-    │   └── renderEngine/ # 渲染引擎子模块目录
-    │       ├── index.ts  # 渲染引擎装配入口
-    │       ├── types.ts  # 渲染模块共享类型
-    │       ├── pagination.ts # 分页算法与布局修正
-    │       ├── iframeRenderer.ts # iframe 渲染实现
-    │       └── imageRenderer.ts # 图片/PDF 渲染实现
-    └── ...               # 其他通用工具函数
-```
+#### 环境要求
+
+- Node.js >= 16.0.0
+- npm >= 7.0.0 或 yarn / pnpm
+
+#### 建议接入点
+
+- 模板 CRUD：`useTemplateStore`（可替换为接口读写）
+- 自定义元素 CRUD：`useDesignerStore` 中的 `customElements`
+- 变量与模板数据：组件实例方法 `setVariables` / `loadTemplateData`
+
+自定义元素扩展请查看：[自定义元素扩展指南](https://printdot.cc/docs)
 
 ---
 
