@@ -4,7 +4,7 @@
 
 <h1 align="center">Vue Print Designer</h1>
 
-<p align="center">Visual Print Designer &nbsp;&middot;&nbsp; Labels / Receipts / Forms — All Covered &nbsp;&middot;&nbsp; Silent Print &amp; Cloud Print in One</p>
+<p align="center">Visual Print Designer  ·  Labels / Receipts / Forms — All Covered  ·  Silent Print & Cloud Print in One</p>
 
 > **Recent Update:** Removed 6 heavy third-party packages, first-load bundle size reduced by ~**65%**; render engine fully rewritten in-house, single-page render time reduced from ~**300 ms to 80 ms** (−73%); language support expanded 2 → **6**, auto-detected from the browser.
 
@@ -135,7 +135,7 @@ A complete integration example based on **Vue 3 + Element Plus**, demonstrating 
 
 Works with any stack (Vue / React / Angular / Vanilla). Web Components **supports Vue 2** as a custom element — no Vue 2 component adapter required.
 
-Parameters, CRUD, and JSON examples: [Web Components API Guide](https://printdot.cc/docs)
+Parameters, CRUD, and JSON examples: [Web Components API Guide](./docs/en/guide/web-components-guide.md)
 
 #### Install
 
@@ -225,7 +225,7 @@ Best for teams with deep customization requirements.
 - Custom elements CRUD: `customElements` in `useDesignerStore`
 - Variables and template data: instance methods `setVariables` / `loadTemplateData`
 
-Custom element extension guide: [custom-element.md](https://printdot.cc/docs)
+Custom element extension guide: [custom-element.md](./docs/en/guide/custom-element.md)
 
 ---
 
