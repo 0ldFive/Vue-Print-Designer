@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Vue Print Designer">
+  <!-- PrintDot logo：打印机（顶部进纸 / 机身 / 出纸口）+ 右下卷角纸张，线条版 -->
+  <!-- 背景 -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="#FFFFFF"/>
+  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="#0F0F10" stroke-opacity="0.06" stroke-width="3"/>
+  <!-- 顶部进纸 -->
+  <rect x="182" y="96" width="148" height="126" rx="16" fill="#FFFFFF" stroke="#111111" stroke-width="18"/>
+  <!-- 打印机机身 -->
+  <rect x="88" y="212" width="336" height="132" rx="34" fill="#FFFFFF" stroke="#111111" stroke-width="18"/>
+  <!-- 出纸口 -->
+  <rect x="160" y="240" width="192" height="14" rx="7" fill="#111111"/>
+  <!-- 前端出纸（右下卷角） -->
+  <path d="M198,290 H316 A16,16 0 0 1 332,306 V358 L260,430 H198 A16,16 0 0 1 182,414 V306 A16,16 0 0 1 198,290 Z" fill="#FFFFFF" stroke="#111111" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M332,358 C338,404 318,426 260,430 Z" fill="#FFFFFF" stroke="#111111" stroke-width="18" stroke-linejoin="round"/>
+  <!-- 纸上的点阵内容（弱化） -->
+  <g fill="#111111" opacity="0.3">
+    <circle cx="222" cy="336" r="5.4"/>
+    <circle cx="262" cy="336" r="5.4"/>
+    <circle cx="302" cy="336" r="5.4"/>
+    <circle cx="222" cy="374" r="5.4"/>
+    <circle cx="262" cy="374" r="5.4"/>
+  </g>
+</svg>
