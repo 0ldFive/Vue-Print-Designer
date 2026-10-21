@@ -1055,9 +1055,9 @@ const shouldUseBodyCellDragCursor = computed(
     canDragTableElement.value && store.selectedElementId !== props.element.id,
 );
 const columnResizeHandleClass =
-  "absolute -right-1 top-0 bottom-0 w-2 hover:bg-blue-400 opacity-0 hover:opacity-100 z-10 transition-opacity";
+  "absolute -right-1 top-0 bottom-0 w-2 hover:bg-blue-400 opacity-0 hover:opacity-100 z-10";
 const rowResizeHandleClass =
-  "absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 rounded hover:bg-blue-400 opacity-0 hover:opacity-100 z-20 transition-opacity";
+  "absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 rounded hover:bg-blue-400 opacity-0 hover:opacity-100 z-20";
 
 // Column-width / row-height resize cursors must follow the table's rotation (CSS cursors
 // never rotate with transforms). Column handles resize along the table's local X axis

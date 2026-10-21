@@ -448,19 +448,58 @@ const style = computed(() => {
   if (props.clipToPageBounds) {
     const pageWidth = store.canvasSize.width;
     const pageHeight = store.canvasSize.height;
-    const clipLeft = Math.max(0, -props.element.x);
-    const clipTop = Math.max(0, -props.element.y);
-    const clipRight = Math.max(
-      0,
-      props.element.x + props.element.width - pageWidth,
-    );
-    const clipBottom = Math.max(
-      0,
-      props.element.y + props.element.height - pageHeight,
+    const rad = ((props.element.style.rotate || 0) * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const centerX = props.element.width / 2;
+    const centerY = props.element.height / 2;
+    const centerPageX = props.element.x + centerX;
+    const centerPageY = props.element.y + centerY;
+    // 元素四角经旋转正映射到页面坐标；四角都在页面内 ⇒ 整个元素视觉上在页面内。
+    // 仅在视觉上确实越出页面时才挂 clip-path：若给"局部盒越界但视觉在页面内"的
+    // 旋转元素挂上实际不裁剪任何内容的 clip-path，非整数缩放下的重栅格化会让
+    // 元素边缘产生亚像素抖动。
+    const cornerToPage = (px: number, py: number) => {
+      const dx = px - centerX;
+      const dy = py - centerY;
+      return [
+        centerPageX + dx * cos - dy * sin,
+        centerPageY + dx * sin + dy * cos,
+      ] as const;
+    };
+    const visualCorners = [
+      cornerToPage(0, 0),
+      cornerToPage(props.element.width, 0),
+      cornerToPage(props.element.width, props.element.height),
+      cornerToPage(0, props.element.height),
+    ];
+    const fullyInsidePage = visualCorners.every(
+      ([qx, qy]) =>
+        qx >= 0 && qy >= 0 && qx <= pageWidth && qy <= pageHeight,
     );
 
-    if (clipLeft > 0 || clipTop > 0 || clipRight > 0 || clipBottom > 0) {
-      baseStyle.clipPath = `inset(${clipTop}px ${clipRight}px ${clipBottom}px ${clipLeft}px)`;
+    if (!fullyInsidePage) {
+      // clip-path 在元素旋转前的局部坐标系中生效；对带 rotate 的元素直接用
+      // inset(上 右 下 左) 会把越界量裁到错误的方向上（如 rotate 90° 时上下被裁）。
+      // 这里把页面矩形四角经逆旋转映射到局部坐标，用 polygon 保证任意角度下
+      // 都按"视觉上的页面矩形"裁剪，选中状态切换时元素不会跳变。
+      const pageCornerToLocal = (pageX: number, pageY: number) => {
+        const dx = pageX - centerPageX;
+        const dy = pageY - centerPageY;
+        return [
+          centerX + dx * cos + dy * sin,
+          centerY - dx * sin + dy * cos,
+        ] as const;
+      };
+      const corners = [
+        pageCornerToLocal(0, 0),
+        pageCornerToLocal(pageWidth, 0),
+        pageCornerToLocal(pageWidth, pageHeight),
+        pageCornerToLocal(0, pageHeight),
+      ];
+      baseStyle.clipPath = `polygon(${corners
+        .map(([px, py]) => `${px.toFixed(4)}px ${py.toFixed(4)}px`)
+        .join(", ")})`;
     } else {
       delete baseStyle.clipPath;
     }
@@ -1652,7 +1691,9 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
       v-if="!readOnly && !actualIsSelected"
       data-print-exclude="true"
       :class="[
-        'absolute inset-0 box-border border pointer-events-none z-30 transition-opacity duration-75',
+        // 不用 transition-opacity：opacity 过渡会在鼠标进出元素时创建/销毁合成层，
+        // 触发缩放画布整体重栅格化，非整数 zoom 下表现为页面内容亚像素抖动。
+        'absolute inset-0 box-border border pointer-events-none z-30',
         isHovered || forceHover ? 'opacity-100' : 'opacity-0',
       ]"
       :style="{
@@ -1710,25 +1751,25 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         <!-- Edge handles -->
         <div
           data-print-exclude="true"
-          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100"
           :style="[resizeHandleStyles.left, { cursor: resizeHandleCursors.left }]"
           @mousedown="(e) => handleResizeStart(e, 'left')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100"
           :style="[resizeHandleStyles.right, { cursor: resizeHandleCursors.right }]"
           @mousedown="(e) => handleResizeStart(e, 'right')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100"
           :style="[resizeHandleStyles.top, { cursor: resizeHandleCursors.top }]"
           @mousedown="(e) => handleResizeStart(e, 'top')"
         ></div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute theme-bg opacity-85 hover:opacity-100"
           :style="[resizeHandleStyles.bottom, { cursor: resizeHandleCursors.bottom }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom')"
         ></div>
@@ -1736,7 +1777,7 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         <!-- Corner L-handles -->
         <div
           data-print-exclude="true"
-          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute opacity-90 hover:opacity-100"
           :style="[resizeHandleStyles.topLeftCorner, { cursor: resizeHandleCursors.topLeft }]"
           @mousedown="(e) => handleResizeStart(e, 'top-left')"
         >
@@ -1745,7 +1786,7 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute opacity-90 hover:opacity-100"
           :style="[resizeHandleStyles.topRightCorner, { cursor: resizeHandleCursors.topRight }]"
           @mousedown="(e) => handleResizeStart(e, 'top-right')"
         >
@@ -1754,7 +1795,7 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute opacity-90 hover:opacity-100"
           :style="[resizeHandleStyles.bottomLeftCorner, { cursor: resizeHandleCursors.bottomLeft }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom-left')"
         >
@@ -1763,7 +1804,7 @@ const handleResizeStart = (e: MouseEvent, direction: ResizeHandleDirection) => {
         </div>
         <div
           data-print-exclude="true"
-          class="resize-handle absolute opacity-90 hover:opacity-100 transition-opacity"
+          class="resize-handle absolute opacity-90 hover:opacity-100"
           :style="[resizeHandleStyles.bottomRightCorner, { cursor: resizeHandleCursors.bottomRight }]"
           @mousedown="(e) => handleResizeStart(e, 'bottom-right')"
         >

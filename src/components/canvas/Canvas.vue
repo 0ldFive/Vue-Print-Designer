@@ -1698,12 +1698,14 @@ const handleGhostMouseDown = (event: MouseEvent) => {
 
       <div
         :id="`page-${index}`"
-        class="print-page shadow-lg relative overflow-hidden transition-all"
+        class="print-page shadow-lg relative overflow-hidden"
         :style="[
           pageStyle,
           {
             overflow: pageHasSelection[index] ? 'visible' : 'hidden',
-            zIndex: pageHasSelection[index] ? 50 : 1,
+            // 恒定 z-index：选中时若把 1 提升到 50，页面会切换合成层，
+            // 在非整数缩放（如 120%）下内容被重新栅格化，产生 1~2px 亚像素偏移。
+            zIndex: 50,
           },
         ]"
         @drop="(e) => handleDrop(e, index)"

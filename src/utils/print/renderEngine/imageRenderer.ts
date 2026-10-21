@@ -100,6 +100,19 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     return false;
   };
 
+  // 从表格向上查找最近的 overflow 裁剪容器（表格 host / 所在页面）。
+  // 表格固化尺寸若超出该容器，最外圈折叠边框会被 overflow:hidden 剪掉，
+  // 表现为预览缺右边框/底边框。
+  const findTableClipHost = (table: HTMLTableElement): HTMLElement | null => {
+    let node: HTMLElement | null = table.parentElement;
+    while (node) {
+      const overflow = window.getComputedStyle(node).overflow;
+      if (overflow === "hidden" || overflow === "clip") return node;
+      node = node.parentElement;
+    }
+    return null;
+  };
+
   // 独立 HTML 会在客户端 WebView 中重新排版表格；序列化前固化当前浏览器测得的几何，
   // 避免表格高度被目标渲染器撑大后覆盖后续绝对定位元素。
   const stabilizeStandaloneHtmlTableLayout = (pages: HTMLElement[]) => {
@@ -116,12 +129,51 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         const tableHeight = rotated ? table.offsetHeight : tableRect.height;
         if (tableWidth <= 0 || tableHeight <= 0) return;
 
+        // 固化尺寸前先 clamp 到裁剪容器可容纳的范围，防止外侧折叠边框被 overflow 裁掉。
+        const clipHost = findTableClipHost(table);
+        const clipWidth =
+          clipHost && clipHost.clientWidth > 0
+            ? clipHost.clientWidth
+            : tableWidth;
+        const clipHeight =
+          clipHost && clipHost.clientHeight > 0
+            ? clipHost.clientHeight
+            : tableHeight;
+        const fixedWidth = Math.min(tableWidth, clipWidth);
+        const fixedHeight = Math.min(tableHeight, clipHeight);
+
         table.style.setProperty("table-layout", "fixed");
         table.style.setProperty("box-sizing", "border-box");
-        table.style.setProperty("width", toFixedCssPx(tableWidth));
-        table.style.setProperty("min-width", toFixedCssPx(tableWidth));
-        table.style.setProperty("height", toFixedCssPx(tableHeight));
-        table.style.setProperty("min-height", toFixedCssPx(tableHeight));
+        table.style.setProperty("width", toFixedCssPx(fixedWidth));
+        table.style.setProperty("min-width", toFixedCssPx(fixedWidth));
+        table.style.setProperty("height", toFixedCssPx(fixedHeight));
+        table.style.setProperty("min-height", toFixedCssPx(fixedHeight));
+
+        // border-collapse 下表格实际渲染宽 = max(指定宽, 列宽总和 + 折叠边框修正)。
+        // 列宽含小数时会撑破上面的 clamp，最外圈边框仍会被裁剪；
+        // 把列宽整体压缩，使列宽总和回到 clamp 后的可用宽度内。
+        const stabilizedWidth = rotated
+          ? table.offsetWidth
+          : table.getBoundingClientRect().width;
+        const widthOverflow = stabilizedWidth - fixedWidth;
+        if (widthOverflow > 0.01) {
+          const cols = Array.from(
+            table.querySelectorAll<HTMLTableColElement>("colgroup col"),
+          );
+          const colWidthTotal = cols.reduce(
+            (sum, col) => sum + (Number.parseFloat(col.style.width) || 0),
+            0,
+          );
+          if (colWidthTotal > 0 && colWidthTotal > widthOverflow) {
+            const scale = (colWidthTotal - widthOverflow) / colWidthTotal;
+            cols.forEach((col) => {
+              const w = Number.parseFloat(col.style.width);
+              if (w > 0) {
+                col.style.width = toFixedCssPx(w * scale);
+              }
+            });
+          }
+        }
 
         const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>("tr"));
         rows.forEach((row) => {
