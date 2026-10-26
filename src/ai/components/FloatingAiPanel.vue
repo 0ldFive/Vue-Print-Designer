@@ -332,7 +332,13 @@ const handleResendMessage = (
 };
 
 const handleRemoveMessage = (id: string) => {
-  store.removeMessage(id);
+  // 若被删除的提问仍在等待回复，先中止生成，避免状态卡在 generating。
+  const index = store.messages.findIndex((message) => message.id === id);
+  const reply = index >= 0 ? store.messages[index + 1] : undefined;
+  if (reply?.role === "assistant" && reply.status === "streaming") {
+    abort();
+  }
+  store.removeMessageWithReply(id);
 };
 
 const handleClose = () => {

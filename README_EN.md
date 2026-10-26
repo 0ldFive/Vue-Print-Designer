@@ -6,7 +6,7 @@
 
 <p align="center">Visual Print Designer  ·  Labels / Receipts / Forms — All Covered  ·  Silent Print & Cloud Print in One</p>
 
-> **Recent Update:** Removed 6 heavy third-party packages, first-load bundle size reduced by ~**65%**; render engine fully rewritten in-house, single-page render time reduced from ~**300 ms to 80 ms** (−73%); language support expanded 2 → **6**, auto-detected from the browser.
+> **Recent Update:** Removed 6 heavy third-party packages, first-load bundle size reduced by ~**65%**; render engine fully rewritten in-house, single-page render time reduced from ~**300 ms to 80 ms** (−73%); **6** languages built in and auto-detected from the user's environment; new **AI assistant** that generates and edits templates in natural language.
 
 <p align="center">
   <a href="https://gitee.com/theGreatOldFive/vue-print-designer/stargazers"><img src="https://gitee.com/theGreatOldFive/vue-print-designer/badge/star.svg?theme=flat" alt="Gitee stars"></a>
@@ -45,20 +45,20 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
   <tr>
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Designer main view" width="100%" /></td>
     <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="Print preview" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="Print parameter settings" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="AI assistant panel" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>Designer main view and canvas</b></td>
     <td align="center"><b>Print preview</b></td>
-    <td align="center"><b>Print parameter settings</b></td>
+    <td align="center"><b>AI assistant · template generation in natural language</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="System settings" width="100%" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="AI model configuration" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="Shortcut reference" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="Advanced table editing" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>System settings and preferences</b></td>
+    <td align="center"><b>AI assistant · model endpoint setup</b></td>
     <td align="center"><b>Shortcut reference</b></td>
     <td align="center"><b>Advanced table editing</b></td>
   </tr>

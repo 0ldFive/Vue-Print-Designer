@@ -11,7 +11,7 @@ import {
   loadConversations,
   saveConversations,
 } from "./conversations";
-import { getBuiltinModels } from "./builtin";
+ import { getBuiltinModels } from "./builtin";
 import type {
   AiAgentStep,
   AiBuiltinModel,
@@ -256,6 +256,21 @@ export const useAiStore = defineStore("ai-template", {
 
     removeMessage(id: string) {
       this.messages = this.messages.filter((item) => item.id !== id);
+    },
+
+    // 删除一条消息时，一并删掉它对应的回复，避免只删掉提问却留下回答。
+    removeMessageWithReply(id: string) {
+      const index = this.messages.findIndex((item) => item.id === id);
+      if (index === -1) return;
+
+      const target = this.messages[index];
+      const next = this.messages[index + 1];
+      const removeIds = new Set<string>([id]);
+      if (target.role === "user" && next?.role === "assistant") {
+        removeIds.add(next.id);
+      }
+
+      this.messages = this.messages.filter((item) => !removeIds.has(item.id));
     },
 
     setStep(id: string, kind: AiStepKind, patch: Partial<AiStep> = {}) {

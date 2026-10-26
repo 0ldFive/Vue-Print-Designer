@@ -6,7 +6,7 @@
 
 <p align="center">可视化打印设计器 &nbsp;&middot;&nbsp; 标签 / 票据 / 表单全场景覆盖 &nbsp;&middot;&nbsp; 静默打印与云打印一体化</p>
 
-> **最新优化：** 移除 6 个第三方大包，首次加载体积减少约 **65%**；渲染引擎全链路自研，单页渲染耗时由约 **300 ms 降至 80 ms**（约 −73%）；多语言 2 → **6 种**，浏览器自动适配。
+> **最新优化：** 移除 6 个第三方大包，首次加载体积减少约 **65%**；渲染引擎全链路自研，单页渲染耗时由约 **300 ms 降至 80 ms**（约 −73%）；内置 **6 种**语言，根据用户环境自动适配；新增 **AI 助手**，用自然语言直接生成与修改模板。
 
 <p align="center">
   <a href="https://gitee.com/theGreatOldFive/vue-print-designer/stargazers"><img src="https://gitee.com/theGreatOldFive/vue-print-designer/badge/star.svg?theme=flat" alt="Gitee stars"></a>
@@ -45,20 +45,20 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
   <tr>
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="设计器主界面" width="100%" /></td>
     <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="打印预览" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="打印参数配置" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="AI 助手对话面板" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>设计器主界面与画布视图</b></td>
     <td align="center"><b>打印预览</b></td>
-    <td align="center"><b>打印参数配置</b></td>
+    <td align="center"><b>AI 助手 &#183; 自然语言生成模板</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="系统设置" width="100%" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="AI 模型配置" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="快捷键说明" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="高级表格编辑" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>系统设置与偏好</b></td>
+    <td align="center"><b>AI 助手 &#183; 模型接入配置</b></td>
     <td align="center"><b>快捷键说明</b></td>
     <td align="center"><b>高级表格编辑</b></td>
   </tr>
@@ -68,6 +68,7 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
 
 ## 核心特性
 
+- **AI 助手**：内置自然语言对话面板，描述需求即可生成发票、发货单、面单等模板，支持多轮修改与图片参考输入；生成结果先以变更预览呈现，确认后一键应用到画布。兼容 OpenAI 协议接口，可接入自建或第三方模型服务，支持多模型配置与高级采样参数。
 - **可视化设计**：全功能拖拽设计器，支持文本 / 图片 / 表格 / 条码 / 二维码 / 形状等组件，内置标尺、网格与辅助对齐。
 - **智能分页**：自动处理长表格分页，支持表头 / 表尾重复，无需手写复杂逻辑，所见即所得。
 - **跨框架支持**：基于 Web Components，零依赖适配 Vue / React / Angular / 原生 HTML 等所有技术栈。
