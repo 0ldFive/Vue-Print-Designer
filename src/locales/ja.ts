@@ -19,6 +19,8 @@ export default {
     loading: "読み込み中...",
     success: "成功",
     input: "入力",
+    showPassword: "パスワードを表示",
+    hidePassword: "パスワードを隠す",
     actions: "操作",
     width: "幅",
     height: "高さ",
@@ -183,6 +185,7 @@ export default {
       tableSplitCells: "セルを分割",
       tableAlignCells: "セル配置を設定",
       tablePaginate: "表をページ分割",
+      aiGenerate: "AI アシスタント",
     },
     headerFooter: "ヘッダーとフッター",
     headerLine: "ヘッダー線",
@@ -756,6 +759,12 @@ export default {
     themeDesc: "既定ではシステムに従います。ライトまたはダークを強制指定できます。",
     autoSave: "自動保存",
     autoSaveDesc: "変更を自動保存します（保存済みテンプレートのみ）。",
+    aiEnabled: "AI アシスタント",
+    aiEnabledDesc:
+      "デザイナーに AI アシスタントの入口を表示します。会話でテンプレートを生成・編集できます。",
+    aiModel: "モデル",
+    aiModelDesc:
+      "AI アシスタントが使用するモデルを選択できます。独自のモデルサービスを接続することもできます。",
     textQuickToolbar: "テキスト要素クイックツールバー",
     textQuickToolbarDesc:
       "テキスト要素選択時に、フローティングのクイックツールバーを表示します。",

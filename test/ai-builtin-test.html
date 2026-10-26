@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 内置模型联调</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+      }
+      print-designer {
+        display: block;
+        width: 100%;
+        height: 100%;
+        flex: 1;
+      }
+
+      #floating-btn {
+        position: fixed;
+        right: 30px;
+        bottom: 30px;
+        width: 56px;
+        height: 56px;
+        border: none;
+        border-radius: 50%;
+        background-color: #1890ff;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+        transition: all 0.2s;
+      }
+      #floating-btn:hover {
+        background-color: #40a9ff;
+        transform: translateY(-2px);
+      }
+
+      #panel {
+        position: fixed;
+        inset: 0;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.45);
+        z-index: 10000;
+      }
+      #panel.active {
+        display: flex;
+      }
+      .panel-card {
+        width: 780px;
+        max-width: 94vw;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 20px 24px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+      }
+      .panel-card header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .panel-card h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        color: #111827;
+      }
+      .panel-card .subtitle {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #9ca3af;
+      }
+      .panel-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-right: 4px;
+      }
+      .group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid #eef0f3;
+        border-radius: 8px;
+        background: #fafbfc;
+      }
+      .group h3 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .panel-card button {
+        padding: 6px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        line-height: 1.4;
+        cursor: pointer;
+      }
+      .panel-card button:hover {
+        border-color: #1890ff;
+        color: #1890ff;
+      }
+      .panel-card button.primary {
+        border-color: #1890ff;
+        background: #1890ff;
+        color: #fff;
+      }
+      .field-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+      }
+      .field-row label {
+        font-size: 12px;
+        color: #6b7280;
+      }
+      .model-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 12px;
+        outline: none;
+      }
+      .model-input:focus {
+        border-color: #1890ff;
+      }
+      #btn-close {
+        padding: 0 4px;
+        border: none;
+        background: transparent;
+        font-size: 22px;
+        line-height: 1;
+        color: #9ca3af;
+        cursor: pointer;
+      }
+      #log {
+        min-height: 180px;
+        max-height: 300px;
+        margin: 0;
+        padding: 12px;
+        overflow: auto;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #cbd5e1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      #log .ok {
+        color: #4ade80;
+      }
+      #log .fail {
+        color: #f87171;
+      }
+      #log .step {
+        color: #60a5fa;
+      }
+      #log .info {
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <print-designer></print-designer>
+
+    <button id="floating-btn" title="打开联调面板">AI</button>
+
+    <div id="panel">
+      <div class="panel-card">
+        <header>
+          <div>
+            <h2>AI 内置模型联调</h2>
+            <p class="subtitle">
+              本地 mock 与宿主转发由 vite.config.ts 提供，密钥只保留在服务端。
+            </p>
+          </div>
+          <button id="btn-close" type="button">×</button>
+        </header>
+
+        <div class="panel-body">
+          <section class="group">
+            <h3>内置模型（本地 mock）</h3>
+            <div class="row">
+              <button id="btn-init" type="button">注入 mock 模型</button>
+              <button id="btn-clear" type="button">清空内置模型</button>
+              <button id="btn-panel" type="button">打开 AI 面板</button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h3>宿主模型（真实转发）</h3>
+            <div class="field-row">
+              <label for="host-model-input">模型 ID</label>
+              <input
+                id="host-model-input"
+                class="model-input"
+                type="text"
+                placeholder="例如 deepseek-chat"
+              />
+              <button id="btn-host-add" type="button">添加</button>
+            </div>
+            <div class="row">
+              <button id="btn-host-models" type="button">查看宿主列表</button>
+              <button id="btn-host-sync" type="button">同步为内置模型</button>
+              <button id="btn-real" class="primary" type="button">
+                全链路生成
+              </button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h3>用户自定义模型</h3>
+            <div class="field-row">
+              <label for="custom-model-input">模型 ID</label>
+              <input
+                id="custom-model-input"
+                class="model-input"
+                type="text"
+                value="mock-model-a"
+              />
+              <span></span>
+            </div>
+            <div class="field-row">
+              <label for="custom-baseurl-input">接口地址</label>
+              <input
+                id="custom-baseurl-input"
+                class="model-input"
+                type="text"
+                value="/mock-ai/v1"
+              />
+              <span></span>
+            </div>
+            <div class="field-row">
+              <label for="custom-apikey-input">API Key</label>
+              <input
+                id="custom-apikey-input"
+                class="model-input"
+                type="text"
+                value="test-key"
+              />
+              <button id="btn-custom-add" type="button">添加</button>
+            </div>
+            <div class="row">
+              <button id="btn-custom-clear" type="button">
+                清空自定义模型
+              </button>
+            </div>
+          </section>
+
+          <section class="group">
+            <h3>诊断</h3>
+            <div class="row">
+              <button id="btn-generate" type="button">生成（当前模型）</button>
+              <button id="btn-generate-b" type="button">生成（内置 B）</button>
+              <button id="btn-generate-fail" type="button">生成（401）</button>
+              <button id="btn-config" type="button">查看配置</button>
+              <button id="btn-stats" type="button">mock 统计</button>
+              <button id="btn-reset" type="button">重置统计</button>
+            </div>
+          </section>
+
+          <div class="row">
+            <button id="btn-auto" class="primary" type="button">
+              自动断言（全部）
+            </button>
+            <button id="btn-clear-log" type="button">清空日志</button>
+          </div>
+
+          <pre id="log"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { PrintDesignerElement } from "../src/web-component.ts";
+
+      if (!customElements.get("print-designer")) {
+        customElements.define("print-designer", PrintDesignerElement);
+      }
+
+      const designer = document.querySelector("print-designer");
+      const logEl = document.getElementById("log");
+      const panel = document.getElementById("panel");
+
+      /** 内置模型：baseUrl 走同源相对路径，直接命中 vite mock。 */
+      const BUILTIN_MODELS = [
+        {
+          id: "builtin-mock-a",
+          alias: "内置模型 A",
+          model: "mock-model-a",
+          baseUrl: "/mock-ai/v1",
+          temperature: 0.2,
+        },
+        {
+          id: "builtin-mock-b",
+          model: "mock-model-b",
+          baseUrl: "/mock-ai/v1",
+        },
+        {
+          id: "builtin-mock-fail",
+          alias: "内置模型（401）",
+          model: "mock-fail-model",
+          baseUrl: "/mock-ai/v1",
+        },
+      ];
+
+      /**
+       * 真实模型来自宿主端点 `GET /mock-ai/host/models`，
+       * baseUrl 指向本地转发入口，密钥只存在于 vite 服务端（.env.local）。
+       */
+      const fetchHostModels = () =>
+        fetch("/mock-ai/host/models")
+          .then((res) => res.json())
+          .then((data) => data.models || []);
+
+      const addHostModel = (model, alias) =>
+        fetch("/mock-ai/host/models", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model, alias }),
+        })
+          .then((res) => res.json())
+          .then((data) => data.models || []);
+
+      /** 把宿主返回的清单整体注入为内置模型，并选中第一个。 */
+      const syncHostModels = async () => {
+        const models = await fetchHostModels();
+        designer.setAiModels(models);
+        if (models.length > 0) await activateBuiltin(models[0].id);
+        log(`已从宿主同步 ${models.length} 个内置模型`, "step");
+        logJson("宿主模型列表", models);
+        return models;
+      };
+
+      /** 添加用户自定义模型：写入 profiles，用于验证与内置模型的混合展示。 */
+      const addCustomProfile = async ({ model, baseUrl, apiKey }) => {
+        const config = await designer.getAiConfig();
+        const id = `custom-${Date.now().toString(36)}`;
+        await designer.setAiConfig({
+          profiles: [
+            ...config.profiles,
+            { id, alias: model, model, baseUrl, apiKey },
+          ],
+          activeId: id,
+        });
+        return designer.getAiConfig();
+      };
+
+      const log = (message, type = "info") => {
+        const line = document.createElement("span");
+        line.className = type;
+        line.textContent = `${message}\n`;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const logJson = (label, value) =>
+        log(`${label}\n${JSON.stringify(value, null, 2)}`);
+
+      const assert = (name, passed, detail = "") => {
+        log(
+          `${passed ? "✅" : "❌"} ${name}${!passed && detail ? ` — ${detail}` : ""}`,
+          passed ? "ok" : "fail",
+        );
+        return passed;
+      };
+
+      const mockStats = () => fetch("/mock-ai/stats").then((res) => res.json());
+      const resetMock = () => fetch("/mock-ai/reset", { method: "POST" });
+
+      /** 保留自定义模型，只切换 activeId（用于验证内置模型可被选中）。 */
+      const activateBuiltin = async (id) => {
+        const config = await designer.getAiConfig();
+        return designer.setAiConfig({
+          profiles: config.profiles,
+          activeId: id,
+        });
+      };
+
+      const injectBuiltin = async () => {
+        await designer.setAiEnabled(true);
+        designer.setAiModels(BUILTIN_MODELS);
+        log(`已注入 ${BUILTIN_MODELS.length} 个内置模型`, "step");
+      };
+
+      const contentOf = (result) =>
+        String(result?.template?.pages?.[0]?.elements?.[0]?.content || "");
+
+      const runAutoTest = async () => {
+        log("=== 自动断言开始 ===", "step");
+        await resetMock();
+        await injectBuiltin();
+        await activateBuiltin("builtin-mock-a");
+
+        const config = await designer.getAiConfig();
+        assert(
+          "内置模型未写入自定义 profiles",
+          !config.profiles.some((item) => item.id.startsWith("builtin-mock")),
+          JSON.stringify(config.profiles),
+        );
+        assert(
+          "activeId 指向内置模型 A",
+          config.activeId === "builtin-mock-a",
+          config.activeId,
+        );
+
+        log("→ 内置 A 生成模板", "step");
+        const first = await designer.generateTemplate("生成一个测试标题");
+        assert(
+          "生成结果名称为「内置模型测试」",
+          first?.template?.name === "内置模型测试",
+          JSON.stringify(first?.template),
+        );
+        assert(
+          "元素内容包含 mock-model-a",
+          contentOf(first).includes("mock-model-a"),
+          contentOf(first),
+        );
+        let stats = await mockStats();
+        assert(
+          "mock 收到 mock-model-a 请求",
+          stats.models.includes("mock-model-a"),
+          JSON.stringify(stats),
+        );
+
+        log("→ 切换到内置 B 后生成", "step");
+        await activateBuiltin("builtin-mock-b");
+        const configB = await designer.getAiConfig();
+        assert(
+          "activeId 持久化为内置 B",
+          configB.activeId === "builtin-mock-b",
+          configB.activeId,
+        );
+        const second = await designer.generateTemplate("再生成一个标题");
+        assert(
+          "元素内容包含 mock-model-b",
+          contentOf(second).includes("mock-model-b"),
+          contentOf(second),
+        );
+
+        log("→ 内置 401 模型", "step");
+        await activateBuiltin("builtin-mock-fail");
+        let failure = null;
+        try {
+          await designer.generateTemplate("触发 401");
+        } catch (error) {
+          failure = error;
+        }
+        assert(
+          "401 映射为 unauthorized",
+          failure?.code === "unauthorized",
+          String(failure?.message || failure),
+        );
+
+        log("→ 清空内置模型", "step");
+        designer.setAiModels([]);
+        await activateBuiltin("");
+        let noModelError = null;
+        try {
+          await designer.generateTemplate("没有模型");
+        } catch (error) {
+          noModelError = error;
+        }
+        assert(
+          "无模型时报 AI model is not configured",
+          /not configured/i.test(String(noModelError?.message || "")),
+          String(noModelError?.message || noModelError),
+        );
+
+        await injectBuiltin();
+        await activateBuiltin("builtin-mock-a");
+        stats = await mockStats();
+        logJson("最终 mock 统计", stats);
+        log("=== 自动断言结束 ===", "step");
+      };
+
+      const runRealTest = async () => {
+        log("=== 真实内置模型链路（宿主转发）===", "step");
+        await designer.setAiEnabled(true);
+        const hostModels = await syncHostModels();
+        assert(
+          "宿主返回至少一个模型",
+          hostModels.length > 0,
+          JSON.stringify(hostModels),
+        );
+        if (hostModels.length === 0) return;
+
+        const config = await designer.getAiConfig();
+        assert(
+          "前端自定义 profiles 为空（不持有密钥）",
+          config.profiles.length === 0,
+          JSON.stringify(config),
+        );
+        assert(
+          "activeId 指向宿主首个模型",
+          config.activeId === hostModels[0].id,
+          config.activeId,
+        );
+
+        const startedAt = Date.now();
+        try {
+          const result = await designer.generateTemplate(
+            "生成一个 A4 模板，只包含一个文本元素，内容为「DeepSeek 全链路测试成功」。",
+          );
+          const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+          assert("真实模型返回模板", Boolean(result?.template), "");
+          assert(
+            "返回至少一个页面",
+            Array.isArray(result?.template?.pages) &&
+              result.template.pages.length > 0,
+            JSON.stringify(result?.template?.pages),
+          );
+          log(`耗时 ${elapsed}s`, "info");
+          logJson("生成结果", result?.template);
+          logJson("mock 统计", await mockStats());
+          log(
+            `下一步：打开 AI 面板，模型下拉应出现「${hostModels[0].alias}」，可直接发消息走完整 UI 链路。`,
+            "info",
+          );
+        } catch (error) {
+          const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+          log(
+            `真实请求失败（${elapsed}s）：code=${error?.code} status=${error?.status} ${error?.message}`,
+            "fail",
+          );
+          if (error?.detail) {
+            log(`上游返回：${String(error.detail).slice(0, 500)}`, "fail");
+          }
+        }
+      };
+
+      const bind = (id, handler) => {
+        document.getElementById(id).addEventListener("click", async () => {
+          try {
+            await handler();
+          } catch (error) {
+            log(`执行失败：${error?.message || error}`, "fail");
+          }
+        });
+      };
+
+      document.getElementById("floating-btn").addEventListener("click", () => {
+        panel.classList.add("active");
+      });
+      document.getElementById("btn-close").addEventListener("click", () => {
+        panel.classList.remove("active");
+      });
+      panel.addEventListener("click", (event) => {
+        if (event.target === panel) panel.classList.remove("active");
+      });
+
+      bind("btn-init", async () => {
+        await injectBuiltin();
+        logJson("当前配置", await designer.getAiConfig());
+      });
+      bind("btn-clear", async () => {
+        designer.setAiModels([]);
+        log("已清空内置模型（对话框下拉会回落）", "step");
+      });
+      bind("btn-panel", async () => {
+        await designer.openAiPanel();
+        log(
+          "已打开 AI 面板，请检查模型下拉：应出现两个「内置」项，设置页不应出现内置项。",
+          "step",
+        );
+      });
+      bind("btn-config", async () => {
+        logJson("当前配置", await designer.getAiConfig());
+      });
+      bind("btn-stats", async () => {
+        logJson("mock 统计", await mockStats());
+      });
+      bind("btn-reset", async () => {
+        await resetMock();
+        log("mock 统计已重置", "step");
+      });
+      bind("btn-generate", async () => {
+        const result = await designer.generateTemplate("生成一个测试标题");
+        assert("生成成功", Boolean(result?.template), "");
+        logJson("生成结果", result?.template);
+      });
+      bind("btn-generate-b", async () => {
+        await activateBuiltin("builtin-mock-b");
+        const result = await designer.generateTemplate("指定内置 B 生成");
+        logJson("生成结果", result?.template);
+      });
+      bind("btn-generate-fail", async () => {
+        await activateBuiltin("builtin-mock-fail");
+        try {
+          await designer.generateTemplate("触发 401");
+          log("未按预期报错", "fail");
+        } catch (error) {
+          log(`预期错误：code=${error?.code} status=${error?.status}`, "ok");
+        }
+      });
+      bind("btn-host-models", async () => {
+        logJson("宿主模型列表", await fetchHostModels());
+      });
+      bind("btn-host-add", async () => {
+        const input = document.getElementById("host-model-input");
+        const value = input.value.trim();
+        if (!value) {
+          log("请先填写要追加的模型 ID", "fail");
+          return;
+        }
+        const models = await addHostModel(value);
+        input.value = "";
+        log(`已追加宿主模型 ${value}，当前共 ${models.length} 个`, "step");
+        logJson("宿主模型列表", models);
+      });
+      bind("btn-host-sync", async () => {
+        await designer.setAiEnabled(true);
+        await syncHostModels();
+        logJson("当前配置", await designer.getAiConfig());
+      });
+      bind("btn-custom-add", async () => {
+        const model = document
+          .getElementById("custom-model-input")
+          .value.trim();
+        const baseUrl = document
+          .getElementById("custom-baseurl-input")
+          .value.trim();
+        const apiKey = document
+          .getElementById("custom-apikey-input")
+          .value.trim();
+        if (!model || !baseUrl) {
+          log("模型 ID 与接口地址不能为空", "fail");
+          return;
+        }
+        const config = await addCustomProfile({ model, baseUrl, apiKey });
+        log(
+          `已添加自定义模型 ${model}，当前共 ${config.profiles.length} 个`,
+          "step",
+        );
+        logJson("当前配置", config);
+        log(
+          "打开 AI 面板可核对：内置项在前，自定义项在后且不带「内置」标签。",
+          "info",
+        );
+      });
+      bind("btn-custom-clear", async () => {
+        const config = await designer.getAiConfig();
+        await designer.setAiConfig({
+          profiles: [],
+          activeId: config.activeId,
+        });
+        log("已清空自定义模型", "step");
+        logJson("当前配置", await designer.getAiConfig());
+      });
+      bind("btn-real", runRealTest);
+      bind("btn-auto", runAutoTest);
+      bind("btn-clear-log", async () => {
+        logEl.textContent = "";
+      });
+
+      designer.addEventListener("ready", async () => {
+        log("设计器已就绪", "step");
+        try {
+          await injectBuiltin();
+          await activateBuiltin("builtin-mock-a");
+          logJson("初始配置", await designer.getAiConfig());
+          log(
+            "下一步：点「自动断言」跑数据链路，再点「打开 AI 面板」人工核对下拉与设置页。",
+            "info",
+          );
+        } catch (error) {
+          log(`初始化失败：${error?.message || error}`, "fail");
+        }
+      });
+    </script>
+  </body>
+</html>

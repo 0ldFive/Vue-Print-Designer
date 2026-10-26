@@ -69,6 +69,10 @@ export const coreActions = {
       this.templateModalFormConfig = normalizeTemplateModalFormConfig(config);
     },
 
+  setTemplateTagResolver(resolver: ((template: any) => any) | null) {
+      this.templateTagResolver = typeof resolver === "function" ? resolver : null;
+    },
+
   setClientUrl(url: string) {
       this.clientUrl = url;
     },

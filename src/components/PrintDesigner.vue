@@ -1,10 +1,19 @@
-﻿<script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed, watch } from "vue";
+<script setup lang="ts">
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  computed,
+  watch,
+  defineAsyncComponent,
+} from "vue";
 import { useI18n } from "@/locales";
 import { uiConfirm } from "@/utils/confirm";
 import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
 import { useAutoSave } from "@/composables/useAutoSave";
+import { useFeatureFlags } from "@/composables/useFeatureFlags";
 import { useTheme } from "@/composables/useTheme";
 import { useFloatingTooltip } from "@/composables/useFloatingTooltip";
 import debounce from "lodash/debounce";
@@ -32,8 +41,26 @@ import { useFloatingPanels } from "./print-designer/composables/useFloatingPanel
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
 const { autoSave } = useAutoSave();
+const { aiEnabled } = useFeatureFlags();
 const { isDark } = useTheme();
 const { t } = useI18n();
+
+// AI is hot-pluggable: its chunk loads only after the panel is first opened.
+// A transient dev-server/module error must not permanently block the panel,
+// so retry once and reset the mount flag on failure.
+const hasLoadedAiPanel = ref(false);
+const FloatingAiPanel = defineAsyncComponent({
+  loader: () => import("@/ai/components/FloatingAiPanel.vue"),
+  onError: (_error, retry, fail, attempts) => {
+    if (attempts <= 1) {
+      retry();
+      return;
+    }
+    hasLoadedAiPanel.value = false;
+    showAiPanel.value = false;
+    fail();
+  },
+});
 
 const props = defineProps<{ headless?: boolean }>();
 
@@ -127,10 +154,12 @@ const {
   showTemplatePanel,
   showPropertiesPanel,
   showStructurePanel,
+  showAiPanel,
   sidebarPanelStyle,
   templatePanelStyle,
   propertiesPanelStyle,
   structurePanelStyle,
+  aiPanelStyle,
   historyPanelStyle,
   minimapPanelStyle,
   minimapPreviewWidth,
@@ -140,6 +169,7 @@ const {
   startPanelResize,
   closeTemplatePanel,
   closeStructurePanel,
+  closeAiPanel,
   initOrClampFloatingPanels,
   ensureSidebarNotOverlappingTemplatePanel,
   restoreTemplatePanelLayout,
@@ -155,6 +185,8 @@ const {
   handleToggleStructurePanelEvent,
   handleClosePropertiesPanelEvent,
   handleCloseStructurePanelEvent,
+  handleToggleAiPanelEvent,
+  handleCloseAiPanelEvent,
   handleBringPanelToFrontEvent,
   stopPanelDrag,
   stopPanelResize,
@@ -447,6 +479,14 @@ onMounted(() => {
     handleCloseStructurePanelEvent as EventListener,
   );
   window.addEventListener(
+    "designer:toggle-ai-panel",
+    handleToggleAiPanelEvent as EventListener,
+  );
+  window.addEventListener(
+    "designer:close-ai-panel",
+    handleCloseAiPanelEvent as EventListener,
+  );
+  window.addEventListener(
     "designer:panel-bring-to-front",
     handleBringPanelToFrontEvent as EventListener,
   );
@@ -454,6 +494,33 @@ onMounted(() => {
     "designer:set-hand-pan-mode",
     handleSetHandPanModeEvent as EventListener,
   );
+  // AI panel: load its chunk lazily on first open, and close on flag/template changes.
+  watch(
+    showAiPanel,
+    (visible) => {
+      if (visible) hasLoadedAiPanel.value = true;
+    },
+    { immediate: true },
+  );
+
+  watch(aiEnabled, (enabled) => {
+    if (!enabled) closeAiPanel();
+  });
+
+  watch(
+    () => store.editingCustomElementId,
+    (id) => {
+      if (id) window.dispatchEvent(new CustomEvent("designer:close-ai-panel"));
+    },
+  );
+
+  watch(
+    () => templateStore.currentTemplateId,
+    () => {
+      window.dispatchEvent(new CustomEvent("designer:template-replaced"));
+    },
+  );
+
   window.addEventListener("mousedown", handleOutsideClickDeselect, true);
   window.addEventListener("mousedown", handleGlobalHandPanMouseDown, true);
   window.addEventListener("click", handleGlobalHandPanClickCapture, true);
@@ -481,6 +548,14 @@ onMounted(() => {
       }
     },
     { immediate: true },
+  );
+
+  // Preview lock disables global editing shortcuts while a candidate is rendered.
+  watch(
+    () => store.previewLocked,
+    (locked) => {
+      store.setDisableGlobalShortcuts(locked);
+    },
   );
 
   // Auto-save watcher
@@ -522,6 +597,7 @@ onMounted(() => {
 const debouncedAutoSave = debounce(async () => {
   if (templateStore.isLoading) return;
   if (store.editingCustomElementId) return;
+  if (store.previewLocked) return;
   if (autoSave.value && templateStore.currentTemplateId) {
     const currentTemplate = templateStore.templates.find(
       (t) => t.id === templateStore.currentTemplateId,
@@ -867,6 +943,14 @@ onUnmounted(() => {
   window.removeEventListener(
     "designer:close-structure-panel",
     handleCloseStructurePanelEvent as EventListener,
+  );
+  window.removeEventListener(
+    "designer:toggle-ai-panel",
+    handleToggleAiPanelEvent as EventListener,
+  );
+  window.removeEventListener(
+    "designer:close-ai-panel",
+    handleCloseAiPanelEvent as EventListener,
   );
   window.removeEventListener(
     "designer:panel-bring-to-front",
@@ -1281,11 +1365,25 @@ const rulerRanges = computed(() => {
                 <div
                   ref="canvasWrapper"
                   :style="canvasWrapperStyle"
-                  :class="['relative', isHandPanActive ? '' : 'mx-auto']"
+                  :class="[
+                    'relative',
+                    isHandPanActive ? '' : 'mx-auto',
+                    store.previewLocked
+                      ? 'pointer-events-none cursor-not-allowed'
+                      : '',
+                  ]"
                 >
                   <Canvas ref="canvasContainer" class="absolute top-0 left-0" />
                 </div>
               </div>
+
+              <!-- Preview lock overlay: keeps canvas editing disabled while an external candidate is rendered,
+                   but lets wheel/scroll pass through so the preview stays scrollable -->
+              <div
+                v-if="store.previewLocked"
+                data-preview-lock-overlay="true"
+                class="pointer-events-none absolute inset-0 z-40 bg-transparent"
+              ></div>
 
               <!-- Guides Overlay (Viewport Layer) -->
               <div
@@ -1394,9 +1492,7 @@ const rulerRanges = computed(() => {
                     v-if="store.highlightedEdge === 'top'"
                     class="absolute left-0 right-0 border-t theme-border"
                     :style="
-                      getProjectionHorizontalLineStyle(
-                        store.pageSpacingY || 0,
-                      )
+                      getProjectionHorizontalLineStyle(store.pageSpacingY || 0)
                     "
                   ></div>
                   <div
@@ -1413,9 +1509,7 @@ const rulerRanges = computed(() => {
                     v-else-if="store.highlightedEdge === 'left'"
                     class="absolute top-0 bottom-0 border-l theme-border"
                     :style="
-                      getProjectionVerticalLineStyle(
-                        store.pageSpacingX || 0,
-                      )
+                      getProjectionVerticalLineStyle(store.pageSpacingX || 0)
                     "
                   ></div>
                   <div
@@ -1486,10 +1580,7 @@ const rulerRanges = computed(() => {
                   <div
                     class="absolute top-0 bottom-0 border-l border-dashed theme-border"
                     :style="
-                      getProjectionVerticalLineStyle(
-                        dragProjection.maxX,
-                        true,
-                      )
+                      getProjectionVerticalLineStyle(dragProjection.maxX, true)
                     "
                   >
                     <div
@@ -1610,6 +1701,16 @@ const rulerRanges = computed(() => {
         @toggle-help="toggleStructureHelpTooltip"
         @close="closeStructurePanel"
         @resize-mousedown="(e) => startPanelResize('structure', e)"
+      />
+      <FloatingAiPanel
+        v-if="!headless && aiEnabled && hasLoadedAiPanel"
+        :show="showAiPanel"
+        :panel-style="aiPanelStyle"
+        :z-index="getPanelZIndex('ai')"
+        :resize-title="t('common.resizePanel')"
+        @panel-mousedown="(e) => handleFloatingPanelMouseDown('ai', e)"
+        @resize-mousedown="(e) => startPanelResize('ai', e)"
+        @close="closeAiPanel"
       />
       <FloatingBasicPanel
         :visible="store.showHistoryPanel"

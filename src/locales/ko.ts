@@ -19,6 +19,8 @@ export default {
     loading: "로딩 중...",
     success: "성공",
     input: "입력",
+    showPassword: "비밀번호 표시",
+    hidePassword: "비밀번호 숨기기",
     actions: "동작",
     width: "너비",
     height: "높이",
@@ -181,6 +183,7 @@ export default {
       tableSplitCells: "셀 분할",
       tableAlignCells: "셀 정렬 설정",
       tablePaginate: "표 페이지 나누기",
+      aiGenerate: "AI 어시스턴트",
     },
     headerFooter: "머리글 및 바닥글",
     headerLine: "머리글 선",
@@ -754,6 +757,12 @@ export default {
     themeDesc: "기본값은 시스템 설정 따르기이며, 라이트 또는 다크를 강제로 지정할 수 있습니다.",
     autoSave: "자동 저장",
     autoSaveDesc: "변경 사항을 자동으로 저장합니다(저장된 템플릿만).",
+    aiEnabled: "AI 어시스턴트",
+    aiEnabledDesc:
+      "디자이너에 AI 어시스턴트 진입점을 표시합니다. 대화로 템플릿을 생성하거나 수정할 수 있습니다.",
+    aiModel: "모델",
+    aiModelDesc:
+      "AI 어시스턴트가 사용할 모델을 선택하거나 직접 모델 서비스를 연결할 수 있습니다.",
     textQuickToolbar: "텍스트 요소 빠른 툴바",
     textQuickToolbarDesc:
       "텍스트 요소를 선택하면 떠 있는 빠른 툴바를 표시합니다.",

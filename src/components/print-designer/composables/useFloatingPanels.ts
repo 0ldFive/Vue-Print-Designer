@@ -6,7 +6,8 @@ export type FloatingPanelKey =
   | "properties"
   | "structure"
   | "minimap"
-  | "history";
+  | "history"
+  | "ai";
 
 type FloatingPanelLayerKey = FloatingPanelKey;
 type ResizablePanelKey = Exclude<FloatingPanelKey, "minimap">;
@@ -32,6 +33,9 @@ const MINIMAP_PANEL_FALLBACK_WIDTH = 160;
 const MINIMAP_PANEL_FALLBACK_HEIGHT = 252;
 const MINIMAP_PANEL_MIN_WIDTH = 160;
 const HISTORY_PANEL_DEFAULT_WIDTH = 280;
+const AI_PANEL_DEFAULT_WIDTH = 340;
+const AI_PANEL_VISIBILITY_STORAGE_KEY =
+  "print-designer-ai-panel-visibility";
 const MINIMAP_PANEL_MAX_WIDTH = 420;
 const MINIMAP_PANEL_MIN_HEIGHT = 140;
 const MINIMAP_PANEL_MAX_HEIGHT = 420;
@@ -142,6 +146,29 @@ const persistStructurePanelVisibility = (visible: boolean) => {
   }
 };
 
+const loadAiPanelVisibility = () => {
+  if (typeof window === "undefined") return false;
+  try {
+    return (
+      window.localStorage.getItem(AI_PANEL_VISIBILITY_STORAGE_KEY) === "true"
+    );
+  } catch {
+    return false;
+  }
+};
+
+const persistAiPanelVisibility = (visible: boolean) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      AI_PANEL_VISIBILITY_STORAGE_KEY,
+      String(visible),
+    );
+  } catch {
+    // ignore storage failures
+  }
+};
+
 const isPanelRectOverlapping = (a: PanelRect, b: PanelRect) => {
   return (
     a.x < b.x + b.width &&
@@ -239,6 +266,20 @@ export const useFloatingPanels = ({
   const historyPanelAnchorX = ref<FloatingPanelHorizontalAnchor>("free");
   const historyPanelAnchorY = ref<FloatingPanelVerticalAnchor>("top");
   const historyPanelHeightMode = ref<FloatingPanelHeightMode>("fit");
+  const aiPanelPos = ref({ x: FLOAT_PANEL_MARGIN, y: FLOAT_PANEL_MARGIN });
+  const aiPanelPreferredPos = ref({
+    x: FLOAT_PANEL_MARGIN,
+    y: FLOAT_PANEL_MARGIN,
+  });
+  const aiPanelWidth = ref(AI_PANEL_DEFAULT_WIDTH);
+  const aiPanelHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+  const aiPanelPreferredWidth = ref(AI_PANEL_DEFAULT_WIDTH);
+  const aiPanelPreferredHeight = ref(FLOAT_PANEL_MIN_HEIGHT);
+  const showAiPanel = ref(loadAiPanelVisibility());
+  const hasInitializedAiPanel = ref(false);
+  const aiPanelAnchorX = ref<FloatingPanelHorizontalAnchor>("free");
+  const aiPanelAnchorY = ref<FloatingPanelVerticalAnchor>("top");
+  const aiPanelHeightMode = ref<FloatingPanelHeightMode>("fit");
   const restoredTemplatePanelLayout = ref({
     x: false,
     y: false,
@@ -269,6 +310,7 @@ export const useFloatingPanels = ({
     "structure",
     "minimap",
     "history",
+    "ai",
   ]);
 
   const isEventForCurrentDesigner = (e: Event) => {
@@ -544,6 +586,13 @@ export const useFloatingPanels = ({
       };
     }
 
+    if (panel === "ai") {
+      return {
+        x: aiPanelAnchorX.value,
+        y: aiPanelAnchorY.value,
+      };
+    }
+
     return {
       x: propertiesPanelAnchorX.value,
       y: propertiesPanelAnchorY.value,
@@ -581,6 +630,12 @@ export const useFloatingPanels = ({
       return;
     }
 
+    if (panel === "ai") {
+      aiPanelAnchorX.value = anchors.x;
+      aiPanelAnchorY.value = anchors.y;
+      return;
+    }
+
     propertiesPanelAnchorX.value = anchors.x;
     propertiesPanelAnchorY.value = anchors.y;
   };
@@ -606,6 +661,11 @@ export const useFloatingPanels = ({
 
     if (panel === "history") {
       historyPanelHeightMode.value = heightMode;
+      return;
+    }
+
+    if (panel === "ai") {
+      aiPanelHeightMode.value = heightMode;
       return;
     }
 
@@ -1122,6 +1182,47 @@ export const useFloatingPanels = ({
     structurePanelWidth.value = structureLayout.width;
     structurePanelHeight.value = structureLayout.height;
 
+    if (!hasInitializedAiPanel.value) {
+      aiPanelAnchorX.value = "free";
+      aiPanelAnchorY.value = "top";
+      aiPanelHeightMode.value = "fit";
+      aiPanelPreferredHeight.value = bounds.maxHeight;
+      aiPanelPreferredWidth.value = AI_PANEL_DEFAULT_WIDTH;
+      aiPanelPreferredPos.value = {
+        x: Math.max(
+          bounds.minX,
+          bounds.maxRight -
+            propertiesPanelWidth.value -
+            structurePanelWidth.value -
+            AI_PANEL_DEFAULT_WIDTH -
+            FLOAT_PANEL_MARGIN * 2,
+        ),
+        y: bounds.minY,
+      };
+      hasInitializedAiPanel.value = true;
+    }
+
+    aiPanelPreferredWidth.value = clampPreferredPanelWidth(
+      aiPanelPreferredWidth.value,
+    );
+    aiPanelPreferredHeight.value = clampPreferredPanelHeight(
+      aiPanelPreferredHeight.value,
+    );
+
+    const aiLayout = resolvePanelLayout(
+      aiPanelPreferredPos.value,
+      aiPanelPreferredWidth.value,
+      aiPanelPreferredHeight.value,
+      {
+        horizontalAnchor: aiPanelAnchorX.value,
+        verticalAnchor: aiPanelAnchorY.value,
+        heightMode: aiPanelHeightMode.value,
+      },
+    );
+    aiPanelPos.value = aiLayout.pos;
+    aiPanelWidth.value = aiLayout.width;
+    aiPanelHeight.value = aiLayout.height;
+
     if (!store.showMinimap) {
       if (store.showHistoryPanel) {
         if (!hasInitializedHistoryPanel.value) {
@@ -1257,6 +1358,15 @@ export const useFloatingPanels = ({
     };
   });
 
+  const aiPanelStyle = computed(() => {
+    return {
+      left: `${aiPanelPos.value.x}px`,
+      top: `${aiPanelPos.value.y}px`,
+      width: `${aiPanelWidth.value}px`,
+      height: `${aiPanelHeight.value}px`,
+    };
+  });
+
   const historyPanelStyle = computed(() => {
     return {
       left: `${historyPanelPos.value.x}px`,
@@ -1296,7 +1406,8 @@ export const useFloatingPanels = ({
       value === "properties" ||
       value === "structure" ||
       value === "minimap" ||
-      value === "history"
+      value === "history" ||
+      value === "ai"
     );
   };
 
@@ -1345,7 +1456,9 @@ export const useFloatingPanels = ({
             : draggingPanel === "structure"
               ? structurePanelWidth.value
               : draggingPanel === "history"
-                ? historyPanelWidth.value
+              ? historyPanelWidth.value
+              : draggingPanel === "ai"
+                ? aiPanelWidth.value
                 : getMinimapPanelSize().width;
     const panelHeight =
       draggingPanel === "sidebar"
@@ -1358,7 +1471,9 @@ export const useFloatingPanels = ({
               ? structurePanelHeight.value
               : draggingPanel === "history"
                 ? historyPanelHeight.value
-                : getMinimapPanelSize().height;
+                : draggingPanel === "ai"
+                  ? aiPanelHeight.value
+                  : getMinimapPanelSize().height;
     const nextPos = clampPanelPos(
       dragStartPanelPos.x + deltaX,
       dragStartPanelPos.y + deltaY,
@@ -1441,6 +1556,21 @@ export const useFloatingPanels = ({
       return;
     }
 
+    if (draggingPanel === "ai") {
+      aiPanelPos.value = nextPos;
+      aiPanelPreferredPos.value = { ...nextPos };
+      setPanelAnchors(
+        "ai",
+        detectPanelAnchors(
+          "ai",
+          nextPos,
+          aiPanelWidth.value,
+          aiPanelHeight.value,
+        ),
+      );
+      return;
+    }
+
     minimapPanelPos.value = nextPos;
     minimapPanelPreferredPos.value = { ...nextPos };
   };
@@ -1497,6 +1627,35 @@ export const useFloatingPanels = ({
         "sidebar",
         detectPanelAnchors(
           "sidebar",
+          resizedLayout.pos,
+          resizedLayout.width,
+          resizedLayout.height,
+        ),
+      );
+      return;
+    }
+
+    if (resizingPanel === "ai") {
+      const resizedLayout = resolvePanelResizeLayout(
+        resizeStartPanelPos,
+        resizeStartWidth,
+        resizeStartHeight,
+        deltaX,
+        deltaY,
+        resizeStartPanelAnchors,
+      );
+
+      aiPanelWidth.value = resizedLayout.width;
+      aiPanelHeight.value = resizedLayout.height;
+      aiPanelPos.value = resizedLayout.pos;
+      aiPanelPreferredWidth.value = resizedLayout.width;
+      aiPanelPreferredHeight.value = resizedLayout.height;
+      aiPanelPreferredPos.value = { ...resizedLayout.pos };
+      setPanelHeightMode("ai", "fixed");
+      setPanelAnchors(
+        "ai",
+        detectPanelAnchors(
+          "ai",
           resizedLayout.pos,
           resizedLayout.width,
           resizedLayout.height,
@@ -1644,7 +1803,9 @@ export const useFloatingPanels = ({
               ? structurePanelWidth.value
               : panel === "history"
                 ? historyPanelWidth.value
-                : minimapPanelWidth.value;
+                : panel === "ai"
+                  ? aiPanelWidth.value
+                  : minimapPanelWidth.value;
     resizeStartHeight =
       panel === "sidebar"
         ? sidebarPanelHeight.value
@@ -1656,7 +1817,9 @@ export const useFloatingPanels = ({
               ? structurePanelHeight.value
               : panel === "history"
                 ? historyPanelHeight.value
-                : minimapPanelHeight.value;
+                : panel === "ai"
+                  ? aiPanelHeight.value
+                  : minimapPanelHeight.value;
     resizeStartPanelPos =
       panel === "sidebar"
         ? { ...sidebarPanelPos.value }
@@ -1668,7 +1831,9 @@ export const useFloatingPanels = ({
               ? { ...structurePanelPos.value }
               : panel === "history"
                 ? { ...historyPanelPos.value }
-                : { ...minimapPanelPos.value };
+                : panel === "ai"
+                  ? { ...aiPanelPos.value }
+                  : { ...minimapPanelPos.value };
     resizeStartPanelAnchors =
       panel === "minimap"
         ? { x: "free", y: "free" }
@@ -1695,7 +1860,9 @@ export const useFloatingPanels = ({
             : panel === "structure"
               ? { ...structurePanelPos.value }
               : panel === "history"
-                ? { ...historyPanelPos.value }
+              ? { ...historyPanelPos.value }
+              : panel === "ai"
+                ? { ...aiPanelPos.value }
                 : { ...minimapPanelPos.value };
 
     window.addEventListener("mousemove", handlePanelDragMove);
@@ -1822,6 +1989,40 @@ export const useFloatingPanels = ({
     });
   };
 
+  const emitAiPanelVisibility = () => {
+    emitPanelVisibility("designer:ai-panel-visibility", showAiPanel.value);
+  };
+
+  const closeAiPanel = () => {
+    if (!showAiPanel.value) return;
+    showAiPanel.value = false;
+    persistAiPanelVisibility(false);
+    emitAiPanelVisibility();
+    nextTick(() => {
+      initOrClampFloatingPanels();
+    });
+  };
+
+  const handleToggleAiPanelEvent = (e: Event) => {
+    if (!isEventForCurrentDesigner(e)) return;
+    const wasVisible = showAiPanel.value;
+    showAiPanel.value = !showAiPanel.value;
+    persistAiPanelVisibility(showAiPanel.value);
+    emitAiPanelVisibility();
+    nextTick(() => {
+      initOrClampFloatingPanels();
+      if (!wasVisible && showAiPanel.value) {
+        bringPanelToFront("ai");
+        initOrClampFloatingPanels();
+      }
+    });
+  };
+
+  const handleCloseAiPanelEvent = (e: Event) => {
+    if (!isEventForCurrentDesigner(e)) return;
+    closeAiPanel();
+  };
+
   const resetTemplateLayoutWhenElementsPanelHidden = () => {
     if (!showElementsPanel.value) {
       restoredTemplatePanelLayout.value.x = false;
@@ -1874,10 +2075,12 @@ export const useFloatingPanels = ({
     showTemplatePanel,
     showPropertiesPanel,
     showStructurePanel,
+    showAiPanel,
     sidebarPanelStyle,
     templatePanelStyle,
     propertiesPanelStyle,
     structurePanelStyle,
+    aiPanelStyle,
     historyPanelStyle,
     minimapPanelStyle,
     minimapPreviewWidth,
@@ -1887,6 +2090,7 @@ export const useFloatingPanels = ({
     startPanelResize,
     closeTemplatePanel,
     closeStructurePanel,
+    closeAiPanel,
     initOrClampFloatingPanels,
     ensureSidebarNotOverlappingTemplatePanel,
     restoreTemplatePanelLayout,
@@ -1902,6 +2106,8 @@ export const useFloatingPanels = ({
     handleToggleStructurePanelEvent,
     handleClosePropertiesPanelEvent,
     handleCloseStructurePanelEvent,
+    handleToggleAiPanelEvent,
+    handleCloseAiPanelEvent,
     handleBringPanelToFrontEvent,
     stopPanelDrag,
     stopPanelResize,

@@ -10,6 +10,7 @@ import {
   type Ref,
 } from "vue";
 import { useDesignerStore } from "@/stores/designer";
+import { useFeatureFlags } from "@/composables/useFeatureFlags";
 import Printer from "~icons/material-symbols/print";
 import Preview from "~icons/material-symbols/preview";
 import HtmlIcon from "~icons/material-symbols/html";
@@ -57,6 +58,7 @@ import ChevronDown from "~icons/material-symbols/expand-more";
 import KeyboardArrowLeft from "~icons/material-symbols/keyboard-arrow-left";
 import KeyboardArrowRight from "~icons/material-symbols/keyboard-arrow-right";
 import ViewSidebar from "~icons/material-symbols/view-sidebar";
+import AutoAwesome from "~icons/material-symbols/auto-awesome";
 import ListIcon from "~icons/material-symbols/list";
 import GridView from "~icons/material-symbols/grid-view";
 import GridViewOutline from "~icons/material-symbols/grid-view-outline";
@@ -300,6 +302,8 @@ const isElementsPanelVisible = ref(false);
 const isTemplatePanelVisible = ref(true);
 const isPropertiesPanelVisible = ref(true);
 const isStructurePanelVisible = ref(true);
+const isAiPanelVisible = ref(false);
+const { aiEnabled } = useFeatureFlags();
 const zoomTriggerRef = ref<HTMLElement | null>(null);
 const languageTriggerRef = ref<HTMLElement | null>(null);
 const languageMenuRef = ref<HTMLElement | null>(null);
@@ -1515,6 +1519,17 @@ const handleStructurePanelVisibilityEvent = (e: Event) => {
   isStructurePanelVisible.value = visible;
 };
 
+const handleAiPanelVisibilityEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  const visible = (e as CustomEvent)?.detail?.visible;
+  if (typeof visible !== "boolean") return;
+  isAiPanelVisible.value = visible;
+};
+
+const toggleAiPanel = () => {
+  dispatchDesignerEvent("designer:toggle-ai-panel");
+};
+
 onMounted(() => {
   loadToolbarGroupOrder();
 
@@ -1546,6 +1561,10 @@ onMounted(() => {
   window.addEventListener(
     "designer:structure-panel-visibility",
     handleStructurePanelVisibilityEvent,
+  );
+  window.addEventListener(
+    "designer:ai-panel-visibility",
+    handleAiPanelVisibilityEvent,
   );
   window.addEventListener("resize", handleToolbarResize);
   window.addEventListener("resize", handleZoomSettingsViewportChange);
@@ -1611,6 +1630,10 @@ onUnmounted(() => {
   window.removeEventListener(
     "designer:structure-panel-visibility",
     handleStructurePanelVisibilityEvent,
+  );
+  window.removeEventListener(
+    "designer:ai-panel-visibility",
+    handleAiPanelVisibilityEvent,
   );
   window.removeEventListener("resize", handleToolbarResize);
   window.removeEventListener("resize", handleZoomSettingsViewportChange);
@@ -2550,6 +2573,19 @@ onUnmounted(() => {
               @click="togglePanelMenuAction('history')"
             >
               <History class="w-4 h-4" />
+            </button>
+            <button
+              v-if="aiEnabled"
+              type="button"
+              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700 text-blue-700 dark:text-blue-400':
+                  isAiPanelVisible,
+              }"
+              :title="t('settings.aiEnabled')"
+              @click="toggleAiPanel"
+            >
+              <AutoAwesome class="w-4 h-4" />
             </button>
           </div>
 

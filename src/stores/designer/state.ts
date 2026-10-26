@@ -17,6 +17,7 @@ import {
   type ListContextMenuConfig,
   type ListContextMenuItem,
   type TemplateModalFormConfig,
+  type TemplateTagResolver,
   type TemplateModalField,
 } from "@/types";
 import {
@@ -59,6 +60,7 @@ export const state = (): DesignerState => ({
     customElementContextMenuConfig: null as ListContextMenuConfig | null,
     templateModalFormConfig: null as TemplateModalFormConfig | null,
     customElementModalFormConfig: null as TemplateModalFormConfig | null,
+    templateTagResolver: null as TemplateTagResolver | null,
     contextMenuEventEmitter: null as
       | ((eventName: string, detail: Record<string, any>) => void)
       | null,
@@ -127,6 +129,7 @@ export const state = (): DesignerState => ({
     printProgress: null as { phase: string; current: number; total: number; message: string } | null,
     disableGlobalShortcuts: false,
     disableShortcutsCount: 0,
+    previewLocked: false,
     tableSelection: null,
     clientUrl: "https://printdot.cc/client",
     cloudUrl: "https://printdot.cc/cloud-print",

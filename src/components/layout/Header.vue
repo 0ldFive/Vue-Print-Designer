@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from "vue";
+import { computed, inject, ref, watch, onMounted, onUnmounted } from "vue";
 import { useI18n } from "@/locales";
 import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
@@ -27,7 +27,20 @@ const templateStore = useTemplateStore();
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
 const showExportMenu = ref(false);
 
+const handleOpenAiSettings = () => {
+  store.setShowSettings(true);
+};
+
+onMounted(() => {
+  window.addEventListener("designer:open-ai-settings", handleOpenAiSettings);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("designer:open-ai-settings", handleOpenAiSettings);
+});
+
 const isSaveDisabled = computed(() => {
+  if (store.previewLocked) return true;
   if (templateStore.isSaving || templateStore.isLoading) return true;
   
   if (templateStore.currentTemplateId) {
@@ -81,10 +94,12 @@ watch(
 );
 
 const handleSave = () => {
+  if (store.previewLocked) return;
   dispatchDesignerEvent("designer:save");
 };
 
 const handleSaveAs = () => {
+  if (store.previewLocked) return;
   const currentId = templateStore.currentTemplateId;
   if (currentId) {
     dispatchDesignerEvent("designer:save-as", { id: currentId });
@@ -93,26 +108,31 @@ const handleSaveAs = () => {
 };
 
 const handlePreview = () => {
+  if (store.previewLocked) return;
   if (store.isGeneratingPreview) return;
   dispatchDesignerEvent("designer:preview");
 };
 
 const handlePrint = () => {
+  if (store.previewLocked) return;
   if (store.isGeneratingPrint) return;
   dispatchDesignerEvent("designer:print");
 };
 
 const handleExportPdf = () => {
+  if (store.previewLocked) return;
   if (store.isGeneratingPdf) return;
   dispatchDesignerEvent("designer:export-pdf");
 };
 
 const handleExportHtml = () => {
+  if (store.previewLocked) return;
   if (store.isGeneratingHtml) return;
   dispatchDesignerEvent("designer:export-html");
 };
 
 const handleExportImages = () => {
+  if (store.previewLocked) return;
   if (store.isGeneratingImages) return;
   dispatchDesignerEvent("designer:export-images");
 };
@@ -200,7 +220,10 @@ const handleOpenSettings = () => {
 
         <div
           v-if="showExportMenu"
-          class="absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl p-1 z-[3200] flex flex-col gap-1"
+          :class="[
+            'absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl p-1 z-[3200] flex flex-col gap-1',
+            store.previewLocked ? 'pointer-events-none opacity-60' : '',
+          ]"
         >
           <button
             @click="handleSaveAs"

@@ -19,6 +19,8 @@ export default {
     loading: "Loading...",
     success: "Success",
     input: "Input",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     actions: "Actions",
     width: "Width",
     height: "Height",
@@ -183,6 +185,7 @@ export default {
       tableSplitCells: "Split cells",
       tableAlignCells: "Set cell alignment",
       tablePaginate: "Paginate table",
+      aiGenerate: "AI assistant",
     },
     headerFooter: "Header & Footer",
     headerLine: "Header Line",
@@ -757,6 +760,12 @@ export default {
     themeDesc: "Defaults to following system; you can force Light or Dark.",
     autoSave: "Auto Save",
     autoSaveDesc: "Automatically save changes (saved templates only).",
+    aiEnabled: "AI Assistant",
+    aiEnabledDesc:
+      "Show the AI assistant in the designer, where you can create or edit templates through chat.",
+    aiModel: "Model",
+    aiModelDesc:
+      "Choose the model the AI assistant uses, or connect your own model service.",
     textQuickToolbar: "Text Element Quick Toolbar",
     textQuickToolbarDesc:
       "Show the floating quick toolbar when a text element is selected.",

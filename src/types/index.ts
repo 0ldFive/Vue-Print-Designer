@@ -327,6 +327,10 @@ export interface TemplateListTag {
   color?: string;
 }
 
+export type TemplateTagResolver = (
+  template: unknown,
+) => TemplateListTag[] | null | undefined;
+
 export interface CustomElementEditSnapshot {
   pages: Page[];
   historyPast: Page[][];
@@ -381,6 +385,7 @@ export interface DesignerState {
   customElementContextMenuConfig?: ListContextMenuConfig | null;
   templateModalFormConfig?: TemplateModalFormConfig | null;
   customElementModalFormConfig?: TemplateModalFormConfig | null;
+  templateTagResolver?: TemplateTagResolver | null;
   contextMenuEventEmitter?:
     | ((eventName: string, detail: Record<string, any>) => void)
     | null;
@@ -450,6 +455,8 @@ export interface DesignerState {
   isGeneratingImages?: boolean;
   disableGlobalShortcuts?: boolean;
   disableShortcutsCount?: number;
+  /** External preview lock (e.g. an AI candidate rendered on the canvas). */
+  previewLocked: boolean;
   clientUrl?: string;
   cloudUrl?: string;
   showClientLink?: boolean;

@@ -263,8 +263,12 @@ const normalizeTagColor = (rawColor: string | undefined) => {
 };
 
 const getTemplateTags = (template: Template): TemplateListTag[] => {
-  const tags = template.ext?.templateTags;
-  if (!Array.isArray(tags)) return [];
+  const resolver = designerStore.templateTagResolver;
+  const source =
+    typeof resolver === "function"
+      ? resolver(template)
+      : template.ext?.templateTags;
+  const tags = Array.isArray(source) ? source : [];
 
   return tags
     .map((tag): TemplateListTag | null => {

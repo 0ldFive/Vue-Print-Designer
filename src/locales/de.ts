@@ -19,6 +19,8 @@ export default {
     loading: "Lädt...",
     success: "Erfolgreich",
     input: "Eingabe",
+    showPassword: "Passwort anzeigen",
+    hidePassword: "Passwort verbergen",
     actions: "Aktionen",
     width: "Breite",
     height: "Höhe",
@@ -183,6 +185,7 @@ export default {
       tableSplitCells: "Zellen teilen",
       tableAlignCells: "Zellenausrichtung festlegen",
       tablePaginate: "Tabelle paginieren",
+      aiGenerate: "KI-Assistent",
     },
     headerFooter: "Kopf- und Fußzeile",
     headerLine: "Kopfzeilenlinie",
@@ -766,6 +769,12 @@ export default {
     autoSave: "Automatisch speichern",
     autoSaveDesc:
       "Änderungen automatisch speichern (nur gespeicherte Vorlagen).",
+    aiEnabled: "KI-Assistent",
+    aiEnabledDesc:
+      "Zeigt den KI-Assistenten im Designer, mit dem sich Vorlagen per Chat erstellen und bearbeiten lassen.",
+    aiModel: "Modell",
+    aiModelDesc:
+      "Wählen Sie das Modell für den KI-Assistenten oder binden Sie Ihren eigenen Modelldienst an.",
     textQuickToolbar: "Schnell-Toolbar für Textelemente",
     textQuickToolbarDesc:
       "Die schwebende Schnell-Toolbar anzeigen, wenn ein Textelement ausgewählt ist.",

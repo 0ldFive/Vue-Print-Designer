@@ -73,6 +73,8 @@ typings/
 .env
 .env.test
 .env.production
+.env.local
+.env.*.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -146,6 +148,7 @@ bin-release/
 *.apk
 .trae
 docs/zh/guide/*
+docs/todo/
 stats-wc.html
 dist-wc/browser-Cw4SfmGQ.js
 dist-wc/canvg-BzMQlId7.js

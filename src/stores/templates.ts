@@ -154,7 +154,7 @@ export const useTemplateStore = defineStore("templates", {
     hasUnsavedChanges(): boolean {
       if (!this.currentTemplateId) return true;
       if (!this.lastSavedStateString) return true;
-      
+
       const designerStore = useDesignerStore();
       const currentString = JSON.stringify({
         pages: designerStore.pages,
@@ -167,7 +167,8 @@ export const useTemplateStore = defineStore("templates", {
         footerHeight: designerStore.footerHeight,
         showHeaderLine: designerStore.showHeaderLine,
         showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering: designerStore.enableHeaderFooterLineRendering,
+        enableHeaderFooterLineRendering:
+          designerStore.enableHeaderFooterLineRendering,
         headerLineStyle: designerStore.headerLineStyle,
         footerLineStyle: designerStore.footerLineStyle,
         headerLineColor: designerStore.headerLineColor,
@@ -188,7 +189,7 @@ export const useTemplateStore = defineStore("templates", {
         testData: designerStore.testData || {},
       });
       return currentString !== this.lastSavedStateString;
-    }
+    },
   },
   actions: {
     updateLastSavedStateString() {
@@ -204,7 +205,8 @@ export const useTemplateStore = defineStore("templates", {
         footerHeight: designerStore.footerHeight,
         showHeaderLine: designerStore.showHeaderLine,
         showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering: designerStore.enableHeaderFooterLineRendering,
+        enableHeaderFooterLineRendering:
+          designerStore.enableHeaderFooterLineRendering,
         headerLineStyle: designerStore.headerLineStyle,
         footerLineStyle: designerStore.footerLineStyle,
         headerLineColor: designerStore.headerLineColor,
@@ -566,11 +568,11 @@ export const useTemplateStore = defineStore("templates", {
           this.createTemplate(name, data);
         }
         this.saveToLocalStorage();
-        
+
         this.updateLastSavedStateString();
 
         // Add a brief artificial delay so the UI loading state is visible to the user during fast local saves
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       } finally {
         this.isSaving = false;
         if (mode === "remote" && !isAutoSave) {
@@ -763,6 +765,8 @@ export const useTemplateStore = defineStore("templates", {
         this.currentTemplateId = createdTemplateId;
         this.updateLastSavedStateString();
       }
+
+      return createdTemplateId;
     },
 
     async deleteTemplate(id: string) {
@@ -1139,9 +1143,9 @@ export const useTemplateStore = defineStore("templates", {
                 }) as Template,
               );
             }
-            
+
             this.updateLastSavedStateString();
-            
+
             return;
           } catch (e) {
             console.error("Failed to load template", e);

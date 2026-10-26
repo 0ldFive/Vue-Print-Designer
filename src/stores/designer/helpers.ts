@@ -95,6 +95,7 @@ export const HISTORY_ACTION = {
   TABLE_SPLIT_CELLS: "editor.historyAction.tableSplitCells",
   TABLE_ALIGN_CELLS: "editor.historyAction.tableAlignCells",
   TABLE_PAGINATE: "editor.historyAction.tablePaginate",
+  AI_GENERATE: "editor.historyAction.aiGenerate",
 } as const;
 
 export const hasOwn = (obj: unknown, key: string) =>

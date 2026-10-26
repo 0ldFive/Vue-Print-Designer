@@ -18,7 +18,7 @@ import {
   type RemoteClientInfo,
 } from "./composables/usePrintSettings";
 import { useDesignerStore } from "./stores/designer";
-import { useTemplateStore } from "./stores/templates";
+import { useTemplateStore, type Template } from "./stores/templates";
 import cloneDeep from "lodash/cloneDeep";
 import { uuidv4 } from "@/utils/uuid";
 import { expandBrandVars } from "@/utils/color";
@@ -38,6 +38,7 @@ import type {
   ListContextMenuSource,
   ListContextMenuItem,
   TemplateModalFormConfig,
+  TemplateListTag,
   DesignerFontOption as InternalDesignerFontOption,
 } from "./types";
 import {
@@ -189,6 +190,9 @@ export interface DesignerListContextMenuConfig {
   items: DesignerListContextMenuItem[];
 }
 export type DesignerTemplateModalFormConfig = TemplateModalFormConfig;
+export type DesignerTemplateTagResolver = (
+  template: Template,
+) => TemplateListTag[] | null | undefined;
 export type DesignerFontOption = InternalDesignerFontOption;
 
 import { toast } from "./utils/toast";
@@ -568,7 +572,10 @@ class PrintDesignerElement extends HTMLElement {
 
   async getPreviewHtml(request: DesignerPreviewRequest = {}) {
     if (!this.printApi) return "";
-    const stopProgress = this.bindProgressReporter("preview", request.onProgress);
+    const stopProgress = this.bindProgressReporter(
+      "preview",
+      request.onProgress,
+    );
     const preparingMessage =
       this.i18n?.global.t("statusBar.progress.preparing") || "Preparing";
     const renderingMessage =
@@ -704,9 +711,7 @@ class PrintDesignerElement extends HTMLElement {
     };
 
     try {
-      this.dispatchEvent(
-        new CustomEvent("preview", { detail: { request } }),
-      );
+      this.dispatchEvent(new CustomEvent("preview", { detail: { request } }));
       this.emitProgress(
         "preview",
         {
@@ -765,7 +770,10 @@ class PrintDesignerElement extends HTMLElement {
       this.printSettings.exportImageMerged.value = Boolean(request.merged);
     }
 
-    const stopProgress = this.bindProgressReporter("export", request.onProgress);
+    const stopProgress = this.bindProgressReporter(
+      "export",
+      request.onProgress,
+    );
 
     try {
       this.dispatchEvent(new CustomEvent("export", { detail: { request } }));
@@ -834,7 +842,10 @@ class PrintDesignerElement extends HTMLElement {
     request: DesignerBatchExportRequest = {},
   ) {
     if (!this.printApi) return null;
-    const stopProgress = this.bindProgressReporter("export", request.onProgress);
+    const stopProgress = this.bindProgressReporter(
+      "export",
+      request.onProgress,
+    );
     try {
       this.dispatchEvent(
         new CustomEvent("export", {
@@ -869,7 +880,10 @@ class PrintDesignerElement extends HTMLElement {
     request: DesignerBatchExportRequest = {},
   ) {
     if (!this.printApi) return;
-    const stopProgress = this.bindProgressReporter("export", request.onProgress);
+    const stopProgress = this.bindProgressReporter(
+      "export",
+      request.onProgress,
+    );
     try {
       this.dispatchEvent(
         new CustomEvent("export", {
@@ -882,7 +896,9 @@ class PrintDesignerElement extends HTMLElement {
         request.filename || "print-batch.pdf",
       );
       this.dispatchEvent(
-        new CustomEvent("exported", { detail: { request: { type: "batchPdf" } } }),
+        new CustomEvent("exported", {
+          detail: { request: { type: "batchPdf" } },
+        }),
       );
     } catch (error) {
       this.dispatchEvent(
@@ -904,7 +920,9 @@ class PrintDesignerElement extends HTMLElement {
   ) {
     if (!this.printApi) return;
     this.dispatchEvent(
-      new CustomEvent("print", { detail: { request: { ...request, batch: true } } }),
+      new CustomEvent("print", {
+        detail: { request: { ...request, batch: true } },
+      }),
     );
     const stopProgress = this.bindProgressReporter("print", request.onProgress);
     try {
@@ -1129,10 +1147,65 @@ class PrintDesignerElement extends HTMLElement {
     };
   }
 
+  // AI module API: loaded on demand so the AI chunk stays out of the main bundle.
+  async getAiConfig(scopeId?: string) {
+    const api = await import("@/ai/api");
+    return api.getAiConfig(scopeId);
+  }
+
+  async setAiConfig(config: Record<string, unknown>, scopeId?: string) {
+    const api = await import("@/ai/api");
+    return api.setAiConfig(config, scopeId);
+  }
+
+  async setAiModels(
+    models: import("./ai/types").AiBuiltinModelInput[],
+    options: { scopeId?: string } = {},
+  ) {
+    const api = await import("@/ai/api");
+    return api.setAiModels(models, options.scopeId ?? this._crudScopeId);
+  }
+
+  async setAiEnabled(enabled: boolean) {
+    const api = await import("@/ai/api");
+    api.setAiEnabled(Boolean(enabled));
+  }
+
+  async isAiEnabled() {
+    const api = await import("@/ai/api");
+    return api.isAiEnabled();
+  }
+
+  async openAiPanel() {
+    const api = await import("@/ai/api");
+    api.openAiPanel();
+  }
+
+  async closeAiPanel() {
+    const api = await import("@/ai/api");
+    api.closeAiPanel();
+  }
+
+  async generateTemplate(prompt: string, options?: Record<string, unknown>) {
+    const api = await import("@/ai/api");
+    return api.generateTemplate(prompt, options || {});
+  }
+
+  async applyAiPreview() {
+    const api = await import("@/ai/api");
+    return api.applyAiPreview();
+  }
+
+  async discardAiPreview() {
+    const api = await import("@/ai/api");
+    api.discardAiPreview();
+  }
+
   loadTemplateData(data: any) {
     if (!this.designerStore) return false;
     if (this.designerStore.editingCustomElementId) return false;
     if (!data) return false;
+    window.dispatchEvent(new CustomEvent("designer:template-replaced"));
     this.designerStore.resetCanvas();
     if (Array.isArray(data.pages) && data.pages.length > 0) {
       this.designerStore.pages = cloneDeep(data.pages);
@@ -1818,6 +1891,16 @@ class PrintDesignerElement extends HTMLElement {
   clearCustomElementModalForm() {
     if (!this.designerStore) return;
     this.designerStore.setCustomElementModalFormConfig(null);
+  }
+
+  setTemplateTagResolver(resolver: DesignerTemplateTagResolver | null) {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateTagResolver(resolver || null);
+  }
+
+  clearTemplateTagResolver() {
+    if (!this.designerStore) return;
+    this.designerStore.setTemplateTagResolver(null);
   }
 
   // Testing hooks

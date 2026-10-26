@@ -2,11 +2,11 @@
 
 ## Contents
 
+- [API Index](#api-index)
 - [Quick Start](#quick-start)
   - [Vue Integration](#vue-integration)
   - [React Integration](#react-integration)
   - [Native HTML Integration](#native-html-integration)
-- [API Index](#api-index)
 - [Instance Methods and Parameters](#instance-methods-and-parameters)
   - [Initialization (Recommended)](#initialization-recommended)
   - [Initialization Parameters (Suggested)](#initialization-parameters-suggested)
@@ -17,7 +17,7 @@
   - [3.1. Send to Local Client Preview (preview)](#31-send-to-local-client-preview-preview)
   - [4. Set Default Print Options (setPrintDefaults)](#4-set-default-print-options-setprintdefaults)
   - [5. Print Quality Settings (getPrintQuality/setPrintQuality)](#5-print-quality-settings-getprintqualitysetprintquality)
-  - [6. Get Printers and Clients (fetchPrinters)](#6-get-printers-and-clients-fetchprinters)
+  - [6. Get Printers and Clients (fetchLocalPrinters / fetchRemoteClients)](#6-get-printers-and-clients-fetchlocalprinters--fetchremoteclients)
   - [7. Set Branding Info (setBranding)](#7-set-branding-info-setbranding)
   - [8. Set Brand Colors (setBrandVars)](#8-set-brand-colors-setbrandvars)
   - [9. Set Theme (setTheme)](#9-set-theme-settheme)
@@ -37,21 +37,27 @@
   - [23. Configure Template Modal Custom Form (setTemplateModalForm)](#23-configure-template-modal-custom-form-settemplatemodalform)
   - [24. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#24-configure-custom-element-modal-custom-form-setcustomelementmodalform)
   - [25. Configure Template List Tag Extension (setTemplateTagResolver)](#25-configure-template-list-tag-extension-settemplatetagresolver)
-
+  - [26. Configure AI Built-in Models (setAiModels)](#26-configure-ai-built-in-models-setaimodels)
 - [Backend API Specifications](#backend-api-specifications)
   - [Overview](#overview)
   - [Common Fields](#common-fields)
-  - [Template CRUD Constraints](#template-crud-constraints)
-    - [1) List Templates](#1-list-templates)
-    - [2) Get Template Detail](#2-get-template-detail)
-    - [3) Save Template (Create/Update)](#3-save-template-createupdate)
-    - [4) Delete Template](#4-delete-template)
-  - [Custom Element CRUD Constraints](#custom-element-crud-constraints)
-    - [5) List Custom Elements](#5-list-custom-elements)
-    - [6) Get Custom Element Detail](#6-get-custom-element-detail)
-    - [7) Save Custom Element (Create/Update)](#7-save-custom-element-createupdate)
-    - [8) Delete Custom Element](#8-delete-custom-element)
   - [Generic ext Constraints](#generic-ext-constraints)
+    - [ext.availableVariables (Template Available Variables)](#extavailablevariables-template-available-variables)
+    - [ext.templateModalForm (Modal Form Values)](#exttemplatemodalform-modal-form-values)
+    - [ext.templateTags (Template List Tags)](#exttemplatetags-template-list-tags)
+    - [ext.<customKey> (Custom Business Fields)](#extcustomkey-custom-business-fields)
+    - [ext Merge Rules](#ext-merge-rules)
+  - [Template CRUD Constraints](#template-crud-constraints)
+    - [1) Endpoint Responsibilities and Call Timing](#1-endpoint-responsibilities-and-call-timing)
+    - [2) List Templates](#2-list-templates)
+    - [3) Get Template Detail](#3-get-template-detail)
+    - [4) Save Template (Create/Update)](#4-save-template-createupdate)
+    - [5) Delete Template](#5-delete-template)
+  - [Custom Element CRUD Constraints](#custom-element-crud-constraints)
+    - [6) List Custom Elements](#6-list-custom-elements)
+    - [7) Get Custom Element Detail](#7-get-custom-element-detail)
+    - [8) Save Custom Element (Create/Update)](#8-save-custom-element-createupdate)
+    - [9) Delete Custom Element](#9-delete-custom-element)
   - [Quick Checklist](#quick-checklist)
 - [Events](#events)
 - [PrintOptions](#printoptions)
@@ -88,7 +94,7 @@
 | `setFontOptions(options)`             | Set available font dropdown options                          |
 | `setTestData(data)`                   | Set test data                                                |
 | `getTestData()`                       | Get test data                                                |
-| `setVariables(vars)`                  | Set variable data                                            |
+| `setVariables(data)`                  | Set variable data                                            |
 | `getVariables()`                      | Get variable data                                            |
 | `getTemplateVariables()`              | Extract used variables and generate default data structure   |
 | `loadTemplateData(data)`              | Load template data                                           |
@@ -120,8 +126,16 @@
 | `clearCustomElementContextMenu()`     | Restore default custom element list extension menu           |
 | `setTemplateModalForm(config)`        | Configure custom forms for create/edit/copy template modals  |
 | `clearTemplateModalForm()`            | Clear template modal custom form configuration               |
-| `setCustomElementModalForm(config)`   | Configure custom forms for create/edit custom element modals |
+| `setCustomElementModalForm(config)`   | Configure custom forms for create/edit/copy custom element modals |
 | `clearCustomElementModalForm()`       | Clear custom element modal custom form configuration         |
+| `setTemplateTagResolver(resolver)`    | Set the template list tag callback (takes priority over `ext.templateTags`) |
+| `clearTemplateTagResolver()`          | Clear the tag callback and fall back to `ext.templateTags`   |
+| `setAiModels(models, options?)`       | Inject built-in model list (no secrets)                      |
+| `setAiEnabled(enabled)`               | Enable/disable the AI assistant                              |
+| `isAiEnabled()`                       | Check whether the AI assistant is enabled                    |
+| `openAiPanel()`                       | Open the AI assistant panel                                  |
+| `getAiConfig(scopeId?)`               | Get AI config (user-defined models only)                     |
+| `setAiConfig(config, scopeId?)`       | Update AI config                                             |
 
 ## Quick Start
 
@@ -282,6 +296,7 @@ Notes:
 - `setCrudEndpoints` configures API URLs and headers
 - `setCrudMode('remote')` makes UI save/delete/load call remote APIs
 - Without these steps, local storage is used
+- These configuration methods must be called after the component is initialized (the `ready` event has fired); before the DOM element is upgraded to the custom element, the methods do not exist.
 
 ### Initialization Parameters (Suggested)
 
@@ -297,10 +312,10 @@ The component does not require a dedicated `init` method. Configure the followin
 | `setBranding`     | `showLogo`        | `boolean`                            | No       | Show logo                |
 | `setBrandVars`    | `vars`            | `Record<string, string>`             | Yes      | Theme CSS variables      |
 | `setBrandVars`    | `options.persist` | `boolean`                            | No       | Persist to local storage |
-| `setTheme`        | `theme`           | `'light' \| 'dark' \| 'system'`      | Yes      | Theme mode               |
+| `setTheme`        | `theme`           | `string`                             | Yes      | Theme mode. `light` / `dark` take effect; other values follow system |
 | `setDesignerFont` | `fontFamily`      | `string`                             | Yes      | Designer font family     |
 | `setDesignerFont` | `options.persist` | `boolean`                            | No       | Persist to local storage |
-| `setFontOptions`  | `options`         | `{ label: string; value: string }[]` | Yes      | Flat font option list, without group fields |
+| `setFontOptions`  | `options`         | `{ label: string; value: string }[]` | No       | Flat font option list; omit or pass `[]` to restore the built-in list |
 | `setFontOptions`  | `options[].label` | `string`                             | Yes      | Dropdown display label   |
 | `setFontOptions`  | `options[].value` | `string`                             | Yes      | CSS font-family value    |
 
@@ -382,11 +397,12 @@ try {
 
 - **`browser`**: Invokes the browser's native print dialog (e.g., `window.print()`). Due to browser security restrictions, the frontend cannot determine whether the user clicked "Print" or "Cancel", so the Promise usually resolves immediately after the dialog is invoked, returning `{ status: 'success', mode: 'browser' }`.
 - **`local`**: Sends the print task to the local print client (e.g., `printdot-client`) via WebSocket. The Promise will **keep waiting** until the local client successfully sends the task to the printer (or the system print queue) and returns a confirmation ACK. It will then resolve and return the ACK message object (e.g. `{ status: 'success', ... }`). If no confirmation is received within the default timeout (30 seconds) or an error occurs, the Promise will be rejected.
-- **`remote`**: Submits the print task to a remote cloud print service. The Promise resolves once the cloud service successfully receives the task, returning the full response data from the cloud API.
+- **`remote`**: Submits the print task to a remote cloud print service. The Promise resolves when the `task_result` message arrives from the cloud service, returning that message (including `status`); a cloud-side `status: 'error'` still resolves rather than rejects, and only a WebSocket timeout or connection error rejects.
+- **Automatic fallback**: `local` / `remote` are only used when the corresponding connection state is `connected`; when not connected they neither throw nor reject, but fall back to `browser` mode and resolve `{ status: 'success', mode: 'browser' }`.
 
 ### 2. Export PDF/Images/HTML (export)
 
-Description: export PDF/images/HTML or return Blob/text.
+Description: export PDF/images/HTML files, or return a Blob. `pdf` / `images` / `html` trigger a browser download and return `undefined`; `pdfBlob` / `imageBlob` do not download and return a `Blob`.
 
 ```ts
 await el.export({
@@ -471,7 +487,7 @@ await el.printBatch(items, {
 | `options`    | `PrintOptions`                                | No       | Print options (see "Print Options Detail" below). |
 | `onProgress` | `(progress: DesignerProgressPayload) => void` | No       | Progress callback fired after each record is rendered. |
 
-Returns: `getBatchPdfBlob` returns `Promise<Blob | null>` (`null` when no render environment is available); `exportBatchPdf` returns `Promise<void>` (triggers a download); `printBatch` returns `Promise<any>` (the underlying print-channel status object; per-`mode` behavior matches `print`).
+Returns: `getBatchPdfBlob` returns `Promise<Blob | null>` (`null` only when the component is not ready; rendering errors reject); `exportBatchPdf` returns `Promise<void>` (triggers a download); `printBatch` returns `Promise<any>` (the underlying print-channel status object; per-`mode` behavior matches `print`).
 
 > Tip: for variables to take effect, the text element in the template must bind a variable (e.g. bind `@code`), not merely contain `@code` in its content.
 >
@@ -496,7 +512,7 @@ Parameters:
 | --- | --- | --- | --- |
 | `onProgress` | `(progress: DesignerProgressPayload) => void` | No | Progress callback fired when progress changes. |
 
-Returns: `Promise<string>` containing the complete generated HTML string (including styles and page elements).
+Returns: `Promise<string>` containing the styled container `div` with its paginated page nodes (`outerHTML`); it does **not** include an `<html>` / `<head>` wrapper.
 
 Progress payload:
 
@@ -513,7 +529,7 @@ Progress payload:
 
 Description: send preview content to the configured local client through WebSocket and let the client open the system preview window. Use this API when the host application wants to reuse the client-side PDF preview capability instead of hosting the preview window in the browser.
 
-Prerequisite: the local client must be running, and `localSettings.wsAddress` / `localSettings.secretKey` must be configured through `setPrintDefaults`, or configured in the designer settings UI.
+Prerequisite: the local client connection must already be established (`localSettings.wsAddress` / `localSettings.secretKey` configured through `setPrintDefaults`, or configured in the designer settings UI).
 
 ```ts
 const result = await el.preview({
@@ -542,7 +558,7 @@ Parameters:
 | `canvasSize` | `{ width: number; height: number }` | No | Page size in px used by the client when rendering HTML/JSON into PDF. If omitted, the current designer `canvasSize` is used. |
 | `onProgress` | `(progress: DesignerProgressPayload) => void` | No | Progress callback fired when progress changes. |
 
-Returns: `Promise<{ type: 'preview_result'; status: 'success' | 'error'; message?: string }>`. `status: 'success'` means the client has accepted the preview request and opened the preview window; the actual PDF rendering happens inside the client preview window.
+Returns: `Promise<{ type: 'preview_result'; status: 'success'; message?: string }>`. It resolves only with `status: 'success'`, meaning the client has accepted the preview request and opened the preview window; a client-side `status: 'error'`, timeout, or connection error rejects the Promise with an error. The actual PDF rendering happens inside the client preview window.
 
 Content flow by `mode`:
 
@@ -602,6 +618,8 @@ Parameters:
 | `localPrintOptions`         | `PrintOptions`                     | No       | Local print options    |
 | `remotePrintOptions`        | `PrintOptions`                     | No       | Remote print options   |
 
+`silentPrint` only affects `local` / `remote`: when `true`, clicking print sends the task directly; when `false`, a print-options confirmation dialog appears first. `browser` mode is always controlled by the browser's own print dialog and ignores this field.
+
 ### 5. Print Quality Settings (getPrintQuality/setPrintQuality)
 
 Description: Get or set the print and export rendering quality.
@@ -620,11 +638,11 @@ await el.export({ type: "pdf" });
 
 Parameters:
 
-| Field     | Type     | Required | Description                                                        |
-| --------- | -------- | -------- | ------------------------------------------------------------------ |
-| `quality` | `string` | Yes      | The print quality tier (`'fast'`, `'normal'`, `'high'`, `'ultra'`) |
+| Field     | Type                                          | Required | Description                        |
+| --------- | --------------------------------------------- | -------- | ---------------------------------- |
+| `quality` | `'fast' \| 'normal' \| 'high' \| 'ultra'`     | Yes      | The print quality tier             |
 
-### 6. Get Printers and Clients (fetchPrinters)
+### 6. Get Printers and Clients (fetchLocalPrinters / fetchRemoteClients)
 
 Description: query printers, printer capabilities, and clients for local/remote print modes.
 
@@ -687,9 +705,9 @@ el.setTheme("light");
 
 Parameters:
 
-| Field   | Type                            | Required | Description |
-| ------- | ------------------------------- | -------- | ----------- |
-| `theme` | `'light' \| 'dark' \| 'system'` | Yes      | Theme mode  |
+| Field   | Type     | Required | Description |
+| ------- | -------- | -------- | ----------- |
+| `theme` | `string` | Yes      | Theme mode. `light` / `dark` take effect; any other value is treated as "follow system" and written to local storage |
 
 ### 10. Set Designer Font (setDesignerFont)
 
@@ -714,7 +732,7 @@ Description: set available font options for the font dropdowns. It applies to th
 
 The top toolbar groups built-in default fonts as Common, Chinese Fonts, Western Fonts, and Monospace Fonts. The `setFontOptions` API still accepts a flat `{ label, value }` array; you do not need to pass grouped data. Custom fonts passed through this API are shown under the Custom Fonts group.
 
-If no item with `value: ''` is provided, a default option is automatically prepended.
+If the array contains an entry with `value: ''`, only the "Custom Fonts" group is shown and the built-in groups are hidden; if it does not, the "Custom Fonts" group is appended after the built-in groups.
 
 ```ts
 el.setFontOptions([
@@ -734,7 +752,7 @@ Parameters:
 
 | Field             | Type                                 | Required | Description             |
 | ----------------- | ------------------------------------ | -------- | ----------------------- |
-| `options`         | `{ label: string; value: string }[]` | Yes      | Flat font option list, without group fields |
+| `options`         | `{ label: string; value: string }[]` | No       | Flat font option list; omit or pass `[]` to restore the built-in list |
 | `options[].label` | `string`                             | Yes      | Label shown in dropdown |
 | `options[].value` | `string`                             | Yes      | CSS `font-family` value |
 
@@ -743,9 +761,11 @@ Parameters:
 Description: set or get the test data for the current template (mainly used for previewing and testing in the designer).
 
 ```ts
-el.setTestData({ orderNo: "A001" }, { merge: true });
+await el.setTestData({ orderNo: "A001" }, { merge: true });
 const testData = el.getTestData();
 ```
+
+Returns: `setTestData` is `Promise<void>` and resolves after the canvas refresh completes; `getTestData` synchronously returns a copy of the test data.
 
 Parameters:
 
@@ -756,61 +776,100 @@ Parameters:
 
 ### 13. Set and Get Variables (setVariables / getVariables)
 
-Description: set or get variable data.
+Description: the designer has three kinds of "data" with different purposes; do not mix them up.
+
+| Object                        | Accessors                        | Purpose                                                    | Saved with the template                 |
+| ----------------------------- | -------------------------------- | ---------------------------------------------------------- | --------------------------------------- |
+| Test data `testData`          | `setTestData` / `getTestData`    | Sample data for design-time preview                        | Yes, stored in template `data.testData` |
+| Variable data `variables`     | `setVariables` / `getVariables`  | Runtime data; takes priority over test data                | No, current session only                |
+| Variable tree `availableVariables` | `setAvailableVariables`     | Hierarchy of selectable variables in the variables panel   | Yes, stored in template `ext.availableVariables` |
+
+Resolution priority: `variables` > `testData`. When the same variable has values in both, printing and exporting use `variables`.
 
 ```ts
-el.setVariables({ orderNo: "A001" }, { merge: true });
+// Design time: prepare sample data for canvas preview
+await el.setTestData({ orderNo: "A001" }, { merge: true });
+
+// Runtime: inject real business data before printing
+await el.setVariables({ orderNo: "REAL-001" }, { merge: true });
 const vars = el.getVariables();
 ```
 
+Returns: `setTestData` / `setVariables` are both `Promise<void>` (waiting for the canvas refresh); `getTestData` / `getVariables` synchronously return data copies.
+
 Parameters:
 
-| Field           | Type                  | Required | Description        |
-| --------------- | --------------------- | -------- | ------------------ |
-| `vars`          | `Record<string, any>` | Yes      | Variables map      |
-| `options.merge` | `boolean`             | No       | Merge or overwrite |
+| Field           | Type                  | Required | Description                                     |
+| --------------- | --------------------- | -------- | ----------------------------------------------- |
+| `data`          | `Record<string, any>` | Yes      | Data object                                     |
+| `options.merge` | `boolean`             | No       | `true` merges into existing data; default `false` overwrites |
+
+Related methods:
+
+- `setTemplateVariables(data, { merge })`: same as `setVariables`, but first strips the **first leading `@`** from each variable name (`@orderNo` → `orderNo`, `@{orderNo}` → `{orderNo}`). It does not strip `{}` braces and does not handle forms like `{#orderNo}`.
+- `setAvailableVariables(tree)`: sets the variable tree; usually restored automatically by `loadTemplateData` from the template `ext.availableVariables`, so manual calls are rarely needed.
 
 ### 14. Extract Template Variables (getTemplateVariables)
 
-Description: Extract variables used in the current template and generate a data structure with default values.
+Description: scan the variables referenced by the current canvas and generate an "empty value" structure by type, usable as the initial value for `setVariables`.
 
 ```ts
-const templateVars = el.getTemplateVariables();
-console.log("Variables structure for current template:", templateVars);
+const schema = el.getTemplateVariables();
+// e.g. { orderNo: '', items: [] }
+
+el.setVariables(schema); // seed the structure first, then replace items with real data
 ```
+
+Default value rules (sample values only come from text/barcode/QR code and tables, so in practice you only get `""` and `[]`; the remaining branches exist for compatibility):
+
+| Variable type       | Generated value |
+| ------------------- | --------------- |
+| Array               | `[]`            |
+| Object              | `{}`            |
+| Number              | `0`             |
+| Boolean             | `false`         |
+| Other (string etc.) | `""`            |
+
+Note: this method returns "which variables the current canvas uses", without hierarchy; for the full variable tree read `getTemplateData().ext.availableVariables`.
 
 ### 15. Get and Load Template Data (getTemplateData / loadTemplateData)
 
-Description: read/write current template data. In addition to `data`, template-level variable bindings are supported via `ext.availableVariables`.
+Description: read/write the "canvas content" itself (pages, canvas size, guides, header/footer settings, test data, and the variable tree); it does not touch the template list.
 
 ```ts
 const tpl = el.getTemplateData();
-// tpl.ext.availableVariables is the bound variable tree for this template
+// tpl.pages / tpl.canvasSize / tpl.testData
+// tpl.ext.availableVariables is the variable tree bound to this template
 
+// The argument is TemplateData itself; do not wrap it in another `data` layer
 el.loadTemplateData({
-  id: "tpl_1",
-  name: "A4 Template",
-  data: tpl.data,
+  ...tpl,
   ext: {
+    ...(tpl.ext || {}),
     availableVariables: [
-      {
-        id: "customer",
-        label: "Customer",
-        children: [{ id: "customer.name", label: "Customer Name" }],
-      },
+      { id: "customer", label: "Customer", children: [{ id: "customer.name", label: "Customer Name" }] },
     ],
   },
 });
 ```
 
-Parameters (`loadTemplateData`):
+Parameters: the argument is a `TemplateData`; there is no `id` / `name` wrapper (those two fields are not read). Common fields:
 
-| Field                    | Type                 | Required | Description                  |
-| ------------------------ | -------------------- | -------- | ---------------------------- |
-| `id`                     | `string`             | No       | Template ID                  |
-| `name`                   | `string`             | No       | Template name                |
-| `data`                   | `TemplateData`       | Yes      | Template canvas data         |
-| `ext.availableVariables` | `VariableTreeItem[]` | No       | Template-bound variable tree |
+| Field                    | Type                  | Required | Description                                        |
+| ------------------------ | --------------------- | -------- | -------------------------------------------------- |
+| `pages`                  | `Page[]`              | No       | Pages and elements; an empty array does not override the default page |
+| `canvasSize`             | `{ width; height }`   | No       | Canvas size                                        |
+| `testData`               | `Record<string, any>` | No       | Test data; cleared when omitted                    |
+| `ext.availableVariables` | `VariableTreeItem[]`  | No       | Template-bound variable tree; cleared when omitted |
+
+`loadTemplateData` behavior (in order):
+
+1. Reset the canvas: this also clears `variables` and `testData`, and writes the default watermark back to localStorage; then each field present in the argument overrides the corresponding value.
+2. `pages` only overrides when it is a **non-empty array**; omitted or empty keeps the default single page after reset.
+3. Replaces test data with `testData`; cleared when omitted.
+4. Replaces the variable tree with `ext.availableVariables`; cleared when omitted.
+5. Clears the element selection, guide selection, and undo/redo history.
+6. Returns `boolean`: `true` on success; `false` when the component is not ready, the argument is empty, or a custom element is being edited.
 
 ### 16. Template CRUD Operations
 
@@ -832,57 +891,71 @@ Parameter `options.includeData` (`boolean`): Whether to include detailed templat
 
 #### 3) Get Template Details (getTemplate)
 
-Description: Get detailed data of a template by ID.
+Description: look up a template in the in-memory list by ID; no extra request is made.
 
 ```ts
 const detail = el.getTemplate("template-id");
 // detail.ext.availableVariables is the template-bound variable tree
 ```
 
+- Returns `null` when not found.
+- In remote mode, call `loadTemplate(id)` if you need the latest detail (it requests the detail endpoint and writes the result back to the list).
+
 #### 4) Create or Update Template (upsertTemplate)
 
-Description: Save or update template data. It acts as a create operation if no `id` is provided, otherwise it's an update.
+Description: decides create vs. update by `id`; local mode writes memory plus localStorage, remote mode calls the upsert endpoint.
 
 ```ts
-const id = await el.upsertTemplate(
-  {
-    name: "A4 Template",
-    data: { pages: [] },
-    ext: {
-      availableVariables: [
-        {
-          id: "customer",
-          label: "Customer",
-          children: [{ id: "customer.name", label: "Customer Name" }],
-        },
-      ],
-    },
+const id = await el.upsertTemplate({
+  name: "A4 Template",
+  data: { pages: [] },
+  ext: {
+    availableVariables: [
+      { id: "customer", label: "Customer", children: [{ id: "customer.name", label: "Customer Name" }] },
+    ],
   },
-  { setCurrent: true },
-);
+}, { setCurrent: true });
 ```
 
-Parameter `options.setCurrent` (`boolean`): Whether to automatically set it as the current canvas template after saving.
-Permission behavior (read-only template):
+Parameters:
 
-- If target template has `editable=false`, update is blocked and `upsertTemplate` returns `null`.
-- If target template is editable, method returns template ID.
+| Field                | Type      | Required | Description |
+| -------------------- | --------- | -------- | ----------- |
+| `template.id`        | `string`  | No       | Update that ID when provided; otherwise a new ID is generated |
+| `template.name`      | `string`  | Yes      | Template name |
+| `template.data`      | `object`  | No       | Canvas data; may be omitted on update to keep the existing data |
+| `template.updatedAt` | `number`  | No       | Timestamp in milliseconds; defaults to the current time when omitted |
+| `template.permissions` | `object` | No      | Permission config; existing permissions are kept when omitted |
+| `template.ext`       | `object`  | No       | Extension data; `ext.availableVariables` is saved with the template |
+| `options.setCurrent` | `boolean` | No       | Mark it as the current template (only updates the identifier, does not load the canvas) |
+
+Returns:
+
+- Success: the final template ID (in remote mode a response `id` wins, falling back to the request `id` when omitted).
+- Target template has `permissions.editable === false`: returns `null` and reports that the template is read-only.
+- Remote request fails: the local memory entry is already written, the local `id` is returned, and a save-failure toast is shown.
+
+Note: `upsertTemplate` does not load the data into the canvas; call `loadTemplate(id)` afterwards if you want to edit it immediately. In remote mode, a successful save re-requests the list endpoint and uses the server list as the source of truth.
 
 #### 5) Delete Template (deleteTemplate)
 
-Description: Delete a specific template by ID.
+Description: delete a template by ID; local mode removes it from memory and localStorage, remote mode calls the delete endpoint.
 
 ```ts
+// A confirmation dialog is shown by default
 await el.deleteTemplate("template-id");
+
+// Skip the confirmation dialog
+await el.deleteTemplate("template-id", { confirm: false });
 ```
 
-Permission behavior (protected template):
-
-- If target template has `deletable=false`, delete is blocked and template remains in list.
+- `options.confirm` (`boolean`): defaults to `true`, showing a second confirmation.
+- When the target template has `permissions.deletable === false`, the delete is blocked and the template remains.
+- Deleting the current template clears the current template identifier and resets the canvas.
 
 #### 6) Overwrite Template List (setTemplates)
 
-Description: Overwrite the locally stored template list directly.
+Description: replace the in-memory template list with the given array (it does not call the delete endpoint).
 
 ```ts
 el.setTemplates([
@@ -894,22 +967,31 @@ el.setTemplates([
       availableVariables: [{ id: "customer.name", label: "Customer Name" }],
     },
   },
-]);
+], { currentTemplateId: "t1" });
 ```
 
-Parameter `options.currentTemplateId` (`string`): Optional, set the currently active template ID after overwriting.
+- `options.currentTemplateId` (`string`): optional, sets the active template after overwriting.
+- Items without string `id` / `name` are filtered out.
+- If the current ID is not in the new list, it falls back to the first item.
+- When an item is selected, `loadTemplate` is called to load its data into the canvas; this is skipped while editing a custom element.
+- Local mode writes back to localStorage; remote mode does not.
 
 #### 7) Load Template to Canvas (loadTemplate)
 
-Description: Load the corresponding template data into the current designer canvas by ID.
+Description: load the specified template data into the canvas.
 
 ```ts
-el.loadTemplate("template-id");
+const ok = el.loadTemplate("template-id");
 ```
+
+- Returns `boolean`: `false` while editing a custom element, otherwise `true`.
+- Local mode: loads synchronously from the in-memory list.
+- Remote mode: requests the template detail asynchronously; the canvas updates after the response arrives. The method itself returns immediately.
+- Loading resets the canvas, replaces the variable tree (`ext.availableVariables`), and clears the undo/redo history.
 
 #### 8) Template Permissions Configuration (permissions)
 
-Description: You can configure the following fields within the `permissions` object of the template to control operations in the designer.
+Description: configure the following fields in the template's `permissions` object to control designer operations.
 
 ```ts
 {
@@ -923,6 +1005,15 @@ Description: You can configure the following fields within the `permissions` obj
   data: { pages: [] }
 }
 ```
+
+| Field       | Default   | Effect |
+| ----------- | --------- | ------ |
+| `system`    | `false`   | When `true`, forces read-only and blocks delete (overrides `editable` / `deletable`) |
+| `editable`  | `!system` | When off, the designer becomes read-only and `upsertTemplate` returns `null` |
+| `deletable` | `!system` | When off, `deleteTemplate` is blocked and the template remains |
+| `copyable`  | `true`    | When off, the copy entry is hidden |
+
+Permissions may also be written at the root level (`system`, `isSystem`, `editable`, `deletable`, `copyable`); root-level values take precedence over `permissions.*`. `system: true` forces `editable` / `deletable` to `false`.
 
 ### 17. Custom Elements CRUD Operations
 
@@ -944,15 +1035,16 @@ Parameter `options.includeElement` (`boolean`): Whether to include detailed elem
 
 #### 3) Get Custom Element Details (getCustomElement)
 
-Description: Get detailed data of a custom element by ID.
+Description: look up a custom element in the in-memory list by ID. It never calls `customElements.get`; the detail comes from the list or the detail cache.
 
 ```ts
 const detail = el.getCustomElement("element-id");
+// returns null when not found
 ```
 
 #### 4) Create or Update Custom Element (upsertCustomElement)
 
-Description: Save or update a custom element.
+Description: save or update a custom element. The request always carries an `id` (a client-generated uuid for new items); local mode writes memory plus localStorage, remote mode calls the upsert endpoint.
 
 ```ts
 const id = await el.upsertCustomElement({
@@ -960,29 +1052,36 @@ const id = await el.upsertCustomElement({
   element: {
     /* element data */
   },
+  testData: {},
 });
 ```
+
+Parameters: `id` (optional; a uuid is generated when omitted), `name` (required string), `element` (required), `testData` (optional), `permissions` (optional), `ext` (optional).
 
 Permission behavior (read-only custom element):
 
 - If target element has `editable=false`, update is blocked and `upsertCustomElement` returns `null`.
-- If target element is editable, method returns element ID.
+- Otherwise the method returns the element ID; a remote response `id` wins, and a missing response `id` falls back to the request `id`.
+- In remote mode, a successful save re-requests the custom element list endpoint and uses the server list as the source of truth.
 
 #### 5) Delete Custom Element (deleteCustomElement)
 
-Description: Delete a specific custom element by ID.
+Description: delete a specific custom element by ID.
 
 ```ts
-el.deleteCustomElement("element-id");
+// A confirmation dialog is shown by default
+await el.deleteCustomElement("element-id");
+
+// Skip the confirmation dialog
+await el.deleteCustomElement("element-id", { confirm: false });
 ```
 
-Permission behavior (protected custom element):
-
+- `options.confirm` (`boolean`): defaults to `true`.
 - If target element has `deletable=false`, delete is blocked and element remains in list.
 
 #### 6) Overwrite Custom Element List (setCustomElements)
 
-Description: Overwrite the locally stored custom element list directly.
+Description: replace the in-memory custom element list. Local mode also writes localStorage; remote mode does not persist the list locally.
 
 ```ts
 el.setCustomElements([
@@ -995,6 +1094,8 @@ el.setCustomElements([
   },
 ]);
 ```
+
+Items without string `id` / `name` or without `element` are ignored.
 
 #### 7) Custom Element Permissions Configuration (permissions)
 
@@ -1013,11 +1114,15 @@ Description: You can configure the following fields within the `permissions` obj
 }
 ```
 
+Field meanings, defaults, and the root-level / `permissions` forms are the same as "Template Permissions Configuration": `system` defaults to `false` and forces read-only plus no delete when `true`; `editable` / `deletable` default to `!system`; `copyable` defaults to `true`.
+
 ### 18. Set CRUD Mode (setCrudMode)
 
-Description: switch CRUD mode.
+Description: switch CRUD mode. `remote` immediately fetches the template list asynchronously; if no template is currently selected and the list is not empty, it automatically loads the first template into the canvas, and it also fetches the custom element list. `local` only switches the data source and makes no request.
 
 ```ts
+// Configure endpoints before switching mode to avoid requests to default URLs
+el.setCrudEndpoints({ /* ... */ });
 el.setCrudMode("local");
 el.setCrudMode("remote");
 ```
@@ -1030,7 +1135,7 @@ Parameters:
 
 ### 19. Configure Cloud CRUD Endpoints (setCrudEndpoints)
 
-Description: configure CRUD endpoints and headers. Supports passing a simple string URL, or an object to configure `url`, `method`, and additional `data`.
+Description: configure CRUD endpoints, headers, and a custom request function. Supports passing a simple string URL, or an object to configure `url` and `method`.
 
 **Highly Customizable URL Note:**
 Whichever configuration method you use below, the CRUD `url` is **fully customizable**. The underlying logic is as follows:
@@ -1135,32 +1240,34 @@ Parameters:
 | `endpoints.templates.upsert`      | `EndpointConfig`         | No       | Template upsert endpoint                            |
 | `endpoints.templates.delete`      | `EndpointConfig`         | No       | Template delete endpoint (`{id}` placeholder)       |
 | `endpoints.customElements.list`   | `EndpointConfig`         | No       | Custom element list endpoint                        |
-| `endpoints.customElements.get`    | `EndpointConfig`         | No       | Custom element detail endpoint (`{id}` placeholder) |
+| `endpoints.customElements.get`    | `EndpointConfig`         | No       | Custom element detail endpoint (reserved: the frontend currently never calls it; details come from the list cache) |
 | `endpoints.customElements.upsert` | `EndpointConfig`         | No       | Custom element upsert endpoint                      |
 | `endpoints.customElements.delete` | `EndpointConfig`         | No       | Custom element delete endpoint (`{id}` placeholder) |
 | `options.baseUrl`                 | `string`                 | No       | Base URL (same as `endpoints.baseUrl`)              |
 | `options.headers`                 | `Record<string, string>` | No       | Request headers (auth, etc)                         |
+| `options.fetcher`                 | `(input, init?) => Promise<Response>` | No | Custom request function for interceptors or replacing `fetch` |
 
-Note: The `EndpointConfig` type is defined as `string | { url: string; method?: string }`. If you need to append extra business data to your requests (such as a tenant ID):
+Note: The `EndpointConfig` type is defined as `string | { url: string; method?: string }`; there is no `data` field for attaching a request body. If you need to append extra business data to your requests (such as a tenant ID):
 
 1. **For Query Requests** (e.g., `list`): Please append query parameters directly to the `url`, or handle it via interceptors on the server side.
 2. **For Write Requests** (e.g., `upsert`): Please place extra parameters directly into the `ext` field of the entity data object.
-3. **For Global Parameters**: It is recommended to pass them uniformly in the request headers by configuring `options.headers` (e.g., `X-Tenant-ID`).
+3. **For Global Parameters**: It is recommended to pass them uniformly in the request headers by configuring `options.headers` (e.g., `X-Tenant-ID`), or rewrite requests before sending via `options.fetcher`.
 
 ### 20. Set Language (setLanguage)
 
-Description: switch language. You can also use `lang="en"` attribute to set initial language.
+Description: switch language. You can also use the `lang` attribute to set the initial language.
 
 ```ts
 el.setLanguage("en");
 el.setLanguage("zh");
+el.setLanguage("zh-Hant");
 ```
 
 Parameters:
 
-| Field  | Type           | Required | Description   |
-| ------ | -------------- | -------- | ------------- |
-| `lang` | `'zh' \| 'en'` | Yes      | Language code |
+| Field  | Type                                                 | Required | Description |
+| ------ | ---------------------------------------------------- | -------- | ----------- |
+| `lang` | `'zh' \| 'zh-Hant' \| 'en' \| 'ja' \| 'ko' \| 'de'`  | Yes      | Language code; invalid values are silently ignored |
 
 ### 21. Configure Client and Cloud Print Links (setLinks)
 
@@ -1187,7 +1294,7 @@ el.setTemplateContextMenu({
       key: "custom-publish",
       label: "Publish Template",
       icon: "material-symbols:rocket-launch", // Optional: Iconify name (e.g. material-symbols:edit)
-      // icon: '馃殌', // Optional: Text or emoji
+      // icon: '🚀', // Optional: Text or emoji
       // iconClass: 'fa fa-edit', // Optional: CSS class for icon fonts
       // iconImage: 'https://example.com/icon.png', // Optional: Image URL
       eventName: "template-custom-publish", // Event to dispatch
@@ -1245,13 +1352,13 @@ You can browse available `material-symbols` icons here: <https://icon-sets.iconi
 
 For `setTemplateContextMenu` (Template List):
 
+- `viewJson`: View JSON (Icon: `material-symbols:data-object`), available in the left template list only; the top dropdown has no such item
 - `testData`: Test Data (Icon: `material-symbols:data-object`)
 - `edit`: Edit (Icon: `material-symbols:edit`)
 - `copy`: Copy (Icon: `material-symbols:content-copy`)
 - `delete`: Delete (Icon: `material-symbols:delete`)
-- `exportPdf`: Export PDF (Icon: `material-symbols:picture-as-pdf`)
-- `exportImage`: Export Image (Icon: `material-symbols:image`)
-- `exportHtml`: Export HTML (Icon: `material-symbols:html`)
+
+The top template dropdown only has four built-ins: `testData` / `edit` / `copy` / `delete`.
 
 For `setCustomElementContextMenu` (Custom Element List):
 
@@ -1263,108 +1370,116 @@ For `setCustomElementContextMenu` (Custom Element List):
 
 ### 23. Configure Template Modal Custom Form (setTemplateModalForm)
 
-Description: Configure custom form structure and default values for template `create / edit / copy` modals.
+Description: configures the form used by the template "Create / Edit / Copy" modals. Besides the template name, you decide the fields; the extra values a user enters are stored in the template's `ext.templateModalForm`.
 
 ```ts
 el.setTemplateModalForm({
   create: {
     fields: [
+      { key: 'name', label: 'Template name', type: 'input', required: true, placeholder: 'Enter a name' },
       {
-        key: "name",
-        label: "Name",
-        type: "input",
-        required: true,
-        placeholder: "Enter template name",
-      },
-      {
-        key: "category",
-        label: "Category",
-        type: "select",
+        key: 'category',
+        label: 'Category',
+        type: 'select',
         required: true,
         options: [
-          { label: "Standard", value: "standard" },
-          { label: "Shipment", value: "shipment" },
-        ],
+          { label: 'Standard', value: 'standard' },
+          { label: 'Shipment', value: 'shipment' }
+        ]
       },
       {
-        key: "scope",
-        label: "Visibility",
-        type: "radio",
+        key: 'scope',
+        label: 'Visibility',
+        type: 'radio',
         options: [
-          { label: "Private", value: "private" },
-          { label: "Team", value: "team" },
-        ],
+          { label: 'Private', value: 'private' },
+          { label: 'Team', value: 'team' }
+        ]
       },
-      {
-        key: "priority",
-        label: "Priority",
-        type: "number",
-        min: 1,
-        max: 99,
-        step: 1,
-      },
-      { key: "remark", label: "Remark", type: "textarea", rows: 3 },
-      { key: "effectiveDate", label: "Effective Date", type: "date" },
-      { key: "publishAt", label: "Publish Time", type: "datetime" },
+      { key: 'priority', label: 'Priority', type: 'number', min: 1, max: 99, step: 1 },
+      { key: 'remark', label: 'Remark', type: 'textarea', rows: 3 },
+      { key: 'effectiveDate', label: 'Effective date', type: 'date' },
+      { key: 'publishAt', label: 'Publish at', type: 'datetime' }
     ],
     initialValues: {
-      category: "standard",
-      scope: "private",
-      priority: 1,
-    },
+      category: 'standard',
+      scope: 'private',
+      priority: 1
+    }
   },
   edit: {
     fields: [
-      { key: "name", label: "Name", type: "input", required: true },
-      {
-        key: "scope",
-        label: "Visibility",
-        type: "radio",
-        options: [
-          { label: "Private", value: "private" },
-          { label: "Team", value: "team" },
-        ],
-      },
-    ],
+      { key: 'name', label: 'Template name', type: 'input', required: true },
+      { key: 'scope', label: 'Visibility', type: 'radio', options: [{ label: 'Private', value: 'private' }, { label: 'Team', value: 'team' }] }
+    ]
   },
   copy: {
     fields: [
-      { key: "name", label: "Name", type: "input", required: true },
-      {
-        key: "category",
-        label: "Category",
-        type: "select",
-        options: [{ label: "Standard", value: "standard" }],
-      },
-    ],
-  },
-});
+      { key: 'name', label: 'Template name', type: 'input', required: true },
+      { key: 'category', label: 'Category', type: 'select', options: [{ label: 'Standard', value: 'standard' }] }
+    ]
+  }
+})
 
-// Clear config and fallback to default single-input modal
-el.clearTemplateModalForm();
+// Clear the configuration and restore the default single-line input
+el.clearTemplateModalForm()
 ```
 
-Parameter contract:
+Top-level parameters:
 
-| Field                     | Type                                                                               | Required      | Description                                                      |
-| ------------------------- | ---------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------- |
-| `config.create/edit/copy` | `TemplateModalConfigItem`                                                          | No            | Config for the respective modal                                  |
-| `item.fields`             | `TemplateModalField[]`                                                             | No            | Field list; fallback to default input if empty                   |
-| `item.initialValues`      | `Record<string, any>`                                                              | No            | Default initial values (used for create or as fallback for echo) |
-| `field.key`               | `string`                                                                           | Yes           | Unique field key                                                 |
-| `field.type`              | `'input' \| 'number' \| 'textarea' \| 'select' \| 'radio' \| 'date' \| 'datetime'` | Yes           | Field type                                                       |
-| `field.options`           | `Array<{label:string,value:string\|number}>`                                       | Conditionally | Required for `select/radio`                                      |
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `config.create / edit / copy` | `TemplateModalConfigItem` | No | Configuration per modal. When `copy` is missing, `edit` then `create` is used; when `edit` is missing, `create` is used |
+| `item.fields` | `TemplateModalField[]` | No | Field list. When omitted or empty, the modal falls back to a single untitled input whose value becomes the template name |
+| `item.initialValues` | `Record<string, any>` | No | Default values, matched by `field.key` |
 
-Behavior notes:
+Fields (`item.fields[]`):
 
-- `name` is still the primary template name field and is used as the name argument for `create/edit/copy`.
-- Other fields are sent back as "extended form values" and stored under `ext.templateModalForm` (see Backend API Specifications).
-- When opening `edit/copy`, the component prefers `ext.templateModalForm[mode]` from template details for echo, then falls back to `initialValues`.
-- `create` uses `initialValues` by default; when not configured, component default behavior applies.
+| Field | Type | Required | Applies to | Description |
+| --- | --- | --- | --- | --- |
+| `key` | `string` | Yes | All | Field identifier; also the submitted key and the key inside `ext.templateModalForm` |
+| `type` | `'input' \| 'number' \| 'textarea' \| 'select' \| 'radio' \| 'date' \| 'datetime'` | Yes | All | Control type; see the table below |
+| `label` | `string` | No | All | Field title; no title is rendered when omitted |
+| `placeholder` | `string` | No | input / number / textarea / select | Placeholder text; for a non-required `select` it is used as the empty option label |
+| `required` | `boolean` | No | All | Required. The confirm button is disabled while empty; a non-required `select` gets an extra empty option |
+| `options` | `{ label: string; value: string \| number }[]` | Required for `select` / `radio` | select / radio | Option list; entries whose `label` is not a string are dropped |
+| `min` / `max` | `number` | No | number | Allowed range; values outside it are not saved when confirming |
+| `step` | `number` | No | number | Step size, defaults to 1 |
+| `rows` | `number` | No | textarea | Visible rows, defaults to 4 |
+
+Control types:
+
+| `type` | UI | Submitted value |
+| --- | --- | --- |
+| `input` | Single-line text box | String |
+| `number` | Numeric input | Number; empty submits `null` |
+| `textarea` | Multi-line text box | String (empty string when left blank) |
+| `select` | Dropdown | The option `value` |
+| `radio` | Radio group | The option `value` |
+| `date` | Native date picker | `YYYY-MM-DD` |
+| `datetime` | Native date-time picker | `YYYY-MM-DDTHH:mm` |
+
+Notes:
+
+- When `fields` is configured, it must contain a field with `key: 'name'`: it supplies the template name on save. Without it, confirming does nothing.
+- `name` is only used as the template name and is not written to `ext.templateModalForm`; all other field values are written to `ext.templateModalForm[mode]`.
+- When `fields` is not configured (or is empty), the modal falls back to a single untitled input whose value becomes the template name; there are no extra fields to fill in.
+
+Prefill order when the modal opens (highest priority first):
+
+1. `ext.templateModalForm[mode]` — history for the current action;
+2. `ext.templateModalForm[lastMode]` — history from the last submission;
+3. business fields in the template's `ext` whose key matches a field `key`;
+4. `initialValues` from the configuration;
+5. the current template name (for the `name` field only).
+
+History wins for keys that exist in both places, so `initialValues` only affects the very first fill.
 
 ### 24. Configure Custom Element Modal Custom Form (setCustomElementModalForm)
 
-Description: Used to configure the custom form structure and default values for the custom element "Create / Edit" modals.
+Description: Used to configure the custom form structure and default values for the custom element "Create / Edit / Copy" modals. Field usage is identical to "23. Configure Template Modal Custom Form"; only examples are shown here.
+
+Difference from template modals: the custom element's `create` / `edit` / `copy` configurations are **independent** and do not fall back to each other; when a mode is not configured, its modal uses the default single name input. `copy` is honored, and the copy modal reads `copy.fields`.
 
 ```ts
 el.setCustomElementModalForm({
@@ -1416,9 +1531,93 @@ el.setTemplateTagResolver((template) => {
 
 | Field   | Type     | Description                                                                                                                                                      |
 | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `key`   | `string` | Unique identifier for the tag                                                                                                                                    |
+| `key` | `string` | Tag identifier; not used for rendering yet, may be omitted |
 | `label` | `string` | Display text of the tag                                                                                                                                          |
 | `color` | `string` | Tag color. Supports built-in semantic colors (`white`, `red`, `blue`, `green`, `orange`) or valid CSS color values. If not provided, default gray style is used. |
+
+**Color Values:**
+
+| Value | Result |
+| --- | --- |
+| `red` / `红色` / `红` / `#ff4d4f` | Light red background, dark red text |
+| `blue` / `蓝色` / `蓝` / `#3b82f6` | Light blue background, dark blue text |
+| `green` / `绿色` / `绿` / `#22c55e` | Light green background, dark green text |
+| `orange` / `橙色` / `橙` / `#f97316` | Light orange background, dark orange text |
+| `white` / `白色` / `白` / `#ffffff` | White background, dark gray text |
+| Any other CSS color (e.g. `#a855f7`, `rgb(168,85,247)`) | Used directly as the background, with white text |
+| Omitted or empty string | Gray background, gray text |
+
+Color values are case-insensitive and surrounding spaces are ignored.
+
+**Display Rules:**
+
+- The list and the toolbar dropdown behave the same: the first 2 tags are shown in array order, and the rest collapse into `+N` (for example `+1`).
+- `+N` is only a count hint; it cannot be clicked to reveal the rest.
+- When the resolver does not return an array, it is treated as no tags; entries that are not objects are ignored.
+- Entries whose `label` is empty or whitespace-only are dropped, so no blank tag is rendered.
+- The callback runs once per template in the list and receives the template list item (`id`, `name`, `ext`, `permissions`, and so on).
+- It runs again whenever the list data changes, and the result is cached while the list stays the same; keep it a pure mapping function without expensive work or side effects.
+- Once a resolver is set, `ext.templateTags` is ignored; call `clearTemplateTagResolver()` to fall back to reading `ext.templateTags`.
+- When `setTemplateTagResolver` is not configured, the frontend reads `ext.templateTags` from the template (see "Backend API Specifications → ext.templateTags").
+
+### 26. Configure AI Built-in Models (setAiModels)
+
+Description: The host (your backend) injects a set of "built-in models" into the designer. Built-in models only appear in the AI assistant's model dropdown, grouped as "Built-in Models"; they are not written into user configuration and require no `apiKey` in the frontend.
+
+```ts
+// 1) Enable the AI feature (off by default; the state is remembered in localStorage)
+await el.setAiEnabled(true);
+
+// 2) Inject the host-provided model list (no apiKey)
+await el.setAiModels([
+  {
+    id: "builtin-fast",
+    alias: "Fast Model",
+    model: "deepseek-flash",
+    baseUrl: "/api/ai/v1",
+  },
+  {
+    id: "builtin-vision",
+    alias: "Vision Model",
+    model: "deepseek-vl",
+    baseUrl: "https://api.example.com/v1",
+    supportsVision: true,
+  },
+]);
+
+// 3) Open the panel; the "Built-in Models" group appears in the dropdown
+await el.openAiPanel();
+```
+
+**Model fields:**
+
+| Field            | Type                      | Required | Description                                                                                              |
+| ---------------- | ------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| `id`             | `string`                  | Yes      | Unique identifier; when `activeId` matches both a built-in and a custom model, the built-in model wins. |
+| `alias`          | `string`                  | No       | Name shown in the dropdown; defaults to `model`.                                                         |
+| `model`          | `string`                  | Yes      | Model name in the request body.                                                                          |
+| `baseUrl`        | `string`                  | Yes      | API base URL. Relative paths go directly to the same origin; `http(s)://` is proxied via `/ai-proxy` in development and called directly in production. |
+| `temperature`    | `number`                  | No       | Defaults to `0.2`.                                                                                       |
+| `maxTokens`      | `number`                  | No       | Defaults to `16384`.                                                                                     |
+| `maxInputTokens` | `number`                  | No       | Defaults to `128000`.                                                                                    |
+| `supportsVision` | `boolean`                 | No       | Whether images can be uploaded; defaults to `false`.                                                     |
+| `headers`        | `Record<string, string>`  | No       | Extra request headers.                                                                                   |
+| `extraBody`      | `Record<string, unknown>` | No       | Extra fields merged into the request body.                                                               |
+
+**Behavior:**
+
+- Replacement semantics: each call replaces the whole built-in list; passing an empty array clears it and the dropdown falls back to user-defined models.
+- Built-in models are not written into `getAiConfig().profiles` and are not saved to localStorage; they must be re-injected after a page refresh.
+- The settings page only lists user-defined models; when only built-in models exist, the empty state reads "Models are provided by your administrator; you can also add your own."
+- The second argument `setAiModels(models, { scopeId })` isolates by tenant/instance and defaults to the designer's CRUD scope.
+- Never inject secrets in the frontend: point `baseUrl` at your own server endpoint, keep the key on the server, and send only the model name and messages from the frontend.
+
+**Read the current configuration:**
+
+```ts
+// Contains only user-defined models; built-in models are maintained via setAiModels
+const config = await el.getAiConfig();
+```
 
 ## Backend API Specifications
 
@@ -1441,16 +1640,270 @@ When integrating with remote CRUD, implement API paths and core fields first, th
 
 | Field         | Type      | Required                   | Description                                                            |
 | ------------- | --------- | -------------------------- | ---------------------------------------------------------------------- |
-| `id`          | `string`  | Required for detail/update | Primary key. Can be omitted for create; backend returns the real `id`. |
-| `name`        | `string`  | Required for create/update | Display name.                                                          |
-| `permissions` | `object`  | Optional                   | Can include `editable/deletable/copyable` to control UI actions.       |
-| `updatedAt`   | `number`  | Recommended                | Unix timestamp in milliseconds.                                        |
-| `ext`         | `object`  | Recommended                | Extension container. See `ext` rules in this section.                  |
-| `success`     | `boolean` | Recommended for delete     | Delete result flag.                                                    |
+| `id`          | `string`  | Required for create/update | Primary key. Every save entry point sends an `id` (a client-generated uuid for new items); the backend may override it via the response `id`. |
+| `name`        | `string`  | Required for create/update | Display name; list items whose `name` is not a string are filtered out. |
+| `permissions` | `object`  | Optional                   | Can include `editable/deletable/copyable/system`; may be placed at the root or under `permissions`, root-level wins. Defaults: `editable/deletable = !system`, `copyable = true`; `system: true` forces read-only and non-deletable. |
+| `updatedAt`   | `number`  | Recommended                | Unix timestamp in milliseconds; falls back to the current time when missing. |
+| `ext`         | `object`  | Recommended                | Extension container. See "Generic `ext` Constraints" below.                  |
+| `success`     | `boolean` | Optional for delete        | The frontend does not read this field; a successful request is enough.  |
+
+### Generic `ext` Constraints
+
+`ext` is the shared "extra information" container for templates and custom elements. The keys below are understood by the designer; any other key is kept and saved as-is.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ext` | `Record<string, any>` | Recommended | Extension container. When `null`, an array, or a string is passed, it is treated as "no extra information". |
+| `ext.availableVariables` | `VariableTreeItem[]` | Recommended for template | The template's own variable catalog; decides which variables can be dragged from the variable panel. See below. |
+| `ext.templateModalForm` | `Record<string, any>` | Optional | Values entered in custom fields of the save modal. See below. |
+| `ext.templateTags` | `TemplateListTag[]` | Optional | Tags shown in the template list. See below. |
+| `ext.<customKey>` | Any JSON value | Optional | Your own business fields; the designer does not interpret them but keeps them. See below. |
+| `<root>.<customKey>` | Not supported | No | Business fields must live inside `ext`, not directly on the template root. |
+| `ext` merge rules | Rule | Yes | How `ext` from multiple sources is combined. See below. |
+
+#### ext.availableVariables (Template Available Variables)
+
+Description: a template can carry its own "variable catalog" in `ext.availableVariables`. It decides which variables appear in the variable panel for drag-and-drop binding, and is saved with the template together with element bindings.
+
+- `data.testData` holds preview **values**; this field holds the variable **structure**. They cannot replace each other.
+- The variable panel only reads this field; element bindings store just the variable path string (`@order.no`), not the whole tree.
+
+##### Structure
+
+```ts
+interface VariableTreeItem {
+  id: string                    // Variable path; also the key used by element bindings
+  label: string                 // Display name in the variable panel
+  children?: VariableTreeItem[] // Child variables
+  isArray?: boolean             // Reserved flag for array-type variables
+}
+```
+
+Example:
+
+```json
+{
+  "ext": {
+    "availableVariables": [
+      {
+        "id": "order",
+        "label": "Order",
+        "children": [
+          { "id": "order.no", "label": "Order No." },
+          { "id": "order.amount", "label": "Amount" }
+        ]
+      },
+      { "id": "items", "label": "Line Items", "isArray": true }
+    ]
+  }
+}
+```
+
+##### Field Constraints
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | Yes | Variable path, globally unique; element bindings use this value. |
+| `label` | `string` | Yes | Display name in the variable panel. |
+| `children` | `VariableTreeItem[]` | No | Child variables; one nesting level is recommended, since the panel expands only one level by default. |
+| `isArray` | `boolean` | No | Reserved flag for array-type variables; not rendered specially for now. |
+
+##### When It Is Sent and Returned
+
+| Scenario | Frontend Behavior |
+| --- | --- |
+| Open template in remote mode (`loadTemplate`) | Requests the detail endpoint and replaces the variable tree with `ext.availableVariables`. |
+| Open template in local mode | Reads the template from localStorage and replaces the variable tree the same way. |
+| `loadTemplateData(...)` | Replaces the variable tree with the passed `ext.availableVariables`; clears it when omitted. |
+| Remote save (`upsertTemplate`) | Uses `ext.availableVariables` from the argument when present, otherwise keeps the template's previous value. |
+| Remote save response | When the response contains `ext`, it is merged field by field. |
+| `setTemplates(list)` | Keeps `ext.availableVariables` on each item as-is. |
+| `getTemplateData()` | Returns the current variable tree under `ext.availableVariables`. |
+
+##### How Elements Bind Variables
+
+Elements store the variable path string; both forms are recognized:
+
+```ts
+element.variable = '@order.no'
+element.variable = '{#order.no}'
+```
+
+Value resolution order: `variables` (runtime) → `testData` (design time).
+
+##### What the Backend Needs to Do
+
+1. The detail endpoint must return `ext.availableVariables`; without it the variable panel is empty.
+2. The save endpoint must store it unchanged: do not trim `children`, rewrite `id`, or merge duplicates.
+3. The list endpoint may omit this field; lists are for display only and do not restore variables.
+4. On create, when the frontend omits it, you may supply a default catalog or return an empty array.
+
+#### ext.templateModalForm (Modal Form Values)
+
+Used by the "Save template" modal: whatever the user enters in your extra fields (category, owner, and so on) is recorded here. Control types, supported attributes, and the prefill order are described in "23. Configure Template Modal Custom Form".
+
+Structure:
+
+```ts
+interface TemplateModalFormExt {
+  create?: Record<string, any> // Values entered in the create modal
+  edit?: Record<string, any>   // Values entered in the edit modal
+  copy?: Record<string, any>   // Values entered in the copy modal
+  lastMode?: "create" | "edit" | "copy" // Which modal submitted last
+  updatedAt?: number           // Timestamp of the last write in milliseconds
+}
+```
+
+Full example:
+
+```json
+{
+  "ext": {
+    "templateModalForm": {
+      "create": { "category": "invoice", "owner": "sales" },
+      "edit": { "category": "invoice", "owner": "finance" },
+      "lastMode": "edit",
+      "updatedAt": 1730000000000
+    }
+  }
+}
+```
+
+When it is written:
+
+| Action | What is written |
+| --- | --- |
+| Create a template and submit the modal | The extra field values go to `create`; `lastMode` becomes `create` |
+| Edit a template and submit the modal | The extra field values go to `edit`; `lastMode` becomes `edit` |
+| Copy a template and submit the modal | The extra field values go to `copy`; `lastMode` becomes `copy` |
+| Plain save (no modal) | No field values are added; only `lastMode` becomes the mode that matches the save |
+| Every write | `updatedAt` is refreshed to the current time |
+
+A plain save means clicking the save button, saving a custom element, or calling `upsertTemplate` without going through the modal form; these writes never change the stored values of `create` / `edit` / `copy`.
+
+What the backend needs to do:
+
+- Store `ext.templateModalForm` as received: do not clear it or trim `create/edit/copy`.
+- Return it unchanged from the detail endpoint; the list endpoint may omit it.
+- `updatedAt` only records the write time for the frontend; the backend does not need to act on it.
+
+#### ext.templateTags (Template List Tags)
+
+The small tags shown before each template in the list and in the toolbar template dropdown (such as "Published" or "Finance only") come from this field by default. Color values and display rules are described in "25. Configure Template List Tag Extension".
+
+##### Structure
+
+```ts
+interface TemplateListTag {
+  key?: string   // Tag identifier, kept as-is; not used for rendering
+  label: string  // Tag text, required
+  color?: string // Tag color
+}
+```
+
+##### Field Constraints
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `key` | `string` | No | Tag identifier. The frontend keeps it as-is; it is not used for de-duplication, sorting, or as a list key. May be omitted |
+| `label` | `string` | Yes | Tag text. Converted to a string and trimmed; entries that are empty or whitespace-only are dropped, so no blank tag is rendered |
+| `color` | `string` | No | Tag color, see the table below; gray default when omitted |
+
+Full example:
+
+```json
+{
+  "ext": {
+    "templateTags": [
+      { "key": "published", "label": "Published", "color": "green" },
+      { "key": "finance", "label": "Finance only", "color": "blue" },
+      { "key": "archived", "label": "Archived" }
+    ]
+  }
+}
+```
+
+The example above renders "Published" and "Finance only", followed by `+1`.
+
+##### What the Backend Needs to Do
+
+1. Include `ext.templateTags` unchanged in the list endpoint; without it no tags are rendered.
+2. The detail endpoint may omit this field.
+3. Store it unchanged on save: the frontend never clears this field when saving a template, so persist what you receive instead of dropping unknown keys.
+
+#### `ext.<customKey>` (Custom Business Fields)
+
+Business fields the designer does not understand go here, such as order type, owning department, or an external system ID.
+
+```json
+{
+  "ext": {
+    "bizMeta": { "source": "erp", "region": "east" },
+    "orderType": "invoice",
+    "flags": ["rush", "gift"],
+    "retryCount": 3
+  }
+}
+```
+
+##### Read and Write Rules
+
+| Stage | Behavior |
+| --- | --- |
+| Read | Whatever the API returns is kept; no type conversion and no key renaming |
+| Save | `ext` is included in the request body; except for `availableVariables`, caller-provided values win |
+| Keys not passed | Previous values are kept and never cleared (see the merge rules below) |
+| Root-level fields | Not supported. Before saving, the frontend keeps only `id`, `name`, `ext`, `permissions`, `data`, `updatedAt`, `element`, and `testData`; any other root field is dropped |
+| Value types | Any JSON value: object, array, string, number, boolean, `null` |
+
+##### Relationship with the Modal Form
+
+When a template modal opens, values in `ext` whose keys match a field `key` are prefilled into the form (step 3 of the prefill order in "23. Configure Template Modal Custom Form").
+
+For this reason, do not name business fields `templateModalForm`, `availableVariables`, or `templateTags`; those three keys are reserved by the designer.
+
+##### What the Backend Needs to Do
+
+1. Store and return `ext` as a plain JSON object; do not filter out unknown keys.
+2. Do not rename keys or change their nesting; the frontend relies on the original keys for prefill and display.
+3. When a template has no extra information, return `{}` or omit `ext` entirely.
+
+#### ext Merge Rules
+
+The `ext` of one template can come from several places (local cache, detail endpoint, save response, caller arguments). The frontend combines them as follows:
+
+| Data type | How it merges | Example |
+| --- | --- | --- |
+| Object | Merged deeply by key; later values win | `{ a: 1, b: 2 }` + `{ b: 3 }` → `{ a: 1, b: 3 }` |
+| Array | Replaced as a whole, never concatenated | `["a","b"]` + `["c"]` → `["c"]` |
+| Non-object | Treated as an empty object, no error | `ext: null` behaves like `ext: {}` |
+
+When merging happens:
+
+- After an `upsertTemplate` remote save succeeds, the response `ext` is written back by **top-level shallow merge** (`{ ...requestExt, ...responseExt }`); nested objects are not merged deeply;
+- After a designer UI save (toolbar / template list) succeeds, request `ext` and response `ext` are merged deeply (objects merge by key, arrays replace as a whole);
+- When `setTemplates(list)` replaces the list, each item's own `ext` is kept;
+- When a template comes back from the detail endpoint, it is written into the list cache;
+- When assembling a remote save request, the caller's `ext` wins and keys not passed fall back to the previous values.
+
+Because arrays are replaced as a whole, return complete arrays from the backend rather than only the changed entries.
+
+Deep merge applies everywhere except the `upsertTemplate` save **response**: there, `ext` overwrites by top-level key. For example, if the request contains `templateModalForm: { create: {...}, edit: {...} }` and the response returns only `templateModalForm: { edit: {...} }`, the local record keeps only `edit` and `create` is lost. So either omit `ext` from that response or echo the complete `ext` back.
 
 ### Template CRUD Constraints
 
-#### 1) List Templates
+#### 1) Endpoint Responsibilities and Call Timing
+
+| Endpoint | When it is called | Must return |
+| -------- | ----------------- | ----------- |
+| List | Designer init, list refresh, after a successful save | Summary array (`id/name/updatedAt/permissions/ext`); array order is display order |
+| Detail | User opens a template (remote `loadTemplate`) | `data` and `ext.availableVariables`, used to restore the canvas and variable tree |
+| Save | Save / Save As | Response `id` may be omitted (fall back to the request `id`); response `ext` shallow-overrides the request `ext` at the top level |
+| Delete | Deleting a template | Any successful response; `success` is not read by the frontend |
+
+The save endpoint is upsert-style: the frontend **always** sends `id` in the request body (a client-generated uuid for new items) and never splits it into two paths. The backend may treat that `id` as an idempotency key, or return its own `id` in the response to override it.
+
+#### 2) List Templates
 
 `GET /api/print/templates`
 
@@ -1458,8 +1911,8 @@ Note: request body is empty; response body is a template array. All fields below
 
 | Field              | Type     | Required    | Description                                                                                                                                                      |
 | ------------------ | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `item.id`          | `string` | Recommended | Template unique ID.                                                                                                                                              |
-| `item.name`        | `string` | Recommended | Template name.                                                                                                                                                   |
+| `item.id`          | `string` | Required    | Template unique ID; items with a non-string value are filtered out.                                                                                              |
+| `item.name`        | `string` | Required    | Template name; items with a non-string value are filtered out.                                                                                                    |
 | `item.updatedAt`   | `number` | Recommended | Update timestamp in milliseconds.                                                                                                                                |
 | `item.permissions` | `object` | Optional    | Permission control fields.                                                                                                                                       |
 | `item.ext`         | `object` | Optional    | Extension data.                                                                                                                                                  |
@@ -1505,7 +1958,7 @@ Response example:
 ]
 ```
 
-#### 2) Get Template Detail
+#### 3) Get Template Detail
 
 `GET /api/print/templates/{id}`
 
@@ -1565,19 +2018,22 @@ Response example:
 }
 ```
 
-#### 3) Save Template (Create/Update)
+#### 4) Save Template (Create/Update)
 
 `POST /api/print/templates`
 
 | Field                              | Type                 | Required            | Description                                                                          |
 | ---------------------------------- | -------------------- | ------------------- | ------------------------------------------------------------------------------------ |
-| `id` (request)                     | `string`             | Required for update | Template unique ID; omit for create.                                                 |
+| `id` (request)                     | `string`             | Yes                 | Always sent; a client-generated uuid for new items.                                  |
 | `name` (request)                   | `string`             | Yes                 | Template name.                                                                       |
 | `data` (request)                   | `object`             | Yes                 | Template design data.                                                                |
+| `updatedAt` (request)              | `number`             | Yes                 | Millisecond timestamp.                                                               |
+| `permissions` (request)            | `object`             | Optional            | Reuses the template's existing permissions.                                          |
 | `ext` (request)                    | `object`             | Optional            | Template extension container.                                                        |
 | `ext.availableVariables` (request) | `VariableTreeItem[]` | Recommended         | Template-bound variable tree; backend should persist as-is.                          |
-| `id` (response)                    | `string`             | Yes                 | Must return real `id` for create flow.                                               |
-| `ext` (response)                   | `object`             | Recommended         | Backend-appended extension data for frontend merge.                                  |
+| `id` (response)                    | `string`             | No                  | May be omitted; the request `id` is used as fallback.                                |
+| `ext` (response)                   | `object`             | Recommended         | **Top-level shallow merge**: same keys win from the response; nested objects are not merged deeply. |
+| `permissions` (response)           | `object`             | Optional            | Overrides the request permissions.                                                   |
 | `<customRootField>` (request root) | Not supported        | No                  | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
 
 Request example:
@@ -1588,7 +2044,14 @@ Content-Type: application/json
 Authorization: Bearer <token>
 
 {
+  "id": "3f1c2a6e-8b4d-4c9a-9f2e-5d7b1a0c6e33",
   "name": "A6 Shipping Label",
+  "updatedAt": 1715337600000,
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
+  },
   "data": {
     "pages": [
       {
@@ -1621,16 +2084,16 @@ Response example:
 }
 ```
 
-#### 4) Delete Template
+#### 5) Delete Template
 
 `DELETE /api/print/templates/{id}`
 
 Note: request body is empty.
 
-| Field     | Type      | Required    | Description                              |
-| --------- | --------- | ----------- | ---------------------------------------- |
-| `path.id` | `string`  | Yes         | Template ID to delete.                   |
-| `success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+| Field     | Type      | Required | Description                              |
+| --------- | --------- | -------- | ---------------------------------------- |
+| `path.id` | `string`  | Yes      | Template ID to delete.                   |
+| `success` | `boolean` | Optional | The frontend does not read it; any 2xx response is treated as success. |
 
 Request example:
 
@@ -1649,20 +2112,21 @@ Response example:
 
 ### Custom Element CRUD Constraints
 
-#### 5) List Custom Elements
+#### 6) List Custom Elements
 
 `GET /api/print/custom-elements`
 
 Note: request body is empty; response body is a custom-element array. All fields below are list-item fields (item.xxx).
 
-| Field              | Type     | Required    | Description                                                            |
-| ------------------ | -------- | ----------- | ---------------------------------------------------------------------- |
-| `item.id`          | `string` | Recommended | Element unique ID.                                                     |
-| `item.name`        | `string` | Recommended | Element name.                                                          |
-| `item.element`     | `object` | Yes         | Element definition; items without this field are filtered by frontend. |
-| `item.updatedAt`   | `number` | Recommended | Update timestamp in milliseconds.                                      |
-| `item.permissions` | `object` | Optional    | Permission control fields.                                             |
-| `item.ext`         | `object` | Optional    | Extension data.                                                        |
+| Field              | Type     | Required | Description                                                            |
+| ------------------ | -------- | -------- | ---------------------------------------------------------------------- |
+| `item.id`          | `string` | Required | Element unique ID; items with a non-string value are filtered out.      |
+| `item.name`        | `string` | Required | Element name; items with a non-string value are filtered out.           |
+| `item.element`     | `object` | Required | Element definition. On first load with no cache, items without it are filtered out; when a cache exists it falls back to the cached value. |
+| `item.testData`    | `object` | Optional | Element test data; returned with the list and kept.                     |
+| `item.updatedAt`   | `number` | Optional | Timestamp in milliseconds. The frontend currently does not keep it.      |
+| `item.permissions` | `object` | Optional | Permission control fields.                                             |
+| `item.ext`         | `object` | Optional | Extension data.                                                        |
 
 Request example:
 
@@ -1696,11 +2160,11 @@ Response example:
 ]
 ```
 
-#### 6) Get Custom Element Detail
+#### 7) Get Custom Element Detail
 
 `GET /api/print/custom-elements/{id}`
 
-Note: request body is empty.
+Note: request body is empty. **The frontend currently never calls this endpoint** (`getCustomElement` reads from memory / the list cache), so it can be implemented as a reserved endpoint.
 
 | Field         | Type     | Required    | Description                              |
 | ------------- | -------- | ----------- | ---------------------------------------- |
@@ -1746,19 +2210,22 @@ Response example:
 }
 ```
 
-#### 7) Save Custom Element (Create/Update)
+#### 8) Save Custom Element (Create/Update)
 
 `POST /api/print/custom-elements`
 
-| Field                              | Type          | Required            | Description                                                                          |
-| ---------------------------------- | ------------- | ------------------- | ------------------------------------------------------------------------------------ |
-| `id` (request)                     | `string`      | Required for update | Element unique ID; omit for create.                                                  |
-| `name` (request)                   | `string`      | Yes                 | Element name.                                                                        |
-| `element` (request)                | `object`      | Yes                 | Element definition.                                                                  |
-| `ext` (request)                    | `object`      | Optional            | Element extension container.                                                         |
-| `id` (response)                    | `string`      | Yes                 | Must return real `id` for create flow.                                               |
-| `ext` (response)                   | `object`      | Recommended         | Backend-appended extension data for frontend merge.                                  |
-| `<customRootField>` (request root) | Not supported | No                  | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
+| Field                              | Type          | Required | Description                                                                          |
+| ---------------------------------- | ------------- | -------- | ------------------------------------------------------------------------------------ |
+| `id` (request)                     | `string`      | Yes      | Always sent; a client-generated uuid for new items.                                  |
+| `name` (request)                   | `string`      | Yes      | Element name.                                                                        |
+| `element` (request)                | `object`      | Yes      | Element definition.                                                                  |
+| `testData` (request)              | `object`      | Optional | Element test data.                                                                   |
+| `permissions` (request)           | `object`      | Optional | Reuses the element's existing permissions.                                           |
+| `ext` (request)                    | `object`      | Optional | Element extension container.                                                         |
+| `id` (response)                    | `string`      | No       | May be omitted; the request `id` is used as fallback.                                |
+| `ext` (response)                   | `object`      | Recommended | **Top-level shallow merge**: same keys win from the response.                       |
+| `permissions` (response)          | `object`      | Optional | Overrides the request permissions.                                                   |
+| `<customRootField>` (request root) | Not supported | No       | Root-level flattened custom fields are not supported; put custom fields under `ext`. |
 
 Request example:
 
@@ -1768,6 +2235,7 @@ Content-Type: application/json
 Authorization: Bearer <token>
 
 {
+  "id": "9a7d4c2b-1e6f-4a0d-8c3b-2f5e9d1a7b64",
   "name": "QRCode Element",
   "element": {
     "type": "qrcode",
@@ -1776,6 +2244,12 @@ Authorization: Bearer <token>
     "width": 100,
     "height": 100,
     "content": "https://example.com/order/1001"
+  },
+  "testData": {},
+  "permissions": {
+    "editable": true,
+    "deletable": true,
+    "copyable": true
   },
   "ext": {
     "category": "qrcode"
@@ -1795,16 +2269,16 @@ Response example:
 }
 ```
 
-#### 8) Delete Custom Element
+#### 9) Delete Custom Element
 
 `DELETE /api/print/custom-elements/{id}`
 
 Note: request body is empty.
 
-| Field     | Type      | Required    | Description                              |
-| --------- | --------- | ----------- | ---------------------------------------- |
-| `path.id` | `string`  | Yes         | Element ID to delete.                    |
-| `success` | `boolean` | Recommended | Delete result. `true` indicates success. |
+| Field     | Type      | Required | Description                              |
+| --------- | --------- | -------- | ---------------------------------------- |
+| `path.id` | `string`  | Yes      | Element ID to delete.                    |
+| `success` | `boolean` | Optional | The frontend does not read it; any 2xx response is treated as success. |
 
 Request example:
 
@@ -1821,24 +2295,14 @@ Response example:
 }
 ```
 
-### Generic `ext` Constraints
-
-| Field                    | Type                  | Required                 | Description                                                                                                         |
-| ------------------------ | --------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `ext`                    | `Record<string, any>` | Recommended              | Extension container. Non-object values (`null`, array, string) are treated as empty object on frontend.             |
-| `ext.templateModalForm`  | `Record<string, any>` | Optional                 | Extended modal-form echo data (shared by template/custom-element flows).                                            |
-| `ext.templateTags`       | `TemplateListTag[]`   | Optional                 | Template list tag data.                                                                                             |
-| `ext.availableVariables` | `VariableTreeItem[]`  | Recommended for template | Template-bound variable tree.                                                                                       |
-| `ext.<customKey>`        | Any JSON value        | Optional                 | Business extension fields (e.g. `ext.customField`, `ext.bizMeta`) are round-tripped and merged by frontend.         |
-| `<root>.<customKey>`     | Not supported         | No                       | Root-level flattened custom extension fields are not supported; place them under `ext`.                             |
-| `ext` merge rule         | Rule                  | Yes                      | Frontend merges objects by key; arrays use last value wins (no concatenation). Return full arrays for array fields. |
-
 ### Quick Checklist
 
-- Both template and custom-element resources expose `list/get/upsert/delete`.
-- All create/update APIs return a real `id`.
-- Template detail returns both `data` and `ext.availableVariables`.
-- Every custom-element list item includes `element`.
+- Templates need `list` / `get` / `upsert` / `delete`.
+- Custom elements need `list` / `upsert` / `delete`; `customElements.get` may be reserved, but the frontend never calls it.
+- List items must contain string `id` and `name`; otherwise they are filtered out.
+- Template detail must return `data` and `ext.availableVariables`.
+- Every custom-element list item must include `element` (on the first load with no cache, items missing it are filtered out).
+- Create/update APIs are recommended to return the real `id`; when omitted, the frontend keeps the `id` sent in the request.
 - All extension fields are under `ext` (no root-level flattened custom fields).
 
 ## Events
@@ -1846,10 +2310,16 @@ Response example:
 ```ts
 el.addEventListener("ready", () => {});
 el.addEventListener("print", (e) => {});
-el.addEventListener("printed", (e) => {});
+el.addEventListener("printed", (e) => {
+  const { request, result } = e.detail || {};
+});
 el.addEventListener("export", (e) => {});
 el.addEventListener("exported", (e) => {
   const blob = e.detail?.blob;
+});
+el.addEventListener("preview", (e) => {});
+el.addEventListener("previewed", (e) => {
+  const { request, result } = e.detail || {};
 });
 el.addEventListener("progress", (e) => {
   console.log(e.detail?.percent, e.detail?.message);
@@ -1865,11 +2335,15 @@ Event details:
 | ---------- | ------------------- | -------------------- |
 | `ready`    | Component ready     | None                 |
 | `print`    | Printing started    | `{ request }`        |
-| `printed`  | Printing finished   | `{ request }`        |
+| `printed`  | Printing finished   | `{ request, result }` |
+| `preview`  | Client preview started | `{ request }`     |
+| `previewed`| Client preview sent | `{ request, result }` |
 | `export`   | Export started      | `{ request }`        |
-| `exported` | Export finished     | `{ request, blob? }` |
+| `exported` | Export finished     | `{ request, blob? }` (`blob` only for `pdfBlob` / `imageBlob`) |
 | `progress` | Progress updated    | `DesignerProgressPayload` |
-| `error`    | Print/export failed | `{ scope, error }`   |
+| `error`    | Print/export/preview/batch failed | `{ scope, error }`; see below |
+
+`error.detail.scope` can be: `print`, `export`, `preview`, `getPreviewHtml`, `getBatchPdfBlob`, `exportBatchPdf`, `printBatch`.
 
 ## PrintOptions
 
@@ -1889,6 +2363,8 @@ Event details:
 | `paperSize`   | `string`                                                       | No       | Paper size                                    |
 | `trayBin`     | `string`                                                       | No       | Tray/bin                                      |
 
+> "Required" above refers to the TypeScript type: except for `timeout`, all fields are required at the type level (empty strings are allowed). At runtime only `local` / `remote` require `printer`; `browser` mode does not read `options` at all.
+
 ## Common Scenarios
 
 In actual projects, integration is typically divided into three core scenarios: **Global Initialization**, **Designer Page**, and **Business Print Page**. Below is the standard API calling order and explanation.
@@ -1904,8 +2380,7 @@ const el = document.querySelector("print-designer") as any;
 el.setBranding({ title: "Enterprise Print Center", showTitle: true });
 el.setLanguage("en");
 
-// 2. Configure CRUD endpoints for cloud templates and custom elements
-el.setCrudMode("remote");
+// 2. Configure cloud CRUD endpoints first, then switch to remote mode
 el.setCrudEndpoints(
   {
     baseUrl: "https://api.your-domain.com",
@@ -1915,11 +2390,18 @@ el.setCrudEndpoints(
       upsert: "/print/templates",
       delete: "/print/templates/{id}",
     },
+    customElements: {
+      list: "/print/custom-elements",
+      get: "/print/custom-elements/{id}",
+      upsert: "/print/custom-elements",
+      delete: "/print/custom-elements/{id}",
+    },
   },
   {
     headers: { Authorization: "Bearer your-token" },
   },
 );
+el.setCrudMode("remote");
 
 // 3. Set default print options (e.g., default to silent print)
 el.setPrintDefaults({
@@ -1936,10 +2418,11 @@ On pages dedicated to template design, the focus is on loading templates and set
 const el = document.querySelector("print-designer") as any;
 
 // 1. If editing an existing template, load it by ID (relies on CRUD endpoints from Scenario 1)
-await el.loadTemplate("tpl_123");
+// loadTemplate is synchronous and only reports whether loading started; in remote mode the canvas updates after the detail response arrives
+el.loadTemplate("tpl_123");
 
 // 2. Set test data so users can preview variable rendering during design
-el.setTestData({
+await el.setTestData({
   orderNo: "TEST-0001",
   customerName: "John Doe",
   items: [{ name: "Product A", qty: 2 }],
@@ -1966,11 +2449,11 @@ On specific business pages (like order details), you usually just silently load 
 const el = document.querySelector("print-designer") as any;
 
 // 1. Load target template (can be pre-fetched JSON or loaded by ID)
-await el.loadTemplate("tpl_123");
+el.loadTemplate("tpl_123"); // synchronous boolean; the canvas updates after the remote detail response
 // Or: el.loadTemplateData(templateJsonData)
 
 // 2. Inject real business variable data (takes priority over test data)
-el.setVariables({
+await el.setVariables({
   orderNo: "REAL-20231025-001",
   customerName: "Acme Corp",
   items: [
@@ -1983,8 +2466,8 @@ el.setVariables({
 el.setPrintQuality("high");
 
 // 4. Execute Print or Export PDF
-// Execute silent print (using the 'local' mode configured in Scenario 1)
-await el.print();
+// Silent print requires silentPrint from setPrintDefaults and a local / remote mode
+await el.print({ mode: "local" });
 
 // Or export as PDF Blob and handle it yourself (e.g., upload to server)
 const pdfBlob = await el.export({ type: "pdfBlob" });
@@ -2004,14 +2487,12 @@ Description: If you do not want to keep any hidden template DOM on the page, or 
 const el = document.querySelector("print-designer") as any;
 
 // Load the template or data to be printed
-await el.loadTemplate("tpl_123");
-el.setVariables({ orderNo: "REAL-20231025-002" });
+el.loadTemplate("tpl_123"); // synchronous boolean; the canvas updates after the remote detail response
+await el.setVariables({ orderNo: "REAL-20231025-002" });
 
-// Call silent print in headless mode
-await el.print({
-  mode: "browser",
-  options: { silent: true },
-});
+// Silent print in headless mode: silentPrint comes from setPrintDefaults, not PrintOptions
+await el.print({ mode: "local" }); // requires setPrintDefaults({ printMode: 'local', silentPrint: true })
+// browser mode does not read options and cannot print silently; it only opens the system print dialog
 
 // Or call PDF export
 await el.export({
@@ -2021,6 +2502,8 @@ await el.export({
 ```
 
 ## Template and Custom Element JSON Examples
+
+> Note: the template example below is the complete "template record" structure (including `id` / `name`). `getTemplateData()` only returns the canvas part (`pages`, `canvasSize`, `testData`, `ext.availableVariables`, etc.) without `id` / `name`; `loadTemplateData()` likewise only needs the canvas part.
 
 **Template Data**
 

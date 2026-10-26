@@ -1,19 +1,31 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onUnmounted, inject } from "vue";
+import {
+  ref,
+  watch,
+  computed,
+  onMounted,
+  onUnmounted,
+  inject,
+  defineAsyncComponent,
+} from "vue";
 import { useI18n } from "@/locales";
 import { useTheme } from "@/composables/useTheme";
 import { useAutoSave } from "@/composables/useAutoSave";
+import { useFeatureFlags } from "@/composables/useFeatureFlags";
 import { usePrintSettings } from "@/composables/usePrintSettings";
 import { useDesignerStore } from "@/stores/designer";
 import ColorPicker from "@/components/common/ColorPicker.vue";
+import PasswordInput from "@/components/common/PasswordInput.vue";
 import { parseColor, hsvToRgb, expandBrandVars } from "@/utils/color";
 import X from "~icons/material-symbols/close";
 import SettingsIcon from "~icons/material-symbols/settings";
 import TranslateIcon from "~icons/material-symbols/translate";
 import PrintIcon from "~icons/material-symbols/print";
 import CloudIcon from "~icons/material-symbols/cloud";
+import AutoAwesomeIcon from "~icons/material-symbols/auto-awesome";
 import LinkIcon from "~icons/material-symbols/link";
 import LinkOffIcon from "~icons/material-symbols/link-off";
+import CheckIcon from "~icons/material-symbols/check";
 
 const props = defineProps<{
   show: boolean;
@@ -26,6 +38,7 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const { theme: selectedTheme, setTheme } = useTheme();
 const { autoSave } = useAutoSave();
+const { aiEnabled, setAiEnabled } = useFeatureFlags();
 const designerStore = useDesignerStore();
 const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
 const {
@@ -54,7 +67,14 @@ const {
   fetchRemoteClients,
 } = usePrintSettings();
 
-const activeTab = ref<"basic" | "language" | "local" | "remote">("basic");
+const activeTab = ref<"basic" | "language" | "ai" | "local" | "remote">(
+  "basic",
+);
+
+// AI module is hot-pluggable: its settings section only loads with the AI tab.
+const AiSettingsSection = defineAsyncComponent(
+  () => import("@/ai/components/AiSettingsSection.vue"),
+);
 type LanguageCode = "zh" | "zh-Hant" | "en" | "ja" | "ko" | "de";
 
 const supportedLanguages: LanguageCode[] = [
@@ -102,7 +122,9 @@ const languageOptions = computed<{ value: LanguageCode; label: string }[]>(
   ],
 );
 
-const selectedLang = ref<LanguageCode>(normalizeLanguage(locale.value as string));
+const selectedLang = ref<LanguageCode>(
+  normalizeLanguage(locale.value as string),
+);
 const selectedBrandKey = ref<string>(
   localStorage.getItem("print-designer-brand-key") || "default",
 );
@@ -414,12 +436,18 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 };
 
+const handleOpenAiSettings = () => {
+  activeTab.value = "ai";
+};
+
 onMounted(() => {
   window.addEventListener("keydown", handleKeydown);
+  window.addEventListener("designer:open-ai-settings", handleOpenAiSettings);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("designer:open-ai-settings", handleOpenAiSettings);
   if (props.show) {
     designerStore.setDisableGlobalShortcuts(false);
   }
@@ -437,8 +465,12 @@ onUnmounted(() => {
         class="bg-white rounded-lg shadow-xl w-[700px] max-w-full h-[500px] flex overflow-hidden"
       >
         <!-- Sidebar Tabs -->
-        <div class="w-48 bg-gray-50 border-r border-gray-200 flex flex-col shrink-0">
-          <div class="flex items-center px-4 py-3 border-b border-gray-200 shrink-0">
+        <div
+          class="w-48 bg-gray-50 border-r border-gray-200 flex flex-col shrink-0"
+        >
+          <div
+            class="flex items-center px-4 py-3 border-b border-gray-200 shrink-0"
+          >
             <h3 class="text-base font-semibold text-gray-800">
               {{ t("settings.title") }}
             </h3>
@@ -467,6 +499,18 @@ onUnmounted(() => {
             >
               <TranslateIcon class="w-5 h-5" />
               {{ t("settings.language") }}
+            </button>
+            <button
+              @click="activeTab = 'ai'"
+              class="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors text-sm"
+              :class="
+                activeTab === 'ai'
+                  ? 'bg-white text-blue-600 border-l-4 border-blue-600 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100 border-l-4 border-transparent'
+              "
+            >
+              <AutoAwesomeIcon class="w-5 h-5" />
+              {{ t("settings.aiEnabled") }}
             </button>
             <button
               @click="activeTab = 'local'"
@@ -533,9 +577,11 @@ onUnmounted(() => {
                     ? t("settings.basic")
                     : activeTab === "language"
                       ? t("settings.language")
-                      : activeTab === "local"
-                        ? t("settings.localConnection")
-                        : t("settings.remoteConnection")
+                      : activeTab === "ai"
+                        ? t("settings.aiEnabled")
+                        : activeTab === "local"
+                          ? t("settings.localConnection")
+                          : t("settings.remoteConnection")
                 }}
               </h3>
             </div>
@@ -675,12 +721,20 @@ onUnmounted(() => {
                   </div>
                   <button
                     @click="
-                      designerStore.setShowStatusBar(!designerStore.showStatusBar)
+                      designerStore.setShowStatusBar(
+                        !designerStore.showStatusBar,
+                      )
                     "
                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                    :class="designerStore.showStatusBar ? 'bg-blue-600' : 'bg-gray-200'"
+                    :class="
+                      designerStore.showStatusBar
+                        ? 'bg-blue-600'
+                        : 'bg-gray-200'
+                    "
                   >
-                    <span class="sr-only">{{ t("settings.showStatusBar") }}</span>
+                    <span class="sr-only">{{
+                      t("settings.showStatusBar")
+                    }}</span>
                     <span
                       aria-hidden="true"
                       class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
@@ -996,29 +1050,87 @@ onUnmounted(() => {
             <!-- Language Tab -->
             <div
               v-if="activeTab === 'language'"
-              class="space-y-4 text-sm text-gray-700"
+              class="space-y-3 text-sm text-gray-700"
             >
-              <div class="mb-2 font-medium text-gray-900">
+              <div class="font-medium text-gray-900">
                 {{ t("settings.selectLanguage") }}
               </div>
-              <div class="flex flex-wrap items-center gap-3">
+              <div class="grid grid-cols-2 gap-2">
                 <label
                   v-for="option in languageOptions"
                   :key="option.value"
-                  class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
+                  class="group flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-xs transition-colors"
                   :class="
                     selectedLang === option.value
-                      ? 'border-blue-600 text-blue-700'
-                      : 'border-gray-300'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                   "
                 >
-                  <input type="radio" :value="option.value" v-model="selectedLang" />
-                  <span>{{ option.label }}</span>
+                  <input
+                    type="radio"
+                    class="sr-only"
+                    :value="option.value"
+                    v-model="selectedLang"
+                  />
+                  <span
+                    class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors"
+                    :class="
+                      selectedLang === option.value
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-300 group-hover:border-gray-400'
+                    "
+                  >
+                    <CheckIcon
+                      v-if="selectedLang === option.value"
+                      class="h-2.5 w-2.5 text-white"
+                    />
+                  </span>
+                  <span class="truncate">{{ option.label }}</span>
                 </label>
               </div>
-              <p class="text-xs text-gray-500 mt-2">
+              <p class="text-xs leading-5 text-gray-500">
                 {{ t("settings.languageDesc") }}
               </p>
+            </div>
+
+            <!-- AI Tab -->
+            <div
+              v-if="activeTab === 'ai'"
+              class="space-y-4 text-sm text-gray-700"
+            >
+              <div>
+                <div class="flex items-center justify-between">
+                  <div class="font-medium text-gray-900">
+                    {{ t("settings.aiEnabled") }}
+                  </div>
+                  <button
+                    type="button"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="aiEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+                    @click="setAiEnabled(!aiEnabled)"
+                  >
+                    <span class="sr-only">{{ t("settings.aiEnabled") }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="aiEnabled ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  {{ t("settings.aiEnabledDesc") }}
+                </p>
+              </div>
+
+              <div v-if="aiEnabled" class="border-t border-gray-200 pt-4">
+                <div class="mb-2 font-medium text-gray-900">
+                  {{ t("settings.aiModel") }}
+                </div>
+                <p class="text-xs text-gray-500 mb-2">
+                  {{ t("settings.aiModelDesc") }}
+                </p>
+                <AiSettingsSection />
+              </div>
             </div>
 
             <!-- Local Connection Tab -->
@@ -1062,11 +1174,7 @@ onUnmounted(() => {
                   <span class="text-xs text-gray-500">{{
                     t("settings.secretKey")
                   }}</span>
-                  <input
-                    v-model="localSettings.secretKey"
-                    type="text"
-                    class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600"
-                  />
+                  <PasswordInput v-model="localSettings.secretKey" />
                 </label>
               </div>
               <div
@@ -1089,9 +1197,7 @@ onUnmounted(() => {
                     </p>
                   </div>
                   <button
-                    @click="
-                      localClientPreview = !localClientPreview
-                    "
+                    @click="localClientPreview = !localClientPreview"
                     :disabled="!localConnected"
                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     :class="[
@@ -1111,9 +1217,7 @@ onUnmounted(() => {
                       aria-hidden="true"
                       class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                       :class="
-                        localClientPreview
-                          ? 'translate-x-5'
-                          : 'translate-x-0'
+                        localClientPreview ? 'translate-x-5' : 'translate-x-0'
                       "
                     />
                   </button>
@@ -1143,9 +1247,7 @@ onUnmounted(() => {
                         v-model="localClientPreviewMode"
                         :disabled="!localConnected"
                       />
-                      <span>{{
-                        t("settings.localClientPreviewModePdf")
-                      }}</span>
+                      <span>{{ t("settings.localClientPreviewModePdf") }}</span>
                     </label>
                     <label
                       class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
@@ -1240,11 +1342,7 @@ onUnmounted(() => {
                   <span class="text-xs text-gray-500">{{
                     t("settings.password")
                   }}</span>
-                  <input
-                    v-model="remoteSettings.password"
-                    type="password"
-                    class="w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-600"
-                  />
+                  <PasswordInput v-model="remoteSettings.password" />
                 </label>
               </div>
               <div class="space-y-2 pt-2 border-t border-gray-200">
