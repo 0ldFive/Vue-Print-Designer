@@ -220,17 +220,17 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     });
   };
 
-  // 旋转表格在屏幕端（非打印）预览渲染器里，collapse 折叠的外边框会因半像素取整被丢弃，
-  // 表现为旋转后“缺两条外边”。打印走干净 iframe、导出图片走高保真光栅化，均不受影响，
-  // 故此修复仅作用于 preview 模式：在表格容器内补一个非折叠的 box-border 叠层，稳定绘制
-  // 完整外边框（不依赖 collapse 折叠边）。
-  const addRotatedTableEdgeOverlayForPreview = (pages: HTMLElement[]) => {
+  // 表格外框在导出态不渲染（spacer 行、TableElement 外边框叠层都只在设计态出现），
+  // 旋转表格还会因半像素取整丢失外边框。这里在 preview 模式下复刻设计器的
+  // 左/右/下外边框叠层，保证预览与设计器视觉一致。打印走干净 iframe、导出图片走
+  // 高保真光栅化，均不受影响。
+  const addTableEdgeOverlayForPreview = (pages: HTMLElement[]) => {
     pages.forEach((page) => {
       const tables = Array.from(
         page.querySelectorAll<HTMLTableElement>("table"),
       );
       tables.forEach((table) => {
-        if (!isWithinRotatedContext(table, page)) return;
+        const rotated = isWithinRotatedContext(table, page);
         const parent = table.parentElement;
         if (!parent) return;
         if (
@@ -252,7 +252,12 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         overlay.setAttribute("data-print-table-edge-overlay", "true");
         overlay.style.cssText =
           "position:absolute;left:0;top:0;width:100%;height:100%;" +
-          `box-sizing:border-box;border:${width} ${style} ${color};` +
+          "box-sizing:border-box;" +
+          (rotated
+            ? `border:${width} ${style} ${color};`
+            : `border-left:${width} ${style} ${color};` +
+              `border-right:${width} ${style} ${color};` +
+              `border-bottom:${width} ${style} ${color};`) +
           "pointer-events:none;";
         parent.appendChild(overlay);
       });
@@ -348,9 +353,9 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
       stabilizeStandaloneHtmlTableLayout(paginatedPages);
 
-      // 仅预览模式补旋转表格外边框叠层（打印 mode="export" 不受影响，避免与折叠边重叠变粗）。
+      // 仅预览模式补表格外边框叠层（打印 mode="export" 不受影响，避免与折叠边重叠变粗）。
       if (mode === "preview") {
-        addRotatedTableEdgeOverlayForPreview(paginatedPages);
+        addTableEdgeOverlayForPreview(paginatedPages);
       }
 
       paginatedPages.forEach((page, index) => {

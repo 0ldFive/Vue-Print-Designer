@@ -548,6 +548,17 @@ const startCell = ref<{
   section: "body" | "footer";
 } | null>(null);
 
+type TableSelectionCell = {
+  rowIndex: number;
+  colField: string;
+  section: "body" | "footer";
+};
+
+// 按住 Ctrl/Cmd 拖选时，把新矩形累加到已有选区，
+// 用于选出反 L 形这类非矩形区域。
+const additiveSelectionBase = ref<TableSelectionCell[] | null>(null);
+const additiveClickCell = ref<TableSelectionCell | null>(null);
+
 const mergeOriginalRowCellLayout = (mergedRow: any, originalRow: any) => {
   Object.keys(originalRow).forEach((field) => {
     const originalCell = originalRow[field];
@@ -798,6 +809,7 @@ const tableOuterEdgeStyle = computed(() => {
   if (borderStyle === "none" || borderWidth <= 0) return {};
 
   return {
+    borderLeft: `${borderWidth}px ${borderStyle} ${props.element.style.borderColor || "#000"}`,
     borderRight: `${borderWidth}px ${borderStyle} ${props.element.style.borderColor || "#000"}`,
     borderBottom: `${borderWidth}px ${borderStyle} ${props.element.style.borderColor || "#000"}`,
   };
@@ -912,8 +924,11 @@ const hasCustomFooterHeight = computed(() => {
 });
 
 const shouldRenderDesignSpacerRow = computed(() => {
+  // 设计态用 spacer 行吸收元素框的剩余高度，保证数据行不被拉伸；
+  // 导出/预览同样需要这行空白，否则表格会按 h-full 拉高行高，与设计器不一致。
+  // 自动分页表格不参与（导出态由分页逻辑接管高度）。
   return (
-    !store.isExporting &&
+    (!store.isExporting || props.element.autoPaginate !== true) &&
     !hasCustomHeaderHeight.value &&
     !hasCustomRowHeight.value &&
     !hasCustomFooterHeight.value
@@ -1047,6 +1062,9 @@ const resizingRow = ref<{ section: RowResizeSection; rowIndex: number } | null>(
 const startResizeY = ref(0);
 const startResizeHeight = ref(0);
 const TABLE_BODY_DRAG_HANDLE_EDGE_SIZE = 10;
+// 单元格屏幕高度低于该值时，上下边缘不再作为整表拖动热区。
+// 矮行（如 20px 行缩放后约 32px）上下热区会吃掉整格，导致单元格点不中。
+const TABLE_BODY_MIN_HEIGHT_FOR_VERTICAL_EDGE = 40;
 const canDragTableElement = computed(
   () => store.isTemplateEditable && !props.element.locked,
 );
@@ -1336,7 +1354,7 @@ const shouldShowFooterRowResizeHandle = (rowIndex: number) => {
 };
 
 const isBodyDragHandleHit = (event: MouseEvent) => {
-  const target = event.currentTarget as HTMLElement;
+  const target = event.currentTarget as HTMLTableCellElement;
   const rect = target.getBoundingClientRect();
   const edgeSize = Math.min(
     TABLE_BODY_DRAG_HANDLE_EDGE_SIZE,
@@ -1346,12 +1364,26 @@ const isBodyDragHandleHit = (event: MouseEvent) => {
   const offsetX = event.clientX - rect.left;
   const offsetY = event.clientY - rect.top;
 
-  return (
-    offsetX <= edgeSize ||
-    offsetX >= rect.width - edgeSize ||
-    offsetY <= edgeSize ||
-    offsetY >= rect.height - edgeSize
-  );
+  // 左右热区只保留在表格最外侧边框：内部相邻两格的交界不再拦截，
+  // 否则从合并单元格右侧或相邻列左侧起拖会被清空选择，框选无法开始。
+  let colStart = 0;
+  const row = target.parentElement as HTMLTableRowElement | null;
+  const rowCells = row ? Array.from(row.cells) : [];
+  for (const cell of rowCells) {
+    if (cell === target) break;
+    colStart += cell.colSpan || 1;
+  }
+  const colEnd = colStart + (target.colSpan || 1) - 1;
+  const columnCount = processedData.value.columns.length;
+
+  const hitLeftOuter = colStart === 0 && offsetX <= edgeSize;
+  const hitRightOuter =
+    colEnd >= columnCount - 1 && offsetX >= rect.width - edgeSize;
+  const hitVerticalEdge =
+    rect.height >= TABLE_BODY_MIN_HEIGHT_FOR_VERTICAL_EDGE &&
+    (offsetY <= edgeSize || offsetY >= rect.height - edgeSize);
+
+  return hitLeftOuter || hitRightOuter || hitVerticalEdge;
 };
 
 const handleResizeStart = (e: MouseEvent, index: number) => {
@@ -1662,6 +1694,78 @@ watch(
   },
 );
 
+// 跳格多选时补齐路径：同一行内两个选中格之间的格子补齐，同一列内同理。
+// 补齐可能产生新的行/列端点，因此循环到选区稳定。
+const fillSelectionPath = (cells: TableSelectionCell[]) => {
+  const columns = processedData.value.columns;
+  const colIndexByField = new Map<string, number>();
+  columns.forEach((column: any, index: number) => {
+    colIndexByField.set(column.field, index);
+  });
+
+  const keyOf = (cell: TableSelectionCell) =>
+    `${cell.section}|${cell.rowIndex}|${cell.colField}`;
+  const filled = new Map<string, TableSelectionCell>();
+  cells.forEach((cell) => filled.set(keyOf(cell), cell));
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+
+    const byRow = new Map<string, TableSelectionCell[]>();
+    const byColumn = new Map<string, TableSelectionCell[]>();
+    filled.forEach((cell) => {
+      const rowKey = `${cell.section}|${cell.rowIndex}`;
+      const columnKey = `${cell.section}|${cell.colField}`;
+      if (!byRow.has(rowKey)) byRow.set(rowKey, []);
+      if (!byColumn.has(columnKey)) byColumn.set(columnKey, []);
+      byRow.get(rowKey)!.push(cell);
+      byColumn.get(columnKey)!.push(cell);
+    });
+
+    byRow.forEach((rowCells) => {
+      const indices = rowCells
+        .map((cell) => colIndexByField.get(cell.colField))
+        .filter((index): index is number => typeof index === "number");
+      if (indices.length < 2) return;
+      const minCol = Math.min(...indices);
+      const maxCol = Math.max(...indices);
+      for (let c = minCol; c <= maxCol; c++) {
+        const field = columns[c]?.field;
+        if (!field) continue;
+        const cell: TableSelectionCell = {
+          rowIndex: rowCells[0].rowIndex,
+          colField: field,
+          section: rowCells[0].section,
+        };
+        if (!filled.has(keyOf(cell))) {
+          filled.set(keyOf(cell), cell);
+          changed = true;
+        }
+      }
+    });
+
+    byColumn.forEach((columnCells) => {
+      const rows = columnCells.map((cell) => cell.rowIndex);
+      const minRow = Math.min(...rows);
+      const maxRow = Math.max(...rows);
+      for (let r = minRow; r <= maxRow; r++) {
+        const cell: TableSelectionCell = {
+          rowIndex: r,
+          colField: columnCells[0].colField,
+          section: columnCells[0].section,
+        };
+        if (!filled.has(keyOf(cell))) {
+          filled.set(keyOf(cell), cell);
+          changed = true;
+        }
+      }
+    });
+  }
+
+  return Array.from(filled.values());
+};
+
 const handleMouseDown = (
   event: MouseEvent,
   rowIndex: number,
@@ -1676,13 +1780,32 @@ const handleMouseDown = (
   }
 
   event.stopPropagation();
+
+  const cell: TableSelectionCell = { rowIndex, colField, section };
   isSelecting.value = true;
-  startCell.value = { rowIndex, colField, section };
-  store.setTableSelection(
-    props.element.id,
-    { rowIndex, colField, section },
-    false,
-  );
+  startCell.value = cell;
+
+  if (event.ctrlKey || event.metaKey) {
+    // 累加选区：保留原选区作为基线，拖选结果叠加到基线上；
+    // 若未发生拖动，则松开鼠标时按单击切换单格。
+    const currentCells =
+      store.tableSelection?.elementId === props.element.id
+        ? store.tableSelection.cells.filter(
+            (c) => (c.section || "body") === section,
+          )
+        : [];
+    additiveSelectionBase.value = currentCells.map((c) => ({
+      rowIndex: c.rowIndex,
+      colField: c.colField,
+      section: (c.section || "body") as "body" | "footer",
+    }));
+    additiveClickCell.value = cell;
+    return;
+  }
+
+  additiveSelectionBase.value = null;
+  additiveClickCell.value = null;
+  store.setTableSelection(props.element.id, cell, false);
 };
 
 const handleMouseOver = (
@@ -1711,10 +1834,10 @@ const handleMouseOver = (
   const minCol = Math.min(startColIdx, endColIdx);
   const maxCol = Math.max(startColIdx, endColIdx);
 
-  const cells = [];
+  const rectCells: TableSelectionCell[] = [];
   for (let r = minRow; r <= maxRow; r++) {
     for (let c = minCol; c <= maxCol; c++) {
-      cells.push({
+      rectCells.push({
         rowIndex: r,
         colField: processedData.value.columns[c].field,
         section,
@@ -1722,10 +1845,59 @@ const handleMouseOver = (
     }
   }
 
-  store.setTableSelectionCells(props.element.id, cells);
+  if (additiveSelectionBase.value) {
+    // 起点格自身悬停不算拖动，避免 Ctrl 单击被误判为累加拖选
+    if (
+      rowIndex === startCell.value.rowIndex &&
+      colField === startCell.value.colField
+    ) {
+      return;
+    }
+    additiveClickCell.value = null;
+    const merged = additiveSelectionBase.value.map((c) => ({ ...c }));
+    rectCells.forEach((cell) => {
+      const exists = merged.some(
+        (c) =>
+          c.rowIndex === cell.rowIndex && c.colField === cell.colField,
+      );
+      if (!exists) merged.push(cell);
+    });
+    store.setTableSelectionCells(
+      props.element.id,
+      fillSelectionPath(merged),
+    );
+    return;
+  }
+
+  store.setTableSelectionCells(props.element.id, rectCells);
 };
 
 const handleMouseUp = () => {
+  if (additiveClickCell.value) {
+    const cell = additiveClickCell.value;
+    additiveClickCell.value = null;
+
+    const base = additiveSelectionBase.value || [];
+    const exists = base.some(
+      (c) => c.rowIndex === cell.rowIndex && c.colField === cell.colField,
+    );
+    const nextCells = exists
+      ? base.filter(
+          (c) =>
+            !(c.rowIndex === cell.rowIndex && c.colField === cell.colField),
+        )
+      : [...base, cell];
+
+    if (nextCells.length === 0) {
+      store.clearTableSelection();
+    } else {
+      store.setTableSelectionCells(
+        props.element.id,
+        fillSelectionPath(nextCells),
+      );
+    }
+  }
+  additiveSelectionBase.value = null;
   isSelecting.value = false;
   startCell.value = null;
 };

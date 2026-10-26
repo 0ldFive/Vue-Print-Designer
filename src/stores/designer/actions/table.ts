@@ -127,11 +127,6 @@ export const tableActions = {
 
       const targetDataKey = section === "footer" ? "footerData" : "data";
 
-      // Find bounds
-      const rowIndices = cells.map((c) => c.rowIndex);
-      const minRow = Math.min(...rowIndices);
-      const maxRow = Math.max(...rowIndices);
-
       // Determine effective columns
       let effectiveColumns = element.columns || [];
       if (element.columnsVariable && this.testData) {
@@ -151,11 +146,117 @@ export const tableActions = {
 
       if (colIndices.length !== cells.length) return; // Invalid columns
 
-      const minColIdx = Math.min(...colIndices);
-      const maxColIdx = Math.max(...colIndices);
+      const cellKey = (row: number, col: number) => `${row}:${col}`;
+      const sourceData = element[targetDataKey] || [];
 
-      const rowSpan = maxRow - minRow + 1;
-      const colSpan = maxColIdx - minColIdx + 1;
+      // 选中的合并格只带锚点，先展开成它实际覆盖的格子集合，
+      // 否则把已合并的块再次纳入 L 形选区时会被拆散。
+      const selectedKeys = new Set<string>();
+      let minRow = Number.POSITIVE_INFINITY;
+      let maxRow = Number.NEGATIVE_INFINITY;
+      let minColIdx = Number.POSITIVE_INFINITY;
+      let maxColIdx = Number.NEGATIVE_INFINITY;
+
+      cells.forEach((c) => {
+        const rowStart = c.rowIndex;
+        const colStart = colFields.indexOf(c.colField);
+        if (colStart === -1) return;
+
+        const cellValue = sourceData[rowStart]?.[c.colField];
+        const spanRows =
+          cellValue && typeof cellValue === "object"
+            ? cellValue.rowSpan || 1
+            : 1;
+        const spanCols =
+          cellValue && typeof cellValue === "object"
+            ? cellValue.colSpan || 1
+            : 1;
+        const rowEnd = rowStart + spanRows - 1;
+        const colEnd = Math.min(colStart + spanCols - 1, colFields.length - 1);
+
+        for (let r = rowStart; r <= rowEnd; r++) {
+          for (let c2 = colStart; c2 <= colEnd; c2++) {
+            selectedKeys.add(cellKey(r, c2));
+            minRow = Math.min(minRow, r);
+            maxRow = Math.max(maxRow, r);
+            minColIdx = Math.min(minColIdx, c2);
+            maxColIdx = Math.max(maxColIdx, c2);
+          }
+        }
+      });
+
+      if (selectedKeys.size === 0) return;
+
+      // 把选区拆成若干最大矩形块：优先取剩余格子中最长的水平连续段，再向下扩展。
+      // 矩形选区只会得到一块；反 L 形会得到「下方 1×3」+「上方 2×2」两块。
+      const usedKeys = new Set<string>();
+      const blocks: {
+        top: number;
+        left: number;
+        bottom: number;
+        right: number;
+      }[] = [];
+
+      while (true) {
+        let best: { row: number; col: number; width: number } | null = null;
+
+        for (let r = minRow; r <= maxRow; r++) {
+          let c = minColIdx;
+          while (c <= maxColIdx) {
+            if (
+              !selectedKeys.has(cellKey(r, c)) ||
+              usedKeys.has(cellKey(r, c))
+            ) {
+              c++;
+              continue;
+            }
+            let end = c;
+            while (
+              end + 1 <= maxColIdx &&
+              selectedKeys.has(cellKey(r, end + 1)) &&
+              !usedKeys.has(cellKey(r, end + 1))
+            ) {
+              end++;
+            }
+            const width = end - c + 1;
+            if (!best || width > best.width) best = { row: r, col: c, width };
+            c = end + 1;
+          }
+        }
+
+        if (!best) break;
+
+        let bottom = best.row;
+        while (bottom + 1 <= maxRow) {
+          let rowComplete = true;
+          for (let c = best.col; c < best.col + best.width; c++) {
+            if (
+              !selectedKeys.has(cellKey(bottom + 1, c)) ||
+              usedKeys.has(cellKey(bottom + 1, c))
+            ) {
+              rowComplete = false;
+              break;
+            }
+          }
+          if (!rowComplete) break;
+          bottom++;
+        }
+
+        for (let r = best.row; r <= bottom; r++) {
+          for (let c = best.col; c < best.col + best.width; c++) {
+            usedKeys.add(cellKey(r, c));
+          }
+        }
+
+        blocks.push({
+          top: best.row,
+          left: best.col,
+          bottom,
+          right: best.col + best.width - 1,
+        });
+      }
+
+      if (blocks.length === 0) return;
 
       // Snapshot for undo
       this.snapshot(HISTORY_ACTION.TABLE_MERGE_CELLS);
@@ -168,26 +269,90 @@ export const tableActions = {
         if (!newData[r]) newData[r] = {};
       }
 
-      // Iterate through the bounding box
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minColIdx; c <= maxColIdx; c++) {
-          const field = colFields[c];
-          const row = newData[r];
+      const ensureCell = (rowIndex: number, field: string) => {
+        const row = newData[rowIndex];
+        if (typeof row[field] !== "object" || row[field] === null) {
+          row[field] = { value: row[field] !== undefined ? row[field] : "" };
+        }
+        return row[field];
+      };
 
-          // Initialize cell object if it's just a value
-          if (typeof row[field] !== "object" || row[field] === null) {
-            row[field] = { value: row[field] !== undefined ? row[field] : "" };
+      blocks.forEach((block) => {
+        const rowSpan = block.bottom - block.top + 1;
+        const colSpan = block.right - block.left + 1;
+        for (let r = block.top; r <= block.bottom; r++) {
+          for (let c = block.left; c <= block.right; c++) {
+            const cellObject = ensureCell(r, colFields[c]);
+            if (r === block.top && c === block.left) {
+              cellObject.rowSpan = rowSpan;
+              cellObject.colSpan = colSpan;
+            } else {
+              cellObject.rowSpan = 0;
+              cellObject.colSpan = 0;
+              cellObject.value = "";
+            }
+          }
+        }
+      });
+
+      // 整个选区只保留左上角格子的内容，其余块左上角的内容清空。
+      const anchorBlock =
+        blocks.find(
+          (block) =>
+            block.top <= minRow &&
+            minRow <= block.bottom &&
+            block.left <= minColIdx &&
+            minColIdx <= block.right,
+        ) || blocks[0];
+      blocks.forEach((block) => {
+        if (block === anchorBlock) return;
+        ensureCell(block.top, colFields[block.left]).value = "";
+      });
+
+      // 去掉相邻块之间的公共边框，让多块拼接成视觉上连续的整块。
+      const clearBlockBorder = (
+        rowIndex: number,
+        field: string,
+        side:
+          | "borderTopWidth"
+          | "borderBottomWidth"
+          | "borderLeftWidth"
+          | "borderRightWidth",
+      ) => {
+        const cellObject = ensureCell(rowIndex, field);
+        if (
+          !cellObject.style ||
+          typeof cellObject.style !== "object" ||
+          Array.isArray(cellObject.style)
+        ) {
+          cellObject.style = {};
+        }
+        cellObject.style[side] = 0;
+      };
+
+      for (let i = 0; i < blocks.length; i++) {
+        for (let j = i + 1; j < blocks.length; j++) {
+          const a = blocks[i];
+          const b = blocks[j];
+          const colOverlapStart = Math.max(a.left, b.left);
+          const colOverlapEnd = Math.min(a.right, b.right);
+          const rowOverlapStart = Math.max(a.top, b.top);
+          const rowOverlapEnd = Math.min(a.bottom, b.bottom);
+
+          if (a.bottom + 1 === b.top && colOverlapStart <= colOverlapEnd) {
+            clearBlockBorder(a.top, colFields[a.left], "borderBottomWidth");
+            clearBlockBorder(b.top, colFields[b.left], "borderTopWidth");
+          } else if (b.bottom + 1 === a.top && colOverlapStart <= colOverlapEnd) {
+            clearBlockBorder(b.top, colFields[b.left], "borderBottomWidth");
+            clearBlockBorder(a.top, colFields[a.left], "borderTopWidth");
           }
 
-          if (r === minRow && c === minColIdx) {
-            // Top-left cell: set span
-            row[field].rowSpan = rowSpan;
-            row[field].colSpan = colSpan;
-          } else {
-            // Other cells: hide and clear value
-            row[field].rowSpan = 0;
-            row[field].colSpan = 0;
-            row[field].value = "";
+          if (a.right + 1 === b.left && rowOverlapStart <= rowOverlapEnd) {
+            clearBlockBorder(a.top, colFields[a.left], "borderRightWidth");
+            clearBlockBorder(b.top, colFields[b.left], "borderLeftWidth");
+          } else if (b.right + 1 === a.left && rowOverlapStart <= rowOverlapEnd) {
+            clearBlockBorder(b.top, colFields[b.left], "borderRightWidth");
+            clearBlockBorder(a.top, colFields[a.left], "borderLeftWidth");
           }
         }
       }
@@ -270,6 +435,120 @@ export const tableActions = {
             rData[field].rowSpan = 1;
             rData[field].colSpan = 1;
           }
+        }
+      }
+
+      // 清除合并时写入的 0 值边框覆盖，恢复公共边显示。
+      const clearZeroBorderSide = (
+        rowIndex: number,
+        field: string,
+        side:
+          | "borderTopWidth"
+          | "borderBottomWidth"
+          | "borderLeftWidth"
+          | "borderRightWidth",
+      ) => {
+        const cellValue = newData[rowIndex]?.[field];
+        if (!cellValue || typeof cellValue !== "object") return;
+        const style = cellValue.style;
+        if (!style || typeof style !== "object" || Array.isArray(style)) return;
+        const value = style[side];
+        if (value !== 0 && value !== "0" && value !== "0px") return;
+        delete style[side];
+        if (Object.keys(style).length === 0) delete cellValue.style;
+      };
+
+      const clearZeroBorderOverride = (rowIndex: number, field: string) => {
+        for (const side of [
+          "borderTopWidth",
+          "borderBottomWidth",
+          "borderLeftWidth",
+          "borderRightWidth",
+        ] as const) {
+          clearZeroBorderSide(rowIndex, field, side);
+        }
+      };
+
+      const top = cell.rowIndex;
+      const bottom = cell.rowIndex + rowSpan - 1;
+      const left = startColIdx;
+      const right = startColIdx + colSpan - 1;
+
+      // 本块及外扩一圈
+      for (let r = top - 1; r <= bottom + 1; r++) {
+        for (let c = left - 1; c <= right + 1; c++) {
+          if (r < 0 || c < 0 || c >= colFields.length || !newData[r]) continue;
+          clearZeroBorderOverride(r, colFields[c]);
+        }
+      }
+
+      // 相邻块可能跨越本块边界（如 L 形合并的上块跨两行），
+      // 需要按列/行回溯到合并格锚点，再清除落在该边界上的那条边。
+      const findRowAnchor = (rowIndex: number, colIndex: number) => {
+        for (let r = rowIndex; r >= 0; r--) {
+          const value = newData[r]?.[colFields[colIndex]];
+          if (!value || typeof value !== "object") return r;
+          if (value.rowSpan !== 0) return r;
+        }
+        return -1;
+      };
+
+      const findColAnchor = (rowIndex: number, colIndex: number) => {
+        for (let c = colIndex; c >= 0; c--) {
+          const value = newData[rowIndex]?.[colFields[c]];
+          if (!value || typeof value !== "object") return c;
+          if (value.colSpan !== 0) return c;
+        }
+        return -1;
+      };
+
+      for (let c = left; c <= right; c++) {
+        const topAnchorRow = findRowAnchor(top - 1, c);
+        if (topAnchorRow >= 0) {
+          const value = newData[topAnchorRow]?.[colFields[c]];
+          const span =
+            value && typeof value === "object" ? value.rowSpan || 1 : 1;
+          if (topAnchorRow + span - 1 === top - 1) {
+            clearZeroBorderSide(
+              topAnchorRow,
+              colFields[c],
+              "borderBottomWidth",
+            );
+          }
+        }
+
+        const bottomAnchorRow = findRowAnchor(bottom + 1, c);
+        if (bottomAnchorRow === bottom + 1) {
+          clearZeroBorderSide(
+            bottomAnchorRow,
+            colFields[c],
+            "borderTopWidth",
+          );
+        }
+      }
+
+      for (let r = top; r <= bottom; r++) {
+        const leftAnchorCol = findColAnchor(r, left - 1);
+        if (leftAnchorCol >= 0) {
+          const value = newData[r]?.[colFields[leftAnchorCol]];
+          const span =
+            value && typeof value === "object" ? value.colSpan || 1 : 1;
+          if (leftAnchorCol + span - 1 === left - 1) {
+            clearZeroBorderSide(
+              r,
+              colFields[leftAnchorCol],
+              "borderRightWidth",
+            );
+          }
+        }
+
+        const rightAnchorCol = findColAnchor(r, right + 1);
+        if (rightAnchorCol === right + 1) {
+          clearZeroBorderSide(
+            r,
+            colFields[rightAnchorCol],
+            "borderLeftWidth",
+          );
         }
       }
 
