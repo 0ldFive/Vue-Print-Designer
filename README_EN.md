@@ -45,7 +45,7 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
   <tr>
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Designer main view" width="100%" /></td>
     <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="Print preview" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="AI assistant panel" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png?v=2" alt="AI assistant panel" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>Designer main view and canvas</b></td>

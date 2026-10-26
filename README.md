@@ -45,7 +45,7 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
   <tr>
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="设计器主界面" width="100%" /></td>
     <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="打印预览" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png" alt="AI 助手对话面板" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png?v=2" alt="AI 助手对话面板" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>设计器主界面与画布视图</b></td>
@@ -53,7 +53,7 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
     <td align="center"><b>AI 助手 &#183; 自然语言生成模板</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="AI 模型配置" width="100%" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png?v=2" alt="AI 模型配置" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="快捷键说明" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="高级表格编辑" width="100%" /></td>
   </tr>
