@@ -220,11 +220,11 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     });
   };
 
-  // 表格外框在导出态不渲染（spacer 行、TableElement 外边框叠层都只在设计态出现），
-  // 旋转表格还会因半像素取整丢失外边框。这里在 preview 模式下复刻设计器的
-  // 左/右/下外边框叠层，保证预览与设计器视觉一致。打印走干净 iframe、导出图片走
-  // 高保真光栅化，均不受影响。
-  const addTableEdgeOverlayForPreview = (pages: HTMLElement[]) => {
+  // 表格外框在导出态不渲染（PrintRenderer 会置 isExporting=true，TableElement 的
+  // 左/右/下外边框叠层因此不输出），旋转表格还会因半像素取整丢失外边框。
+  // 这里按单元格边框样式复刻设计器的外边框叠层，供预览与导出（图片/PDF/HTML）
+  // 共用，保证三者视觉一致。同一父节点内只补一次，重复调用幂等。
+  const addTableEdgeOverlays = (pages: HTMLElement[]) => {
     pages.forEach((page) => {
       const tables = Array.from(
         page.querySelectorAll<HTMLTableElement>("table"),
@@ -353,10 +353,8 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
       stabilizeStandaloneHtmlTableLayout(paginatedPages);
 
-      // 仅预览模式补表格外边框叠层（打印 mode="export" 不受影响，避免与折叠边重叠变粗）。
-      if (mode === "preview") {
-        addTableEdgeOverlayForPreview(paginatedPages);
-      }
+      // 表格外框叠层在 processContentForImage 已统一补齐，这里幂等调用一次兜底。
+      addTableEdgeOverlays(paginatedPages);
 
       paginatedPages.forEach((page, index) => {
         const clone = page.cloneNode(true) as HTMLElement;
@@ -928,6 +926,13 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
 
     updatePageNumbers(container, pagesCount);
     container.style.height = `${height * pagesCount}px`;
+
+    // 分页拆分完成后统一补表格外框叠层（导出渲染不输出 TableElement 的设计态外框）。
+    addTableEdgeOverlays(
+      Array.from(container.children).filter(
+        (el) => !["STYLE", "LINK", "SCRIPT"].includes(el.tagName),
+      ) as HTMLElement[],
+    );
 
     if (store.showRenderDebugLogs) {
       console.log(`[Render Debug] 4. handleTablePagination & updatePageNumbers took ${(performance.now() - paginStart).toFixed(2)}ms (generated ${pagesCount} pages)`);

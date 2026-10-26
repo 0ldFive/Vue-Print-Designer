@@ -474,6 +474,23 @@ const handleChange = (key: string, value: any) => {
   }
 };
 
+// 面板 X/Y 以元素中心点为准：旋转围绕中心进行，中心坐标不随角度变化。
+// 写回时换算回模型左上角（x/y）。
+const positionX = computed(() =>
+  element.value ? element.value.x + element.value.width / 2 : 0,
+);
+
+const positionY = computed(() =>
+  element.value ? element.value.y + element.value.height / 2 : 0,
+);
+
+const handlePositionChange = (axis: "x" | "y", value: number) => {
+  if (!element.value) return;
+  const half =
+    axis === "x" ? element.value.width / 2 : element.value.height / 2;
+  handleChange(axis, value - half);
+};
+
 const handleStyleChange = (key: string, value: any) => {
   if (element.value) {
     store.updateElement(element.value.id, {
@@ -913,18 +930,18 @@ const closePropertiesPanel = () => {
               :label="`${t('properties.label.x')} (${unitLabel})`"
               type="number"
               :disabled="isEditingDisabled"
-              :value="pxToUnit(element.x, unit)"
+              :value="pxToUnit(positionX, unit)"
               @update:value="
-                (v) => handleChange('x', unitToPx(Number(v), unit))
+                (v) => handlePositionChange('x', unitToPx(Number(v), unit))
               "
             />
             <PropertyInput
               :label="`${t('properties.label.y')} (${unitLabel})`"
               type="number"
               :disabled="isEditingDisabled"
-              :value="pxToUnit(element.y, unit)"
+              :value="pxToUnit(positionY, unit)"
               @update:value="
-                (v) => handleChange('y', unitToPx(Number(v), unit))
+                (v) => handlePositionChange('y', unitToPx(Number(v), unit))
               "
             />
             <PropertyInput

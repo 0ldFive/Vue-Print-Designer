@@ -330,9 +330,10 @@ const getElementTitle = (element: PrintElement) => {
 };
 
 const getElementMeta = (element: PrintElement) => {
-  return `X:${Math.round(element.x)} Y:${Math.round(element.y)} W:${Math.round(
-    element.width,
-  )} H:${Math.round(element.height)} Z:${getElementZIndex(element)}`;
+  // 与属性面板保持一致：X/Y 展示元素中心点。
+  return `X:${Math.round(element.x + element.width / 2)} Y:${Math.round(
+    element.y + element.height / 2,
+  )} W:${Math.round(element.width)} H:${Math.round(element.height)} Z:${getElementZIndex(element)}`;
 };
 
 const isElementSelected = (id: string) => {
