@@ -21,7 +21,7 @@ jobs:
 
       - name: Install
         env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
           NPM_CONFIG_REPLACE_REGISTRY_HOST: always
         run: npm ci
 
@@ -81,7 +81,7 @@ jobs:
 
       - name: Install
         env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
           NPM_CONFIG_REPLACE_REGISTRY_HOST: always
         run: npm ci
 
