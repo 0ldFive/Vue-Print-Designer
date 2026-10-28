@@ -55,12 +55,12 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
   <tr>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png?v=2" alt="AI 模型配置" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="快捷键说明" width="100%" /></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="高级表格编辑" width="100%" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png?v=2" alt="模板市场" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>AI 助手 &#183; 模型接入配置</b></td>
     <td align="center"><b>快捷键说明</b></td>
-    <td align="center"><b>高级表格编辑</b></td>
+    <td align="center"><b>模板市场</b></td>
   </tr>
 </table>
 
@@ -76,6 +76,7 @@ Vue Print Designer 是一款可视化打印设计器，面向业务表单、标�
   - **浏览器打印**：原生预览与打印。
   - **导出**：支持生成 PDF、图片（拼接 / 分片）。
   - **客户端打印**：支持**静默打印**（无弹窗直打）与**云打印**（远程任务下发）。
+  - **标签打印**：配套客户端把设计器模板直接转成标签打印机原生指令（TSPL / ZPL / ESC-POS / CPCL），经系统打印队列 RAW 直出，条码与二维码保持矢量锐度，支持批量数据与连续纸。
 - **企业级功能**：支持自定义纸张、API 数据对接、模板导入导出及精细的打印参数控制（打印机 / 份数 / 单双面 / DPI）。
 
 ---
@@ -104,6 +105,51 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
     <td align="center"><b>打印预览 - 本地客户端实时预览</b></td>
   </tr>
 </table>
+
+### 标签打印（RAW 指令直出）
+
+热敏 / 热转印标签机（TSC、佳博、斑马、汉印、得力、芯烨等）本质是指令集打印机，把 PDF 交给这类设备只能整页栅格化：出标慢、条码扫描率下降、自定义纸张还容易缩放错位。客户端为此提供独立的标签打印通道——直接解析设计器模板 JSON，生成打印机原生指令后以 RAW 方式投递到系统打印队列，驱动原样透传。
+
+- **四种指令集**：TSPL / ZPL / ESC-POS / CPCL，默认按打印机名与驱动名自动推断，识别不到时可显式指定。
+- **元素完整还原**：文本（自动换行、对齐、粗细）、条码、二维码、表格（合并单元格、表头表尾、SUM / AVG / COUNT 聚合）、图片（抖动为黑白）、矩形 / 线条 / 圆形、多标签网格，以及任意角度的元素旋转。
+- **打印参数可控**：标签纸宽高（毫米，高度填 0 即连续纸按内容撑高）、DPI、速度、浓度、间隙 / 黑标 / 纵向偏移；文字可选位图渲染（版式保真）或机内字库（指令体积更小）。
+- **两条使用路径**：
+  - 业务端发送 `print_label` 消息，把设计器导出的模板 JSON 原样转发即可，无需二次加工；
+  - 在客户端打印预览窗口勾选「标签打印」即可本地出标（需设计器预览模式为 JSON）；选中标签机时会自动识别指令集并勾选，识别结果可随时手动推翻。
+- **批量与多页**：模板一页即一张标签；`labels[]` 可一次提交整批数据，每条数据独立设置份数，相邻标签之间可配置间隔。
+- **可追溯**：打印记录以 `label` 类型保存任务，并保留下发的指令内容，便于复查。
+
+#### 打印效果一致性比对
+
+下图为同一张 60 × 40 mm 仓库标签的三种呈现：设计器导出的原始效果、Zebra 官方 Labelary 服务按 ZPL 指令解析出的固件模拟结果，以及客户端本地按同一批指令重绘的结果。右下角将三者分别以红、黄、蓝三层叠加，重合区域呈深紫灰，可据此检查文本位置、字号与条码模块是否对齐。
+
+<table width="100%">
+  <tr>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-comparison.png" alt="标签打印三路对比" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>四路对照：设计器原图 / 厂商 API 模拟 / 客户端指令渲染 / 三方叠加</b></td>
+  </tr>
+</table>
+
+<table width="100%">
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-designer.png" alt="设计器原图" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-api.png" alt="厂商 API 模拟" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-local.png" alt="客户端指令渲染" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-overlay.png" alt="三方叠加" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>设计器原图</b></td>
+    <td align="center"><b>厂商 API 模拟</b></td>
+    <td align="center"><b>客户端指令渲染</b></td>
+    <td align="center"><b>三方叠加（diff）</b></td>
+  </tr>
+</table>
+
+以上图片由测试工具自动生成，不是手工截图。修改标签相关代码后，工具会将 ZPL 指令提交至 Labelary 逐点比对，差异超过 0.5% 时给出告警；无网络环境下自动跳过远端比对并输出提示，不影响本地打印任务。
+
+> 边界说明：彩色与灰度按黑白抖动输出；`pageNumber` 元素、水印 / 渐变 / 阴影、自定义 JS 脚本在标签路径下会被忽略且不阻断任务；ESC-POS 依赖机型支持 page mode 与 `ESC *` 位图。文字版式跨机器一致（客户端内嵌字体渲染），几何误差约 0.5 dot（203 dpi 下约 0.06 mm）。
 
 ---
 

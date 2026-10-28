@@ -763,6 +763,9 @@ export default {
     aiEnabled: "AI Assistant",
     aiEnabledDesc:
       "Show the AI assistant in the designer, where you can create or edit templates through chat.",
+    marketEnabled: "Template Market",
+    marketEnabledDesc:
+      "Show the template market in the designer to browse official templates and add them to your templates.",
     aiModel: "Model",
     aiModelDesc:
       "Choose the model the AI assistant uses, or connect your own model service.",

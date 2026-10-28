@@ -760,6 +760,9 @@ export default {
     aiEnabled: "AI 어시스턴트",
     aiEnabledDesc:
       "디자이너에 AI 어시스턴트 진입점을 표시합니다. 대화로 템플릿을 생성하거나 수정할 수 있습니다.",
+    marketEnabled: "템플릿 마켓",
+    marketEnabledDesc:
+      "디자이너에 템플릿 마켓 진입점을 표시합니다. 공식 제공 템플릿을 둘러보고 내 템플릿에 추가할 수 있습니다.",
     aiModel: "모델",
     aiModelDesc:
       "AI 어시스턴트가 사용할 모델을 선택하거나 직접 모델 서비스를 연결할 수 있습니다.",

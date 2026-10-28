@@ -55,12 +55,12 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
   <tr>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="AI model configuration" width="100%" /></td>
     <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="Shortcut reference" width="100%" /></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png" alt="Advanced table editing" width="100%" /></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png?v=2" alt="Template market" width="100%" /></td>
   </tr>
   <tr>
     <td align="center"><b>AI assistant · model endpoint setup</b></td>
     <td align="center"><b>Shortcut reference</b></td>
-    <td align="center"><b>Advanced table editing</b></td>
+    <td align="center"><b>Template market</b></td>
   </tr>
 </table>
 
@@ -75,6 +75,7 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
   - **Browser Print**: Native preview and print.
   - **Export**: Generate PDF and images (merge / split supported).
   - **Client Print**: Supports **Silent Printing** (direct print without dialogs) and **Cloud Printing** (remote task dispatch).
+  - **Label Printing**: The companion client converts designer templates into native label printer commands (TSPL / ZPL / ESC-POS / CPCL) and sends them as RAW data through the system print queue, keeping barcodes and QR codes vector-sharp, with batch data and continuous paper support.
 - **Enterprise Ready**: Supports custom paper sizes, API data integration, template import/export, and fine-grained print parameter control (printer / copies / duplex / DPI).
 
 ---
@@ -103,6 +104,51 @@ PrintDot Client is the companion desktop app for this project. It connects to yo
     <td align="center"><b>Print preview - real-time preview in local client</b></td>
   </tr>
 </table>
+
+### Label Printing (Native RAW Commands)
+
+Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, Xprinter and others) are command-driven devices. Handing them a PDF means rasterizing whole pages: slower output, lower barcode scan rates, and misalignment on custom paper. The client therefore provides a dedicated label path — it parses the designer's template JSON, generates native printer commands, and writes them as RAW data to the system print queue, which the driver passes through untouched.
+
+- **Four command languages**: TSPL / ZPL / ESC-POS / CPCL, inferred from the printer and driver names by default, or set explicitly when detection fails.
+- **Faithful element rendering**: text (wrapping, alignment, weight), barcodes, QR codes, tables (merged cells, repeated headers / footers, SUM / AVG / COUNT aggregation), images (dithered to black and white), rectangles / lines / circles, multi-label grids, and free-angle element rotation.
+- **Controllable print options**: label width and height in millimetres (height 0 means continuous paper sized to content), DPI, speed, density, gap / black mark / vertical offset; text can be rendered as bitmaps (layout-faithful) or with the printer's built-in fonts (smaller command payloads).
+- **Two entry points**:
+  - Send a `print_label` message and forward the template JSON exported by the designer as-is, with no extra processing;
+  - Tick "Label printing" in the client's print preview window to print locally (the designer's preview mode must be JSON). When a label printer is selected, the command language is detected and enabled automatically, and the result can always be overridden.
+- **Batch and multi-page**: one template page equals one label; `labels[]` submits a whole batch at once, each record with its own copy count and an optional interval between consecutive labels.
+- **Traceable**: jobs are stored in print history as the `label` type together with the commands that were sent, so they can be reviewed later.
+
+#### Rendering Consistency Comparison
+
+The images below show the same 60 × 40 mm warehouse label in three forms: the original output exported from the designer, the firmware simulation produced by Zebra's official Labelary service from the ZPL commands, and the client's local redraw of the same commands. The bottom-right pane overlays all three in red, yellow and blue, so overlapping areas appear deep purple-grey and positions, font sizes and barcode modules can be checked for alignment.
+
+<table width="100%">
+  <tr>
+    <td align="center"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-comparison.png" alt="Label printing three-way comparison" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Four panes: designer output / vendor API simulation / client command rendering / three-way overlay</b></td>
+  </tr>
+</table>
+
+<table width="100%">
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-designer.png" alt="Designer output" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-api.png" alt="Vendor API simulation" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-local.png" alt="Client command rendering" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-overlay.png" alt="Three-way overlay" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Designer output</b></td>
+    <td align="center"><b>Vendor API simulation</b></td>
+    <td align="center"><b>Client command rendering</b></td>
+    <td align="center"><b>Three-way overlay (diff)</b></td>
+  </tr>
+</table>
+
+The images are generated by the test tooling rather than captured by hand. After changes to label-related code, the tooling submits the ZPL commands to Labelary for a point-by-point comparison and reports a warning when the difference exceeds 0.5%. Without network access it skips the remote comparison, emits a notice, and leaves local print jobs unaffected.
+
+> Boundaries: colour and greyscale are dithered to black and white; `pageNumber` elements, watermarks / gradients / shadows and custom JS scripts are ignored on the label path without failing the job; ESC-POS requires the printer to support page mode and `ESC *` bitmaps. Text layout is identical across machines (the client embeds its own font rendering), with a geometric error of about 0.5 dot (~0.06 mm at 203 dpi).
 
 ---
 

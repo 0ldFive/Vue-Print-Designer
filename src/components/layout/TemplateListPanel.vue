@@ -391,7 +391,6 @@ const selectTemplate = async (template: Template) => {
 const handleCreate = (e?: Event) => {
   if (e && !isEventForCurrentDesigner(e)) return;
   if (e) e.stopImmediatePropagation();
-
   activeMenuId.value = null;
   modalMode.value = "create";
   targetTemplateId.value = null;

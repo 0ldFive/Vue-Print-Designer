@@ -150,6 +150,11 @@ bin-release/
 docs/zh/guide/*
 docs/todo/
 stats-wc.html
+
+# Market template build intermediates
+scripts/market/
+test/market-mock/
+/market/
 dist-wc/browser-Cw4SfmGQ.js
 dist-wc/canvg-BzMQlId7.js
 dist-wc/dompurify-fy0HnYL4.js

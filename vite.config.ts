@@ -3,7 +3,8 @@ import type { Plugin } from "vite";
 import vue from "@vitejs/plugin-vue";
 import Icons from "unplugin-icons/vite";
 import { fileURLToPath, URL } from "node:url";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 const packageJson = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
@@ -349,6 +350,77 @@ const aiMockServer = (
   };
 };
 
+/**
+ * 本地模板市场，仅供 `npm run dev` 联调 `test/market-mock/market`。
+ * 与线上保持同一套干净路由：
+ *   /test/market-mock/market              → index.json
+ *   /test/market-mock/market/{id}         → {id}/template.json
+ *   /test/market-mock/market/{id}/variables → {id}/variables.json
+ *   /test/market-mock/market/{id}/cover     → {id}/cover.png
+ * 只处理该前缀并补齐 CORS，不参与生产构建。
+ */
+const marketMockServer = (): Plugin => {
+  const root = fileURLToPath(
+    new URL("./test/market-mock/market", import.meta.url),
+  );
+  const prefix = "/test/market-mock/market";
+  const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+  const MIME_TYPES: Record<string, string> = {
+    ".json": "application/json; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+  };
+
+  const resolveMockFile = (pathname: string): string | null => {
+    const rest = pathname
+      .slice(prefix.length)
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+    if (!rest) return join(root, "index.json");
+    const [id, action, ...extra] = rest.split("/");
+    if (!ID_PATTERN.test(id) || extra.length > 0) return null;
+    if (!action) return join(root, id, "template.json");
+    if (action === "variables") return join(root, id, "variables.json");
+    if (action === "cover") return join(root, id, "cover.png");
+    return null;
+  };
+
+  return {
+    name: "market-mock-server",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const pathname = decodeURIComponent((req.url || "").split("?")[0]);
+        if (pathname !== prefix && !pathname.startsWith(`${prefix}/`)) {
+          next();
+          return;
+        }
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "no-store");
+        const filePath = resolveMockFile(pathname);
+        if (
+          !filePath ||
+          !existsSync(filePath) ||
+          !statSync(filePath).isFile()
+        ) {
+          res.statusCode = 404;
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end("not found");
+          return;
+        }
+        const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase();
+        res.statusCode = 200;
+        res.setHeader(
+          "Content-Type",
+          MIME_TYPES[ext] || "application/octet-stream",
+        );
+        res.end(readFileSync(filePath));
+      });
+    },
+  };
+};
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   // 第三个参数传空串，允许读取不带 VITE_ 前缀的服务端变量（如 DEEPSEEK_API_KEY）。
@@ -365,6 +437,7 @@ export default defineConfig(({ mode }) => {
         baseUrl: env.DEEPSEEK_BASE_URL,
         models: env.DEEPSEEK_MODELS,
       }),
+      marketMockServer(),
     ],
     define: {
       __PRINT_DESIGNER_VERSION__: JSON.stringify(printDesignerVersion),

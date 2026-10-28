@@ -1,4 +1,9 @@
-import { isAiEnabled, setAiEnabled } from "@/composables/useFeatureFlags";
+import {
+  isAiEnabled,
+  isModuleHidden,
+  setAiEnabled,
+  setModuleHidden,
+} from "@/composables/useFeatureFlags";
 import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
 import cloneDeep from "lodash/cloneDeep";
@@ -48,6 +53,13 @@ export const setAiConfig = (config: AiConfigInput, scopeId?: string) => {
 };
 
 export { isAiEnabled, setAiEnabled };
+
+/** 宿主侧整体隐藏 AI 模块：入口与设置页签都不再出现，刷新后保留。 */
+export const setAiHidden = (hidden: boolean) => {
+  setModuleHidden("ai", Boolean(hidden));
+};
+
+export const isAiHidden = (): boolean => isModuleHidden("ai");
 
 /** 注入内置模型列表，覆盖式生效；传空数组即清空。 */
 export const setAiModels = (

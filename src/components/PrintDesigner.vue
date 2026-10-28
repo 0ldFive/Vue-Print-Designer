@@ -41,7 +41,9 @@ import { useFloatingPanels } from "./print-designer/composables/useFloatingPanel
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
 const { autoSave } = useAutoSave();
-const { aiEnabled } = useFeatureFlags();
+const { aiEnabled, hiddenModules } = useFeatureFlags();
+const aiHidden = computed(() => hiddenModules.value.ai === true);
+const marketHidden = computed(() => hiddenModules.value.market === true);
 const { isDark } = useTheme();
 const { t } = useI18n();
 
@@ -58,6 +60,22 @@ const FloatingAiPanel = defineAsyncComponent({
     }
     hasLoadedAiPanel.value = false;
     showAiPanel.value = false;
+    fail();
+  },
+});
+
+// The market gallery follows the same lazy-mount rule as the AI panel.
+const hasLoadedMarket = ref(false);
+const showMarket = ref(false);
+const MarketModal = defineAsyncComponent({
+  loader: () => import("@/market/components/MarketModal.vue"),
+  onError: (_error, retry, fail, attempts) => {
+    if (attempts <= 1) {
+      retry();
+      return;
+    }
+    hasLoadedMarket.value = false;
+    showMarket.value = false;
     fail();
   },
 });
@@ -207,6 +225,13 @@ const isEventForCurrentDesigner = (e: Event) => {
   const eventId = (e as CustomEvent)?.detail?.__designerInstanceId;
   if (!eventId) return true;
   return eventId === designerInstanceId;
+};
+
+const handleOpenMarketEvent = (e: Event) => {
+  if (!isEventForCurrentDesigner(e)) return;
+  if (marketHidden.value) return;
+  hasLoadedMarket.value = true;
+  showMarket.value = true;
 };
 
 let handPanStartPointer = { x: 0, y: 0 };
@@ -487,6 +512,10 @@ onMounted(() => {
     handleCloseAiPanelEvent as EventListener,
   );
   window.addEventListener(
+    "designer:open-market",
+    handleOpenMarketEvent as EventListener,
+  );
+  window.addEventListener(
     "designer:panel-bring-to-front",
     handleBringPanelToFrontEvent as EventListener,
   );
@@ -505,6 +534,14 @@ onMounted(() => {
 
   watch(aiEnabled, (enabled) => {
     if (!enabled) closeAiPanel();
+  });
+
+  watch(aiHidden, (hidden) => {
+    if (hidden) closeAiPanel();
+  });
+
+  watch(marketHidden, (hidden) => {
+    if (hidden) showMarket.value = false;
   });
 
   watch(
@@ -951,6 +988,10 @@ onUnmounted(() => {
   window.removeEventListener(
     "designer:close-ai-panel",
     handleCloseAiPanelEvent as EventListener,
+  );
+  window.removeEventListener(
+    "designer:open-market",
+    handleOpenMarketEvent as EventListener,
   );
   window.removeEventListener(
     "designer:panel-bring-to-front",
@@ -1703,7 +1744,7 @@ const rulerRanges = computed(() => {
         @resize-mousedown="(e) => startPanelResize('structure', e)"
       />
       <FloatingAiPanel
-        v-if="!headless && aiEnabled && hasLoadedAiPanel"
+        v-if="!headless && aiEnabled && !aiHidden && hasLoadedAiPanel"
         :show="showAiPanel"
         :panel-style="aiPanelStyle"
         :z-index="getPanelZIndex('ai')"
@@ -1711,6 +1752,10 @@ const rulerRanges = computed(() => {
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('ai', e)"
         @resize-mousedown="(e) => startPanelResize('ai', e)"
         @close="closeAiPanel"
+      />
+      <MarketModal
+        v-if="!headless && hasLoadedMarket && showMarket"
+        @close="showMarket = false"
       />
       <FloatingBasicPanel
         :visible="store.showHistoryPanel"

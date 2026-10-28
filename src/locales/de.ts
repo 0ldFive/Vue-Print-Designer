@@ -772,6 +772,9 @@ export default {
     aiEnabled: "KI-Assistent",
     aiEnabledDesc:
       "Zeigt den KI-Assistenten im Designer, mit dem sich Vorlagen per Chat erstellen und bearbeiten lassen.",
+    marketEnabled: "Vorlagenmarkt",
+    marketEnabledDesc:
+      "Zeigt den Vorlagenmarkt im Designer, um offizielle Vorlagen zu durchsuchen und zu Ihren Vorlagen hinzuzufügen.",
     aiModel: "Modell",
     aiModelDesc:
       "Wählen Sie das Modell für den KI-Assistenten oder binden Sie Ihren eigenen Modelldienst an.",

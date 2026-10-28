@@ -20,6 +20,11 @@ import {
 } from "../utils/entityConstraints";
 import i18n from "../locales";
 import type { VariableTreeItem } from "../types";
+import {
+  sanitizePages,
+  sanitizeTemplateData,
+  hasMeaningfulTemplateData,
+} from "../utils/templateData";
 
 export interface Template {
   id: string;
@@ -39,49 +44,6 @@ export interface Template {
   ext?: Record<string, any>;
   [key: string]: any;
 }
-
-const sanitizeElement = (element: any) => {
-  if (!element || typeof element !== "object") return null;
-  if (typeof element.id !== "string" || !element.id) return null;
-  if (typeof element.type !== "string" || !element.type) return null;
-  return {
-    ...element,
-    style:
-      element.style && typeof element.style === "object" ? element.style : {},
-  };
-};
-
-const sanitizePages = (pages: any) => {
-  if (!Array.isArray(pages)) return [];
-  return pages
-    .filter((page) => page && typeof page === "object")
-    .map((page, index) => ({
-      ...page,
-      id:
-        typeof page.id === "string" && page.id ? page.id : `page-${index + 1}`,
-      elements: Array.isArray(page.elements)
-        ? page.elements.map(sanitizeElement).filter(Boolean)
-        : [],
-    }));
-};
-
-const sanitizeTemplateData = (data: any) => {
-  const base = data && typeof data === "object" ? data : {};
-  return {
-    ...base,
-    pages: sanitizePages(base.pages),
-  };
-};
-
-const hasMeaningfulTemplateData = (data: any): boolean => {
-  if (!data || typeof data !== "object") return false;
-  // A template data is meaningful if it has pages with elements,
-  // or it has a defined canvasSize which is a core property of a template.
-  // Just having 'testData' or other minor keys doesn't mean we have the full template data.
-  if (Array.isArray(data.pages) && data.pages.length > 0) return true;
-  if (data.canvasSize && typeof data.canvasSize === "object") return true;
-  return false;
-};
 
 const sanitizeAvailableVariables = (variables: any): VariableTreeItem[] => {
   return Array.isArray(variables) ? cloneDeep(variables) : [];
@@ -654,6 +616,7 @@ export const useTemplateStore = defineStore("templates", {
       data?: any,
       extraValues?: Record<string, any>,
       templateMode: "create" | "copy" = "create",
+      ext?: Record<string, any>,
     ) {
       const { mode, endpoints, headers, fetcher } = getCrudConfig(
         this.crudScopeId,
@@ -700,7 +663,7 @@ export const useTemplateStore = defineStore("templates", {
           data: newData,
           updatedAt: Date.now(),
           ext: withExtAvailableVariables(
-            undefined,
+            mergeExt(ext),
             designerStore.availableVariables,
           ),
         },

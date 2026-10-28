@@ -133,6 +133,8 @@
 | `setAiModels(models, options?)`       | Inject built-in model list (no secrets)                      |
 | `setAiEnabled(enabled)`               | Enable/disable the AI assistant                              |
 | `isAiEnabled()`                       | Check whether the AI assistant is enabled                    |
+| `setAiHidden(hidden)`                 | Hide the AI module entirely (toolbar, panel, settings tab)   |
+| `isAiHidden()`                        | Check whether the AI module is hidden                        |
 | `openAiPanel()`                       | Open the AI assistant panel                                  |
 | `getAiConfig(scopeId?)`               | Get AI config (user-defined models only)                     |
 | `setAiConfig(config, scopeId?)`       | Update AI config                                             |

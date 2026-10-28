@@ -303,7 +303,8 @@ const isTemplatePanelVisible = ref(true);
 const isPropertiesPanelVisible = ref(true);
 const isStructurePanelVisible = ref(true);
 const isAiPanelVisible = ref(false);
-const { aiEnabled } = useFeatureFlags();
+const { aiEnabled, hiddenModules } = useFeatureFlags();
+const aiHidden = computed(() => hiddenModules.value.ai === true);
 const zoomTriggerRef = ref<HTMLElement | null>(null);
 const languageTriggerRef = ref<HTMLElement | null>(null);
 const languageMenuRef = ref<HTMLElement | null>(null);
@@ -2575,7 +2576,7 @@ onUnmounted(() => {
               <History class="w-4 h-4" />
             </button>
             <button
-              v-if="aiEnabled"
+              v-if="aiEnabled && !aiHidden"
               type="button"
               class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               :class="{

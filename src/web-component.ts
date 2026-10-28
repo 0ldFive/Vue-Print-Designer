@@ -1176,6 +1176,17 @@ class PrintDesignerElement extends HTMLElement {
     return api.isAiEnabled();
   }
 
+  /** 整体隐藏 AI 模块：所有 AI 入口（工具栏、面板、设置页签）一并消失。 */
+  async setAiHidden(hidden: boolean) {
+    const api = await import("@/ai/api");
+    api.setAiHidden(Boolean(hidden));
+  }
+
+  async isAiHidden() {
+    const api = await import("@/ai/api");
+    return api.isAiHidden();
+  }
+
   async openAiPanel() {
     const api = await import("@/ai/api");
     api.openAiPanel();
@@ -1199,6 +1210,46 @@ class PrintDesignerElement extends HTMLElement {
   async discardAiPreview() {
     const api = await import("@/ai/api");
     api.discardAiPreview();
+  }
+
+  // Market module API: config is shared, the gallery chunk loads on demand.
+  async setMarketEnabled(enabled: boolean) {
+    const config = await import("@/market/config");
+    config.setMarketEnabled(Boolean(enabled));
+  }
+
+  async isMarketEnabled() {
+    const config = await import("@/market/config");
+    return config.isMarketEnabled();
+  }
+
+  /** 整体隐藏模板市场：所有市场入口（工具栏、弹窗、设置页签）一并消失。 */
+  async setMarketHidden(hidden: boolean) {
+    const config = await import("@/market/config");
+    config.setMarketHidden(Boolean(hidden));
+  }
+
+  async isMarketHidden() {
+    const config = await import("@/market/config");
+    return config.isMarketHidden();
+  }
+
+  async setMarketConfig(
+    config: Partial<import("./market/config").MarketConfig>,
+  ) {
+    const api = await import("@/market/config");
+    api.setMarketConfig(config || {});
+  }
+
+  async openMarket() {
+    window.dispatchEvent(new CustomEvent("designer:open-market", { detail: {} }));
+  }
+
+  async useMarketTemplate(id: string) {
+    if (!this.templateStore) return null;
+    const { useMarketStore } = await import("@/market/store");
+    const store = useMarketStore();
+    return store.useTemplate(String(id || ""), null);
   }
 
   loadTemplateData(data: any) {

@@ -12,6 +12,7 @@ import { useI18n } from "@/locales";
 import { useTheme } from "@/composables/useTheme";
 import { useAutoSave } from "@/composables/useAutoSave";
 import { useFeatureFlags } from "@/composables/useFeatureFlags";
+import { useMarketConfig } from "@/market/config";
 import { usePrintSettings } from "@/composables/usePrintSettings";
 import { useDesignerStore } from "@/stores/designer";
 import ColorPicker from "@/components/common/ColorPicker.vue";
@@ -23,6 +24,7 @@ import TranslateIcon from "~icons/material-symbols/translate";
 import PrintIcon from "~icons/material-symbols/print";
 import CloudIcon from "~icons/material-symbols/cloud";
 import AutoAwesomeIcon from "~icons/material-symbols/auto-awesome";
+import StorefrontIcon from "~icons/material-symbols/storefront";
 import LinkIcon from "~icons/material-symbols/link";
 import LinkOffIcon from "~icons/material-symbols/link-off";
 import CheckIcon from "~icons/material-symbols/check";
@@ -38,7 +40,11 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const { theme: selectedTheme, setTheme } = useTheme();
 const { autoSave } = useAutoSave();
-const { aiEnabled, setAiEnabled } = useFeatureFlags();
+const { aiEnabled, setAiEnabled, hiddenModules } = useFeatureFlags();
+const { marketEnabled, setMarketEnabled } = useMarketConfig();
+const toggleMarketEnabled = () => setMarketEnabled(!marketEnabled.value);
+const aiHidden = computed(() => hiddenModules.value.ai === true);
+const marketHidden = computed(() => hiddenModules.value.market === true);
 const designerStore = useDesignerStore();
 const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
 const {
@@ -67,9 +73,33 @@ const {
   fetchRemoteClients,
 } = usePrintSettings();
 
-const activeTab = ref<"basic" | "language" | "ai" | "local" | "remote">(
-  "basic",
-);
+const activeTab = ref<
+  "basic" | "language" | "ai" | "market" | "local" | "remote"
+>("basic");
+
+const activeTabTitle = computed(() => {
+  switch (activeTab.value) {
+    case "language":
+      return t("settings.language");
+    case "ai":
+      return t("settings.aiEnabled");
+    case "market":
+      return t("settings.marketEnabled");
+    case "local":
+      return t("settings.localConnection");
+    case "remote":
+      return t("settings.remoteConnection");
+    default:
+      return t("settings.basic");
+  }
+});
+
+// 模块被宿主隐藏时，已选中的页签自动回落到基础设置。
+watch([aiHidden, marketHidden], ([aiOff, marketOff]) => {
+  if ((activeTab.value === "ai" && aiOff) || (activeTab.value === "market" && marketOff)) {
+    activeTab.value = "basic";
+  }
+});
 
 // AI module is hot-pluggable: its settings section only loads with the AI tab.
 const AiSettingsSection = defineAsyncComponent(
@@ -501,6 +531,7 @@ onUnmounted(() => {
               {{ t("settings.language") }}
             </button>
             <button
+              v-if="!aiHidden"
               @click="activeTab = 'ai'"
               class="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors text-sm"
               :class="
@@ -511,6 +542,19 @@ onUnmounted(() => {
             >
               <AutoAwesomeIcon class="w-5 h-5" />
               {{ t("settings.aiEnabled") }}
+            </button>
+            <button
+              v-if="!marketHidden"
+              @click="activeTab = 'market'"
+              class="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors text-sm"
+              :class="
+                activeTab === 'market'
+                  ? 'bg-white text-blue-600 border-l-4 border-blue-600 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100 border-l-4 border-transparent'
+              "
+            >
+              <StorefrontIcon class="w-5 h-5" />
+              {{ t("settings.marketEnabled") }}
             </button>
             <button
               @click="activeTab = 'local'"
@@ -572,17 +616,7 @@ onUnmounted(() => {
           >
             <div class="flex items-center gap-3">
               <h3 class="text-base font-semibold text-gray-800">
-                {{
-                  activeTab === "basic"
-                    ? t("settings.basic")
-                    : activeTab === "language"
-                      ? t("settings.language")
-                      : activeTab === "ai"
-                        ? t("settings.aiEnabled")
-                        : activeTab === "local"
-                          ? t("settings.localConnection")
-                          : t("settings.remoteConnection")
-                }}
+                {{ activeTabTitle }}
               </h3>
             </div>
             <button
@@ -1095,7 +1129,7 @@ onUnmounted(() => {
 
             <!-- AI Tab -->
             <div
-              v-if="activeTab === 'ai'"
+              v-if="activeTab === 'ai' && !aiHidden"
               class="space-y-4 text-sm text-gray-700"
             >
               <div>
@@ -1130,6 +1164,36 @@ onUnmounted(() => {
                   {{ t("settings.aiModelDesc") }}
                 </p>
                 <AiSettingsSection />
+              </div>
+            </div>
+
+            <!-- Market Tab -->
+            <div
+              v-if="activeTab === 'market' && !marketHidden"
+              class="space-y-4 text-sm text-gray-700"
+            >
+              <div>
+                <div class="flex items-center justify-between">
+                  <div class="font-medium text-gray-900">
+                    {{ t("settings.marketEnabled") }}
+                  </div>
+                  <button
+                    type="button"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="marketEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+                    @click="toggleMarketEnabled"
+                  >
+                    <span class="sr-only">{{ t("settings.marketEnabled") }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="marketEnabled ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  {{ t("settings.marketEnabledDesc") }}
+                </p>
               </div>
             </div>
 

@@ -744,6 +744,9 @@ export default {
     autoSaveDesc: "当模版发生变更时自动保存（仅对已保存过的模版生效）。",
     aiEnabled: "AI 助手",
     aiEnabledDesc: "开启后会在设计器里显示 AI 助手入口，用对话就能生成或修改模板。",
+    marketEnabled: "模板市场",
+    marketEnabledDesc:
+      "开启后会在设计器里显示模板市场入口，可浏览官方提供的模板并一键添加到我的模板。",
     aiModel: "模型",
     aiModelDesc: "选择 AI 助手使用的模型，也可以接入自己的模型服务。",
     textQuickToolbar: "文本元素快捷操作栏",

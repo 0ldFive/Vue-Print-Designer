@@ -3,6 +3,8 @@ import { computed, inject, ref, watch, onMounted, onUnmounted } from "vue";
 import { useI18n } from "@/locales";
 import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
+import { useFeatureFlags } from "@/composables/useFeatureFlags";
+import { useMarketConfig } from "@/market/config";
 import { canEditEntity } from "@/utils/entityConstraints";
 import HeaderToolbar from "./toolbar/HeaderToolbar.vue";
 import HeaderElementsBar from "./toolbar/HeaderElementsBar.vue";
@@ -20,12 +22,19 @@ import DataObject from "~icons/material-symbols/data-object";
 import HelpCircleIcon from "~icons/material-symbols/help";
 import SettingsIcon from "~icons/material-symbols/settings";
 import ReorderIcon from "~icons/material-symbols/drag-indicator";
+import StorefrontIcon from "~icons/material-symbols/storefront";
 
 const { t } = useI18n();
 const store = useDesignerStore();
 const templateStore = useTemplateStore();
+const { hiddenModules } = useFeatureFlags();
+const { marketEnabled } = useMarketConfig();
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
 const showExportMenu = ref(false);
+
+const showMarketEntry = computed(
+  () => marketEnabled.value && hiddenModules.value.market !== true,
+);
 
 const handleOpenAiSettings = () => {
   store.setShowSettings(true);
@@ -186,6 +195,18 @@ const handleOpenSettings = () => {
         >
           {{ titleText }}
         </h1>
+        <button
+          v-if="showMarketEntry"
+          type="button"
+          class="ml-1 flex shrink-0 items-center gap-1.5 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+          :title="t('settings.marketEnabled')"
+          @click="dispatchDesignerEvent('designer:open-market')"
+        >
+          <StorefrontIcon class="w-4 h-4" />
+          <span class="hidden whitespace-nowrap lg:inline">{{
+            t("settings.marketEnabled")
+          }}</span>
+        </button>
       </div>
 
       <div class="min-w-0 flex justify-center overflow-hidden">

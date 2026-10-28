@@ -12,6 +12,7 @@ import {
 import { useDesignerStore } from "@/stores/designer";
 import { useTheme } from "@/composables/useTheme";
 import { useFloatingTooltip } from "@/composables/useFloatingTooltip";
+import { useI18n } from "@/locales";
 import CodeEditorModal from "@/components/common/CodeEditorModal.vue";
 import OpenInFull from "~icons/material-symbols/open-in-full";
 import Close from "~icons/material-symbols/close";
@@ -41,6 +42,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(["update:value"]);
+const { t } = useI18n();
 const store = useDesignerStore();
 const { isDark } = useTheme();
 const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
@@ -120,7 +122,7 @@ defineExpose({ toggleExpand, isExpanded });
         <button
           @click="toggleExpand"
           class="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-gray-100"
-          title="Expand Editor"
+          :title="t('properties.label.expandEditor')"
         >
           <OpenInFull class="w-3.5 h-3.5" />
         </button>

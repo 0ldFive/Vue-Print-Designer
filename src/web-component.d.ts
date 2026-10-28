@@ -44,6 +44,32 @@ export type CrudEndpoints = {
   };
 };
 
+export type MarketErrorCode =
+  | "network"
+  | "timeout"
+  | "notFound"
+  | "server"
+  | "invalidPayload";
+
+export interface MarketConfig {
+  baseUrl: string;
+  headers?: Record<string, string>;
+  fetcher?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
+  timeoutMs: number;
+}
+
+export interface MarketUsedEventDetail {
+  marketId: string;
+  templateId: string;
+}
+
+export interface MarketErrorEventDetail {
+  code: MarketErrorCode;
+}
+
 export interface PrintDesignerElement extends HTMLElement {
   print(request?: DesignerPrintRequest): Promise<any>;
   export(request: DesignerExportRequest): Promise<void | Blob>;
@@ -183,6 +209,27 @@ export interface PrintDesignerElement extends HTMLElement {
         init?: RequestInit,
       ) => Promise<Response>;
     },
+  ): void;
+
+  setMarketEnabled(enabled: boolean): Promise<void>;
+  isMarketEnabled(): Promise<boolean>;
+  setMarketHidden(hidden: boolean): Promise<void>;
+  isMarketHidden(): Promise<boolean>;
+  setAiHidden(hidden: boolean): Promise<void>;
+  isAiHidden(): Promise<boolean>;
+  setMarketConfig(config: Partial<MarketConfig>): Promise<void>;
+  openMarket(): Promise<void>;
+  useMarketTemplate(id: string): Promise<{ templateId: string } | null>;
+
+  addEventListener(
+    type: "market:used",
+    listener: (event: CustomEvent<MarketUsedEventDetail>) => void,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: "market:error",
+    listener: (event: CustomEvent<MarketErrorEventDetail>) => void,
+    options?: boolean | AddEventListenerOptions,
   ): void;
 }
 
