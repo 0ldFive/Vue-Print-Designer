@@ -38,6 +38,7 @@
   - [24. Configure Custom Element Modal Custom Form (setCustomElementModalForm)](#24-configure-custom-element-modal-custom-form-setcustomelementmodalform)
   - [25. Configure Template List Tag Extension (setTemplateTagResolver)](#25-configure-template-list-tag-extension-settemplatetagresolver)
   - [26. Configure AI Built-in Models (setAiModels)](#26-configure-ai-built-in-models-setaimodels)
+  - [27. Toggle and Hide the AI Assistant / Template Market](#27-toggle-and-hide-the-ai-assistant--template-market)
 - [Backend API Specifications](#backend-api-specifications)
   - [Overview](#overview)
   - [Common Fields](#common-fields)
@@ -131,13 +132,24 @@
 | `setTemplateTagResolver(resolver)`    | Set the template list tag callback (takes priority over `ext.templateTags`) |
 | `clearTemplateTagResolver()`          | Clear the tag callback and fall back to `ext.templateTags`   |
 | `setAiModels(models, options?)`       | Inject built-in model list (no secrets)                      |
-| `setAiEnabled(enabled)`               | Enable/disable the AI assistant                              |
+| `setAiEnabled(enabled)`               | Enable/disable the AI assistant (enabled by default)         |
 | `isAiEnabled()`                       | Check whether the AI assistant is enabled                    |
 | `setAiHidden(hidden)`                 | Hide the AI module entirely (toolbar, panel, settings tab)   |
 | `isAiHidden()`                        | Check whether the AI module is hidden                        |
 | `openAiPanel()`                       | Open the AI assistant panel                                  |
+| `closeAiPanel()`                      | Close the AI assistant panel                                 |
+| `generateTemplate(prompt, options?)`  | Generate a template through the AI without opening the panel |
+| `applyAiPreview()`                    | Apply the generated AI preview                               |
+| `discardAiPreview()`                  | Discard the generated AI preview                             |
 | `getAiConfig(scopeId?)`               | Get AI config (user-defined models only)                     |
 | `setAiConfig(config, scopeId?)`       | Update AI config                                             |
+| `setMarketEnabled(enabled)`           | Enable/disable the template market (enabled by default)      |
+| `isMarketEnabled()`                   | Check whether the template market is enabled                 |
+| `setMarketHidden(hidden)`             | Hide the template market entirely (toolbar, modal, settings tab) |
+| `isMarketHidden()`                    | Check whether the template market is hidden                  |
+| `setMarketConfig(config)`             | Configure market base URL, headers and timeout               |
+| `openMarket()`                        | Open the template market modal                               |
+| `useMarketTemplate(id)`               | Load a market template into the designer                     |
 
 ## Quick Start
 
@@ -1567,7 +1579,7 @@ Color values are case-insensitive and surrounding spaces are ignored.
 Description: The host (your backend) injects a set of "built-in models" into the designer. Built-in models only appear in the AI assistant's model dropdown, grouped as "Built-in Models"; they are not written into user configuration and require no `apiKey` in the frontend.
 
 ```ts
-// 1) Enable the AI feature (off by default; the state is remembered in localStorage)
+// 1) The AI feature is enabled by default; call setAiEnabled(false) to turn it off
 await el.setAiEnabled(true);
 
 // 2) Inject the host-provided model list (no apiKey)
@@ -1619,6 +1631,60 @@ await el.openAiPanel();
 ```ts
 // Contains only user-defined models; built-in models are maintained via setAiModels
 const config = await el.getAiConfig();
+```
+
+### 27. Toggle and Hide the AI Assistant / Template Market
+
+Description: The AI assistant and the template market are add-on modules, both enabled by default. Two independent groups of methods are available:
+
+- `setAiEnabled` / `setMarketEnabled`: controls whether the module entry is shown, suitable for letting users turn it on or off in settings;
+- `setAiHidden` / `setMarketHidden`: removes the module from the UI entirely, including the toolbar entry, the modal and the settings tab, suitable for white-labeling or stripping the UI down.
+
+| Method | Description |
+| --- | --- |
+| `setAiEnabled(enabled)` | Enable/disable the AI assistant (enabled by default) |
+| `isAiEnabled()` | Check whether the AI assistant is enabled |
+| `setAiHidden(hidden)` | Hide the AI module entirely (default `false`) |
+| `isAiHidden()` | Check whether the AI module is hidden |
+| `setMarketEnabled(enabled)` | Enable/disable the template market (enabled by default) |
+| `isMarketEnabled()` | Check whether the template market is enabled |
+| `setMarketHidden(hidden)` | Hide the template market entirely (default `false`) |
+| `isMarketHidden()` | Check whether the template market is hidden |
+
+```ts
+// Turn off the market entry but keep the switch in settings
+await el.setMarketEnabled(false);
+
+// White-label: remove the AI entry and its settings tab completely
+await el.setAiHidden(true);
+
+const aiHidden = await el.isAiHidden(); // true
+```
+
+**Behavior:**
+
+- Both states are persisted to `localStorage` and survive reloads, under the keys `print-designer-ai-enabled`, `print-designer-market-enabled` and `print-designer-hidden-modules`.
+- `enabled` defaults to `true`; only an explicit `setAiEnabled(false)` / `setMarketEnabled(false)` turns it off. `hidden` defaults to `false`.
+- `hidden` wins when both are set: once a module is hidden, no entry appears even if `enabled` is `true`.
+- These settings are only available through instance methods; `<print-designer>` exposes no matching HTML attributes.
+- An enabled AI assistant still needs a usable model (user-defined or injected through `setAiModels`) before it can chat; otherwise the panel prompts for configuration.
+
+**Template market helpers:**
+
+| Method | Description |
+| --- | --- |
+| `setMarketConfig(config)` | Configure market base URL, headers and timeout; `baseUrl` defaults to `https://printdot.cc/market` |
+| `openMarket()` | Open the market modal programmatically |
+| `useMarketTemplate(id)` | Load the specified market template into the designer |
+
+```ts
+await el.setMarketConfig({
+  baseUrl: "https://your-domain.com/market",
+  headers: { "X-Tenant-Id": "tenant-a" },
+  timeoutMs: 10000,
+});
+
+await el.openMarket();
 ```
 
 ## Backend API Specifications

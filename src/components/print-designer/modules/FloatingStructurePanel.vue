@@ -49,11 +49,11 @@ const emit = defineEmits<{
       @mousedown="emit('panel-mousedown', $event)"
     >
       <div
-        class="relative p-4 pr-20 min-h-[72px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-move select-none rounded-t"
+        class="relative p-4 min-h-[72px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-move select-none rounded-t"
         data-floating-panel-drag-handle="true"
       >
         <div class="min-w-0">
-          <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 pr-16">
             {{ title }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">

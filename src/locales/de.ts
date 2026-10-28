@@ -39,7 +39,7 @@ export default {
     invalidJson: "Ungültiges JSON. Änderungen wurden nicht gespeichert.",
     testDataKeyChanged:
       "Schlüssel der Testdaten können nicht geändert werden. Bitte bearbeiten Sie nur die Werte.",
-    variables: "Verfügbare Variablen",
+    variables: "Variablen",
     noData: "Keine Daten",
     resizePanel: "Panelgröße ändern",
   },
@@ -312,6 +312,7 @@ export default {
     custom: "Benutzerdefiniert",
     layout: "Layout",
     layoutSubtitle: "Seitenelemente nach Seite und Ebene anzeigen",
+    pageLabel: "Seite {n}",
     layoutHelp: {
       title: "Leitfaden zur Layoutstruktur",
       items: {

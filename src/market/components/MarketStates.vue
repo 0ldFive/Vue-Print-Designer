@@ -26,20 +26,30 @@ const errorText = computed(() => t(getMarketErrorKey(props.errorCode)));
     class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
   >
     <div
-      v-for="index in 8"
+      v-for="index in 20"
       :key="index"
       class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
     >
       <div
         class="aspect-[4/3] animate-pulse bg-gray-100 dark:bg-gray-700"
       ></div>
-      <div class="space-y-2 p-3">
+      <div
+        class="space-y-1 border-t border-gray-200 p-3 dark:border-gray-700"
+      >
         <div
-          class="h-3 w-3/4 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
+          class="h-5 w-3/4 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
         ></div>
         <div
-          class="h-3 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
+          class="h-4 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
         ></div>
+        <div class="flex gap-1">
+          <div
+            class="h-5 w-10 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
+          ></div>
+          <div
+            class="h-5 w-12 animate-pulse rounded bg-gray-100 dark:bg-gray-700"
+          ></div>
+        </div>
       </div>
     </div>
   </div>

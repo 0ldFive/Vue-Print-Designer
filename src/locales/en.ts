@@ -39,7 +39,7 @@ export default {
     invalidJson: "Invalid JSON. Changes were not saved.",
     testDataKeyChanged:
       "Test data keys cannot be changed. Please only edit values.",
-    variables: "Available Variables",
+    variables: "Variables",
     noData: "No Data",
     resizePanel: "Resize panel",
   },
@@ -310,6 +310,7 @@ export default {
     custom: "Custom",
     layout: "Layout",
     layoutSubtitle: "Browse page elements by page and layer",
+    pageLabel: "Page {n}",
     layoutHelp: {
       title: "Layout Structure Guide",
       items: {

@@ -419,10 +419,10 @@ watch(isReady, (value) => {
       @mousedown="emit('panel-mousedown', $event)"
     >
       <div
-        class="relative min-h-[64px] cursor-move select-none rounded-t border-b border-gray-200 bg-gray-50 p-4 pr-28 dark:border-gray-700 dark:bg-gray-800"
+        class="relative min-h-[64px] cursor-move select-none rounded-t border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
         data-floating-panel-drag-handle="true"
       >
-        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 pr-32">
           {{ messages.title }}
         </h2>
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">

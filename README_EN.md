@@ -68,6 +68,7 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
 
 ## Core Features
 
+- **AI Assistant**: A built-in natural-language chat panel that generates invoice, delivery note, and waybill templates from a description, with multi-turn edits and image reference input; results appear as a change preview before you apply them to the canvas in one click. Works with OpenAI-compatible endpoints, including self-hosted or third-party model services, with multi-model profiles and advanced sampling parameters.
 - **Visual Design**: Full-featured drag-and-drop designer supporting text / images / tables / barcodes / QR codes / shapes. Includes rulers, grids, and alignment tools.
 - **Smart Pagination**: Automatically handles long table pagination with header/footer repetition. No complex manual logic required — what you see is what you get.
 - **Cross-Framework**: Built on Web Components, zero-dependency compatibility with Vue / React / Angular / native HTML.
@@ -116,7 +117,7 @@ Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, X
   - Send a `print_label` message and forward the template JSON exported by the designer as-is, with no extra processing;
   - Tick "Label printing" in the client's print preview window to print locally (the designer's preview mode must be JSON). When a label printer is selected, the command language is detected and enabled automatically, and the result can always be overridden.
 - **Batch and multi-page**: one template page equals one label; `labels[]` submits a whole batch at once, each record with its own copy count and an optional interval between consecutive labels.
-- **Traceable**: jobs are stored in print history as the `label` type together with the commands that were sent, so they can be reviewed later.
+- **Print history**: every label job is recorded in the client's print history with printer, copies, status and time, and failed jobs can be retried.
 
 #### Rendering Consistency Comparison
 

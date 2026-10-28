@@ -310,6 +310,7 @@ export default {
     custom: "カスタム",
     layout: "レイアウト",
     layoutSubtitle: "ページとレイヤーで要素構造を確認",
+    pageLabel: "ページ {n}",
     layoutHelp: {
       title: "レイアウト構造ガイド",
       items: {

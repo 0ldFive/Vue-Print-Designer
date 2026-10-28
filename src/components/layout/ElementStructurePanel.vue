@@ -602,7 +602,7 @@ onUnmounted(() => {
                 : 'text-gray-700 dark:text-gray-200'
             "
           >
-            #{{ page.pageIndex + 1 }}
+            {{ t("elementsPanel.pageLabel", { n: page.pageIndex + 1 }) }}
           </span>
           <span
             class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1 rounded"

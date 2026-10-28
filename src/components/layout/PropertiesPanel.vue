@@ -770,11 +770,11 @@ const closePropertiesPanel = () => {
   >
     <!-- Header -->
     <div
-      class="relative p-4 pr-20 min-h-[72px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-move select-none rounded-t"
+      class="relative p-4 min-h-[72px] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-move select-none rounded-t"
       data-floating-panel-drag-handle="true"
     >
       <div class="min-w-0">
-        <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0 pr-16">
           <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {{ t("properties.title") }}
           </h2>

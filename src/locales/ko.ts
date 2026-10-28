@@ -308,6 +308,7 @@ export default {
     custom: "사용자 지정",
     layout: "레이아웃",
     layoutSubtitle: "페이지와 레이어 기준으로 요소 구조 보기",
+    pageLabel: "페이지 {n}",
     layoutHelp: {
       title: "레이아웃 구조 안내",
       items: {

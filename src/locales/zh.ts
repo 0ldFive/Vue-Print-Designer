@@ -304,6 +304,7 @@ export default {
     standard: "标准元素",
     layout: "布局结构",
     layoutSubtitle: "按页面与层级查看页面元素",
+    pageLabel: "页 {n}",
     layoutHelp: {
       title: "布局结构说明",
       items: {
