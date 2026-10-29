@@ -45,6 +45,7 @@ const emit = defineEmits<{
   <div
     v-if="show"
     data-floating-panel-surface="true"
+    data-floating-panel-key="minimap"
     class="absolute pointer-events-none"
     :style="[panelStyle, { zIndex }]"
   >

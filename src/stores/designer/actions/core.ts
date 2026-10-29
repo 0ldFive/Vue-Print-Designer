@@ -251,6 +251,14 @@ export const coreActions = {
       );
     },
 
+  setPanelEdgeAutoHide(enabled: boolean) {
+      this.panelEdgeAutoHide = enabled;
+      localStorage.setItem(
+        "print-designer-panel-edge-auto-hide",
+        enabled ? "true" : "false",
+      );
+    },
+
   setShowTextQuickToolbar(show: boolean) {
       this.showTextQuickToolbar = show;
       localStorage.setItem(

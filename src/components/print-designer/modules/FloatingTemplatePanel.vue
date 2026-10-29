@@ -40,6 +40,7 @@ const emit = defineEmits<{
   <div
     v-show="show"
     data-floating-panel-surface="true"
+    data-floating-panel-key="templates"
     class="absolute pointer-events-none"
     :style="[panelStyle, { zIndex }]"
   >

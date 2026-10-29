@@ -1,4 +1,12 @@
-import { computed, nextTick, ref, watch, type Ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  type Ref,
+} from "vue";
 
 export type FloatingPanelKey =
   | "sidebar"
@@ -11,6 +19,9 @@ export type FloatingPanelKey =
 
 type FloatingPanelLayerKey = FloatingPanelKey;
 type ResizablePanelKey = Exclude<FloatingPanelKey, "minimap">;
+export type FloatingPanelEdge = "left" | "right" | "top" | "bottom";
+type FloatingPanelDockEdgeMap = Record<FloatingPanelKey, FloatingPanelEdge | null>;
+type FloatingPanelCollapsedMap = Record<FloatingPanelKey, boolean>;
 type FloatingPanelHorizontalAnchor = "left" | "right" | "free";
 type FloatingPanelVerticalAnchor = "top" | "bottom" | "free";
 type FloatingPanelHeightMode = "fit" | "fixed";
@@ -20,6 +31,9 @@ const FLOAT_PANEL_MAX_WIDTH = 520;
 const FLOAT_PANEL_MARGIN = 12;
 const FLOAT_PANEL_MIN_HEIGHT = 280;
 const FLOAT_PANEL_EDGE_SNAP_TOLERANCE = 16;
+const FLOAT_PANEL_STATUS_BAR_SNAP = 16;
+const FLOAT_PANEL_EDGE_OVERDRAG = 6;
+const FLOAT_PANEL_EDGE_HIT_TOLERANCE = 3;
 const TEMPLATE_PANEL_DEFAULT_WIDTH = 320;
 const PROPERTIES_PANEL_DEFAULT_WIDTH = 296;
 const STRUCTURE_PANEL_DEFAULT_WIDTH = 300;
@@ -41,9 +55,20 @@ const MINIMAP_PANEL_MIN_HEIGHT = 140;
 const MINIMAP_PANEL_MAX_HEIGHT = 420;
 const MINIMAP_PANEL_BORDER_SIZE = 2;
 const MINIMAP_PANEL_HEADER_HEIGHT = 40;
-const FLOAT_PANEL_Z_BASE = 40;
+const FLOAT_PANEL_Z_BASE = 6100;
 const FLOAT_PANEL_Z_STEP = 20;
 const FLOAT_PANEL_Z_ACTIVE_OFFSET = 10;
+const FLOAT_PANEL_EDGE_AUTO_HIDE_PEEK = 6;
+const FLOAT_PANEL_EDGE_AUTO_HIDE_DELAY = 350;
+const FLOAT_PANEL_EDGE_TRANSITION = "left 0.24s ease, top 0.24s ease";
+// 贴边后在窗口内侧投出轻度阴影，提示面板可从边缘拉出
+const FLOAT_PANEL_EDGE_RADIUS = "0.5rem 0.5rem 0 0";
+const FLOAT_PANEL_EDGE_SHADOWS: Record<FloatingPanelEdge, string> = {
+  left: "6px 0 14px -4px rgba(15, 23, 42, 0.22)",
+  right: "-6px 0 14px -4px rgba(15, 23, 42, 0.22)",
+  top: "0 6px 14px -4px rgba(15, 23, 42, 0.22)",
+  bottom: "0 -6px 14px -4px rgba(15, 23, 42, 0.22)",
+};
 
 type FloatingPanelBounds = {
   minX: number;
@@ -86,6 +111,7 @@ type PanelRect = {
 interface FloatingPanelStoreLike {
   showMinimap: boolean;
   showHistoryPanel: boolean;
+  panelEdgeAutoHide?: boolean;
 }
 
 interface UseFloatingPanelsOptions {
@@ -286,10 +312,32 @@ export const useFloatingPanels = ({
     width: false,
     height: false,
   });
+  const panelDockEdges = ref<FloatingPanelDockEdgeMap>({
+    sidebar: null,
+    templates: null,
+    properties: null,
+    structure: null,
+    minimap: null,
+    history: null,
+    ai: null,
+  });
+  const collapsedPanels = ref<FloatingPanelCollapsedMap>({
+    sidebar: false,
+    templates: false,
+    properties: false,
+    structure: false,
+    minimap: false,
+    history: false,
+    ai: false,
+  });
+  const interactionPanel = ref<FloatingPanelKey | null>(null);
+  const edgeAutoHideEnabled = computed(() => store.panelEdgeAutoHide === true);
+  const panelAutoHideTimers = new Map<FloatingPanelKey, number>();
 
   let draggingPanel: FloatingPanelKey | null = null;
   let dragStartPointer = { x: 0, y: 0 };
   let dragStartPanelPos = { x: 0, y: 0 };
+  let lastPointerPosition: { x: number; y: number } | null = null;
   let resizingPanel: FloatingPanelKey | null = null;
   let resizeStartPointer = { x: 0, y: 0 };
   let resizeStartWidth = FLOAT_PANEL_MIN_WIDTH;
@@ -420,13 +468,76 @@ export const useFloatingPanels = ({
     };
   };
 
+  const getFloatingPanelWindowBounds = (): FloatingPanelBounds => {
+    const { width, height } = panelsHostSize.value;
+    const fallback: FloatingPanelBounds = {
+      minX: 0,
+      minY: 0,
+      maxRight: Math.max(0, width),
+      maxBottom: Math.max(0, height),
+      maxHeight: Math.max(FLOAT_PANEL_MIN_HEIGHT, height),
+    };
+
+    if (!panelsHostRef.value || typeof window === "undefined") {
+      return fallback;
+    }
+
+    const hostRect = panelsHostRef.value.getBoundingClientRect();
+    const minX = -hostRect.left;
+    const minY = -hostRect.top;
+    const maxRight = window.innerWidth - hostRect.left;
+    const maxBottom = window.innerHeight - hostRect.top;
+
+    return {
+      minX,
+      minY,
+      maxRight,
+      maxBottom,
+      maxHeight: Math.max(FLOAT_PANEL_MIN_HEIGHT, maxBottom - minY),
+    };
+  };
+
+  const getActivePanelBounds = (): FloatingPanelBounds =>
+    edgeAutoHideEnabled.value
+      ? getFloatingPanelWindowBounds()
+      : getFloatingPanelBounds();
+
+  // 底部状态栏上沿在 panelsHost 坐标系中的位置，状态栏未渲染时返回 null
+  const getStatusBarTop = () => {
+    if (typeof document === "undefined" || !panelsHostRef.value) return null;
+    const statusBar = panelsHostRef.value.querySelector("footer");
+    if (!statusBar) return null;
+    const hostRect = panelsHostRef.value.getBoundingClientRect();
+    return statusBar.getBoundingClientRect().top - hostRect.top;
+  };
+
+  // resize 放大时底边接近状态栏上沿就吸附贴合，避免面板遮住状态栏
+  const snapPanelHeightToStatusBar = (
+    panelY: number,
+    panelHeight: number,
+    minHeight: number,
+    maxHeight: number,
+  ) => {
+    const statusBarTop = getStatusBarTop();
+    if (statusBarTop === null) return panelHeight;
+
+    const bottomDistance = Math.abs(panelY + panelHeight - statusBarTop);
+    if (bottomDistance > FLOAT_PANEL_STATUS_BAR_SNAP) return panelHeight;
+
+    const snappedHeight = statusBarTop - panelY;
+    if (snappedHeight < minHeight || snappedHeight > maxHeight) {
+      return panelHeight;
+    }
+    return snappedHeight;
+  };
+
   const clampPanelPos = (
     x: number,
     y: number,
     panelWidth: number,
     panelHeight: number,
   ) => {
-    const { minX, minY, maxRight, maxBottom } = getFloatingPanelBounds();
+    const { minX, minY, maxRight, maxBottom } = getActivePanelBounds();
     const maxX = Math.max(minX, maxRight - panelWidth);
     const maxY = Math.max(minY, maxBottom - panelHeight);
 
@@ -436,8 +547,37 @@ export const useFloatingPanels = ({
     };
   };
 
+  // 拖动时允许越过窗口边缘最多 FLOAT_PANEL_EDGE_OVERDRAG，松手后按越界量判定是否贴边收起
+  const clampPanelPosForDrag = (
+    x: number,
+    y: number,
+    panelWidth: number,
+    panelHeight: number,
+  ) => {
+    if (!edgeAutoHideEnabled.value) {
+      return {
+        pos: clampPanelPos(x, y, panelWidth, panelHeight),
+        pinned: false,
+      };
+    }
+
+    const { minX, minY, maxRight, maxBottom } = getActivePanelBounds();
+    const maxX = Math.max(minX, maxRight - panelWidth);
+    const maxY = Math.max(minY, maxBottom - panelHeight);
+    const over = FLOAT_PANEL_EDGE_OVERDRAG;
+
+    const nextX = Math.min(Math.max(x, minX - over), maxX + over);
+    const nextY = Math.min(Math.max(y, minY - over), maxY + over);
+
+    // 面板贴住或越出窗口边缘时跳过画布吸附，避免被吸回边界内
+    const pinned =
+      nextX <= minX || nextX >= maxX || nextY <= minY || nextY >= maxY;
+
+    return { pos: { x: nextX, y: nextY }, pinned };
+  };
+
   const clampPanelWidth = (panelWidth: number, panelX: number) => {
-    const { minX, maxRight } = getFloatingPanelBounds();
+    const { minX, maxRight } = getActivePanelBounds();
     const maxWidthByBounds = Math.max(
       FLOAT_PANEL_MIN_WIDTH,
       maxRight - Math.max(panelX, minX),
@@ -447,7 +587,7 @@ export const useFloatingPanels = ({
   };
 
   const clampPanelHeight = (panelHeight: number, panelY: number) => {
-    const { minY, maxBottom, maxHeight } = getFloatingPanelBounds();
+    const { minY, maxBottom, maxHeight } = getActivePanelBounds();
     const localMaxHeight = Math.max(
       FLOAT_PANEL_MIN_HEIGHT,
       maxBottom - Math.max(panelY, minY),
@@ -485,7 +625,7 @@ export const useFloatingPanels = ({
   };
 
   const clampMinimapPanelWidth = (panelWidth: number, panelX: number) => {
-    const { minX, maxRight } = getFloatingPanelBounds();
+    const { minX, maxRight } = getActivePanelBounds();
     const maxWidthByBounds = Math.max(
       MINIMAP_PANEL_MIN_WIDTH,
       maxRight - Math.max(panelX, minX),
@@ -495,7 +635,7 @@ export const useFloatingPanels = ({
   };
 
   const clampMinimapPanelHeight = (panelHeight: number, panelY: number) => {
-    const { minY, maxBottom } = getFloatingPanelBounds();
+    const { minY, maxBottom } = getActivePanelBounds();
     const maxHeightByBounds = Math.max(
       MINIMAP_PANEL_MIN_HEIGHT,
       maxBottom - Math.max(panelY, minY),
@@ -853,6 +993,21 @@ export const useFloatingPanels = ({
 
     const pos = clampPanelPos(nextX, nextY, width, height);
 
+    // 底边随高度变化时（非底边锚定），接近底部状态栏上沿就吸附贴合
+    if (anchors.y !== "bottom") {
+      const bounds = getActivePanelBounds();
+      const maxHeight = Math.min(
+        bounds.maxHeight,
+        Math.max(FLOAT_PANEL_MIN_HEIGHT, bounds.maxBottom - pos.y),
+      );
+      height = snapPanelHeightToStatusBar(
+        pos.y,
+        height,
+        FLOAT_PANEL_MIN_HEIGHT,
+        maxHeight,
+      );
+    }
+
     return {
       pos,
       width,
@@ -885,6 +1040,7 @@ export const useFloatingPanels = ({
     deltaX: number,
     deltaY: number,
   ): FloatingPanelLayout => {
+    // 小地图最高 420px，够不到底部状态栏，无需吸附
     return resolveMinimapPanelLayout(
       startPos,
       startWidth + deltaX,
@@ -898,6 +1054,404 @@ export const useFloatingPanels = ({
       height: minimapPanelHeight.value,
     };
   };
+
+  const getPanelFrame = (panel: FloatingPanelKey) => {
+    if (panel === "sidebar") {
+      return {
+        pos: sidebarPanelPos.value,
+        width: sidebarPanelWidth.value,
+        height: sidebarPanelHeight.value,
+      };
+    }
+
+    if (panel === "templates") {
+      return {
+        pos: templatePanelPos.value,
+        width: templatePanelWidth.value,
+        height: templatePanelHeight.value,
+      };
+    }
+
+    if (panel === "properties") {
+      return {
+        pos: propertiesPanelPos.value,
+        width: propertiesPanelWidth.value,
+        height: propertiesPanelHeight.value,
+      };
+    }
+
+    if (panel === "structure") {
+      return {
+        pos: structurePanelPos.value,
+        width: structurePanelWidth.value,
+        height: structurePanelHeight.value,
+      };
+    }
+
+    if (panel === "history") {
+      return {
+        pos: historyPanelPos.value,
+        width: historyPanelWidth.value,
+        height: historyPanelHeight.value,
+      };
+    }
+
+    if (panel === "ai") {
+      return {
+        pos: aiPanelPos.value,
+        width: aiPanelWidth.value,
+        height: aiPanelHeight.value,
+      };
+    }
+
+    return {
+      pos: minimapPanelPos.value,
+      width: minimapPanelWidth.value,
+      height: minimapPanelHeight.value,
+    };
+  };
+
+  const setPanelPosition = (
+    panel: FloatingPanelKey,
+    pos: { x: number; y: number },
+  ) => {
+    if (panel === "sidebar") {
+      sidebarPanelPos.value = { ...pos };
+      sidebarPanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    if (panel === "templates") {
+      templatePanelPos.value = { ...pos };
+      templatePanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    if (panel === "properties") {
+      propertiesPanelPos.value = { ...pos };
+      propertiesPanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    if (panel === "structure") {
+      structurePanelPos.value = { ...pos };
+      structurePanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    if (panel === "history") {
+      historyPanelPos.value = { ...pos };
+      historyPanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    if (panel === "ai") {
+      aiPanelPos.value = { ...pos };
+      aiPanelPreferredPos.value = { ...pos };
+      return;
+    }
+
+    minimapPanelPos.value = { ...pos };
+    minimapPanelPreferredPos.value = { ...pos };
+  };
+
+  const clearPanelAutoHideTimer = (panel: FloatingPanelKey) => {
+    const timer = panelAutoHideTimers.get(panel);
+    if (timer === undefined) return;
+    window.clearTimeout(timer);
+    panelAutoHideTimers.delete(panel);
+  };
+
+  const clearAllPanelAutoHideTimers = () => {
+    panelAutoHideTimers.forEach((timer) => window.clearTimeout(timer));
+    panelAutoHideTimers.clear();
+  };
+
+  const resetPanelDockState = () => {
+    (Object.keys(panelDockEdges.value) as FloatingPanelKey[]).forEach(
+      (panel) => {
+        panelDockEdges.value[panel] = null;
+        collapsedPanels.value[panel] = false;
+      },
+    );
+    interactionPanel.value = null;
+  };
+
+  const getDockedPanelPos = (
+    panel: FloatingPanelKey,
+    edge: FloatingPanelEdge,
+  ) => {
+    const bounds = getFloatingPanelWindowBounds();
+    const frame = getPanelFrame(panel);
+    const over = FLOAT_PANEL_EDGE_OVERDRAG;
+    const nextPos = { ...frame.pos };
+
+    if (edge === "left") {
+      nextPos.x = bounds.minX - over;
+    } else if (edge === "right") {
+      nextPos.x = bounds.maxRight - frame.width + over;
+    } else if (edge === "top") {
+      nextPos.y = bounds.minY - over;
+    } else {
+      nextPos.y = bounds.maxBottom - frame.height + over;
+    }
+
+    return nextPos;
+  };
+
+  const getPanelEdgeOverdrags = (panel: FloatingPanelKey) => {
+    const bounds = getFloatingPanelWindowBounds();
+    const frame = getPanelFrame(panel);
+    return {
+      left: bounds.minX - frame.pos.x,
+      right: frame.pos.x + frame.width - bounds.maxRight,
+      top: bounds.minY - frame.pos.y,
+      bottom: frame.pos.y + frame.height - bounds.maxBottom,
+    };
+  };
+
+  const detectWindowDockEdge = (
+    panel: FloatingPanelKey,
+  ): FloatingPanelEdge | null => {
+    const over = getPanelEdgeOverdrags(panel);
+    // 面板被拖出窗口边缘满 6px 才收起，未达门槛只吸附停留
+    const threshold = FLOAT_PANEL_EDGE_OVERDRAG - 0.5;
+
+    const candidates = [
+      { edge: "left" as FloatingPanelEdge, ok: over.left >= threshold, weight: over.left },
+      { edge: "right" as FloatingPanelEdge, ok: over.right >= threshold, weight: over.right },
+      { edge: "top" as FloatingPanelEdge, ok: over.top >= threshold, weight: over.top },
+      {
+        edge: "bottom" as FloatingPanelEdge,
+        ok: over.bottom >= threshold,
+        weight: over.bottom,
+      },
+    ]
+      .filter((candidate) => candidate.ok)
+      .sort((a, b) => b.weight - a.weight);
+
+    return candidates.length > 0 ? candidates[0].edge : null;
+  };
+
+  const dockPanelToEdge = (
+    panel: FloatingPanelKey,
+    edge: FloatingPanelEdge,
+  ) => {
+    clearPanelAutoHideTimer(panel);
+    setPanelPosition(panel, getDockedPanelPos(panel, edge));
+    panelDockEdges.value[panel] = edge;
+    collapsedPanels.value[panel] = false;
+  };
+
+  const undockPanel = (panel: FloatingPanelKey) => {
+    if (!panelDockEdges.value[panel]) return;
+    clearPanelAutoHideTimer(panel);
+    panelDockEdges.value[panel] = null;
+    collapsedPanels.value[panel] = false;
+  };
+
+  const syncDockedPanelPositions = () => {
+    if (!edgeAutoHideEnabled.value) return;
+
+    (Object.keys(panelDockEdges.value) as FloatingPanelKey[]).forEach(
+      (panel) => {
+        const edge = panelDockEdges.value[panel];
+        if (!edge) return;
+        setPanelPosition(panel, getDockedPanelPos(panel, edge));
+      },
+    );
+  };
+
+  const snapPanelPosToCanvasEdges = (
+    x: number,
+    y: number,
+    panelWidth: number,
+    panelHeight: number,
+  ) => {
+    if (!edgeAutoHideEnabled.value) return { x, y };
+
+    const bounds = getFloatingPanelBounds();
+    let nextX = x;
+    let nextY = y;
+
+    const leftDistance = Math.abs(x - bounds.minX);
+    const rightDistance = Math.abs(x + panelWidth - bounds.maxRight);
+    if (leftDistance <= FLOAT_PANEL_EDGE_SNAP_TOLERANCE) {
+      nextX = bounds.minX;
+    } else if (rightDistance <= FLOAT_PANEL_EDGE_SNAP_TOLERANCE) {
+      nextX = bounds.maxRight - panelWidth;
+    }
+
+    const topDistance = Math.abs(y - bounds.minY);
+    const bottomDistance = Math.abs(y + panelHeight - bounds.maxBottom);
+    if (topDistance <= FLOAT_PANEL_EDGE_SNAP_TOLERANCE) {
+      nextY = bounds.minY;
+    } else if (bottomDistance <= FLOAT_PANEL_EDGE_SNAP_TOLERANCE) {
+      nextY = bounds.maxBottom - panelHeight;
+    }
+
+    return { x: nextX, y: nextY };
+  };
+
+  // 收起偏移按窗口边缘计算，保证隐藏后只在窗口内露出 peek 像素的细条
+  const getPanelDockOffset = (
+    panel: FloatingPanelKey,
+    pos: { x: number; y: number },
+    panelWidth: number,
+    panelHeight: number,
+  ) => {
+    if (!edgeAutoHideEnabled.value) return { x: 0, y: 0 };
+
+    const edge = panelDockEdges.value[panel];
+    if (!edge || !collapsedPanels.value[panel]) return { x: 0, y: 0 };
+
+    const bounds = getFloatingPanelWindowBounds();
+    const peek = FLOAT_PANEL_EDGE_AUTO_HIDE_PEEK;
+
+    if (edge === "left") {
+      return { x: bounds.minX + peek - (pos.x + panelWidth), y: 0 };
+    }
+    if (edge === "right") {
+      return { x: bounds.maxRight - peek - pos.x, y: 0 };
+    }
+    if (edge === "top") {
+      return { x: 0, y: bounds.minY + peek - (pos.y + panelHeight) };
+    }
+    return { x: 0, y: bounds.maxBottom - peek - pos.y };
+  };
+
+  const buildPanelStyle = (
+    panel: FloatingPanelKey,
+    pos: { x: number; y: number },
+    panelWidth: number,
+    panelHeight: number,
+  ) => {
+    const offset = getPanelDockOffset(panel, pos, panelWidth, panelHeight);
+    const dockEdge = panelDockEdges.value[panel];
+    // 只有收起的细条状态才带阴影，展开后不显示阴影
+    const dockShadow =
+      dockEdge && collapsedPanels.value[panel]
+        ? FLOAT_PANEL_EDGE_SHADOWS[dockEdge]
+        : undefined;
+    return {
+      left: `${pos.x + offset.x}px`,
+      top: `${pos.y + offset.y}px`,
+      width: `${panelWidth}px`,
+      height: `${panelHeight}px`,
+      // 根元素与内容层保持相同圆角，避免阴影沿直角绘制、在圆角处露出白色三角
+      borderRadius: dockShadow ? FLOAT_PANEL_EDGE_RADIUS : undefined,
+      boxShadow: dockShadow,
+      transition:
+        dockEdge && interactionPanel.value !== panel
+          ? FLOAT_PANEL_EDGE_TRANSITION
+          : "none",
+    };
+  };
+
+  const handleFloatingPanelMouseEnter = (panel: FloatingPanelKey) => {
+    clearPanelAutoHideTimer(panel);
+    if (!edgeAutoHideEnabled.value) return;
+    if (!panelDockEdges.value[panel]) return;
+    if (collapsedPanels.value[panel]) {
+      collapsedPanels.value[panel] = false;
+    }
+  };
+
+  const getPanelSurfaceRect = (panel: FloatingPanelKey) => {
+    const surface = panelsHostRef.value?.querySelector<HTMLElement>(
+      `[data-floating-panel-key="${panel}"]`,
+    );
+    if (!surface) return null;
+    const rect = surface.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+    };
+  };
+
+  const isPointerInsidePanelRect = (
+    rect: { left: number; right: number; top: number; bottom: number },
+    pointer: { x: number; y: number },
+  ) => {
+    const tolerance = FLOAT_PANEL_EDGE_HIT_TOLERANCE;
+    return (
+      pointer.x >= rect.left - tolerance &&
+      pointer.x <= rect.right + tolerance &&
+      pointer.y >= rect.top - tolerance &&
+      pointer.y <= rect.bottom + tolerance
+    );
+  };
+
+  const schedulePanelAutoHide = (panel: FloatingPanelKey) => {
+    if (panelAutoHideTimers.has(panel)) return;
+
+    const timer = window.setTimeout(() => {
+      panelAutoHideTimers.delete(panel);
+      if (!edgeAutoHideEnabled.value) return;
+      if (!panelDockEdges.value[panel]) return;
+      if (draggingPanel || resizingPanel || interactionPanel.value) return;
+
+      const rect = getPanelSurfaceRect(panel);
+      if (
+        rect &&
+        lastPointerPosition &&
+        isPointerInsidePanelRect(rect, lastPointerPosition)
+      ) {
+        return;
+      }
+
+      collapsedPanels.value[panel] = true;
+    }, FLOAT_PANEL_EDGE_AUTO_HIDE_DELAY);
+
+    panelAutoHideTimers.set(panel, timer);
+  };
+
+  const syncPanelAutoHideByPointer = (pointer: { x: number; y: number }) => {
+    lastPointerPosition = pointer;
+    if (!edgeAutoHideEnabled.value) return;
+    if (draggingPanel || resizingPanel || interactionPanel.value) return;
+
+    (Object.keys(panelDockEdges.value) as FloatingPanelKey[]).forEach(
+      (panel) => {
+        if (!panelDockEdges.value[panel]) return;
+
+        const rect = getPanelSurfaceRect(panel);
+        if (!rect) return;
+
+        if (isPointerInsidePanelRect(rect, pointer)) {
+          clearPanelAutoHideTimer(panel);
+          if (collapsedPanels.value[panel]) {
+            collapsedPanels.value[panel] = false;
+          }
+          return;
+        }
+
+        if (collapsedPanels.value[panel]) return;
+        schedulePanelAutoHide(panel);
+      },
+    );
+  };
+
+  const handleGlobalPointerMove = (e: MouseEvent) => {
+    // 拖到窗口外松手时 mouseup 可能丢失，这里按左键状态兜底结束拖动
+    if (draggingPanel && e.buttons === 0) {
+      stopPanelDrag();
+    }
+    syncPanelAutoHideByPointer({ x: e.clientX, y: e.clientY });
+  };
+
+  onMounted(() => {
+    window.addEventListener("mousemove", handleGlobalPointerMove, {
+      passive: true,
+    });
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener("mousemove", handleGlobalPointerMove);
+    clearAllPanelAutoHideTimers();
+  });
 
   const placeMinimapNearPropertiesPanel = () => {
     const minimapSize = getMinimapPanelSize();
@@ -1018,7 +1572,7 @@ export const useFloatingPanels = ({
     sidebarPanelPos.value = { ...nonOverlappingPos };
   };
 
-  const initOrClampFloatingPanels = () => {
+  const initOrClampFloatingPanelsCore = () => {
     updatePanelsHostSize();
     const { width, height } = panelsHostSize.value;
     if (!width || !height) return;
@@ -1322,68 +1876,84 @@ export const useFloatingPanels = ({
     }
   };
 
-  const sidebarPanelStyle = computed(() => {
-    return {
-      left: `${sidebarPanelPos.value.x}px`,
-      top: `${sidebarPanelPos.value.y}px`,
-      width: `${sidebarPanelWidth.value}px`,
-      height: `${sidebarPanelHeight.value}px`,
-    };
-  });
+  const initOrClampFloatingPanels = () => {
+    // 已贴边面板的坐标由窗口 bounds 决定，不能被画布 bounds 的 clamp 覆盖
+    const dockedPositions = (
+      Object.keys(panelDockEdges.value) as FloatingPanelKey[]
+    )
+      .filter((panel) => !!panelDockEdges.value[panel])
+      .map((panel) => ({ panel, pos: { ...getPanelFrame(panel).pos } }));
 
-  const templatePanelStyle = computed(() => {
-    return {
-      left: `${templatePanelPos.value.x}px`,
-      top: `${templatePanelPos.value.y}px`,
-      width: `${templatePanelWidth.value}px`,
-      height: `${templatePanelHeight.value}px`,
-    };
-  });
+    initOrClampFloatingPanelsCore();
 
-  const propertiesPanelStyle = computed(() => {
-    return {
-      left: `${propertiesPanelPos.value.x}px`,
-      top: `${propertiesPanelPos.value.y}px`,
-      width: `${propertiesPanelWidth.value}px`,
-      height: `${propertiesPanelHeight.value}px`,
-    };
-  });
+    dockedPositions.forEach(({ panel, pos }) => {
+      setPanelPosition(panel, pos);
+    });
+    syncDockedPanelPositions();
+  };
 
-  const structurePanelStyle = computed(() => {
-    return {
-      left: `${structurePanelPos.value.x}px`,
-      top: `${structurePanelPos.value.y}px`,
-      width: `${structurePanelWidth.value}px`,
-      height: `${structurePanelHeight.value}px`,
-    };
-  });
+  const sidebarPanelStyle = computed(() =>
+    buildPanelStyle(
+      "sidebar",
+      sidebarPanelPos.value,
+      sidebarPanelWidth.value,
+      sidebarPanelHeight.value,
+    ),
+  );
 
-  const aiPanelStyle = computed(() => {
-    return {
-      left: `${aiPanelPos.value.x}px`,
-      top: `${aiPanelPos.value.y}px`,
-      width: `${aiPanelWidth.value}px`,
-      height: `${aiPanelHeight.value}px`,
-    };
-  });
+  const templatePanelStyle = computed(() =>
+    buildPanelStyle(
+      "templates",
+      templatePanelPos.value,
+      templatePanelWidth.value,
+      templatePanelHeight.value,
+    ),
+  );
 
-  const historyPanelStyle = computed(() => {
-    return {
-      left: `${historyPanelPos.value.x}px`,
-      top: `${historyPanelPos.value.y}px`,
-      width: `${historyPanelWidth.value}px`,
-      height: `${historyPanelHeight.value}px`,
-    };
-  });
+  const propertiesPanelStyle = computed(() =>
+    buildPanelStyle(
+      "properties",
+      propertiesPanelPos.value,
+      propertiesPanelWidth.value,
+      propertiesPanelHeight.value,
+    ),
+  );
 
-  const minimapPanelStyle = computed(() => {
-    return {
-      left: `${minimapPanelPos.value.x}px`,
-      top: `${minimapPanelPos.value.y}px`,
-      width: `${minimapPanelWidth.value}px`,
-      height: `${minimapPanelHeight.value}px`,
-    };
-  });
+  const structurePanelStyle = computed(() =>
+    buildPanelStyle(
+      "structure",
+      structurePanelPos.value,
+      structurePanelWidth.value,
+      structurePanelHeight.value,
+    ),
+  );
+
+  const aiPanelStyle = computed(() =>
+    buildPanelStyle(
+      "ai",
+      aiPanelPos.value,
+      aiPanelWidth.value,
+      aiPanelHeight.value,
+    ),
+  );
+
+  const historyPanelStyle = computed(() =>
+    buildPanelStyle(
+      "history",
+      historyPanelPos.value,
+      historyPanelWidth.value,
+      historyPanelHeight.value,
+    ),
+  );
+
+  const minimapPanelStyle = computed(() =>
+    buildPanelStyle(
+      "minimap",
+      minimapPanelPos.value,
+      minimapPanelWidth.value,
+      minimapPanelHeight.value,
+    ),
+  );
 
   const minimapPreviewWidth = computed(() =>
     Math.max(120, minimapPanelWidth.value - MINIMAP_PANEL_BORDER_SIZE),
@@ -1474,12 +2044,21 @@ export const useFloatingPanels = ({
                 : draggingPanel === "ai"
                   ? aiPanelHeight.value
                   : getMinimapPanelSize().height;
-    const nextPos = clampPanelPos(
+    const dragResult = clampPanelPosForDrag(
       dragStartPanelPos.x + deltaX,
       dragStartPanelPos.y + deltaY,
       panelWidth,
       panelHeight,
     );
+    // 面板已贴住或越出窗口边缘时不做画布吸附，否则会被吸回边界内
+    const nextPos = dragResult.pinned
+      ? dragResult.pos
+      : snapPanelPosToCanvasEdges(
+          dragResult.pos.x,
+          dragResult.pos.y,
+          panelWidth,
+          panelHeight,
+        );
 
     if (draggingPanel === "sidebar") {
       sidebarPanelPos.value = nextPos;
@@ -1576,9 +2155,32 @@ export const useFloatingPanels = ({
   };
 
   const stopPanelDrag = () => {
+    const panel = draggingPanel;
     draggingPanel = null;
+    interactionPanel.value = null;
     window.removeEventListener("mousemove", handlePanelDragMove);
     window.removeEventListener("mouseup", stopPanelDrag);
+
+    if (!panel || !edgeAutoHideEnabled.value) return;
+
+    // 越出窗口满 6px 才贴边收起；未达门槛则吸回窗口内并保持展开
+    const edge = detectWindowDockEdge(panel);
+    if (!edge) {
+      const frame = getPanelFrame(panel);
+      const clampedPos = clampPanelPos(
+        frame.pos.x,
+        frame.pos.y,
+        frame.width,
+        frame.height,
+      );
+      if (clampedPos.x !== frame.pos.x || clampedPos.y !== frame.pos.y) {
+        setPanelPosition(panel, clampedPos);
+      }
+      return;
+    }
+
+    dockPanelToEdge(panel, edge);
+    collapsedPanels.value[panel] = true;
   };
 
   const handlePanelResizeMove = (e: MouseEvent) => {
@@ -1623,15 +2225,6 @@ export const useFloatingPanels = ({
       sidebarPanelPreferredHeight.value = resizedLayout.height;
       sidebarPanelPreferredPos.value = { ...resizedLayout.pos };
       setPanelHeightMode("sidebar", "fixed");
-      setPanelAnchors(
-        "sidebar",
-        detectPanelAnchors(
-          "sidebar",
-          resizedLayout.pos,
-          resizedLayout.width,
-          resizedLayout.height,
-        ),
-      );
       return;
     }
 
@@ -1652,15 +2245,6 @@ export const useFloatingPanels = ({
       aiPanelPreferredHeight.value = resizedLayout.height;
       aiPanelPreferredPos.value = { ...resizedLayout.pos };
       setPanelHeightMode("ai", "fixed");
-      setPanelAnchors(
-        "ai",
-        detectPanelAnchors(
-          "ai",
-          resizedLayout.pos,
-          resizedLayout.width,
-          resizedLayout.height,
-        ),
-      );
       return;
     }
 
@@ -1681,15 +2265,6 @@ export const useFloatingPanels = ({
       templatePanelPreferredHeight.value = resizedLayout.height;
       templatePanelPreferredPos.value = { ...resizedLayout.pos };
       setPanelHeightMode("templates", "fixed");
-      setPanelAnchors(
-        "templates",
-        detectPanelAnchors(
-          "templates",
-          resizedLayout.pos,
-          resizedLayout.width,
-          resizedLayout.height,
-        ),
-      );
       return;
     }
 
@@ -1710,15 +2285,6 @@ export const useFloatingPanels = ({
       structurePanelPreferredHeight.value = resizedLayout.height;
       structurePanelPreferredPos.value = { ...resizedLayout.pos };
       setPanelHeightMode("structure", "fixed");
-      setPanelAnchors(
-        "structure",
-        detectPanelAnchors(
-          "structure",
-          resizedLayout.pos,
-          resizedLayout.width,
-          resizedLayout.height,
-        ),
-      );
       return;
     }
 
@@ -1739,15 +2305,6 @@ export const useFloatingPanels = ({
       historyPanelPreferredHeight.value = resizedLayout.height;
       historyPanelPreferredPos.value = { ...resizedLayout.pos };
       setPanelHeightMode("history", "fixed");
-      setPanelAnchors(
-        "history",
-        detectPanelAnchors(
-          "history",
-          resizedLayout.pos,
-          resizedLayout.width,
-          resizedLayout.height,
-        ),
-      );
       return;
     }
 
@@ -1767,21 +2324,34 @@ export const useFloatingPanels = ({
     propertiesPanelPreferredHeight.value = resizedLayout.height;
     propertiesPanelPreferredPos.value = { ...resizedLayout.pos };
     setPanelHeightMode("properties", "fixed");
-    setPanelAnchors(
-      "properties",
-      detectPanelAnchors(
-        "properties",
-        resizedLayout.pos,
-        resizedLayout.width,
-        resizedLayout.height,
-      ),
-    );
   };
 
   const stopPanelResize = () => {
+    const panel = resizingPanel;
     resizingPanel = null;
+    interactionPanel.value = null;
     window.removeEventListener("mousemove", handlePanelResizeMove);
     window.removeEventListener("mouseup", stopPanelResize);
+    // 松手后才刷新锚点，避免放大到底部吸附时锚点中途变成 bottom 把面板锁死在状态栏上沿
+    if (panel && panel !== "minimap") {
+      const frame = getPanelFrame(panel);
+      const anchors = detectPanelAnchors(
+        panel,
+        frame.pos,
+        frame.width,
+        frame.height,
+      );
+      const statusBarTop = getStatusBarTop();
+      // 吸附在状态栏上沿时保持 free 锚点，下次仍可继续向下放大越过状态栏
+      if (
+        statusBarTop !== null &&
+        Math.abs(frame.pos.y + frame.height - statusBarTop) < 1
+      ) {
+        anchors.y = "free";
+      }
+      setPanelAnchors(panel, anchors);
+    }
+    syncDockedPanelPositions();
   };
 
   const startPanelResize = (panel: FloatingPanelKey, e: MouseEvent) => {
@@ -1790,6 +2360,8 @@ export const useFloatingPanels = ({
 
     stopPanelDrag();
     bringPanelToFront(panel);
+    clearPanelAutoHideTimer(panel);
+    interactionPanel.value = panel;
     resizingPanel = panel;
     resizeStartPointer = { x: e.clientX, y: e.clientY };
     resizeStartWidth =
@@ -1848,6 +2420,8 @@ export const useFloatingPanels = ({
     e.stopPropagation();
 
     bringPanelToFront(panel);
+    undockPanel(panel);
+    interactionPanel.value = panel;
     draggingPanel = panel;
     dragStartPointer = { x: e.clientX, y: e.clientY };
     dragStartPanelPos =
@@ -2070,6 +2644,17 @@ export const useFloatingPanels = ({
     },
   );
 
+  watch(
+    () => edgeAutoHideEnabled.value,
+    (enabled) => {
+      clearAllPanelAutoHideTimers();
+      resetPanelDockState();
+      if (!enabled) {
+        nextTick(() => initOrClampFloatingPanels());
+      }
+    },
+  );
+
   return {
     showElementsPanel,
     showTemplatePanel,
@@ -2087,6 +2672,7 @@ export const useFloatingPanels = ({
     minimapPreviewMaxHeight,
     getPanelZIndex,
     handleFloatingPanelMouseDown,
+    handleFloatingPanelMouseEnter,
     startPanelResize,
     closeTemplatePanel,
     closeStructurePanel,

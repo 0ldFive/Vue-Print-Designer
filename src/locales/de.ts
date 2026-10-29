@@ -756,6 +756,9 @@ export default {
       "Wählen Sie eine vordefinierte Designfarbe und übernehmen Sie sie sofort.",
     showStatusBar: "Statusleiste",
     showStatusBarDesc: "Statusleiste am unteren Rand des Editors anzeigen.",
+    panelEdgeAutoHide: "Panels am Rand andocken",
+    panelEdgeAutoHideDesc:
+      "Wenn aktiviert, können schwebende Panels an jeden Fensterrand gezogen und angedockt werden. Nach dem Verlassen des Zeigers klappen sie zu einem schmalen Streifen ein und beim Überfahren wieder aus.",
     themePresetDefault: "Blau",
     themePresetEmerald: "Smaragd",
     themePresetAmber: "Bernstein",

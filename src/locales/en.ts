@@ -749,6 +749,9 @@ export default {
     themeColorDesc: "Pick a preset theme color and apply instantly.",
     showStatusBar: "Status Bar",
     showStatusBarDesc: "Show the status bar at the bottom of the editor.",
+    panelEdgeAutoHide: "Dock panels to edge",
+    panelEdgeAutoHideDesc:
+      "When enabled, drag a floating panel to any window edge to dock it. It auto-collapses into a thin strip after the pointer leaves and expands on hover.",
     themePresetDefault: "Blue",
     themePresetEmerald: "Emerald",
     themePresetAmber: "Amber",

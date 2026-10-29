@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch, onMounted, onUnmounted } from "vue";
+import type { Ref } from "vue";
 import { useI18n } from "@/locales";
 import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
@@ -30,7 +31,34 @@ const templateStore = useTemplateStore();
 const { hiddenModules } = useFeatureFlags();
 const { marketEnabled } = useMarketConfig();
 const designerInstanceId = inject<string | null>("designer-instance-id", null);
+const modalContainer = inject<Ref<HTMLElement | null>>(
+  "modal-container",
+  ref(null),
+);
 const showExportMenu = ref(false);
+const exportMenuAnchor = ref<HTMLElement | null>(null);
+const exportMenuStyle = ref<Record<string, string>>({});
+
+// 菜单 Teleport 到 modal-container 后脱离 Header 层叠上下文，需要按视口坐标定位
+const updateExportMenuPosition = () => {
+  const rect = exportMenuAnchor.value?.getBoundingClientRect();
+  if (!rect) return;
+  exportMenuStyle.value = {
+    top: `${rect.bottom + 8}px`,
+    right: `${Math.max(8, window.innerWidth - rect.right)}px`,
+  };
+};
+
+watch(showExportMenu, (visible) => {
+  window.removeEventListener("resize", updateExportMenuPosition);
+  if (!visible) return;
+  updateExportMenuPosition();
+  window.addEventListener("resize", updateExportMenuPosition);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateExportMenuPosition);
+});
 
 const showMarketEntry = computed(
   () => marketEnabled.value && hiddenModules.value.market !== true,
@@ -213,7 +241,10 @@ const handleOpenSettings = () => {
         <HeaderElementsBar />
       </div>
 
-      <div class="relative justify-self-end shrink-0 min-w-max">
+      <div
+        ref="exportMenuAnchor"
+        class="relative justify-self-end shrink-0 min-w-max"
+      >
         <div class="flex items-center shadow-sm">
           <button
             @click="handleSave"
@@ -239,11 +270,13 @@ const handleOpenSettings = () => {
           </button>
         </div>
 
+        <Teleport :to="modalContainer || 'body'">
         <div
           v-if="showExportMenu"
+          :style="exportMenuStyle"
           :class="[
-            'absolute top-full right-0 mt-2 w-max min-w-[160px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl p-1 z-[3200] flex flex-col gap-1',
-            store.previewLocked ? 'pointer-events-none opacity-60' : '',
+            'fixed w-max min-w-[160px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl p-1 z-[3200] flex flex-col gap-1',
+            store.previewLocked ? 'pointer-events-none opacity-60' : 'pointer-events-auto',
           ]"
         >
           <button
@@ -334,9 +367,10 @@ const handleOpenSettings = () => {
         </div>
         <div
           v-if="showExportMenu"
-          class="fixed inset-0 z-[3199]"
+          class="fixed inset-0 z-[3199] pointer-events-auto"
           @click="closeExportMenu"
         ></div>
+        </Teleport>
       </div>
     </header>
 

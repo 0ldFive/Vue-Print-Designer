@@ -746,6 +746,9 @@ export default {
     themeColorDesc: "프리셋 테마 색상을 선택해 즉시 적용하세요.",
     showStatusBar: "상태 표시줄",
     showStatusBarDesc: "편집기 하단에 상태 표시줄을 표시합니다.",
+    panelEdgeAutoHide: "패널 가장자리 고정",
+    panelEdgeAutoHideDesc:
+      "활성화하면 플로팅 패널을 창의 아무 가장자리로 끌어 고정할 수 있습니다. 포인터가 벗어나면 얇은 띠로 자동 접히고, 올리면 다시 펼쳐집니다.",
     themePresetDefault: "파랑",
     themePresetEmerald: "에메랄드",
     themePresetAmber: "앰버",

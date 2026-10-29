@@ -184,6 +184,7 @@ const {
   minimapPreviewMaxHeight,
   getPanelZIndex,
   handleFloatingPanelMouseDown,
+  handleFloatingPanelMouseEnter,
   startPanelResize,
   closeTemplatePanel,
   closeStructurePanel,
@@ -1310,9 +1311,9 @@ const rulerRanges = computed(() => {
     <div
       ref="panelsHostRef"
       data-floating-panels-host="true"
-      class="flex-1 flex overflow-hidden relative"
+      class="flex-1 min-h-0 flex overflow-visible relative"
     >
-      <main class="flex-1 overflow-hidden relative flex flex-col">
+      <main class="flex-1 min-h-0 overflow-hidden relative flex flex-col">
         <CustomEditBanner
           :visible="!!store.editingCustomElementId"
           :title="
@@ -1329,7 +1330,7 @@ const rulerRanges = computed(() => {
         />
         <Shortcuts />
         <!-- Rulers Area -->
-        <div class="relative w-full h-full flex flex-col overflow-hidden">
+        <div class="relative w-full flex-1 min-h-0 flex flex-col overflow-hidden">
           <!-- Top Ruler -->
           <div
             class="flex-none h-[21px] bg-gray-50 border-b border-gray-300 flex z-20"
@@ -1642,47 +1643,50 @@ const rulerRanges = computed(() => {
         </footer> -->
 
         <StatusBar v-if="store.showStatusBar" />
-
-        <FloatingMinimapPanel
-          :show="store.showMinimap"
-          :panel-style="minimapPanelStyle"
-          :z-index="getPanelZIndex('minimap')"
-          :title="t('editor.showMinimap')"
-          :resize-title="t('common.resizePanel')"
-          :scroll-width="minimapScrollWidth"
-          :scroll-height="minimapScrollHeight"
-          :viewport-width="viewportWidth"
-          :viewport-height="viewportHeight"
-          :scroll-left="minimapScrollX"
-          :scroll-top="minimapScrollY"
-          :pages="store.pages"
-          :page-width="store.canvasSize.width"
-          :page-height="store.canvasSize.height"
-          :zoom="store.zoom"
-          :content-offset-x="minimapContentOffsetX"
-          :content-offset-y="minimapContentOffsetY"
-          :canvas-background="store.canvasBackground"
-          :show-header-line="store.showHeaderLine"
-          :show-footer-line="store.showFooterLine"
-          :header-height="store.headerHeight"
-          :footer-height="store.footerHeight"
-          :page-spacing-y="store.pageSpacingY || 0"
-          :watermark="store.watermark || null"
-          :preview-width="minimapPreviewWidth"
-          :preview-max-height="minimapPreviewMaxHeight"
-          @panel-mousedown="(e) => handleFloatingPanelMouseDown('minimap', e)"
-          @close="store.setShowMinimap(false)"
-          @resize-mousedown="(e) => startPanelResize('minimap', e)"
-          @update-scroll="handleMinimapScroll"
-        />
       </main>
+
+      <FloatingMinimapPanel
+        :show="store.showMinimap"
+        :panel-style="minimapPanelStyle"
+        :z-index="getPanelZIndex('minimap')"
+        :title="t('editor.showMinimap')"
+        :resize-title="t('common.resizePanel')"
+        :scroll-width="minimapScrollWidth"
+        :scroll-height="minimapScrollHeight"
+        :viewport-width="viewportWidth"
+        :viewport-height="viewportHeight"
+        :scroll-left="minimapScrollX"
+        :scroll-top="minimapScrollY"
+        :pages="store.pages"
+        :page-width="store.canvasSize.width"
+        :page-height="store.canvasSize.height"
+        :zoom="store.zoom"
+        :content-offset-x="minimapContentOffsetX"
+        :content-offset-y="minimapContentOffsetY"
+        :canvas-background="store.canvasBackground"
+        :show-header-line="store.showHeaderLine"
+        :show-footer-line="store.showFooterLine"
+        :header-height="store.headerHeight"
+        :footer-height="store.footerHeight"
+        :page-spacing-y="store.pageSpacingY || 0"
+        :watermark="store.watermark || null"
+        :preview-width="minimapPreviewWidth"
+        :preview-max-height="minimapPreviewMaxHeight"
+        @panel-mousedown="(e) => handleFloatingPanelMouseDown('minimap', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('minimap')"
+        @close="store.setShowMinimap(false)"
+        @resize-mousedown="(e) => startPanelResize('minimap', e)"
+        @update-scroll="handleMinimapScroll"
+      />
 
       <FloatingBasicPanel
         :visible="showElementsPanel"
         :panel-style="sidebarPanelStyle"
         :z-index="getPanelZIndex('sidebar')"
         :resize-title="t('common.resizePanel')"
+        panel-key="sidebar"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('sidebar', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('sidebar')"
         @resize-mousedown="(e) => startPanelResize('sidebar', e)"
       >
         <ElementsPanel />
@@ -1705,6 +1709,7 @@ const rulerRanges = computed(() => {
         :set-help-button-ref="setTemplateHelpButtonRef"
         :set-help-tooltip-ref="setTemplateHelpTooltipRef"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('templates', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('templates')"
         @toggle-help="toggleTemplateHelpTooltip"
         @close="closeTemplatePanel"
         @resize-mousedown="(e) => startPanelResize('templates', e)"
@@ -1717,6 +1722,7 @@ const rulerRanges = computed(() => {
         :resize-title="t('common.resizePanel')"
         panel-key="properties"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('properties', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('properties')"
         @resize-mousedown="(e) => startPanelResize('properties', e)"
       >
         <PropertiesPanel />
@@ -1739,6 +1745,7 @@ const rulerRanges = computed(() => {
         :set-help-button-ref="setStructureHelpButtonRef"
         :set-help-tooltip-ref="setStructureHelpTooltipRef"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('structure', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('structure')"
         @toggle-help="toggleStructureHelpTooltip"
         @close="closeStructurePanel"
         @resize-mousedown="(e) => startPanelResize('structure', e)"
@@ -1750,6 +1757,7 @@ const rulerRanges = computed(() => {
         :z-index="getPanelZIndex('ai')"
         :resize-title="t('common.resizePanel')"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('ai', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('ai')"
         @resize-mousedown="(e) => startPanelResize('ai', e)"
         @close="closeAiPanel"
       />
@@ -1764,6 +1772,7 @@ const rulerRanges = computed(() => {
         :resize-title="t('common.resizePanel')"
         panel-key="history"
         @panel-mousedown="(e) => handleFloatingPanelMouseDown('history', e)"
+        @mouseenter="handleFloatingPanelMouseEnter('history')"
         @resize-mousedown="(e) => startPanelResize('history', e)"
       >
         <HistoryPanel />

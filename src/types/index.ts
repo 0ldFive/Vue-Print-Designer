@@ -431,6 +431,7 @@ export interface DesignerState {
   showMinimap: boolean;
   showHistoryPanel: boolean;
   showStatusBar: boolean;
+  panelEdgeAutoHide: boolean;
   showTextQuickToolbar: boolean;
   showDeveloperMode: boolean;
   showPaginationDebugLogs: boolean;

@@ -195,6 +195,13 @@ const DEFAULT_PRINT_CSS_VALUES: Record<string, string> = {
 };
 
 const isDefaultPrintCssValue = (prop: string, value: string) => {
+  // padding / margin 的 0 值必须保留：内联样式被抽成 class 后，元素上残留的
+  // Tailwind 布局类（如 p-1）会重新生效，把 0 覆盖成 4px，导致导出/预览的
+  // 表格行高被撑大、内容整体下坠，与设计器画布不一致。
+  if (prop.startsWith("padding-") || prop.startsWith("margin-")) {
+    return false;
+  }
+
   return DEFAULT_PRINT_CSS_VALUES[prop] === value;
 };
 

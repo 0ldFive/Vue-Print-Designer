@@ -201,6 +201,20 @@ const connectionButtonClass = (
   return "bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50";
 };
 
+// 打印方式选项：未连接成功的模式整体置灰
+const printModeOptionClass = (
+  mode: "browser" | "local" | "remote",
+  enabled: boolean,
+) => {
+  if (!enabled) {
+    return "cursor-not-allowed border-gray-200 text-gray-400 bg-gray-50 opacity-60";
+  }
+  return (
+    "cursor-pointer " +
+    (printMode.value === mode ? "border-blue-600 text-blue-700" : "border-gray-300")
+  );
+};
+
 const clamp = (value: number, min = 0, max = 255) =>
   Math.min(Math.max(value, min), max);
 
@@ -788,6 +802,43 @@ onUnmounted(() => {
               <div class="border-t border-gray-200 pt-4">
                 <div class="flex items-center justify-between">
                   <div class="font-medium text-gray-900">
+                    {{ t("settings.panelEdgeAutoHide") }}
+                  </div>
+                  <button
+                    @click="
+                      designerStore.setPanelEdgeAutoHide(
+                        !designerStore.panelEdgeAutoHide,
+                      )
+                    "
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    :class="
+                      designerStore.panelEdgeAutoHide
+                        ? 'bg-blue-600'
+                        : 'bg-gray-200'
+                    "
+                  >
+                    <span class="sr-only">{{
+                      t("settings.panelEdgeAutoHide")
+                    }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="
+                        designerStore.panelEdgeAutoHide
+                          ? 'translate-x-5'
+                          : 'translate-x-0'
+                      "
+                    />
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  {{ t("settings.panelEdgeAutoHideDesc") }}
+                </p>
+              </div>
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between">
+                  <div class="font-medium text-gray-900">
                     {{ t("settings.autoSave") }}
                   </div>
                   <button
@@ -897,23 +948,15 @@ onUnmounted(() => {
                   </div>
                   <div class="flex items-center gap-3">
                     <label
-                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
-                      :class="
-                        printMode === 'browser'
-                          ? 'border-blue-600 text-blue-700'
-                          : 'border-gray-300'
-                      "
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded text-xs"
+                      :class="printModeOptionClass('browser', true)"
                     >
                       <input type="radio" value="browser" v-model="printMode" />
                       <span>{{ t("settings.printModeBrowser") }}</span>
                     </label>
                     <label
-                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
-                      :class="
-                        printMode === 'local'
-                          ? 'border-blue-600 text-blue-700'
-                          : 'border-gray-300'
-                      "
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded text-xs"
+                      :class="printModeOptionClass('local', localConnected)"
                     >
                       <input
                         type="radio"
@@ -924,12 +967,8 @@ onUnmounted(() => {
                       <span>{{ t("settings.printModeLocal") }}</span>
                     </label>
                     <label
-                      class="flex items-center gap-2 px-3 py-1.5 border rounded cursor-pointer text-xs"
-                      :class="
-                        printMode === 'remote'
-                          ? 'border-blue-600 text-blue-700'
-                          : 'border-gray-300'
-                      "
+                      class="flex items-center gap-2 px-3 py-1.5 border rounded text-xs"
+                      :class="printModeOptionClass('remote', remoteConnected)"
                     >
                       <input
                         type="radio"

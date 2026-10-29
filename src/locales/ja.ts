@@ -748,6 +748,9 @@ export default {
     themeColorDesc: "プリセットのテーマカラーを選ぶと即時適用されます。",
     showStatusBar: "ステータスバー",
     showStatusBarDesc: "エディター下部にステータスバーを表示します。",
+    panelEdgeAutoHide: "パネルの端に貼り付け",
+    panelEdgeAutoHideDesc:
+      "有効にすると、フローティングパネルをウィンドウの任意の端にドラッグして貼り付けられます。ポインターが離れると細い帯に自動的に折りたたまれ、ホバーで展開します。",
     themePresetDefault: "ブルー",
     themePresetEmerald: "エメラルド",
     themePresetAmber: "アンバー",

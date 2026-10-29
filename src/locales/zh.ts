@@ -731,6 +731,8 @@ export default {
     themeColorDesc: "选择一个预设主题色，立即生效。",
     showStatusBar: "状态栏",
     showStatusBarDesc: "在编辑器底部显示状态栏。",
+    panelEdgeAutoHide: "浮动面板贴边收起",
+    panelEdgeAutoHideDesc: "拖到窗口边缘自动收起，移入即展开。",
     themePresetDefault: "蓝色",
     themePresetEmerald: "绿色",
     themePresetAmber: "橙色",

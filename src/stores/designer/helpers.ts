@@ -177,6 +177,12 @@ export const loadStatusBarVisible = () => {
   return stored !== "false";
 };
 
+export const loadPanelEdgeAutoHide = () => {
+  const stored = localStorage.getItem("print-designer-panel-edge-auto-hide");
+  if (stored === null) return false;
+  return stored === "true";
+};
+
 export type LayerMoveMode = "front" | "back" | "forward" | "backward";
 
 export const getElementZIndex = (element: PrintElement) => element.style?.zIndex || 1;

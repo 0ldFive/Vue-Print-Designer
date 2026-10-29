@@ -731,6 +731,9 @@ export default {
     themeColorDesc: "選擇一個預設主題色，立即生效。",
     showStatusBar: "狀態欄",
     showStatusBarDesc: "在編輯器底部顯示狀態欄。",
+    panelEdgeAutoHide: "浮動面板貼邊收合",
+    panelEdgeAutoHideDesc:
+      "開啟後可將浮動面板拖到視窗任意邊緣貼邊，滑鼠移開後自動收合為細條，移入即展開。",
     themePresetDefault: "藍色",
     themePresetEmerald: "綠色",
     themePresetAmber: "橙色",

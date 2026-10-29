@@ -1176,11 +1176,18 @@ const getRowHeightCellStyle = (
   const height = getRenderedRowHeight(section, rowIndex, row);
   if (!height) return {};
 
+  // border-collapse 下单元格上下边框各占 0.5px，若 line-height 仍等于设定行高，
+  // 内容会把行高撑大 1px；多行累计后表格总高超出元素框，末行被挤压或裁切，
+  // 与导出结果出现偏差。这里按边框宽度扣减，保证渲染行高精确等于设定值。
+  const borderStyle = props.element.style.borderStyle || "solid";
+  const borderWidth = Number(props.element.style.borderWidth ?? 1) || 0;
+  const borderOffset = borderStyle === "none" ? 0 : borderWidth;
+
   return {
     height: `${height}px`,
     paddingTop: "0px",
     paddingBottom: "0px",
-    lineHeight: `${height}px`,
+    lineHeight: `${Math.max(1, height - borderOffset)}px`,
   };
 };
 
