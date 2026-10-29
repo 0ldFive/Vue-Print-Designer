@@ -464,6 +464,25 @@ const projectName = startCase(pkg.name);
                       >
                     </li>
                     <li class="flex justify-between items-center">
+                      <span>{{ t("shortcuts.selectPenetrate") }}</span>
+                      <kbd
+                        class="bg-gray-100 px-2 py-0.5 rounded border text-xs"
+                        >{{
+                          formatShortcut([
+                            t("shortcuts.alt"),
+                            t("shortcuts.click"),
+                          ])
+                        }}</kbd
+                      >
+                    </li>
+                    <li class="flex justify-between items-center">
+                      <span>{{ t("shortcuts.selectCycle") }}</span>
+                      <kbd
+                        class="bg-gray-100 px-2 py-0.5 rounded border text-xs"
+                        >{{ t("shortcuts.click") }} ×2</kbd
+                      >
+                    </li>
+                    <li class="flex justify-between items-center">
                       <span
                         >{{ t("common.lock") }}/{{ t("common.unlock") }}</span
                       >

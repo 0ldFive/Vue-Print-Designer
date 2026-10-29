@@ -706,6 +706,8 @@ export default {
     closeModal: "Dialog schließen",
     selectAll: "Alles auswählen",
     multiSelect: "Mehrfachauswahl",
+    selectPenetrate: "Element darunter auswählen",
+    selectCycle: "Überlappende Elemente durchschalten",
     move: "Verschieben",
     fastMove: "Schnell verschieben",
     snapRotate: "Einrast-Drehung",

@@ -697,6 +697,8 @@ export default {
     closeModal: "모달 닫기",
     selectAll: "모두 선택",
     multiSelect: "다중 선택",
+    selectPenetrate: "아래 요소 선택",
+    selectCycle: "겹친 요소 순환 전환",
     move: "이동",
     fastMove: "빠른 이동",
     snapRotate: "회전 스냅",

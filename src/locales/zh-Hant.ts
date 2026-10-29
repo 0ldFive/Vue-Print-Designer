@@ -682,6 +682,8 @@ export default {
     closeModal: "關閉彈窗",
     selectAll: "全選",
     multiSelect: "多選",
+    selectPenetrate: "穿透選擇下層元素",
+    selectCycle: "循環切換重疊元素",
     move: "移動",
     fastMove: "快速移動",
     snapRotate: "吸附旋轉",

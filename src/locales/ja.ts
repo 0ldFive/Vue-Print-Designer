@@ -699,6 +699,8 @@ export default {
     closeModal: "モーダルを閉じる",
     selectAll: "すべて選択",
     multiSelect: "複数選択",
+    selectPenetrate: "下の要素を選択",
+    selectCycle: "重なりを順に切り替え",
     move: "移動",
     fastMove: "高速移動",
     snapRotate: "スナップ回転",

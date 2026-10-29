@@ -1,3 +1,16 @@
+<script lang="ts">
+// 跨 wrapper 共享的“拖动转交”标记：指针按下的是上层元素，
+// 但真正要拖动的是被它盖住的下层元素时，由下层 wrapper 接管这次拖动。
+type ForwardDragPayload = {
+  elementId: string;
+  pageIndex: number;
+  x: number;
+  y: number;
+};
+
+let pendingForwardDrag: ForwardDragPayload | null = null;
+</script>
+
 <script setup lang="ts">
 import {
   ref,
@@ -604,6 +617,166 @@ let initialTop = 0;
 let isDragging = false;
 let hasSnapshot = false;
 
+// 按下后尚未确定“点击选择”还是“拖动”时的起点：
+// 首次明显移动才决定拖谁，未移动就松开则按点击处理。
+let pendingPointer: { x: number; y: number } | null = null;
+
+// 上一次点击的位置与时间，用于"同一位置重复点击循环切换重叠元素"。
+let lastClickState: {
+  x: number;
+  y: number;
+  pageIndex: number;
+  time: number;
+} | null = null;
+
+const CLICK_CYCLE_DISTANCE = 3;
+const DOUBLE_CLICK_INTERVAL = 350;
+
+/**
+ * 取指针位置下方当前页面的元素 id，按视觉层级从最上层到最下层排列。
+ * elementsFromPoint 的顺序即浏览器命中测试顺序，天然等于"看到的上下关系"。
+ */
+const getHitElementIdsAt = (clientX: number, clientY: number) => {
+  const root = getQueryRoot();
+  const pageElement = root.getElementById(`page-${props.pageIndex}`);
+  const stack = root.elementsFromPoint(clientX, clientY);
+  const ids: string[] = [];
+
+  for (const node of stack) {
+    if (!(node instanceof Element)) continue;
+    const wrapper = node.closest(".element-wrapper") as HTMLElement | null;
+    if (!wrapper) continue;
+    if (pageElement && !pageElement.contains(wrapper)) continue;
+    if (wrapper.dataset.readOnly === "true") continue;
+    const id = wrapper.dataset.elementId;
+    if (!id || ids.includes(id)) continue;
+    ids.push(id);
+  }
+
+  return ids;
+};
+
+/**
+ * 解析点击（按下后未拖动）应选中的元素，PS 式智能选择：
+ * 1. 默认选中最上层；
+ * 2. 按住 Alt 点击穿透到下一层；
+ * 3. 在同一位置再次点击，逐层向下循环。
+ * 双击间隔内不循环，避免干扰文字/图片的双击编辑。
+ */
+const resolveClickSelection = (e: MouseEvent) => {
+  const candidateIds = getHitElementIdsAt(e.clientX, e.clientY);
+  if (candidateIds.length === 0) return props.element.id;
+
+  const now = performance.now();
+  const previous = lastClickState;
+  const isSameSpot =
+    !!previous &&
+    previous.pageIndex === props.pageIndex &&
+    Math.abs(previous.x - e.clientX) <= CLICK_CYCLE_DISTANCE &&
+    Math.abs(previous.y - e.clientY) <= CLICK_CYCLE_DISTANCE;
+  const isDoubleClick =
+    isSameSpot && now - (previous as NonNullable<typeof previous>).time <= DOUBLE_CLICK_INTERVAL;
+
+  lastClickState = {
+    x: e.clientX,
+    y: e.clientY,
+    pageIndex: props.pageIndex,
+    time: now,
+  };
+
+  const selectedId =
+    store.selectedElementIds.length === 1 ? store.selectedElementId : null;
+  const selectedIndex = selectedId ? candidateIds.indexOf(selectedId) : -1;
+
+  if (e.altKey) {
+    const baseIndex =
+      selectedIndex >= 0
+        ? selectedIndex
+        : candidateIds.indexOf(props.element.id);
+    return candidateIds[(baseIndex + 1) % candidateIds.length];
+  }
+
+  if (isSameSpot && !isDoubleClick) {
+    // 已选中的是最上层：再点一次切到下一层
+    if (selectedIndex === 0 && candidateIds.length > 1) {
+      return candidateIds[1];
+    }
+    // 已选中的是下层元素：保持不动，让这次按下直接拖动它
+    if (selectedIndex > 0) {
+      return candidateIds[selectedIndex];
+    }
+  }
+
+  return candidateIds[0];
+};
+
+/**
+ * 把这次拖动转交给真正的目标图层：派发一次带原始按下坐标的 mousedown，
+ * 交给目标 wrapper 自己处理，保证它的锁定、嵌入单元格约束等逻辑都生效。
+ */
+const forwardDragTo = (
+  elementId: string,
+  originX: number,
+  originY: number,
+) => {
+  const root = getQueryRoot();
+  const pageElement = root.getElementById(`page-${props.pageIndex}`);
+  const scope = pageElement ?? root;
+  const target = Array.from(
+    scope.querySelectorAll<HTMLElement>(".element-wrapper"),
+  ).find(
+    (wrapper) =>
+      wrapper.dataset.elementId === elementId &&
+      wrapper.dataset.readOnly !== "true",
+  );
+  if (!target) return;
+
+  pendingForwardDrag = {
+    elementId,
+    pageIndex: props.pageIndex,
+    x: originX,
+    y: originY,
+  };
+  target.dispatchEvent(
+    new MouseEvent("mousedown", {
+      bubbles: true,
+      cancelable: true,
+      clientX: originX,
+      clientY: originY,
+      button: 0,
+      buttons: 1,
+    }),
+  );
+  // 目标未接管（被锁定等）时清掉标记，避免污染下一次点击
+  if (pendingForwardDrag && pendingForwardDrag.elementId === elementId) {
+    pendingForwardDrag = null;
+  }
+};
+
+/** 开始拖动当前元素；返回 false 表示不应拖动（如已锁定）。 */
+const beginDrag = (clientX: number, clientY: number) => {
+  if (props.element.locked) return false;
+
+  // 拖动前确保它被选中（多选时它已在选中集合里，不会打断群组拖动）
+  if (!store.selectedElementIds.includes(props.element.id)) {
+    store.selectElement(props.element.id, false, false);
+  }
+
+  isDragging = true;
+  store.setDragging(true);
+  store.setResizing(false);
+  store.setRotating(false);
+  hasSnapshot = false;
+  startX = clientX;
+  startY = clientY;
+  initialLeft = props.element.x;
+  initialTop = props.element.y;
+
+  window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("mouseup", handleMouseUp);
+  return true;
+};
+
 const handleMouseDown = (e: MouseEvent) => {
   if (props.readOnly) return;
   if (e.button !== 0) return; // Only left click
@@ -617,51 +790,39 @@ const handleMouseDown = (e: MouseEvent) => {
   // Prevent bubbling to page-level marquee selection start.
   e.stopPropagation();
 
+  // 由上层元素转交过来的拖动：用原始按下坐标直接拖动本元素
+  const forwarded = pendingForwardDrag;
+  if (
+    forwarded &&
+    forwarded.elementId === props.element.id &&
+    forwarded.pageIndex === props.pageIndex
+  ) {
+    pendingForwardDrag = null;
+    beginDrag(forwarded.x, forwarded.y);
+    return;
+  }
+
   // Check for multi-select (Ctrl/Cmd key)
   const isMultiSelect = e.ctrlKey || e.metaKey;
 
-  // Refined Selection Logic:
-  // 1. If multi-selecting (Ctrl/Cmd), always toggle/add.
-  // 2. If single-selecting (No modifier):
-  //    a. If element is ALREADY selected, do NOT deselect others immediately (wait for mouse up).
-  //       This allows dragging a group by clicking any member.
-  //    b. If element is NOT selected, select it exclusively.
-
   if (isMultiSelect) {
-    store.selectElement(props.element.id, true);
-  } else {
-    if (!store.selectedElementIds.includes(props.element.id)) {
-      store.selectElement(props.element.id, false);
-    }
-    // If already selected, do nothing on mouse down to preserve group selection for dragging
+    store.selectElement(props.element.id, true, false);
+    beginDrag(e.clientX, e.clientY);
+    return;
   }
 
-  if (
-    !props.element.locked &&
-    store.selectedElementIds.includes(props.element.id)
-  ) {
-    store.bringElementsToFront(store.selectedElementIds);
-  }
-
-  if (props.element.locked) return; // Prevent drag if locked
-
-  isDragging = true;
-  store.setDragging(true);
-  store.setResizing(false);
-  store.setRotating(false);
+  // 单击：此时还不知道用户是要“点击选择”还是“拖动”，
+  // 先只记录起点，等鼠标真正移动再决定拖谁；
+  // 没移动就松开则按 PS 式规则确定选中项（见 resolveClickSelection）。
+  // 这样选中下层元素后拖动，不会被上层元素抢走。
+  pendingPointer = { x: e.clientX, y: e.clientY };
+  isDragging = false;
   hasSnapshot = false;
-  startX = e.clientX;
-  startY = e.clientY;
-  initialLeft = props.element.x;
-  initialTop = props.element.y;
-
   window.addEventListener("mousemove", handleMouseMove);
   window.addEventListener("mouseup", handleMouseUp);
 };
 
-const handleMouseMove = (e: MouseEvent) => {
-  if (!isDragging) return;
-
+const applyDrag = (e: MouseEvent) => {
   const dx = (e.clientX - startX) / props.zoom;
   const dy = (e.clientY - startY) / props.zoom;
 
@@ -718,7 +879,60 @@ const handleMouseMove = (e: MouseEvent) => {
   }
 };
 
+const handleMouseMove = (e: MouseEvent) => {
+  // 还没开始拖动：第一次明显移动时才决定拖哪个元素
+  if (!isDragging) {
+    if (!pendingPointer) return;
+    if (
+      Math.abs(e.clientX - pendingPointer.x) <= 2 &&
+      Math.abs(e.clientY - pendingPointer.y) <= 2
+    )
+      return;
+
+    const originX = pendingPointer.x;
+    const originY = pendingPointer.y;
+    pendingPointer = null;
+
+    const candidateIds = getHitElementIdsAt(originX, originY);
+    const selectedId =
+      store.selectedElementIds.length === 1 ? store.selectedElementId : null;
+    const selectedIndex = selectedId ? candidateIds.indexOf(selectedId) : -1;
+
+    // 当前选中的图层就在指针下方（可能被上层盖住）：继续拖它；
+    // 否则拖指针命中的最上层元素。
+    const targetId =
+      selectedIndex >= 0
+        ? (selectedId as string)
+        : (candidateIds[0] ?? props.element.id);
+
+    if (targetId !== props.element.id) {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      forwardDragTo(targetId, originX, originY);
+      return;
+    }
+
+    if (!beginDrag(originX, originY)) {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      return;
+    }
+  }
+
+  applyDrag(e);
+};
+
 const handleMouseUp = (e: MouseEvent) => {
+  // 没有发生拖动：这次按下就是一次点击，按 PS 式规则确定选中项
+  if (pendingPointer) {
+    pendingPointer = null;
+    const targetId = resolveClickSelection(e);
+    store.selectElement(targetId, false, false);
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+    return;
+  }
+
   if (isDragging && hasSnapshot) {
     const root = getQueryRoot();
     const elementsFromPoint = root.elementsFromPoint(e.clientX, e.clientY);
@@ -760,19 +974,6 @@ const handleMouseUp = (e: MouseEvent) => {
           });
         }
       }
-    }
-  }
-
-  // If we didn't drag (was a click), and it wasn't a multi-select action,
-  // we should now ensure this element is exclusively selected.
-  // This handles the "Click to select single item from group" case.
-  if (isDragging && !hasSnapshot) {
-    // Check if it was a simple click (no significant movement)
-    // We can infer this from !hasSnapshot because hasSnapshot is set only on move
-    // But we also need to check modifiers
-    const isMultiSelect = e.ctrlKey || e.metaKey;
-    if (!isMultiSelect) {
-      store.selectElement(props.element.id, false);
     }
   }
 

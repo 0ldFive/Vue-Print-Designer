@@ -700,6 +700,8 @@ export default {
     closeModal: "Close Modal",
     selectAll: "Select All",
     multiSelect: "Multi-select",
+    selectPenetrate: "Select Layer Below",
+    selectCycle: "Cycle Overlapping Elements",
     move: "Move",
     fastMove: "Fast Move",
     snapRotate: "Snap Rotate",

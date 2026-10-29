@@ -506,15 +506,6 @@ export const selectionActions = {
           : null;
 
       this.selectedElementId = currentPageLastId || fallbackId;
-
-      const hasUnlockedSelected = this.selectedElementIds.some((selectedId) =>
-        this.pages.some((page) =>
-          page.elements.some((el) => el.id === selectedId && !el.locked),
-        ),
-      );
-      if (hasUnlockedSelected) {
-        this.bringElementsToFront(allIds);
-      }
     },
 
   setSelection(ids: string[]) {
@@ -524,14 +515,6 @@ export const selectionActions = {
       }
       this.selectedElementIds = ids;
       this.selectedElementId = ids.length > 0 ? ids[ids.length - 1] : null;
-      const hasUnlockedSelected = this.selectedElementIds.some((selectedId) =>
-        this.pages.some((page) =>
-          page.elements.some((el) => el.id === selectedId && !el.locked),
-        ),
-      );
-      if (hasUnlockedSelected) {
-        this.bringElementsToFront(ids);
-      }
       if (ids.length > 0) {
         // Find page and update current index
         const pageIndex = this.pages.findIndex((p) =>
