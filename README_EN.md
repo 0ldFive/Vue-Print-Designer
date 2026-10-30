@@ -125,12 +125,12 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
 
 ## Print &amp; Export
 
-<table width="100%">
+<table width="100%" style="width: 100%;">
   <tr>
-    <td align="center" width="25%"><b>Browser Print</b><br/><sub>Native preview and print</sub></td>
-    <td align="center" width="25%"><b>Export</b><br/><sub>PDF and images (merge / split)<br/>plus HTML / Blob</sub></td>
-    <td align="center" width="25%"><b>Silent / Cloud Print</b><br/><sub>Direct print without dialogs<br/>remote task dispatch</sub></td>
-    <td align="center" width="25%"><b>Label RAW Output</b><br/><sub>Native commands to the system queue<br/>batch and continuous paper</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Browser Print</b><br/><sub>Native preview and print</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Export</b><br/><sub>PDF and images (merge / split)<br/>plus HTML / Blob</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b><br/><sub>Direct print without dialogs<br/>remote task dispatch</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b><br/><sub>Native commands to the system queue<br/>batch and continuous paper</sub></td>
   </tr>
 </table>
 

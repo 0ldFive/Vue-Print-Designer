@@ -125,12 +125,12 @@
 
 ## 打印与导出
 
-<table width="100%">
+<table width="100%" style="width: 100%;">
   <tr>
-    <td align="center" width="25%"><b>浏览器打印</b><br/><sub>原生预览与打印</sub></td>
-    <td align="center" width="25%"><b>导出</b><br/><sub>PDF、图片（拼接 / 分片）<br/>以及 HTML / Blob</sub></td>
-    <td align="center" width="25%"><b>静默 / 云打印</b><br/><sub>无弹窗直打<br/>远程任务下发</sub></td>
-    <td align="center" width="25%"><b>标签 RAW 直出</b><br/><sub>原生指令投递系统队列<br/>支持批量与连续纸</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>浏览器打印</b><br/><sub>原生预览与打印</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>导出</b><br/><sub>PDF、图片（拼接 / 分片）<br/>以及 HTML / Blob</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b><br/><sub>无弹窗直打<br/>远程任务下发</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b><br/><sub>原生指令投递系统队列<br/>支持批量与连续纸</sub></td>
   </tr>
 </table>
 
