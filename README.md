@@ -45,11 +45,11 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><h3>−65%</h3><sub>首次加载体积<br/>移除 6 个第三方大包</sub></td>
-    <td align="center" width="20%"><h3>300 KB</h3><sub>ES 打包体积<br/>Web Components 构建</sub></td>
-    <td align="center" width="20%"><h3>80 ms</h3><sub>单页渲染耗时<br/>自研引擎，原约 300 ms（约 −73%）</sub></td>
-    <td align="center" width="20%"><h3>6 种</h3><sub>内置语言<br/>按浏览器环境自动适配</sub></td>
-    <td align="center" width="20%"><h3>4 种</h3><sub>标签指令集<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
+    <td align="center" width="20%"><b>−65%</b><br/><sub>首次加载体积<br/>移除 6 个第三方大包</sub></td>
+    <td align="center" width="20%"><b>300 KB</b><br/><sub>ES 打包体积<br/>Web Components 构建</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>单页渲染耗时<br/>自研引擎，原约 300 ms（约 −73%）</sub></td>
+    <td align="center" width="20%"><b>6 种</b><br/><sub>内置语言<br/>按浏览器环境自动适配</sub></td>
+    <td align="center" width="20%"><b>4 种</b><br/><sub>标签指令集<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
   </tr>
 </table>
 

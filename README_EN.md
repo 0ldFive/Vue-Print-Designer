@@ -45,11 +45,11 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><h3>−65%</h3><sub>First-load bundle size<br/>6 heavy third-party packages removed</sub></td>
-    <td align="center" width="20%"><h3>300 KB</h3><sub>ES bundle size<br/>Web Components build</sub></td>
-    <td align="center" width="20%"><h3>80 ms</h3><sub>Per-page render time<br/>in-house engine, from ~300 ms (−73%)</sub></td>
-    <td align="center" width="20%"><h3>6</h3><sub>Languages built in<br/>auto-detected from the browser</sub></td>
-    <td align="center" width="20%"><h3>4</h3><sub>Label command languages<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
+    <td align="center" width="20%"><b>−65%</b><br/><sub>First-load bundle size<br/>6 heavy third-party packages removed</sub></td>
+    <td align="center" width="20%"><b>300 KB</b><br/><sub>ES bundle size<br/>Web Components build</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>Per-page render time<br/>in-house engine, from ~300 ms (−73%)</sub></td>
+    <td align="center" width="20%"><b>6</b><br/><sub>Languages built in<br/>auto-detected from the browser</sub></td>
+    <td align="center" width="20%"><b>4</b><br/><sub>Label command languages<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
   </tr>
 </table>
 
