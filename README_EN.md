@@ -56,7 +56,7 @@
     <td align="center" valign="top"><sub>Built as Web Components, lower integration cost</sub></td>
     <td align="center" valign="top"><sub>In-house rendering engine, about 73% faster per page</sub></td>
     <td align="center" valign="top"><sub>Auto-detected from the browser, or set via API</sub></td>
-    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL command languages</sub></td>
+    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL</sub></td>
   </tr>
 </table>
 
@@ -73,9 +73,9 @@
     <td align="center" width="33%"><b>Integrate</b></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>Full-featured drag-and-drop designer with text / images / tables / barcodes / QR codes / shapes, plus rulers, grids and alignment tools.</sub></td>
-    <td align="center" valign="top"><sub>Browser print, PDF and image export (merge / split), client silent / cloud print, and native RAW label commands.</sub></td>
-    <td align="center" valign="top"><sub>Built on Web Components — zero-dependency with Vue / React / Angular / native HTML, and Vue 2 as a custom element.</sub></td>
+    <td align="center" valign="top"><sub>Designer for text, images, tables, barcodes, QR codes and shapes, with rulers and alignment.</sub></td>
+    <td align="center" valign="top"><sub>Browser print, PDF / image export, silent / cloud print, and native RAW label output.</sub></td>
+    <td align="center" valign="top"><sub>Web Components based, zero-dependency with Vue / React / Angular / native HTML and Vue 2.</sub></td>
   </tr>
 </table>
 

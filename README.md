@@ -56,7 +56,7 @@
     <td align="center" valign="top"><sub>Web Components 构建产物，接入成本更低</sub></td>
     <td align="center" valign="top"><sub>自研渲染引擎，单页渲染较旧版提速约 73%</sub></td>
     <td align="center" valign="top"><sub>按浏览器环境自动适配，也可 API 手动设置</sub></td>
-    <td align="center" valign="top"><sub>四种标签指令集：TSPL / ZPL / ESC-POS / CPCL 全部支持</sub></td>
+    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL 四种指令集</sub></td>
   </tr>
 </table>
 
@@ -73,9 +73,9 @@
     <td align="center" width="33%"><b>集成</b></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>全功能拖拽设计器，文本 / 图片 / 表格 / 条码 / 二维码 / 形状等组件，内置标尺、网格与辅助对齐。</sub></td>
-    <td align="center" valign="top"><sub>浏览器原生打印，支持 PDF、图片（拼接 / 分片）导出，客户端静默 / 云打印，标签机 RAW 指令直出。</sub></td>
-    <td align="center" valign="top"><sub>基于 Web Components，零依赖适配 Vue / React / Angular / 原生 HTML，Vue 2 亦可作为自定义元素。</sub></td>
+    <td align="center" valign="top"><sub>拖拽完成排版，支持文本 / 图片 / 表格 / 条码 / 二维码 / 形状，内置标尺网格与对齐。</sub></td>
+    <td align="center" valign="top"><sub>浏览器原生打印、PDF 与图片导出、客户端静默 / 云打印、标签机 RAW 直出。</sub></td>
+    <td align="center" valign="top"><sub>基于 Web Components，零依赖适配 Vue / React / Angular 与原生 HTML，支持 Vue 2。</sub></td>
   </tr>
 </table>
 
