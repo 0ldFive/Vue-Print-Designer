@@ -196,7 +196,7 @@ PrintDot Client is the companion desktop app for this project. It connects to yo
 
 ### Label Printing (Native RAW Commands)
 
-Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, Xprinter and others) are command-driven devices. Handing them a PDF means rasterizing whole pages: slower output, lower barcode scan rates, and misalignment on custom paper. The client therefore provides a dedicated label path — it parses the designer's template JSON, generates native printer commands, and writes them as RAW data to the system print queue, which the driver passes through untouched.
+Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, Xprinter and others) are command-driven: a PDF can only be rasterized page by page, meaning slower output, lower barcode scan rates and misalignment on custom paper. The client adds a dedicated label path that parses the template JSON, generates native commands, and writes them as RAW to the system print queue.
 
 <table width="100%">
   <tr>
@@ -207,11 +207,11 @@ Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, X
     <td align="center" width="20%"><b>Print history</b></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>TSPL / ZPL<br/>ESC-POS / CPCL<br/>Inferred from printer<br/>and driver names<br/>or set explicitly<br/>when detection fails</sub></td>
-    <td align="center" valign="top"><sub>Text (wrapping, alignment, weight)<br/>Barcodes, QR codes<br/>Tables (merged cells, headers / footers)<br/>SUM / AVG / COUNT aggregation<br/>Images (dithered black and white)<br/>Rectangles, lines, circles, grids, rotation</sub></td>
-    <td align="center" valign="top"><sub>Label width and height in mm<br/>Height 0 sizes paper to content<br/>DPI, speed, density<br/>Gap / black mark / vertical offset<br/>Text as bitmaps<br/>or built-in fonts</sub></td>
-    <td align="center" valign="top"><sub>One template page equals one label<br/><code>labels[]</code> submits a batch<br/>Each record has<br/>its own copy count<br/>Optional interval<br/>between labels</sub></td>
-    <td align="center" valign="top"><sub>Every label job is recorded<br/>in the client history<br/>Printer, copies<br/>status and time<br/>Failed jobs<br/>can be retried</sub></td>
+    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL, inferred from printer and driver names by default, or set explicitly when detection fails.</sub></td>
+    <td align="center" valign="top"><sub>Text, barcodes, QR codes, tables (merged cells, headers / footers), images (dithered black and white), shapes and rotation.</sub></td>
+    <td align="center" valign="top"><sub>Label width and height (height 0 for continuous paper), DPI, speed, density, gap / black mark / offset, bitmaps or built-in fonts.</sub></td>
+    <td align="center" valign="top"><sub>One page per label; <code>labels[]</code> submits a whole batch with per-record copy counts and an optional interval.</sub></td>
+    <td align="center" valign="top"><sub>Every label job is recorded in the client history with printer, copies, status and time, and failed jobs can be retried.</sub></td>
   </tr>
 </table>
 

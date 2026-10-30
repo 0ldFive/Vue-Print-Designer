@@ -5,8 +5,8 @@
 <h1 align="center">Vue Print Designer</h1>
 
 <p align="center">
-  <b>可视化打印设计器 &nbsp;&middot;&nbsp; 标签 / 票据 / 表单全场景覆盖</b><br/>
-  <sub>模板化与变量化 &nbsp;&middot;&nbsp; 静默打印与云打印一体化 &nbsp;&middot;&nbsp; 多技术栈零依赖接入</sub>
+  <b>可视化打印设计器  ·  标签 / 票据 / 表单全场景覆盖</b><br/>
+  <sub>模板化与变量化  ·  静默打印与云打印一体化  ·  多技术栈零依赖接入</sub>
 </p>
 
 <p align="center">
@@ -27,13 +27,13 @@
 
 <p align="center">
   <a href="https://0ldfive.github.io/Vue-Print-Designer/"><b>在线演示</b></a>
-  &nbsp;&middot;&nbsp;
+   · 
   <a href="https://printdot.cc/docs"><b>使用文档</b></a>
-  &nbsp;&middot;&nbsp;
+   · 
   <a href="https://printdot.cc/client"><b>客户端下载</b></a>
-  &nbsp;&middot;&nbsp;
+   · 
   <a href="https://github.com/0ldFive/vue-designer-sample"><b>集成示例</b></a>
-  &nbsp;&middot;&nbsp;
+   · 
   <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README_EN.md">English</a>
 </p>
 
@@ -41,7 +41,7 @@
   <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Vue Print Designer 设计器主界面" width="100%" />
 </p>
 
-<p align="center"><sub>设计器主界面 &nbsp;&middot;&nbsp; 画布视图 / 属性面板 / 图层面板</sub></p>
+<p align="center"><sub>设计器主界面  ·  画布视图 / 属性面板 / 图层面板</sub></p>
 
 <table width="100%">
   <tr>
@@ -60,7 +60,7 @@
   </tr>
 </table>
 
-<p align="center"><sub>拖拽排版 &nbsp;→&nbsp; 绑定变量 &nbsp;→&nbsp; 预览校验 &nbsp;→&nbsp; 浏览器 / 客户端 / 标签机输出</sub></p>
+<p align="center"><sub>拖拽排版  →  绑定变量  →  预览校验  →  浏览器 / 客户端 / 标签机输出</sub></p>
 
 ---
 
@@ -127,7 +127,7 @@
     <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png?v=2" alt="模板市场" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>AI 助手 &#183; 自然语言生成模板</b></td>
+    <td align="center"><b>AI 助手 · 自然语言生成模板</b></td>
     <td align="center"><b>模板市场</b></td>
   </tr>
 </table>
@@ -139,7 +139,7 @@
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="打印预览" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>AI 助手 &#183; 模型接入配置</b></td>
+    <td align="center"><b>AI 助手 · 模型接入配置</b></td>
     <td align="center"><b>快捷键说明</b></td>
     <td align="center"><b>打印预览</b></td>
   </tr>
@@ -177,9 +177,9 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
     <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 版本更新" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>主界面 &#183; 服务控制与可用打印机</b></td>
-    <td align="center"><b>设置 &#183; 云打印中转与连接配置</b></td>
-    <td align="center"><b>版本更新 &#183; 一键检测最新客户端</b></td>
+    <td align="center"><b>主界面 · 服务控制与可用打印机</b></td>
+    <td align="center"><b>设置 · 云打印中转与连接配置</b></td>
+    <td align="center"><b>版本更新 · 一键检测最新客户端</b></td>
   </tr>
 </table>
 
@@ -189,14 +189,14 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
     <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 打印预览" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>打印记录 &#183; 任务状态与重试</b></td>
-    <td align="center"><b>打印预览 &#183; 本地客户端实时预览</b></td>
+    <td align="center"><b>打印记录 · 任务状态与重试</b></td>
+    <td align="center"><b>打印预览 · 本地客户端实时预览</b></td>
   </tr>
 </table>
 
 ### 标签打印（RAW 指令直出）
 
-热敏 / 热转印标签机（TSC、佳博、斑马、汉印、得力、芯烨等）本质是指令集打印机，把 PDF 交给这类设备只能整页栅格化：出标慢、条码扫描率下降、自定义纸张还容易缩放错位。客户端为此提供独立的标签打印通道——直接解析设计器模板 JSON，生成打印机原生指令后以 RAW 方式投递到系统打印队列，驱动原样透传。
+热敏 / 热转印标签机（TSC、佳博、斑马、汉印、得力、芯烨等）是指令集打印机，用 PDF 只能整页栅格化：出标慢、条码识别率下降、自定义纸张易错位。客户端提供独立的标签通道：解析模板 JSON 生成原生指令，以 RAW 投递到系统打印队列，驱动原样透传。
 
 <table width="100%">
   <tr>
@@ -207,11 +207,11 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
     <td align="center" width="20%"><b>打印记录</b></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>TSPL / ZPL<br/>ESC-POS / CPCL<br/>默认按打印机名<br/>与驱动名自动推断<br/>识别不到时<br/>可显式指定</sub></td>
-    <td align="center" valign="top"><sub>文本（换行、对齐、粗细）<br/>条码、二维码<br/>表格（合并单元格、表头表尾）<br/>SUM / AVG / COUNT 聚合<br/>图片（抖动黑白）、矩形 / 线条<br/>圆形、多标签网格、任意旋转</sub></td>
-    <td align="center" valign="top"><sub>标签纸宽高（毫米）<br/>高度填 0 连续纸撑高<br/>DPI、速度、浓度<br/>间隙 / 黑标 / 纵向偏移<br/>文字可选位图渲染<br/>或机内字库（指令更小）</sub></td>
-    <td align="center" valign="top"><sub>模板一页即一张标签<br/><code>labels[]</code> 可一次提交<br/>整批数据<br/>每条数据独立设置份数<br/>相邻标签间<br/>可配置间隔</sub></td>
-    <td align="center" valign="top"><sub>每次标签打印<br/>记入客户端记录<br/>可查看打印机、份数<br/>状态与时间<br/>失败任务<br/>可重试</sub></td>
+    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL，默认按打印机名与驱动名自动推断，识别不到时可显式指定。</sub></td>
+    <td align="center" valign="top"><sub>文本、条码、二维码、表格（合并、表头表尾）、图片（抖动黑白）、图形与旋转。</sub></td>
+    <td align="center" valign="top"><sub>标签纸宽高（高度 0 为连续纸）、DPI、速度、浓度、间隙 / 黑标 / 偏移、位图或机内字库。</sub></td>
+    <td align="center" valign="top"><sub>模板一页即一张标签；<code>labels[]</code> 可整批提交，每条独立设置份数，标签间可配间隔。</sub></td>
+    <td align="center" valign="top"><sub>每次标签打印都会记入客户端打印记录，可查看打印机、份数、状态与时间，失败任务可重试。</sub></td>
   </tr>
 </table>
 
