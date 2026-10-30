@@ -45,11 +45,11 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>−65%</b><br/><sub>首次加载体积<br/>移除 6 个第三方大包</sub></td>
-    <td align="center" width="20%"><b>300 KB</b><br/><sub>ES 打包体积<br/>Web Components 构建</sub></td>
-    <td align="center" width="20%"><b>80 ms</b><br/><sub>单页渲染耗时<br/>自研引擎，原约 300 ms（约 −73%）</sub></td>
-    <td align="center" width="20%"><b>6 种</b><br/><sub>内置语言<br/>按浏览器环境自动适配</sub></td>
-    <td align="center" width="20%"><b>4 种</b><br/><sub>标签指令集<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
+    <td align="center" width="20%"><b>−65%</b><br/><sub>移除 6 个第三方大包，首屏加载更轻</sub></td>
+    <td align="center" width="20%"><b>300 KB</b><br/><sub>Web Components 构建产物，接入成本更低</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>自研引擎，较旧版提速约 73%</sub></td>
+    <td align="center" width="20%"><b>6 种</b><br/><sub>按浏览器环境自动适配，也可 API 手动设置</sub></td>
+    <td align="center" width="20%"><b>4 种</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL 四种指令集</sub></td>
   </tr>
 </table>
 
@@ -127,10 +127,10 @@
 
 <table width="100%" style="width: 100%;">
   <tr>
-    <td align="center" width="25%" style="width: 25%;"><b>浏览器打印</b><br/><sub>原生预览与打印</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>导出</b><br/><sub>PDF、图片（拼接 / 分片）<br/>以及 HTML / Blob</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b><br/><sub>无弹窗直打<br/>远程任务下发</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b><br/><sub>原生指令投递系统队列<br/>支持批量与连续纸</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>浏览器打印</b><br/><sub>原生预览与打印，支持打印机 / 份数 / 单双面 / DPI 参数控制</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>导出</b><br/><sub>生成 PDF、图片（拼接 / 分片）、HTML 与 Blob，可自定义文件名</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b><br/><sub>无弹窗直打，支持远程任务下发，由本地客户端执行</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b><br/><sub>原生指令投递系统打印队列，支持批量数据与连续纸</sub></td>
   </tr>
 </table>
 
@@ -138,20 +138,9 @@
 
 PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印机并执行静默打印任务。安装后，即可在浏览器中直接发起打印而无需弹窗确认。它提供服务控制、连接配置、打印记录、版本更新与打印预览等功能，帮助你在本地快速完成打印闭环。
 
-<table width="100%">
-  <tr>
-    <td width="18%"><b>支持平台</b></td>
-    <td>Windows / macOS / Linux</td>
-  </tr>
-  <tr>
-    <td><b>关键能力</b></td>
-    <td>自动发现并识别设备、稳定连接维护与转发队列、轻量后台运行、打印任务记录与版本更新提示</td>
-  </tr>
-  <tr>
-    <td><b>下载地址</b></td>
-    <td><a href="https://printdot.cc/client">https://printdot.cc/client</a></td>
-  </tr>
-</table>
+- **支持平台**：Windows / macOS / Linux
+- **关键能力**：自动发现并识别设备、稳定连接维护与转发队列、轻量后台运行、打印任务记录与版本更新提示
+- **下载地址**：[https://printdot.cc/client](https://printdot.cc/client)
 
 <table width="100%">
   <tr>
@@ -242,20 +231,9 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
   </tr>
 </table>
 
-<table width="100%">
-  <tr>
-    <td width="16%"><b>项目地址</b></td>
-    <td><a href="https://github.com/0ldFive/vue-designer-sample">https://github.com/0ldFive/vue-designer-sample</a></td>
-  </tr>
-  <tr>
-    <td><b>在线演示</b></td>
-    <td><a href="https://0ldfive.github.io/vue-designer-sample/#/designer">https://0ldfive.github.io/vue-designer-sample/#/designer</a></td>
-  </tr>
-  <tr>
-    <td><b>技术栈</b></td>
-    <td>Vue 3, TypeScript, Element Plus, Vite</td>
-  </tr>
-</table>
+- **项目地址**：[https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
+- **在线演示**：[https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
+- **技术栈**：Vue 3, TypeScript, Element Plus, Vite
 
 ## 快速开始
 

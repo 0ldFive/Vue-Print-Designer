@@ -45,11 +45,11 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>−65%</b><br/><sub>First-load bundle size<br/>6 heavy third-party packages removed</sub></td>
-    <td align="center" width="20%"><b>300 KB</b><br/><sub>ES bundle size<br/>Web Components build</sub></td>
-    <td align="center" width="20%"><b>80 ms</b><br/><sub>Per-page render time<br/>in-house engine, from ~300 ms (−73%)</sub></td>
-    <td align="center" width="20%"><b>6</b><br/><sub>Languages built in<br/>auto-detected from the browser</sub></td>
-    <td align="center" width="20%"><b>4</b><br/><sub>Label command languages<br/>TSPL / ZPL / ESC-POS / CPCL</sub></td>
+    <td align="center" width="20%"><b>−65%</b><br/><sub>6 heavy third-party packages removed, lighter first load</sub></td>
+    <td align="center" width="20%"><b>300 KB</b><br/><sub>Built as Web Components, lower integration cost</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>In-house engine, about 73% faster than before</sub></td>
+    <td align="center" width="20%"><b>6</b><br/><sub>Auto-detected from the browser, or set via API</sub></td>
+    <td align="center" width="20%"><b>4</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL command languages</sub></td>
   </tr>
 </table>
 
@@ -127,10 +127,10 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
 
 <table width="100%" style="width: 100%;">
   <tr>
-    <td align="center" width="25%" style="width: 25%;"><b>Browser Print</b><br/><sub>Native preview and print</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>Export</b><br/><sub>PDF and images (merge / split)<br/>plus HTML / Blob</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b><br/><sub>Direct print without dialogs<br/>remote task dispatch</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b><br/><sub>Native commands to the system queue<br/>batch and continuous paper</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Browser Print</b><br/><sub>Native preview and print, with printer / copies / duplex / DPI controls</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Export</b><br/><sub>Generate PDF, images (merge / split), HTML and Blob with custom filenames</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b><br/><sub>Direct print without dialogs, with remote task dispatch to the local client</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b><br/><sub>Native commands to the system queue, with batch data and continuous paper</sub></td>
   </tr>
 </table>
 
@@ -138,20 +138,9 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
 
 PrintDot Client is the companion desktop app for this project. It connects to your local printers and handles silent print jobs, so you can print straight from the browser without any pop-up dialogs. It provides service control, connection settings, print history, update notifications, and print preview to help you complete the local print workflow.
 
-<table width="100%">
-  <tr>
-    <td width="20%"><b>Platforms</b></td>
-    <td>Windows / macOS / Linux</td>
-  </tr>
-  <tr>
-    <td><b>Key capabilities</b></td>
-    <td>Automatic device discovery, stable connection &amp; forwarding queue, lightweight background mode, print job history and update notifications</td>
-  </tr>
-  <tr>
-    <td><b>Download</b></td>
-    <td><a href="https://printdot.cc/client">https://printdot.cc/client</a></td>
-  </tr>
-</table>
+- **Platforms**: Windows / macOS / Linux
+- **Key capabilities**: Automatic device discovery, stable connection &amp; forwarding queue, lightweight background mode, print job history and update notifications
+- **Download**: [https://printdot.cc/client](https://printdot.cc/client)
 
 <table width="100%">
   <tr>
@@ -242,20 +231,9 @@ A complete integration example based on **Vue 3 + Element Plus**, demonstrating 
   </tr>
 </table>
 
-<table width="100%">
-  <tr>
-    <td width="18%"><b>Repository</b></td>
-    <td><a href="https://github.com/0ldFive/vue-designer-sample">https://github.com/0ldFive/vue-designer-sample</a></td>
-  </tr>
-  <tr>
-    <td><b>Live Demo</b></td>
-    <td><a href="https://0ldfive.github.io/vue-designer-sample/#/designer">https://0ldfive.github.io/vue-designer-sample/#/designer</a></td>
-  </tr>
-  <tr>
-    <td><b>Tech Stack</b></td>
-    <td>Vue 3, TypeScript, Element Plus, Vite</td>
-  </tr>
-</table>
+- **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
+- **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
+- **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
 
 ## Quick Start
 
