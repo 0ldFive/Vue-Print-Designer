@@ -985,6 +985,7 @@ export const usePrint = () => {
             pageSpacingX: store.pageSpacingX,
             pageSpacingY: store.pageSpacingY,
             canvasBackground: store.canvasBackground,
+            canvasBackgroundImage: cloneDeep(store.canvasBackgroundImage),
             watermark: cloneDeep(store.watermark),
             unit: store.unit,
           });

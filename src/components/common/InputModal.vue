@@ -2,7 +2,7 @@
 import { ref, watch, onUnmounted, computed, inject } from "vue";
 import { useI18n } from "@/locales";
 import Close from "~icons/material-symbols/close";
-import Check from "~icons/material-symbols/check";
+import Save from "~icons/material-symbols/save";
 import { useDesignerStore } from "@/stores/designer";
 import { useTheme } from "@/composables/useTheme";
 
@@ -345,10 +345,10 @@ onUnmounted(() => {
           <button
             @click="handleSave"
             :disabled="!isFormValid"
-            class="flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+            class="flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-90"
           >
-            <Check class="w-4 h-4 shrink-0" />
-            {{ t("common.confirm") }}
+            <Save class="w-4 h-4 shrink-0" />
+            {{ t("common.save") }}
           </button>
         </div>
       </div>

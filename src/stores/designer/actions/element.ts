@@ -89,6 +89,7 @@ export const elementActions = {
           showMinimap: this.showMinimap,
           showHistoryPanel: this.showHistoryPanel,
           canvasBackground: this.canvasBackground,
+          canvasBackgroundImage: cloneDeep(this.canvasBackgroundImage),
           pageSpacingX: this.pageSpacingX,
           pageSpacingY: this.pageSpacingY,
           unit: this.unit,
@@ -186,6 +187,9 @@ export const elementActions = {
       this.showMinimap = snapshot.showMinimap;
       this.showHistoryPanel = snapshot.showHistoryPanel;
       this.canvasBackground = snapshot.canvasBackground;
+      this.canvasBackgroundImage = cloneDeep(
+        snapshot.canvasBackgroundImage ?? null,
+      );
       this.pageSpacingX = snapshot.pageSpacingX ?? this.pageSpacingX;
       this.pageSpacingY = snapshot.pageSpacingY ?? this.pageSpacingY;
       this.unit = snapshot.unit || this.unit;

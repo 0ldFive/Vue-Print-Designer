@@ -618,6 +618,7 @@ onMounted(() => {
       () => store.headerLineSpan,
       () => store.footerLineSpan,
       () => store.canvasBackground,
+      () => store.canvasBackgroundImage,
       () => store.pageSpacingX,
       () => store.pageSpacingY,
       () => store.watermark,

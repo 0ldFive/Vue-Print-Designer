@@ -2,7 +2,12 @@ import { createApp, h } from "vue";
 import { createPinia } from "pinia";
 import cloneDeep from "lodash/cloneDeep";
 import { uuidv4 } from "@/utils/uuid";
-import type { EmbeddedInTableAnchor, Page, WatermarkSettings } from "@/types";
+import type {
+  CanvasBackgroundImageSettings,
+  EmbeddedInTableAnchor,
+  Page,
+  WatermarkSettings,
+} from "@/types";
 import i18n from "@/locales";
 import PrintRenderer from "@/components/print/PrintRenderer.vue";
 import baseStyles from "@/style.css?inline";
@@ -37,6 +42,7 @@ type PrintRenderPayload = {
   pages: Page[];
   canvasSize: { width: number; height: number };
   canvasBackground: string;
+  canvasBackgroundImage?: CanvasBackgroundImageSettings | null;
   headerHeight: number;
   footerHeight: number;
   pageSpacingX: number;
@@ -251,6 +257,7 @@ export const createIframeRenderer = ({
       pages: createRepeatedPages(sourcePages),
       canvasSize: { ...store.canvasSize },
       canvasBackground: store.canvasBackground,
+      canvasBackgroundImage: cloneDeep(store.canvasBackgroundImage),
       headerHeight: store.headerHeight,
       footerHeight: store.footerHeight,
       pageSpacingX: store.pageSpacingX || 0,

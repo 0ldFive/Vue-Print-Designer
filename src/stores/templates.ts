@@ -144,6 +144,7 @@ export const useTemplateStore = defineStore("templates", {
         showMinimap: designerStore.showMinimap,
         showHistoryPanel: designerStore.showHistoryPanel,
         canvasBackground: designerStore.canvasBackground,
+        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
         pageSpacingX: designerStore.pageSpacingX,
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
@@ -182,6 +183,7 @@ export const useTemplateStore = defineStore("templates", {
         showMinimap: designerStore.showMinimap,
         showHistoryPanel: designerStore.showHistoryPanel,
         canvasBackground: designerStore.canvasBackground,
+        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
         pageSpacingX: designerStore.pageSpacingX,
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
@@ -415,6 +417,7 @@ export const useTemplateStore = defineStore("templates", {
         showMinimap: designerStore.showMinimap,
         showHistoryPanel: designerStore.showHistoryPanel,
         canvasBackground: designerStore.canvasBackground,
+        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
         pageSpacingX: designerStore.pageSpacingX,
         pageSpacingY: designerStore.pageSpacingY,
         unit: designerStore.unit,
@@ -653,6 +656,7 @@ export const useTemplateStore = defineStore("templates", {
         showMinimap: designerStore.showMinimap,
         showHistoryPanel: designerStore.showHistoryPanel,
         canvasBackground: designerStore.canvasBackground,
+        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
       };
       const newData = sanitizeTemplateData(nextData);
 
@@ -1056,6 +1060,10 @@ export const useTemplateStore = defineStore("templates", {
               designerStore.showHistoryPanel = data.showHistoryPanel;
             if (data.canvasBackground !== undefined)
               designerStore.canvasBackground = data.canvasBackground;
+            if (data.canvasBackgroundImage !== undefined)
+              designerStore.canvasBackgroundImage = cloneDeep(
+                data.canvasBackgroundImage,
+              );
             if (data.pageSpacingX !== undefined)
               designerStore.pageSpacingX = data.pageSpacingX;
             if (data.pageSpacingY !== undefined)
@@ -1194,6 +1202,10 @@ export const useTemplateStore = defineStore("templates", {
             designerStore.showHistoryPanel = data.showHistoryPanel;
           if (data.canvasBackground !== undefined)
             designerStore.canvasBackground = data.canvasBackground;
+          if (data.canvasBackgroundImage !== undefined)
+            designerStore.canvasBackgroundImage = cloneDeep(
+              data.canvasBackgroundImage,
+            );
           if (data.pageSpacingX !== undefined)
             designerStore.pageSpacingX = data.pageSpacingX;
           if (data.pageSpacingY !== undefined)

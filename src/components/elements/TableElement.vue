@@ -14,6 +14,7 @@ import type { PrintElement, TableCellRef } from "@/types";
 import { useDesignerStore } from "@/stores/designer";
 import cloneDeep from "lodash/cloneDeep";
 import { normalizeVariableKey } from "@/utils/variables";
+import Save from "~icons/material-symbols/save";
 
 const props = defineProps<{
   element: PrintElement;
@@ -2707,8 +2708,9 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
           </button>
           <button
             @click="saveHeaderEdit"
-            class="px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-xs theme-bg-strong text-white hover:opacity-90 rounded transition-opacity"
           >
+            <Save class="w-4 h-4" />
             {{ t("common.save") }}
           </button>
         </div>

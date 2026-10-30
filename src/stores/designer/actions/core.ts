@@ -11,6 +11,7 @@ import {
   ElementType,
   type CustomElementTemplate,
   type WatermarkSettings,
+  type CanvasBackgroundImageSettings,
   type CustomElementEditSnapshot,
   type BrandingSettings,
   type DesignerFontOption,
@@ -114,6 +115,22 @@ export const coreActions = {
         "print-designer-watermark",
         JSON.stringify(this.watermark),
       );
+    },
+
+  setCanvasBackgroundImage(update: Partial<CanvasBackgroundImageSettings>) {
+      const base: CanvasBackgroundImageSettings = this.canvasBackgroundImage ?? {
+        url: "",
+        fit: "cover",
+        opacity: 1,
+        visible: true,
+      };
+      const next = { ...base, ...update };
+      const cleared = update.url !== undefined && !String(update.url).trim();
+      this.canvasBackgroundImage = cleared ? null : next;
+    },
+
+  clearCanvasBackgroundImage() {
+      this.canvasBackgroundImage = null;
     },
 
   setUnit(unit: "mm" | "px" | "pt" | "in" | "cm") {
@@ -407,6 +424,11 @@ export const coreActions = {
       }
       if (typeof data.canvasBackground === "string") {
         this.canvasBackground = data.canvasBackground;
+      }
+      if (data.canvasBackgroundImage !== undefined) {
+        this.canvasBackgroundImage = data.canvasBackgroundImage
+          ? cloneDeep(data.canvasBackgroundImage)
+          : null;
       }
 
       this.selectedElementId = null;

@@ -1134,6 +1134,9 @@ class PrintDesignerElement extends HTMLElement {
       showMinimap: this.designerStore.showMinimap,
       showHistoryPanel: this.designerStore.showHistoryPanel,
       canvasBackground: this.designerStore.canvasBackground,
+      canvasBackgroundImage: cloneDeep(
+        this.designerStore.canvasBackgroundImage,
+      ),
       pageSpacingX: this.designerStore.pageSpacingX,
       pageSpacingY: this.designerStore.pageSpacingY,
       unit: this.designerStore.unit,
@@ -1347,6 +1350,10 @@ class PrintDesignerElement extends HTMLElement {
       this.designerStore.showHistoryPanel = data.showHistoryPanel;
     if (data.canvasBackground !== undefined)
       this.designerStore.canvasBackground = data.canvasBackground;
+    if (data.canvasBackgroundImage !== undefined)
+      this.designerStore.canvasBackgroundImage = cloneDeep(
+        data.canvasBackgroundImage,
+      );
     if (data.pageSpacingX !== undefined)
       this.designerStore.pageSpacingX = data.pageSpacingX;
     if (data.pageSpacingY !== undefined)

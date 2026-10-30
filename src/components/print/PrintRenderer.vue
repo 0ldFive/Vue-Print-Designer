@@ -184,6 +184,9 @@ const applyPayload = async (payload: any) => {
     pages: cloneDeep(payload.pages || []),
     canvasSize: payload.canvasSize || store.canvasSize,
     canvasBackground: payload.canvasBackground || store.canvasBackground,
+    canvasBackgroundImage: payload.canvasBackgroundImage
+      ? cloneDeep(payload.canvasBackgroundImage)
+      : null,
     headerHeight: payload.headerHeight ?? store.headerHeight,
     footerHeight: payload.footerHeight ?? store.footerHeight,
     pageSpacingX: payload.pageSpacingX ?? store.pageSpacingX,

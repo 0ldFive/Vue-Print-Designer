@@ -420,15 +420,42 @@ onUnmounted(() => {
   window.removeEventListener("mouseup", handleLineMouseUp);
 });
 
-const pageStyle = computed(() => {
-  const base = {
-    width: `${store.canvasSize.width}px`,
-    height: `${store.canvasSize.height}px`,
-    backgroundColor: store.canvasBackground,
-  } as const;
+const pageStyle = computed(
+  () =>
+    ({
+      width: `${store.canvasSize.width}px`,
+      height: `${store.canvasSize.height}px`,
+      backgroundColor: store.canvasBackground,
+    }) as const,
+);
 
-  if (!watermarkStyle.value) return base;
-  return { ...base, ...watermarkStyle.value } as const;
+const pageBackgroundImageStyle = computed<CSSProperties | null>(() => {
+  const background = store.canvasBackgroundImage;
+  if (!background || !background.url || background.visible === false) return null;
+
+  const opacity = Number.isFinite(background.opacity)
+    ? Math.min(1, Math.max(0, background.opacity))
+    : 1;
+
+  const fitStyle: CSSProperties =
+    background.fit === "repeat"
+      ? { backgroundSize: "auto", backgroundRepeat: "repeat" }
+      : background.fit === "contain"
+        ? { backgroundSize: "contain", backgroundRepeat: "no-repeat" }
+        : background.fit === "origin"
+          ? { backgroundSize: "auto", backgroundRepeat: "no-repeat" }
+          : { backgroundSize: "cover", backgroundRepeat: "no-repeat" };
+
+  return {
+    position: "absolute",
+    inset: 0,
+    zIndex: 0,
+    pointerEvents: "none",
+    opacity,
+    backgroundImage: `url("${background.url}")`,
+    backgroundPosition: "center",
+    ...fitStyle,
+  };
 });
 
 const watermarkStyle = computed(() => {
@@ -458,6 +485,18 @@ const watermarkStyle = computed(() => {
     backgroundRepeat: "repeat",
     backgroundSize: `${density}px ${density}px`,
   } as const;
+});
+
+// 水印独立成层，保证它覆盖在页面背景图之上而不被遮挡。
+const pageWatermarkStyle = computed<CSSProperties | null>(() => {
+  if (!watermarkStyle.value) return null;
+  return {
+    position: "absolute",
+    inset: 0,
+    zIndex: 0,
+    pointerEvents: "none",
+    ...watermarkStyle.value,
+  };
 });
 
 // Selection box state
@@ -1715,6 +1754,20 @@ const handleGhostMouseDown = (event: MouseEvent) => {
         @contextmenu="(e) => handleContextMenu(e, index)"
         @click.self="handleBackgroundClick"
       >
+        <!-- Page Background Image -->
+        <div
+          v-if="pageBackgroundImageStyle"
+          data-print-page-background-image="true"
+          :style="pageBackgroundImageStyle"
+        ></div>
+
+        <!-- Page Watermark -->
+        <div
+          v-if="pageWatermarkStyle"
+          data-print-page-watermark="true"
+          :style="pageWatermarkStyle"
+        ></div>
+
         <!-- Grid Background -->
         <div
           v-if="store.showGrid"
@@ -2011,6 +2064,16 @@ const handleGhostMouseDown = (event: MouseEvent) => {
           class="print-page shadow-lg relative overflow-hidden"
           :style="pageStyle"
         >
+          <div
+            v-if="pageBackgroundImageStyle"
+            data-print-page-background-image="true"
+            :style="pageBackgroundImageStyle"
+          ></div>
+          <div
+            v-if="pageWatermarkStyle"
+            data-print-page-watermark="true"
+            :style="pageWatermarkStyle"
+          ></div>
           <div
             class="absolute top-1.5 left-1.5 z-[9] px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-500/80 text-white shadow select-none pointer-events-none"
           >

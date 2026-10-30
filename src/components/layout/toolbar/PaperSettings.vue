@@ -16,7 +16,13 @@ import Settings from "~icons/material-symbols/settings";
 import ChevronDown from "~icons/material-symbols/expand-more";
 import Plus from "~icons/material-symbols/add";
 import X from "~icons/material-symbols/close";
+import Save from "~icons/material-symbols/save";
 import ColorPicker from "@/components/common/ColorPicker.vue";
+import UploadIcon from "@/svg/components/UploadIcon.vue";
+import type {
+  CanvasBackgroundImageFit,
+  CanvasBackgroundImageSettings,
+} from "@/types";
 
 const { t } = useI18n();
 const store = useDesignerStore();
@@ -303,6 +309,147 @@ const canvasBackground = computed({
   get: () => store.canvasBackground,
   set: (val) => store.setCanvasBackground(val),
 });
+
+const BACKGROUND_IMAGE_MAX_SIZE = 2 * 1024 * 1024;
+
+const backgroundImageFileInput = ref<HTMLInputElement | null>(null);
+const backgroundImageError = ref("");
+const backgroundImage = computed(() => store.canvasBackgroundImage ?? null);
+const backgroundImageUrl = computed(() => backgroundImage.value?.url || "");
+const backgroundImageFit = computed<CanvasBackgroundImageFit>(
+  () => backgroundImage.value?.fit || "cover",
+);
+const backgroundImageOpacity = computed(() =>
+  Math.round((backgroundImage.value?.opacity ?? 1) * 100),
+);
+const backgroundImageVisible = computed(
+  () => backgroundImage.value?.visible !== false,
+);
+const DATA_URL_PREVIEW_LENGTH = 96;
+const isBackgroundImageDataUrl = computed(() =>
+  backgroundImageUrl.value.startsWith("data:"),
+);
+// base64 图片动辄数十万字符，输入框只回显摘要，避免整段字符串渲染卡顿。
+const backgroundImageUrlInput = computed(() => {
+  const url = backgroundImageUrl.value;
+  if (!url) return "";
+  if (!isBackgroundImageDataUrl.value) return url;
+  return `${url.slice(0, DATA_URL_PREVIEW_LENGTH)}…（共 ${url.length} 字符）`;
+});
+
+const updateBackgroundImage = (
+  update: Partial<CanvasBackgroundImageSettings>,
+) => {
+  if (isPageSettingsReadOnly.value) return;
+  store.setCanvasBackgroundImage(update);
+};
+
+const handleBackgroundImageUploadClick = () => {
+  if (isPageSettingsReadOnly.value) return;
+  backgroundImageFileInput.value?.click();
+};
+
+const handleBackgroundImageFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  target.value = "";
+  if (!file || isPageSettingsReadOnly.value) return;
+
+  backgroundImageError.value = "";
+
+  if (!file.type.startsWith("image/")) {
+    backgroundImageError.value = t("editor.backgroundImageFileTypeError");
+    return;
+  }
+
+  if (file.size > BACKGROUND_IMAGE_MAX_SIZE) {
+    backgroundImageError.value = t("editor.backgroundImageSizeError");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = e.target?.result;
+    if (typeof result === "string") {
+      updateBackgroundImage({ url: result, visible: true });
+    }
+  };
+  reader.onerror = () => {
+    backgroundImageError.value = t("editor.backgroundImageReadError");
+  };
+  reader.readAsDataURL(file);
+};
+
+// 允许直接粘贴裸 base64：按文件头补上 data URL 前缀，否则浏览器无法把它当图片加载。
+const normalizeBackgroundImageInput = (raw: string) => {
+  const value = raw.trim();
+  if (!value || value.length < 256) return value;
+  if (value.startsWith("data:") || /^(https?:|blob:|\/|\.\/)/i.test(value)) {
+    return value;
+  }
+
+  const signatures: Array<[string, string]> = [
+    ["iVBORw0KGgo", "image/png"],
+    ["/9j/", "image/jpeg"],
+    ["R0lGOD", "image/gif"],
+    ["UklGR", "image/webp"],
+  ];
+  const matched = signatures.find(([prefix]) => value.startsWith(prefix));
+  return matched ? `data:${matched[1]};base64,${value}` : value;
+};
+
+const handleBackgroundImageUrlChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const url = normalizeBackgroundImageInput(target.value);
+  backgroundImageError.value = "";
+
+  // 输入框当前展示的是 base64 摘要，未改动时不要把它当成新地址写回。
+  if (url === backgroundImageUrlInput.value && isBackgroundImageDataUrl.value) {
+    return;
+  }
+
+  if (!url) {
+    if (!isPageSettingsReadOnly.value) store.clearCanvasBackgroundImage();
+    return;
+  }
+
+  updateBackgroundImage({ url, visible: true });
+};
+
+const handleBackgroundImageUrlFocus = (event: FocusEvent) => {
+  const target = event.target as HTMLInputElement;
+  // 聚焦时全选摘要，方便直接粘贴新的地址或 base64 覆盖。
+  if (isBackgroundImageDataUrl.value) target.select();
+};
+
+const handleBackgroundImageUrlEnter = (event: KeyboardEvent) => {
+  (event.target as HTMLInputElement).blur();
+};
+
+const handleBackgroundImageFitChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement;
+  updateBackgroundImage({ fit: target.value as CanvasBackgroundImageFit });
+};
+
+const handleBackgroundImageOpacityChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const percent = Number(target.value);
+  if (!Number.isFinite(percent)) return;
+  updateBackgroundImage({
+    opacity: Math.min(100, Math.max(0, percent)) / 100,
+  });
+};
+
+const toggleBackgroundImageVisible = () => {
+  if (!backgroundImageUrl.value) return;
+  updateBackgroundImage({ visible: !backgroundImageVisible.value });
+};
+
+const clearBackgroundImage = () => {
+  if (isPageSettingsReadOnly.value) return;
+  backgroundImageError.value = "";
+  store.clearCanvasBackgroundImage();
+};
 
 const watermarkText = computed({
   get: () => store.watermark?.text || "",
@@ -1579,8 +1726,15 @@ onUnmounted(() => {
           </div>
 
           <div
-            class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end shrink-0 rounded-b-lg"
+            class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-2.5 shrink-0 rounded-b-lg"
           >
+            <button
+              @click="showHeaderFooterLineSettings = false"
+              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-xs"
+            >
+              <Save class="w-4 h-4 shrink-0" />
+              {{ t("common.save") }}
+            </button>
             <button
               @click="showHeaderFooterLineSettings = false"
               class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
@@ -1750,11 +1904,157 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3"
+                :title="t('editor.backgroundImageHint')"
+              >
+                {{ t("editor.backgroundImage") }}
+              </h3>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span
+                    class="text-sm text-gray-700 dark:text-gray-200 font-medium"
+                    >{{ t("editor.backgroundImageVisible") }}</span
+                  >
+                  <button
+                    type="button"
+                    :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
+                    @click="toggleBackgroundImageVisible"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="
+                      backgroundImageVisible
+                        ? 'bg-blue-600 dark:bg-blue-500'
+                        : 'bg-gray-200 dark:bg-gray-700'
+                    "
+                  >
+                    <span class="sr-only">{{
+                      t("editor.backgroundImageVisible")
+                    }}</span>
+                    <span
+                      aria-hidden="true"
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+                      :class="
+                        backgroundImageVisible ? 'translate-x-5' : 'translate-x-0'
+                      "
+                    />
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    >{{ t("properties.label.imageSource") }}</label
+                  >
+                  <input
+                    type="text"
+                    :value="backgroundImageUrlInput"
+                    :disabled="isPageSettingsReadOnly"
+                    :placeholder="t('properties.image.urlPlaceholder')"
+                    @change="handleBackgroundImageUrlChange"
+                    @focus="handleBackgroundImageUrlFocus"
+                    @keydown.enter="handleBackgroundImageUrlEnter"
+                    class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    :disabled="isPageSettingsReadOnly"
+                    @click="handleBackgroundImageUploadClick"
+                    class="w-full py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <UploadIcon class="h-4 w-4" />
+                    {{ t("properties.image.uploadBtn") }}
+                  </button>
+                  <span
+                    class="text-[10px] text-gray-400 dark:text-gray-500 text-center"
+                    >{{ t("properties.image.uploadTip") }}</span
+                  >
+                </div>
+
+                <button
+                  v-if="backgroundImageUrl"
+                  type="button"
+                  :disabled="isPageSettingsReadOnly"
+                  @click="clearBackgroundImage"
+                  class="w-full py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-dashed border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs transition-colors"
+                >
+                  <X class="h-3.5 w-3.5" />
+                  {{ t("editor.backgroundImageClear") }}
+                </button>
+
+                <input
+                  ref="backgroundImageFileInput"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="handleBackgroundImageFileChange"
+                />
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label
+                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      >{{ t("editor.backgroundImageFit") }}</label
+                    >
+                    <select
+                      :value="backgroundImageFit"
+                      :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
+                      @change="handleBackgroundImageFitChange"
+                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    >
+                      <option value="cover">
+                        {{ t("editor.backgroundImageFitCover") }}
+                      </option>
+                      <option value="contain">
+                        {{ t("editor.backgroundImageFitContain") }}
+                      </option>
+                      <option value="repeat">
+                        {{ t("editor.backgroundImageFitRepeat") }}
+                      </option>
+                      <option value="origin">
+                        {{ t("editor.backgroundImageFitOrigin") }}
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      >{{ t("editor.backgroundImageOpacity") }}</label
+                    >
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      :value="backgroundImageOpacity"
+                      :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
+                      @change="handleBackgroundImageOpacityChange"
+                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    />
+                  </div>
+                </div>
+
+                <p v-if="backgroundImageError" class="text-xs text-red-500 mt-1">
+                  {{ backgroundImageError }}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div
-            class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end shrink-0 rounded-b-lg"
+            class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-2.5 shrink-0 rounded-b-lg"
           >
+            <button
+              @click="showAdvancedSettings = false"
+              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-xs"
+            >
+              <Save class="w-4 h-4 shrink-0" />
+              {{ t("common.save") }}
+            </button>
             <button
               @click="showAdvancedSettings = false"
               class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"

@@ -2,6 +2,7 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import CloseIcon from "~icons/material-symbols/close";
 import ExpandIcon from "~icons/material-symbols/expand-more";
+import SaveIcon from "~icons/material-symbols/save";
 import { useAiLocale } from "../locales";
 import type { AiModelProfile } from "../types";
 import { AiRequestError, requestAiTemplate } from "../core/client";
@@ -501,9 +502,10 @@ onBeforeUnmount(() => {
             <button
               type="button"
               :disabled="!canSubmit"
-              class="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs theme-bg-strong text-white hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               @click="submit"
             >
+              <SaveIcon class="w-4 h-4" />
               {{ isEdit ? messages.save : messages.addModel }}
             </button>
           </div>

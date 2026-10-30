@@ -90,6 +90,7 @@ export const useJsonBlobModal = (options: UseJsonBlobModalOptions) => {
       showMinimap: store.showMinimap,
       showHistoryPanel: store.showHistoryPanel,
       canvasBackground: store.canvasBackground,
+      canvasBackgroundImage: cloneDeep(store.canvasBackgroundImage),
       pageSpacingX: store.pageSpacingX,
       pageSpacingY: store.pageSpacingY,
     };
@@ -144,7 +145,15 @@ export const useJsonBlobModal = (options: UseJsonBlobModalOptions) => {
       return;
     }
 
-    store.applyTemplateJsonToDesigner(parsed);
+    // 兼容两种粘贴方式：完整模板对象（含 data 包裹）或模板 data 本身。
+    const payload =
+      parsed.data &&
+      typeof parsed.data === "object" &&
+      !Array.isArray(parsed.data)
+        ? parsed.data
+        : parsed;
+
+    store.applyTemplateJsonToDesigner(payload);
 
     const current = templateStore.templates.find(
       (item) => item.id === templateStore.currentTemplateId,

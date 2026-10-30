@@ -631,6 +631,12 @@ const handleTestDataClose = () => {
   store.saveCustomElements();
 };
 
+// 保存按钮：先提交编辑结果再关闭弹窗（保存即关闭，改动已生效）。
+const handleTestDataSave = () => {
+  handleTestDataClose();
+  showTestDataModal.value = false;
+};
+
 onMounted(() => {
   window.addEventListener("mousedown", handleGlobalClick);
 });
@@ -916,8 +922,10 @@ onUnmounted(() => {
       :title="t('common.testData')"
       :value="testDataContent"
       language="json"
+      :show-save-button="true"
       @update:value="testDataContent = $event"
       @close="handleTestDataClose"
+      @save="handleTestDataSave"
     />
   </aside>
 </template>

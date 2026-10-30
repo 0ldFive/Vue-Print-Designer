@@ -85,6 +85,7 @@ export const pageActions = {
       this.headerLineSpan = 100;
       this.footerLineSpan = 100;
       this.canvasBackground = "#ffffff";
+      this.canvasBackgroundImage = null;
       this.pageSpacingX = 0;
       this.pageSpacingY = 0;
       this.canvasSize = { width: 794, height: 1123 };

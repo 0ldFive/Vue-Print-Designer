@@ -603,6 +603,10 @@ const handleViewJson = async (template: Template) => {
       enableHeaderFooterLineRendering: designerStore.enableHeaderFooterLineRendering,
       headerLineStyle: designerStore.headerLineStyle,
       footerLineStyle: designerStore.footerLineStyle,
+      canvasBackground: designerStore.canvasBackground,
+      canvasBackgroundImage: JSON.parse(
+        JSON.stringify(designerStore.canvasBackgroundImage ?? null),
+      ),
     };
   }
   jsonContent.value = JSON.stringify(targetData, null, 2);
@@ -790,7 +794,42 @@ const handleTestDataClose = () => {
   }
 };
 
-const handleJsonSave = () => {
+// 保存按钮：先提交编辑结果再关闭弹窗（保存即关闭，改动已生效）。
+const handleTestDataSave = () => {
+  handleTestDataClose();
+  showTestDataModal.value = false;
+};
+
+// 与 applyTemplateJsonToDesigner 实际支持的字段保持一致，仅用于拦截完全无关的 JSON。
+const DESIGN_JSON_KEYS = [
+  "pages",
+  "canvasSize",
+  "guides",
+  "zoom",
+  "showGrid",
+  "allowDragOutsideCanvas",
+  "headerHeight",
+  "footerHeight",
+  "showHeaderLine",
+  "showFooterLine",
+  "enableHeaderFooterLineRendering",
+  "headerLineStyle",
+  "footerLineStyle",
+  "headerLineColor",
+  "footerLineColor",
+  "headerLineWidth",
+  "footerLineWidth",
+  "headerLineSpanMode",
+  "footerLineSpanMode",
+  "headerLineSpan",
+  "footerLineSpan",
+  "showMinimap",
+  "showHistoryPanel",
+  "canvasBackground",
+  "canvasBackgroundImage",
+] as const;
+
+const handleJsonSave = async () => {
   const target = jsonTarget.value;
   if (!target) return;
 
@@ -801,17 +840,39 @@ const handleJsonSave = () => {
     parsed = null;
   }
 
-  if (!parsed) {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     toast.error(t("common.invalidJson"));
     return;
   }
 
-  if (templateStore.currentTemplateId === target.id) {
-    designerStore.applyTemplateJsonToDesigner(parsed);
-  } else {
-    target.data = { ...target.data, ...parsed };
-    templateStore.updateTemplate(target.id, { data: target.data });
+  // 兼容两种粘贴方式：完整模板对象（含 data 包裹）或模板 data 本身。
+  const payload =
+    parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data)
+      ? parsed.data
+      : parsed;
+
+  const hasDesignPayload = DESIGN_JSON_KEYS.some((key) => key in payload);
+
+  if (!hasDesignPayload) {
+    toast.error(t("common.invalidJson"));
+    return;
   }
+
+  try {
+    if (templateStore.currentTemplateId === target.id) {
+      designerStore.applyTemplateJsonToDesigner(payload);
+    } else {
+      target.data = { ...(target.data || {}), ...payload };
+      target.updatedAt = Date.now();
+      await templateStore.updateTemplate(target.id, { data: target.data });
+    }
+  } catch (e) {
+    // 本地存储写入失败（如超出 localStorage 配额）也需要明确提示，避免静默失败。
+    console.error("Failed to save template JSON", e);
+    toast.error(t("toast.templateSaveFailed"));
+    return;
+  }
+
   showJsonModal.value = false;
 };
 
@@ -1175,8 +1236,10 @@ onUnmounted(() => {
       :title="t('common.testData')"
       :value="testDataContent"
       language="json"
+      :show-save-button="true"
       @update:value="testDataContent = $event"
       @close="handleTestDataClose"
+      @save="handleTestDataSave"
     />
 
     <CodeEditorModal

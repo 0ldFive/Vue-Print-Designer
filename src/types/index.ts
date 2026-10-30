@@ -8,6 +8,17 @@ export interface WatermarkSettings {
   density: number;
 }
 
+export type CanvasBackgroundImageFit = "cover" | "contain" | "repeat" | "origin";
+
+export interface CanvasBackgroundImageSettings {
+  /** base64 data URL 或 http(s) 图片地址 */
+  url: string;
+  fit: CanvasBackgroundImageFit;
+  /** 0-1 */
+  opacity: number;
+  visible: boolean;
+}
+
 export interface BrandingSettings {
   title?: string;
   logoUrl?: string;
@@ -362,6 +373,7 @@ export interface CustomElementEditSnapshot {
   showMinimap: boolean;
   showHistoryPanel: boolean;
   canvasBackground: string;
+  canvasBackgroundImage?: CanvasBackgroundImageSettings | null;
   pageSpacingX?: number;
   pageSpacingY?: number;
   unit?: "mm" | "px" | "pt" | "in" | "cm";
@@ -439,6 +451,7 @@ export interface DesignerState {
   showHelp: boolean;
   showSettings: boolean;
   canvasBackground: string;
+  canvasBackgroundImage?: CanvasBackgroundImageSettings | null;
   pageSpacingX?: number;
   pageSpacingY?: number;
   guides: Guide[];

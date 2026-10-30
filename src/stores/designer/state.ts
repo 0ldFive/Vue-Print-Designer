@@ -112,6 +112,7 @@ export const state = (): DesignerState => ({
     showHelp: false,
     showSettings: false,
     canvasBackground: "#ffffff",
+    canvasBackgroundImage: null as import("../../types").CanvasBackgroundImageSettings | null,
     pageSpacingX: 0,
     pageSpacingY: 0,
     guides: [],

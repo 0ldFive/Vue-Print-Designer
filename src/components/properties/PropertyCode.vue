@@ -194,9 +194,11 @@ defineExpose({ toggleExpand, isExpanded });
       :value="value"
       :language="language"
       :read-only="disabled"
+      :show-save-button="!disabled"
       :help-items="modalHelpItems"
       @update:value="handleModalUpdate"
       @close="handleModalClose"
+      @save="handleModalClose"
     />
   </div>
 </template>
