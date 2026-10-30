@@ -47,9 +47,9 @@
   <tr>
     <td align="center" width="20%"><b>−65%</b><br/><sub>移除 6 个第三方大包，首屏加载更轻</sub></td>
     <td align="center" width="20%"><b>300 KB</b><br/><sub>Web Components 构建产物，接入成本更低</sub></td>
-    <td align="center" width="20%"><b>80 ms</b><br/><sub>自研引擎，较旧版提速约 73%</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>自研渲染引擎，单页渲染较旧版提速约 73%</sub></td>
     <td align="center" width="20%"><b>6 种</b><br/><sub>按浏览器环境自动适配，也可 API 手动设置</sub></td>
-    <td align="center" width="20%"><b>4 种</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL 四种指令集</sub></td>
+    <td align="center" width="20%"><b>4 种</b><br/><sub>四种标签指令集：TSPL / ZPL / ESC-POS / CPCL 全部支持</sub></td>
   </tr>
 </table>
 
@@ -62,8 +62,8 @@
 <table width="100%">
   <tr>
     <td align="center" width="33%"><b>设计</b><br/><sub>全功能拖拽设计器，文本 / 图片 / 表格 / 条码 / 二维码 / 形状等组件，内置标尺、网格与辅助对齐。</sub></td>
-    <td align="center" width="34%"><b>打印</b><br/><sub>浏览器原生打印、PDF 与图片导出、客户端静默 / 云打印、标签机 RAW 指令直出。</sub></td>
-    <td align="center" width="33%"><b>集成</b><br/><sub>基于 Web Components，零依赖适配 Vue / React / Angular / 原生 HTML，支持 Vue 2。</sub></td>
+    <td align="center" width="34%"><b>打印</b><br/><sub>浏览器原生打印，支持 PDF、图片（拼接 / 分片）导出，客户端静默 / 云打印，标签机 RAW 指令直出。</sub></td>
+    <td align="center" width="33%"><b>集成</b><br/><sub>基于 Web Components，零依赖适配 Vue / React / Angular / 原生 HTML，Vue 2 亦可作为自定义元素。</sub></td>
   </tr>
 </table>
 
@@ -91,7 +91,7 @@
     <td align="center" width="33%"><b>跨框架支持</b><br/><sub>Web Components 封装，Vue / React / Angular / 原生 HTML 均可直接嵌入。</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><b>企业级功能</b><br/><sub>自定义纸张、API 数据对接、模板导入导出，以及打印机 / 份数 / 单双面 / DPI 等打印参数控制。</sub></td>
+    <td align="center" width="33%"><b>企业级功能</b><br/><sub>自定义纸张、API 数据对接、模板导入导出，打印机 / 份数 / 单双面 / DPI 可控。</sub></td>
     <td align="center" width="34%"><b>标签打印</b><br/><sub>模板直接转标签机原生指令，经系统打印队列 RAW 直出，条码与二维码保持矢量锐度。</sub></td>
     <td align="center" width="33%"><b>国际化</b><br/><sub>中文简繁、英、日、韩、德 6 种语言，按浏览器环境自动检测，也可通过 API 手动设置。</sub></td>
   </tr>
@@ -129,8 +129,8 @@
   <tr>
     <td align="center" width="25%" style="width: 25%;"><b>浏览器打印</b><br/><sub>原生预览与打印，支持打印机 / 份数 / 单双面 / DPI 参数控制</sub></td>
     <td align="center" width="25%" style="width: 25%;"><b>导出</b><br/><sub>生成 PDF、图片（拼接 / 分片）、HTML 与 Blob，可自定义文件名</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b><br/><sub>无弹窗直打，支持远程任务下发，由本地客户端执行</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b><br/><sub>原生指令投递系统打印队列，支持批量数据与连续纸</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b><br/><sub>静默打印无弹窗直打，云打印远程任务下发，由本地客户端执行</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b><br/><sub>模板转原生指令，经系统打印队列 RAW 直出，支持批量与连续纸</sub></td>
   </tr>
 </table>
 
@@ -172,11 +172,11 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>四种指令集</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL，默认按打印机名与驱动名自动推断，识别不到时可显式指定。</sub></td>
-    <td align="center" width="20%"><b>元素完整还原</b><br/><sub>文本（自动换行、对齐、粗细）、条码、二维码、表格（合并单元格、表头表尾、SUM / AVG / COUNT 聚合）、图片（抖动为黑白）、矩形 / 线条 / 圆形、多标签网格，以及任意角度的元素旋转。</sub></td>
-    <td align="center" width="20%"><b>打印参数可控</b><br/><sub>标签纸宽高（毫米，高度填 0 即连续纸按内容撑高）、DPI、速度、浓度、间隙 / 黑标 / 纵向偏移；文字可选位图渲染（版式保真）或机内字库（指令体积更小）。</sub></td>
-    <td align="center" width="20%"><b>批量与多页</b><br/><sub>模板一页即一张标签；<code>labels[]</code> 可一次提交整批数据，每条数据独立设置份数，相邻标签间可配置间隔。</sub></td>
-    <td align="center" width="20%"><b>打印记录</b><br/><sub>每次标签打印都会记入客户端打印记录，可查看打印机、份数、状态与时间，失败任务可重试。</sub></td>
+    <td align="center" width="20%"><b>四种指令集</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL<br/>默认按打印机名与驱动名自动推断<br/>识别不到时可显式指定</sub></td>
+    <td align="center" width="20%"><b>元素完整还原</b><br/><sub>文本（自动换行、对齐、粗细）<br/>条码、二维码<br/>表格（合并单元格、表头表尾）<br/>SUM / AVG / COUNT 聚合<br/>图片（抖动为黑白）<br/>矩形 / 线条 / 圆形、多标签网格<br/>任意角度的元素旋转</sub></td>
+    <td align="center" width="20%"><b>打印参数可控</b><br/><sub>标签纸宽高（毫米）<br/>高度填 0 即连续纸按内容撑高<br/>DPI、速度、浓度<br/>间隙 / 黑标 / 纵向偏移<br/>文字可选位图渲染（版式保真）<br/>或机内字库（指令体积更小）</sub></td>
+    <td align="center" width="20%"><b>批量与多页</b><br/><sub>模板一页即一张标签<br/><code>labels[]</code> 可一次提交整批数据<br/>每条数据独立设置份数<br/>相邻标签间可配置间隔</sub></td>
+    <td align="center" width="20%"><b>打印记录</b><br/><sub>每次标签打印记入客户端记录<br/>可查看打印机、份数、状态与时间<br/>失败任务可重试</sub></td>
   </tr>
 </table>
 

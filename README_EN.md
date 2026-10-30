@@ -47,7 +47,7 @@
   <tr>
     <td align="center" width="20%"><b>−65%</b><br/><sub>6 heavy third-party packages removed, lighter first load</sub></td>
     <td align="center" width="20%"><b>300 KB</b><br/><sub>Built as Web Components, lower integration cost</sub></td>
-    <td align="center" width="20%"><b>80 ms</b><br/><sub>In-house engine, about 73% faster than before</sub></td>
+    <td align="center" width="20%"><b>80 ms</b><br/><sub>In-house rendering engine, about 73% faster per page</sub></td>
     <td align="center" width="20%"><b>6</b><br/><sub>Auto-detected from the browser, or set via API</sub></td>
     <td align="center" width="20%"><b>4</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL command languages</sub></td>
   </tr>
@@ -62,8 +62,8 @@
 <table width="100%">
   <tr>
     <td align="center" width="33%"><b>Design</b><br/><sub>Full-featured drag-and-drop designer with text / images / tables / barcodes / QR codes / shapes, plus rulers, grids and alignment tools.</sub></td>
-    <td align="center" width="34%"><b>Print</b><br/><sub>Browser print, PDF and image export, client silent / cloud print, and native RAW label commands.</sub></td>
-    <td align="center" width="33%"><b>Integrate</b><br/><sub>Built on Web Components — zero-dependency with Vue / React / Angular / native HTML, Vue 2 included.</sub></td>
+    <td align="center" width="34%"><b>Print</b><br/><sub>Browser print, PDF and image export (merge / split), client silent / cloud print, and native RAW label commands.</sub></td>
+    <td align="center" width="33%"><b>Integrate</b><br/><sub>Built on Web Components — zero-dependency with Vue / React / Angular / native HTML, and Vue 2 as a custom element.</sub></td>
   </tr>
 </table>
 
@@ -91,7 +91,7 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
     <td align="center" width="33%"><b>Cross-Framework</b><br/><sub>Packaged as Web Components — drop it into Vue / React / Angular / native HTML as-is.</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><b>Enterprise Ready</b><br/><sub>Custom paper sizes, API data integration, template import/export, and print parameter control (printer / copies / duplex / DPI).</sub></td>
+    <td align="center" width="33%"><b>Enterprise Ready</b><br/><sub>Custom paper sizes, API data integration, template import/export, and printer / copies / duplex / DPI controls.</sub></td>
     <td align="center" width="34%"><b>Label Printing</b><br/><sub>Templates become native label commands and go out as RAW data through the system print queue, keeping barcodes and QR codes vector-sharp.</sub></td>
     <td align="center" width="33%"><b>i18n</b><br/><sub>Simplified / Traditional Chinese, English, Japanese, Korean and German — auto-detected from the browser or set via API.</sub></td>
   </tr>
@@ -129,8 +129,8 @@ Join our QQ group for usage discussions, integration tips, and troubleshooting. 
   <tr>
     <td align="center" width="25%" style="width: 25%;"><b>Browser Print</b><br/><sub>Native preview and print, with printer / copies / duplex / DPI controls</sub></td>
     <td align="center" width="25%" style="width: 25%;"><b>Export</b><br/><sub>Generate PDF, images (merge / split), HTML and Blob with custom filenames</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b><br/><sub>Direct print without dialogs, with remote task dispatch to the local client</sub></td>
-    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b><br/><sub>Native commands to the system queue, with batch data and continuous paper</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b><br/><sub>Silent print without dialogs, cloud print with remote task dispatch, run by the local client</sub></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b><br/><sub>Templates to native commands, sent as RAW through the system queue, batch and continuous paper</sub></td>
   </tr>
 </table>
 
@@ -172,11 +172,11 @@ Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, X
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>Four command languages</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL, inferred from printer and driver names by default, or set explicitly when detection fails.</sub></td>
-    <td align="center" width="20%"><b>Faithful element rendering</b><br/><sub>Text (wrapping, alignment, weight), barcodes, QR codes, tables (merged cells, repeated headers / footers, SUM / AVG / COUNT aggregation), images (dithered to black and white), rectangles / lines / circles, multi-label grids, and free-angle element rotation.</sub></td>
-    <td align="center" width="20%"><b>Controllable print options</b><br/><sub>Label width and height in millimetres (height 0 means continuous paper sized to content), DPI, speed, density, gap / black mark / vertical offset; text can be rendered as bitmaps (layout-faithful) or with the printer's built-in fonts (smaller command payloads).</sub></td>
-    <td align="center" width="20%"><b>Batch and multi-page</b><br/><sub>One template page equals one label; <code>labels[]</code> submits a whole batch at once, each record with its own copy count and an optional interval between consecutive labels.</sub></td>
-    <td align="center" width="20%"><b>Print history</b><br/><sub>Every label job is recorded in the client's print history with printer, copies, status and time, and failed jobs can be retried.</sub></td>
+    <td align="center" width="20%"><b>Four command languages</b><br/><sub>TSPL / ZPL / ESC-POS / CPCL<br/>Inferred from printer and driver names<br/>or set explicitly when detection fails</sub></td>
+    <td align="center" width="20%"><b>Faithful element rendering</b><br/><sub>Text (wrapping, alignment, weight)<br/>Barcodes, QR codes<br/>Tables (merged cells, headers / footers)<br/>SUM / AVG / COUNT aggregation<br/>Images (dithered to black and white)<br/>Rectangles / lines / circles, multi-label grids<br/>Free-angle element rotation</sub></td>
+    <td align="center" width="20%"><b>Controllable print options</b><br/><sub>Label width and height in millimetres<br/>Height 0 sizes continuous paper to content<br/>DPI, speed, density<br/>Gap / black mark / vertical offset<br/>Text as bitmaps (layout-faithful)<br/>or with built-in fonts (smaller payloads)</sub></td>
+    <td align="center" width="20%"><b>Batch and multi-page</b><br/><sub>One template page equals one label<br/><code>labels[]</code> submits a whole batch at once<br/>Each record with its own copy count<br/>Optional interval between consecutive labels</sub></td>
+    <td align="center" width="20%"><b>Print history</b><br/><sub>Every label job is recorded in the client<br/>Printer, copies, status and time<br/>Failed jobs can be retried</sub></td>
   </tr>
 </table>
 
