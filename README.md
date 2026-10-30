@@ -45,18 +45,18 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>−65%</b></td>
-    <td align="center" width="20%"><b>300 KB</b></td>
-    <td align="center" width="20%"><b>80 ms</b></td>
-    <td align="center" width="20%"><b>6 种</b></td>
-    <td align="center" width="20%"><b>4 种</b></td>
+    <td align="center" width="20%"><b>首屏体积 −65%</b></td>
+    <td align="center" width="20%"><b>ES 包体积 300 KB</b></td>
+    <td align="center" width="20%"><b>单页渲染 80 ms</b></td>
+    <td align="center" width="20%"><b>内置语言 6 种</b></td>
+    <td align="center" width="20%"><b>标签指令集 4 种</b></td>
   </tr>
   <tr>
     <td align="center" valign="top"><sub>移除 6 个第三方大包，首屏加载更轻</sub></td>
     <td align="center" valign="top"><sub>Web Components 构建产物，接入成本更低</sub></td>
-    <td align="center" valign="top"><sub>自研渲染引擎，单页渲染较旧版提速约 73%</sub></td>
+    <td align="center" valign="top"><sub>自研渲染引擎，较旧版提速约 73%</sub></td>
     <td align="center" valign="top"><sub>按浏览器环境自动适配，也可 API 手动设置</sub></td>
-    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL 四种指令集</sub></td>
+    <td align="center" valign="top"><sub>支持 TSPL / ZPL / ESC-POS / CPCL</sub></td>
   </tr>
 </table>
 

@@ -45,18 +45,18 @@
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><b>−65%</b></td>
-    <td align="center" width="20%"><b>300 KB</b></td>
-    <td align="center" width="20%"><b>80 ms</b></td>
-    <td align="center" width="20%"><b>6</b></td>
-    <td align="center" width="20%"><b>4</b></td>
+    <td align="center" width="20%"><b>First-load −65%</b></td>
+    <td align="center" width="20%"><b>ES Bundle 300 KB</b></td>
+    <td align="center" width="20%"><b>Render 80 ms</b></td>
+    <td align="center" width="20%"><b>Languages 6</b></td>
+    <td align="center" width="20%"><b>Command Sets 4</b></td>
   </tr>
   <tr>
     <td align="center" valign="top"><sub>6 heavy third-party packages removed, lighter first load</sub></td>
     <td align="center" valign="top"><sub>Built as Web Components, lower integration cost</sub></td>
     <td align="center" valign="top"><sub>In-house rendering engine, about 73% faster per page</sub></td>
     <td align="center" valign="top"><sub>Auto-detected from the browser, or set via API</sub></td>
-    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL</sub></td>
+    <td align="center" valign="top"><sub>Supports TSPL / ZPL / ESC-POS / CPCL</sub></td>
   </tr>
 </table>
 
