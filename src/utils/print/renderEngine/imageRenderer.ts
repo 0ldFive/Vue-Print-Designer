@@ -253,12 +253,17 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
           // 分页包装层（data-print-wrapper）不是元素框，它比表格宽、比表格矮，
           // 一旦被当作外框基准就会出现「右侧多一条、底部缺一条」。
           if (ancestor.hasAttribute("data-print-wrapper")) break;
-          const ancestorStyle = window.getComputedStyle(ancestor);
-          const clipped =
-            ancestorStyle.overflowX !== "visible" ||
-            ancestorStyle.overflowY !== "visible";
           const ancestorRect = ancestor.getBoundingClientRect();
-          if (clipped && ancestorRect.height + 2 < tableBox.height) {
+          // 只要祖先盒子在任一方向小于表格盒子，就说明表格已溢出该层容器，
+          // 外框必须以元素框为基准。这里不再额外判断 overflow 计算值：
+          // 导出克隆后 overflow 不一定可靠，而「祖先更小」已足以说明溢出。
+          // 若不切换基准，横向溢出会让右边框落在容器之外被裁掉，
+          // 表现为设计态/预览态有右边框、导出图片却没有。
+          // 容差取 0.5：表格在 fixed 布局下常因折叠边框只比容器宽不到 1px，
+          // 这点溢出已足以把 1px 右边框整条裁掉，用 2px 容差会漏判。
+          const overflowsVertically = ancestorRect.height + 0.5 < tableBox.height;
+          const overflowsHorizontally = ancestorRect.width + 0.5 < tableBox.width;
+          if (overflowsVertically || overflowsHorizontally) {
             frameHost = ancestor;
             break;
           }
@@ -306,16 +311,21 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
           const pageRect = page.getBoundingClientRect();
           const hostRect = host.getBoundingClientRect();
           const tableRect = table.getBoundingClientRect();
-          // 表格若压到页面底边，底边线会被裁，最多收进半个像素保证可见。
+          // 表格若压到页面右/底边，右/底边线会被页面裁，各收进半个像素保证可见。
+          const maxVisibleWidth = Math.max(
+            1,
+            pageRect.right - tableRect.left - 0.5,
+          );
           const maxVisibleHeight = Math.max(
             1,
             pageRect.bottom - tableRect.top - 0.5,
           );
+          const overlayWidth = Math.min(tableRect.width, maxVisibleWidth);
           const overlayHeight = Math.min(tableRect.height, maxVisibleHeight);
           overlayPosition =
             `left:${tableRect.left - hostRect.left - host.clientLeft}px;` +
             `top:${tableRect.top - hostRect.top - host.clientTop}px;` +
-            `width:${tableRect.width}px;` +
+            `width:${overlayWidth}px;` +
             `height:${overlayHeight}px;`;
         }
 
