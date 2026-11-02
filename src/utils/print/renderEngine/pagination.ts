@@ -1021,6 +1021,24 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
       }
     };
 
+    // 锁定表格分页：标记为已完成并禁止后续分页轮次再次拆解。
+    // 用于"无论怎样切分都会溢出"的场景（例如重复表尾本身已占满可打印区），
+    // 否则每轮都会新建空页，页数无界增长并最终拖死主线程。
+    const lockTablePagination = (
+      wrapper: HTMLElement,
+      table: HTMLElement,
+      reason: string,
+    ) => {
+      wrapper.setAttribute("data-flow-paginated", "true");
+      wrapper.setAttribute("data-flow-pagination-locked", "true");
+      syncTableRightEdgeLines(wrapper, table);
+      syncElementsBelowTables();
+      paginationDebug("table.locked", {
+        flowId: getWrapperDebugId(wrapper),
+        reason,
+      });
+    };
+
     // 通过二分查找自动高度文本可切分位置。
     const findAutoHeightSplitIndex = (
       textEl: HTMLElement,
@@ -1114,9 +1132,32 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           }
 
           if (wrapper.hasAttribute("data-flow-paginated")) {
-            // 已标记分页 → 检查是否仍溢出（需修复）
-            const contentRect = (table || autoHeightEl)!.getBoundingClientRect();
-            if (contentRect.bottom > limitBottom + 1) {
+            // 已锁定分页的块不再参与溢出校验：这些块本身无论如何切分都会
+            // 溢出，撤标只会触发"重拆 → 再溢出"的无限循环。
+            if (wrapper.hasAttribute("data-flow-pagination-locked")) return;
+
+            // 已标记分页 → 检查是否仍溢出（需修复）。
+            // 重复表尾的表格必须与拆分判定保持同一口径（行底部 + 表尾高度），
+            // 否则会出现"拆不动却被反复撤标"的抖动。
+            const isRepeatFooterTable =
+              !!table && table.getAttribute("data-tfoot-repeat") === "true";
+            const repeatedFooterEl = isRepeatFooterTable
+              ? table!.querySelector("tfoot")
+              : null;
+            const bodyRows = isRepeatFooterTable
+              ? Array.from(table!.querySelectorAll("tbody tr"))
+              : [];
+            // 与拆分口径保持一致：末行底部 + 实际表尾高度；
+            // 本页块被判定为"不重复表尾"时表尾已被移除，高度按 0 计。
+            const contentBottom =
+              isRepeatFooterTable && bodyRows.length > 0
+                ? bodyRows[bodyRows.length - 1].getBoundingClientRect().bottom +
+                  (repeatedFooterEl
+                    ? repeatedFooterEl.getBoundingClientRect().height
+                    : 0)
+                : (table || autoHeightEl)!.getBoundingClientRect().bottom;
+
+            if (contentBottom > limitBottom + 1) {
               wrapper.removeAttribute("data-flow-paginated");
               repairedCount += 1;
             }
@@ -1414,11 +1455,51 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             marginBottom;
           const tableFitsFreshPage =
             tableRect.height <= availableContentHeight * getPageScaleY(pageRect) + 1;
+
+          const tableHeadEl = table.querySelector("thead");
+          const tableHeadHeight = tableHeadEl
+            ? tableHeadEl.getBoundingClientRect().height
+            : 0;
+          const firstRowHeight = rows[0]
+            ? rows[0].getBoundingClientRect().height
+            : 0;
+
+          // 当前页从表格顶部到可打印底部的剩余高度。
+          // 若本页装不下「表头 + 表尾 + 一行」却装得下「表头 + 一行」，
+          // 则本页块不重复表尾，让表格从当前页剩余空间就地开始排，
+          // 避免整表被推到下一页而在当前页留下大块空白。
+          const pageRemainingHeight = limitBottom - wrapperRect.top;
+          const dropRepeatedFooter =
+            isFooterRepeated &&
+            !!tfoot &&
+            repeatedFooterHeight > 0 &&
+            tableHeadHeight + firstRowHeight + repeatedFooterHeight >
+              pageRemainingHeight + 1 &&
+            tableHeadHeight + firstRowHeight <= pageRemainingHeight + 1;
+          // 本页块已决定不重复表尾时，拆分测量按"无表尾"计算。
+          const splitFooterHeight = dropRepeatedFooter
+            ? 0
+            : repeatedFooterHeight;
+
           const firstRowBottomWithFooter = rows[0]
-            ? rows[0].getBoundingClientRect().bottom + repeatedFooterHeight
+            ? rows[0].getBoundingClientRect().bottom + splitFooterHeight
             : Number.POSITIVE_INFINITY;
           const firstRowFitsCurrentPage =
             rows.length > 0 && firstRowBottomWithFooter <= limitBottom + 1;
+
+          // 重复表尾时，若"表头 + 单行 + 表尾"已超出可打印高度，
+          // 则无论怎样切分，任何一页都无法容纳一行数据：
+          // 拆分只会每轮追加新页却永远不收敛，这里直接判定不可分页并锁定。
+          const pageScaleY = getPageScaleY(pageRect);
+          const minChunkHeight =
+            tableHeadHeight + firstRowHeight + repeatedFooterHeight;
+          if (
+            rows.length > 1 &&
+            minChunkHeight > availableContentHeight * pageScaleY + 1
+          ) {
+            lockTablePagination(wrapper, table, "footer-overflow");
+            return;
+          }
 
           if (
             rows.length > 0 &&
@@ -1446,7 +1527,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
             // 快速判断是否有溢出（检查最末行 / 表格整体底端）
             const lastOverflows = !isFooterRepeated
               ? tableRect.bottom > limitBottom + 1
-              : rows[rowCount - 1].getBoundingClientRect().bottom + repeatedFooterHeight > limitBottom + 1;
+              : rows[rowCount - 1].getBoundingClientRect().bottom + splitFooterHeight > limitBottom + 1;
 
             if (lastOverflows) {
               // 二分查找：在 rows[0..rowCount-2] 中找第一个溢出行
@@ -1457,7 +1538,7 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
               while (lo <= hi) {
                 const mid = (lo + hi) >> 1;
-                if (rows[mid].getBoundingClientRect().bottom + repeatedFooterHeight > limitBottom + 1) {
+                if (rows[mid].getBoundingClientRect().bottom + splitFooterHeight > limitBottom + 1) {
                   splitIndex = mid; // mid 溢出，记录并向前找
                   hi = mid - 1;
                 } else {
@@ -1478,7 +1559,13 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
           // 如果根据行累加计算没超限，但表格整体(包含border等)超限，
           // 也应当触发分页。整体移入下一页或者将最后一行移入。
           if (splitIndex === -1 && rows.length > 0) {
-            if (tableRect.bottom > limitBottom + 2) {
+            // 重复表尾按"末行 + 本页实际表尾高度"判定，
+            // 避免本页块已决定不重复表尾时仍被整表高度误判为溢出。
+            const tableOverflowBottom = isFooterRepeated
+              ? rows[rows.length - 1].getBoundingClientRect().bottom +
+                splitFooterHeight
+              : tableRect.bottom;
+            if (tableOverflowBottom > limitBottom + 2) {
               if (wrapperTopInPage > minTop + 5) {
                 splitIndex = firstRowFitsCurrentPage && rows.length > 1
                   ? rows.length - 1
@@ -1490,6 +1577,13 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
                 splitIndex = 1; // 仅1行且贴近页首，实在拆不了，强制保留防死循环
               }
             }
+          }
+
+          // 兜底：拆分后新块不含任何数据行说明拆分没有推进，
+          // 继续建页只会每轮追加一个空页（页数无界增长），这里锁定该表。
+          if (splitIndex !== -1 && rows.length - splitIndex <= 0) {
+            lockTablePagination(wrapper, table, "no-progress");
+            return;
           }
 
           if (splitIndex !== -1) {
@@ -1521,7 +1615,8 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
               table.getAttribute("data-tfoot-repeat") === "true";
 
             if (oldTfoot) {
-              if (!shouldRepeatFooter) {
+              // 本页块已判定不重复表尾时同样移除，与拆分测量口径保持一致。
+              if (!shouldRepeatFooter || dropRepeatedFooter) {
                 oldTfoot.remove();
               } else {
                 updatePageSums(table);
@@ -1566,6 +1661,11 @@ export const createPagination = ({ store }: { store: DesignerStore }) => {
 
             syncElementsBelowTables(true);
           } else {
+            // 本页块不重复表尾时，必须真正从 DOM 移除表尾，
+            // 否则收尾校验仍会按实际表格底部判定为溢出并反复撤标。
+            if (dropRepeatedFooter) {
+              table.querySelector("tfoot")?.remove();
+            }
             syncTableRightEdgeLines(wrapper, table);
             if (table) updatePageSums(table);
             wrapper.setAttribute("data-flow-paginated", "true");

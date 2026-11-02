@@ -2307,9 +2307,12 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
               verticalAlign: 'top',
               backgroundColor: element.style.headerBackgroundColor || '#f3f4f6',
               color: element.style.headerColor || '#000000',
+              // 未单独设置表头字号时回退到元素主字号，避免落到 text-sm 的 14px。
               fontSize: element.style.headerFontSize
                 ? `${element.style.headerFontSize}px`
-                : undefined,
+                : element.style.fontSize
+                  ? `${element.style.fontSize}px`
+                  : undefined,
               textAlign: col.align || element.style.headerTextAlign || 'left',
               cursor:
                 store.selectedElementId === element.id ? 'pointer' : 'default',
@@ -2556,9 +2559,14 @@ export const elementPropertiesSchema: ElementPropertiesSchema = {
                 backgroundColor:
                   element.style.footerBackgroundColor || '#f9fafb',
                 color: element.style.footerColor || '#000000',
+                // 未单独设置页脚字号时回退到元素主字号。
+                // 若保留 undefined，td 上的 text-sm（14px）会生效，表尾在窄列内
+                // 大量换行从而撑满整页，导致表格无法分页。
                 fontSize: element.style.footerFontSize
                   ? `${element.style.footerFontSize}px`
-                  : undefined,
+                  : element.style.fontSize
+                    ? `${element.style.fontSize}px`
+                    : undefined,
                 textAlign: col.align || element.style.footerTextAlign || 'left',
                 cursor:
                   store.selectedElementId === element.id

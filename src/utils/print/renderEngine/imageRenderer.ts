@@ -245,19 +245,78 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         const style = cellStyle.borderTopStyle;
         const color = cellStyle.borderTopColor;
         if (style === "none" || !(Number.parseFloat(width) > 0)) return;
+        // 单元格自身已画出的边不再重复补线，否则会与表格自身边框叠成"双线"。
+        const isSideDrawnByCell = (
+          target: HTMLTableCellElement | undefined,
+          side: "left" | "right" | "bottom",
+        ) => {
+          if (!target) return false;
+          const targetStyle = window.getComputedStyle(target);
+          const sideWidth = Number.parseFloat(
+            targetStyle.getPropertyValue(`border-${side}-width`) || "0",
+          );
+          const sideStyle = targetStyle.getPropertyValue(`border-${side}-style`);
+          return (
+            Number.isFinite(sideWidth) &&
+            sideWidth > 0 &&
+            sideStyle !== "none" &&
+            sideStyle !== "hidden"
+          );
+        };
+
+        const borderParts: string[] = [];
+        if (rotated) {
+          borderParts.push(`border:${width} ${style} ${color};`);
+        } else {
+          const firstRowEl = table.rows[0];
+          if (!isSideDrawnByCell(firstRowEl?.cells[0], "left")) {
+            borderParts.push(`border-left:${width} ${style} ${color};`);
+          }
+          if (
+            !isSideDrawnByCell(
+              firstRowEl?.cells[firstRowEl.cells.length - 1],
+              "right",
+            )
+          ) {
+            borderParts.push(`border-right:${width} ${style} ${color};`);
+          }
+          // 底边始终补：border-collapse 下末行单元格的底边框会与表格边界折叠，
+          // 计算样式仍是 1px 但实际不绘制，只按单元格判断会让预览丢失底边。
+          // 叠层已按表格实际盒子定位，与单元格边框重合时视觉上仍是一条线。
+          borderParts.push(`border-bottom:${width} ${style} ${color};`);
+        }
+        // 三条边都已有单元格边框时无需补叠层。
+        if (borderParts.length === 0) return;
+
         if (window.getComputedStyle(parent).position === "static") {
           parent.style.setProperty("position", "relative");
         }
+        // 叠层按表格实际盒子（含亚像素）定位：
+        // 表格宽度可能略大于父容器，使用 width:100% 会让右/下边框错开一条线。
+        const tableRect = table.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+        // 表格贴住页面底边时，叠层底边会落在页面边界外被裁掉；
+        // 按实际超出量把叠层底边内缩，保证底边线始终落在页面内可见。
+        const pageRect = page.getBoundingClientRect();
+        const overflowBottom = Math.max(0, tableRect.bottom - pageRect.bottom);
+        const bottomInset = Math.min(
+          overflowBottom,
+          Math.max(0, tableRect.height - 1),
+        );
+        const overlayPosition = rotated
+          ? "left:0;top:0;width:100%;height:100%;"
+          : `left:${tableRect.left - parentRect.left - parent.clientLeft}px;` +
+            `top:${tableRect.top - parentRect.top - parent.clientTop}px;` +
+            `width:${tableRect.width}px;` +
+            `height:${tableRect.height - bottomInset}px;`;
+
         const overlay = parent.ownerDocument.createElement("div");
         overlay.setAttribute("data-print-table-edge-overlay", "true");
         overlay.style.cssText =
-          "position:absolute;left:0;top:0;width:100%;height:100%;" +
+          "position:absolute;" +
+          overlayPosition +
           "box-sizing:border-box;" +
-          (rotated
-            ? `border:${width} ${style} ${color};`
-            : `border-left:${width} ${style} ${color};` +
-              `border-right:${width} ${style} ${color};` +
-              `border-bottom:${width} ${style} ${color};`) +
+          borderParts.join("") +
           "pointer-events:none;";
         parent.appendChild(overlay);
       });
