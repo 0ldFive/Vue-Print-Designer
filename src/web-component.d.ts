@@ -81,6 +81,10 @@ export interface PrintDesignerElement extends HTMLElement {
     items: DesignerBatchItem[],
     request?: DesignerBatchExportRequest,
   ): Promise<void>;
+  /**
+   * 批量套打。缺省合成一个多页 PDF；`request.format = 'label'` 时直发客户端
+   * 原生标签指令（TSPL/ZPL/CPCL/ESC-POS），仅本地客户端通道可用。
+   */
   printBatch(
     items: DesignerBatchItem[],
     request?: DesignerBatchPrintRequest,

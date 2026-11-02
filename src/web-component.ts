@@ -75,6 +75,8 @@ export type DesignerPrintRequest = {
 export type DesignerBatchItem = {
   variables?: Record<string, any>;
   testData?: Record<string, any>;
+  /** 该条数据的打印份数，默认 1；由前端展开，不依赖客户端逐条份数。 */
+  copies?: number;
 };
 
 export type DesignerBatchExportRequest = {
@@ -82,9 +84,42 @@ export type DesignerBatchExportRequest = {
   onProgress?: DesignerProgressCallback;
 };
 
+// 标签通道参数：直发客户端 print_label，由客户端转换为 TSPL/ZPL/CPCL/ESC-POS。
+// 仅本地客户端支持；远程与浏览器通道不可用。
+export type DesignerLabelOptions = {
+  printer: string;
+  /** 指令集，缺省 auto：按打印机名与驱动名推断，推断失败需显式指定。 */
+  language?: "auto" | "tspl" | "zpl" | "cpcl" | "escpos";
+  dpi?: number;
+  speed?: number;
+  density?: number;
+  /** 标签间隙，单位 mm。 */
+  gap?: number;
+  /** 黑标位置，单位 mm。 */
+  bline?: number;
+  offset?: number;
+  textMode?: "" | "device" | "bitmap";
+  /** 连续纸：内容实测算高，忽略 pageSize.height。 */
+  continuous?: boolean;
+  /** 纸张规格（mm）；不传时用 canvasSize 换算。 */
+  pageSize?: { width: number; height: number };
+  background?: "auto" | "off";
+  jobName?: string;
+  /** > 0 时逐张一个 RAW 作业，用于留出回退定位时间。 */
+  intervalMs?: number;
+  /** 下发超时，默认 60s。 */
+  timeout?: number;
+  /** 前置条件不满足时回退 PDF 通道，默认 false（直接报错）。 */
+  fallbackToPdf?: boolean;
+};
+
 export type DesignerBatchPrintRequest = {
   mode?: PrintMode;
   options?: PrintOptions;
+  /** 打印通道：pdf（默认）或 label（客户端原生标签指令）。 */
+  format?: "pdf" | "label";
+  /** format 为 label 时必填。 */
+  label?: DesignerLabelOptions;
   onProgress?: DesignerProgressCallback;
 };
 
@@ -912,8 +947,8 @@ class PrintDesignerElement extends HTMLElement {
     }
   }
 
-  // 批量套打：合成一个多页 PDF 后按单个任务打印（浏览器/本地/远程客户端），
-  // 打印机只定位一次纸张，根治“打一张回退一次”。
+  // 批量套打：format 缺省合成一个多页 PDF 后按单个任务打印；
+  // format='label' 时直接下发客户端原生命令（本地通道）。
   async printBatch(
     items: DesignerBatchItem[],
     request: DesignerBatchPrintRequest = {},
@@ -929,7 +964,12 @@ class PrintDesignerElement extends HTMLElement {
       const result = await this.printApi.printBatch(
         items,
         this.getPrintPages(),
-        { mode: request.mode, options: request.options },
+        {
+          mode: request.mode,
+          options: request.options,
+          format: request.format,
+          label: request.label,
+        },
       );
       this.dispatchEvent(
         new CustomEvent("printed", { detail: { request, result } }),

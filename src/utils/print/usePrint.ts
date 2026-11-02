@@ -21,6 +21,12 @@ import { isShadowDomContent, lockViewportScroll } from "./dom";
 import { createPrintExecutor } from "./printChannel";
 import { createRenderEngine } from "./renderEngine";
 import { createZipBlob } from "./zipBuilder";
+import {
+  buildLabelPayload,
+  buildLabelTemplate,
+  type LabelJobPayload,
+  type LabelPrintOptions,
+} from "./labelPrint";
 
 export const usePrint = () => {
   const store = useDesignerStore();
@@ -36,8 +42,10 @@ export const usePrint = () => {
     remoteSelectedClientId,
     fetchRemoteClients,
     fetchRemotePrinters,
+    fetchLocalPrinterCaps,
     submitRemoteTask,
     sendLocalPreview,
+    sendLocalLabel,
     exportImageMerged,
     printQuality,
   } = usePrintSettings();
@@ -774,6 +782,14 @@ export const usePrint = () => {
   type BatchPrintItem = {
     variables?: Record<string, any>;
     testData?: Record<string, any>;
+    copies?: number;
+  };
+
+  type BatchPrintRequest = {
+    mode?: PrintMode;
+    options?: PrintOptions;
+    format?: "pdf" | "label";
+    label?: LabelPrintOptions;
   };
 
   const resolveBatchContent = (
@@ -832,17 +848,119 @@ export const usePrint = () => {
     }
   };
 
+  // 标签通道前置校验：通道、连接、打印机与指令集推断，任一不满足即抛错。
+  // 只有调用方显式开启 fallbackToPdf 时，才由 printBatch 捕获并回退 PDF。
+  const prepareLabelJob = async (
+    items: BatchPrintItem[],
+    request: BatchPrintRequest,
+  ) => {
+    const labelOptions = request.label;
+    if (!labelOptions || !labelOptions.printer) {
+      throw new Error("Label printing requires label.printer.");
+    }
+
+    const targetMode = request.mode || printMode.value;
+    if (targetMode !== "local") {
+      throw new Error(
+        "Label printing is only available on the local client channel; set mode to 'local'.",
+      );
+    }
+    if (localStatus.value !== "connected") {
+      throw new Error("Local print client is not connected.");
+    }
+
+    const language = labelOptions.language || "auto";
+    if (language === "auto") {
+      const caps = await fetchLocalPrinterCaps(labelOptions.printer);
+      if (!caps?.guessedLanguage) {
+        throw new Error(
+          `Cannot infer label language for printer "${labelOptions.printer}"; specify label.language explicitly.`,
+        );
+      }
+    }
+
+    const template = buildLabelTemplate({
+      pages: store.pages,
+      canvasSize: store.canvasSize,
+      canvasBackground: store.canvasBackground,
+      canvasBackgroundImage: store.canvasBackgroundImage,
+      watermark: store.watermark,
+    });
+
+    const {
+      printer,
+      timeout: _timeout,
+      fallbackToPdf: _fallbackToPdf,
+      ...labelArgs
+    } = labelOptions;
+
+    return buildLabelPayload({
+      printer,
+      template,
+      items,
+      options: labelArgs,
+      key: localSettings.secretKey.trim(),
+    });
+  };
+
+  const sendLabelJob = async (payload: LabelJobPayload, timeoutMs: number) => {
+    store.setPrintProgress({
+      phase: "label",
+      current: 20,
+      total: 100,
+      message: i18n.global.t("statusBar.progress.printing"),
+    });
+    try {
+      const result = await sendLocalLabel(payload, timeoutMs);
+      if (result?.status === "error") {
+        throw new Error(result.message || "Label printing failed");
+      }
+      store.setPrintProgress({
+        phase: "label",
+        current: 100,
+        total: 100,
+        message: i18n.global.t("statusBar.progress.printing"),
+      });
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      return result;
+    } finally {
+      store.setPrintProgress(null);
+    }
+  };
+
   const printBatch = async (
     items: BatchPrintItem[],
     content?: HTMLElement | string | HTMLElement[],
-    request?: { mode?: PrintMode; options?: PrintOptions },
+    request?: BatchPrintRequest,
   ) => {
+    if (request?.format === "label") {
+      let labelPayload: LabelJobPayload | null = null;
+      try {
+        labelPayload = await prepareLabelJob(items, request);
+      } catch (error) {
+        if (!request.label?.fallbackToPdf) throw error;
+        console.warn(
+          "[printBatch] label channel unavailable, falling back to PDF:",
+          error,
+        );
+      }
+      if (labelPayload) {
+        return await sendLabelJob(
+          labelPayload,
+          request.label?.timeout || 60000,
+        );
+      }
+    }
+
     const report = reportBatchProgress("print");
     const pdf = await createBatchPdfDocument(items, resolveBatchContent(content), {
       onProgress: report,
     });
     const blob = pdf.output("blob");
-    return await printPdf(blob, request);
+    return await printPdf(blob, {
+      mode: request?.mode,
+      options: request?.options,
+    });
   };
 
   type PreviewMode = "pdf" | "html" | "json";

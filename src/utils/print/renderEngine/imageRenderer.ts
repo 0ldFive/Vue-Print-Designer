@@ -233,11 +233,6 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         const rotated = isWithinRotatedContext(table, page);
         const parent = table.parentElement;
         if (!parent) return;
-        if (
-          parent.querySelector(':scope > [data-print-table-edge-overlay="true"]')
-        ) {
-          return;
-        }
         const cell = table.querySelector<HTMLElement>("td, th");
         if (!cell) return;
         const cellStyle = window.getComputedStyle(cell);
@@ -245,72 +240,86 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
         const style = cellStyle.borderTopStyle;
         const color = cellStyle.borderTopColor;
         if (style === "none" || !(Number.parseFloat(width) > 0)) return;
-        // 单元格自身已画出的边不再重复补线，否则会与表格自身边框叠成"双线"。
-        const isSideDrawnByCell = (
-          target: HTMLTableCellElement | undefined,
-          side: "left" | "right" | "bottom",
-        ) => {
-          if (!target) return false;
-          const targetStyle = window.getComputedStyle(target);
-          const sideWidth = Number.parseFloat(
-            targetStyle.getPropertyValue(`border-${side}-width`) || "0",
-          );
-          const sideStyle = targetStyle.getPropertyValue(`border-${side}-style`);
-          return (
-            Number.isFinite(sideWidth) &&
-            sideWidth > 0 &&
-            sideStyle !== "none" &&
-            sideStyle !== "hidden"
-          );
-        };
 
+        // 两种场景需要并存：
+        // 1) 未分页：表格内容高于元素框，被 overflow 裁掉，外框应以元素框为基准；
+        // 2) 已分页：外层包装的 overflow 可能仍是 hidden，但表格已按内容展开、
+        //    并未被裁，此时外框必须跟随表格实际高度，否则只覆盖容器那一截。
+        // 因此只有「确实把表格裁短的容器」才作为外框基准。
+        const tableBox = table.getBoundingClientRect();
+        let frameHost: HTMLElement | null = null;
+        let ancestor: HTMLElement | null = parent;
+        while (ancestor && ancestor !== page) {
+          // 分页包装层（data-print-wrapper）不是元素框，它比表格宽、比表格矮，
+          // 一旦被当作外框基准就会出现「右侧多一条、底部缺一条」。
+          if (ancestor.hasAttribute("data-print-wrapper")) break;
+          const ancestorStyle = window.getComputedStyle(ancestor);
+          const clipped =
+            ancestorStyle.overflowX !== "visible" ||
+            ancestorStyle.overflowY !== "visible";
+          const ancestorRect = ancestor.getBoundingClientRect();
+          if (clipped && ancestorRect.height + 2 < tableBox.height) {
+            frameHost = ancestor;
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        const host = frameHost ?? parent;
+        if (
+          host.querySelector(':scope > [data-print-table-edge-overlay="true"]')
+        ) {
+          return;
+        }
+        // border-collapse 下最右列 / 最后一行的边框会与表格边界折叠，
+        // 计算样式仍是 1px 但实际不绘制。因此外框三条边一律补齐，
+        // 叠加在单元格边框上（位置重合，视觉仍是一条线）。
         const borderParts: string[] = [];
         if (rotated) {
           borderParts.push(`border:${width} ${style} ${color};`);
         } else {
-          const firstRowEl = table.rows[0];
-          if (!isSideDrawnByCell(firstRowEl?.cells[0], "left")) {
-            borderParts.push(`border-left:${width} ${style} ${color};`);
-          }
-          if (
-            !isSideDrawnByCell(
-              firstRowEl?.cells[firstRowEl.cells.length - 1],
-              "right",
-            )
-          ) {
-            borderParts.push(`border-right:${width} ${style} ${color};`);
-          }
-          // 底边始终补：border-collapse 下末行单元格的底边框会与表格边界折叠，
-          // 计算样式仍是 1px 但实际不绘制，只按单元格判断会让预览丢失底边。
-          // 叠层已按表格实际盒子定位，与单元格边框重合时视觉上仍是一条线。
+          borderParts.push(`border-left:${width} ${style} ${color};`);
+          borderParts.push(`border-right:${width} ${style} ${color};`);
           borderParts.push(`border-bottom:${width} ${style} ${color};`);
         }
-        // 三条边都已有单元格边框时无需补叠层。
-        if (borderParts.length === 0) return;
 
-        if (window.getComputedStyle(parent).position === "static") {
-          parent.style.setProperty("position", "relative");
+        if (window.getComputedStyle(host).position === "static") {
+          host.style.setProperty("position", "relative");
         }
-        // 叠层按表格实际盒子（含亚像素）定位：
-        // 表格宽度可能略大于父容器，使用 width:100% 会让右/下边框错开一条线。
-        const tableRect = table.getBoundingClientRect();
-        const parentRect = parent.getBoundingClientRect();
-        // 表格贴住页面底边时，叠层底边会落在页面边界外被裁掉；
-        // 按实际超出量把叠层底边内缩，保证底边线始终落在页面内可见。
-        const pageRect = page.getBoundingClientRect();
-        const overflowBottom = Math.max(0, tableRect.bottom - pageRect.bottom);
-        const bottomInset = Math.min(
-          overflowBottom,
-          Math.max(0, tableRect.height - 1),
-        );
-        const overlayPosition = rotated
-          ? "left:0;top:0;width:100%;height:100%;"
-          : `left:${tableRect.left - parentRect.left - parent.clientLeft}px;` +
-            `top:${tableRect.top - parentRect.top - parent.clientTop}px;` +
-            `width:${tableRect.width}px;` +
-            `height:${tableRect.height - bottomInset}px;`;
 
-        const overlay = parent.ownerDocument.createElement("div");
+        let overlayPosition: string;
+        if (rotated || frameHost) {
+          // 与设计态一致：铺满元素框根节点。
+          overlayPosition = "left:0;top:0;width:100%;height:100%;";
+          // 元素框本身贴住页面底边时，底边线会被页面裁掉，最多内缩 1px。
+          if (!rotated) {
+            const hostRect = host.getBoundingClientRect();
+            const pageRect = page.getBoundingClientRect();
+            const overflowBottom = hostRect.bottom - pageRect.bottom;
+            if (overflowBottom > 0) {
+              overlayPosition =
+                "left:0;top:0;width:100%;height:calc(100% - 1px);";
+            }
+          }
+        } else {
+          // 已分页：按表格自身盒子精确对齐（不能用 offsetWidth，它是整数，
+          // 会在右侧多出 1px 变成「双线粗边」）。
+          const pageRect = page.getBoundingClientRect();
+          const hostRect = host.getBoundingClientRect();
+          const tableRect = table.getBoundingClientRect();
+          // 表格若压到页面底边，底边线会被裁，最多收进半个像素保证可见。
+          const maxVisibleHeight = Math.max(
+            1,
+            pageRect.bottom - tableRect.top - 0.5,
+          );
+          const overlayHeight = Math.min(tableRect.height, maxVisibleHeight);
+          overlayPosition =
+            `left:${tableRect.left - hostRect.left - host.clientLeft}px;` +
+            `top:${tableRect.top - hostRect.top - host.clientTop}px;` +
+            `width:${tableRect.width}px;` +
+            `height:${overlayHeight}px;`;
+        }
+
+        const overlay = host.ownerDocument.createElement("div");
         overlay.setAttribute("data-print-table-edge-overlay", "true");
         overlay.style.cssText =
           "position:absolute;" +
@@ -318,7 +327,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
           "box-sizing:border-box;" +
           borderParts.join("") +
           "pointer-events:none;";
-        parent.appendChild(overlay);
+        host.appendChild(overlay);
       });
     });
   };

@@ -72,6 +72,10 @@ export interface LocalPrinterCaps {
   printerPaperNames?: string[];
   duplexSupported?: boolean;
   colorSupported?: boolean;
+  /** Label language inferred from the printer name / driver, when supported. */
+  guessedLanguage?: string;
+  /** Printer resolution from DEVMODE, 0/absent when the driver does not report it. */
+  dpi?: number;
 }
 
 export type PrintQuality = "fast" | "normal" | "high" | "ultra";
@@ -117,6 +121,14 @@ interface PrintSettingsState {
     timeoutMs?: number,
   ) => Promise<{
     type: "preview_result";
+    status: "success" | "error";
+    message?: string;
+  }>;
+  sendLocalLabel: (
+    payload: Record<string, any>,
+    timeoutMs?: number,
+  ) => Promise<{
+    type: "print_result";
     status: "success" | "error";
     message?: string;
   }>;
@@ -1033,6 +1045,32 @@ const createState = (): PrintSettingsState => {
     );
   };
 
+  // 标签指令下发：客户端在同一条 WS 连接里完成「模板 → 指令 → RAW 队列」，
+  // 队列最长等待 5 分钟，因此默认超时给到 60s 且允许调用方覆盖。
+  const sendLocalLabel = async (
+    payload: Record<string, any>,
+    timeoutMs: number = 60000,
+  ) => {
+    await connectLocal();
+    return await sendWithWait<{
+      type: "print_result";
+      status: "success" | "error";
+      message?: string;
+    }>(
+      localSocket,
+      localWaiters,
+      payload,
+      (
+        msg,
+      ): msg is {
+        type: "print_result";
+        status: "success" | "error";
+        message?: string;
+      } => msg?.type === "print_result",
+      timeoutMs,
+    );
+  };
+
   const stopRemoteClientsPolling = () => {
     if (remoteClientsPoller.value) {
       window.clearInterval(remoteClientsPoller.value);
@@ -1105,6 +1143,7 @@ const createState = (): PrintSettingsState => {
     fetchLocalPrinterCaps,
     submitRemoteTask,
     sendLocalPreview,
+    sendLocalLabel,
     cancelLocalRetry,
     cancelRemoteRetry,
     connectLocal,

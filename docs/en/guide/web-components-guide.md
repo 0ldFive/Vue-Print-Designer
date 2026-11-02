@@ -446,6 +446,8 @@ Parameters:
 
 Description: For "one template + a set of data" batch variable-printing scenarios. Pass an array of data records; the component reuses a single hidden render environment, applies the template to each record in order, and finally **produces one multi-page PDF** (each record maps to its own page(s); no image stitching).
 
+`printBatch` also has a **label channel**: with `request.format = 'label'` it skips the PDF entirely and sends the template JSON plus the data array to the local client, which converts them into native TSPL / ZPL / CPCL / ESC-POS commands and writes them to the system print queue as RAW. Intended for thermal/thermal-transfer label printers: barcodes and QR codes are drawn natively, and the payload size does not grow with the number of labels.
+
 The three methods:
 
 | Method                             | Purpose                                                                                          | Returns                 |
@@ -477,6 +479,19 @@ await el.printBatch(items, {
   options: { printer: 'HP LaserJet', copies: 1 },
   onProgress: (p) => console.log('Batch print', p.percent, p.message),
 })
+
+// 4) Label printer: send native commands (local client)
+await el.printBatch(items, {
+  mode: 'local',
+  format: 'label',
+  label: {
+    printer: 'TSC TE244',
+    language: 'tspl', // defaults to auto: inferred from printer/driver name
+    gap: 2, // label gap in mm
+    // pageSize omitted -> derived from the current canvasSize
+  },
+  onProgress: (p) => console.log('Label print', p.percent, p.message),
+})
 ```
 
 `items` array item (`DesignerBatchItem`):
@@ -485,6 +500,7 @@ await el.printBatch(items, {
 | ----------- | --------------------- | -------- | ----------------------------------------------------------------------------------------------- |
 | `variables` | `Record<string, any>` | No       | Variable values for this record (for `@variable` binding), matching export-mode variable data.  |
 | `testData`  | `Record<string, any>` | No       | Test data for this record, used as the variable fallback.                                       |
+| `copies`    | `number`              | No       | Copies for this record, default 1; the label channel unrolls it into multiple labels.           |
 
 `request` for `getBatchPdfBlob` / `exportBatchPdf` (`DesignerBatchExportRequest`):
 
@@ -497,9 +513,42 @@ await el.printBatch(items, {
 
 | Field        | Type                                          | Required | Description                                       |
 | ------------ | --------------------------------------------- | -------- | ------------------------------------------------- |
-| `mode`       | `'browser' \| 'local' \| 'remote'`            | No       | Print mode. If omitted, the default mode is used. |
-| `options`    | `PrintOptions`                                | No       | Print options (see "Print Options Detail" below). |
-| `onProgress` | `(progress: DesignerProgressPayload) => void` | No       | Progress callback fired after each record is rendered. |
+| `mode`       | `'browser' \| 'local' \| 'remote'`            | No       | Print mode. If omitted, the default mode is used. The label channel requires `'local'`. |
+| `format`     | `'pdf' \| 'label'`                            | No       | Print channel, defaults to `'pdf'`; `'label'` uses the client's native label commands. |
+| `label`      | `DesignerLabelOptions`                        | No       | Required when `format` is `'label'`; see label options below. |
+| `options`    | `PrintOptions`                                | No       | Print options for the PDF channel (see "Print Options Detail" below); ignored by the label channel. |
+| `onProgress` | `(progress: DesignerProgressPayload) => void` | No       | Progress callback; the label channel reports only "dispatched" and "finished". |
+
+`label` options (`DesignerLabelOptions`):
+
+| Field             | Type                                              | Required | Description                                                       |
+| ----------------- | ------------------------------------------------- | -------- | ----------------------------------------------------------------- |
+| `printer`         | `string`                                          | Yes      | Printer name; must match the system driver name exactly.          |
+| `language`        | `'auto' \| 'tspl' \| 'zpl' \| 'cpcl' \| 'escpos'` | No       | Command set, defaults to `'auto'`; inference failure raises an error, so specify it explicitly. |
+| `dpi`             | `number`                                          | No       | Resolution; falls back to the driver-reported value, then 203.    |
+| `speed`           | `number`                                          | No       | Print speed; falls back to the printer setting.                   |
+| `density`         | `number`                                          | No       | Print density; falls back to the printer setting.                 |
+| `gap`             | `number`                                          | No       | Label gap in mm.                                                  |
+| `bline`           | `number`                                          | No       | Black-mark position in mm.                                        |
+| `offset`          | `number`                                          | No       | Whole-layout offset in mm.                                        |
+| `textMode`        | `'' \| 'device' \| 'bitmap'`                      | No       | Text rendering mode; per-command-set default (bitmap for fidelity). |
+| `continuous`      | `boolean`                                         | No       | Continuous paper: height is measured from content, `pageSize.height` is ignored. |
+| `pageSize`        | `{ width: number; height: number }`               | No       | Paper size in mm; derived from the current `canvasSize` when omitted. |
+| `background`      | `'auto' \| 'off'`                                 | No       | Draw page background/watermark; defaults to `'auto'`.             |
+| `jobName`         | `string`                                          | No       | Job name, defaults to `Label Batch`.                              |
+| `intervalMs`      | `number`                                          | No       | When greater than 0, one RAW job per label so the printer can reposition. |
+| `timeout`         | `number`                                          | No       | Dispatch timeout, defaults to 60000 ms.                           |
+| `fallbackToPdf`   | `boolean`                                         | No       | Fall back to the PDF channel when preconditions fail; defaults to `false` (throw instead). |
+
+Label channel limits:
+
+- Local client channel only; `remote` / `browser` raise an error instead of silently falling back.
+- Template variables are rewritten into the client's placeholder syntax before sending; no template preprocessing is needed.
+- Headers, footers, `repeatPerPage` and page numbers do not apply to the label channel (a label has no page concept).
+- Table data-variable binding (`variable` / `columnsVariable` / `footerDataVariable`) is not supported and raises an error pointing to the PDF channel.
+- `customScript`, gradients, shadows and transparency are not rendered.
+- Text is rendered with the client's embedded fonts: visually equivalent, not pixel-identical.
+- `copies` has no effect with the CPCL command set (TSPL / ZPL / ESC-POS are fine).
 
 Returns: `getBatchPdfBlob` returns `Promise<Blob | null>` (`null` only when the component is not ready; rendering errors reject); `exportBatchPdf` returns `Promise<void>` (triggers a download); `printBatch` returns `Promise<any>` (the underlying print-channel status object; per-`mode` behavior matches `print`).
 
