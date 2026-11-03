@@ -102,6 +102,8 @@ export default {
     spacingX: "水平邊距",
     spacingY: "垂直邊距",
     showMarginLines: "顯示邊距線",
+    continuousPaper: "連續紙",
+    continuousPaperHint: "標籤高度隨內容增長，表格不再被元素框裁剪",
     allowDragOutsideCanvas: "允許元素拖拽出畫布",
     showCornerMarkers: "顯示角標",
     showGrid: "顯示網格",

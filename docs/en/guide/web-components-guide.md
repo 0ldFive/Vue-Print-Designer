@@ -532,7 +532,6 @@ await el.printBatch(items, {
 | `bline`           | `number`                                          | No       | Black-mark position in mm.                                        |
 | `offset`          | `number`                                          | No       | Whole-layout offset in mm.                                        |
 | `textMode`        | `'' \| 'device' \| 'bitmap'`                      | No       | Text rendering mode; per-command-set default (bitmap for fidelity). |
-| `continuous`      | `boolean`                                         | No       | Continuous paper: height is measured from content, `pageSize.height` is ignored. |
 | `pageSize`        | `{ width: number; height: number }`               | No       | Paper size in mm; derived from the current `canvasSize` when omitted. |
 | `background`      | `'auto' \| 'off'`                                 | No       | Draw page background/watermark; defaults to `'auto'`.             |
 | `jobName`         | `string`                                          | No       | Job name, defaults to `Label Batch`.                              |

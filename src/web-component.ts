@@ -99,8 +99,6 @@ export type DesignerLabelOptions = {
   bline?: number;
   offset?: number;
   textMode?: "" | "device" | "bitmap";
-  /** 连续纸：内容实测算高，忽略 pageSize.height。 */
-  continuous?: boolean;
   /** 纸张规格（mm）；不传时用 canvasSize 换算。 */
   pageSize?: { width: number; height: number };
   background?: "auto" | "off";
@@ -1151,6 +1149,7 @@ class PrintDesignerElement extends HTMLElement {
     return {
       pages: cloneDeep(this.designerStore.pages),
       canvasSize: cloneDeep(this.designerStore.canvasSize),
+      continuousPaper: this.designerStore.continuousPaper,
       guides: cloneDeep(this.designerStore.guides),
       zoom: this.designerStore.zoom,
       showGrid: this.designerStore.showGrid,

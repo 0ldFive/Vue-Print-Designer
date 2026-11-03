@@ -27,6 +27,10 @@ import {
   type LabelJobPayload,
   type LabelPrintOptions,
 } from "./labelPrint";
+import {
+  applyContinuousLayout,
+  resolveRenderCanvasSize,
+} from "@/utils/continuousLayout";
 
 export const usePrint = () => {
   const store = useDesignerStore();
@@ -77,7 +81,24 @@ export const usePrint = () => {
     });
   };
 
+  // 连续纸渲染高度：由 createRepeatedPages 记录，供同一次导出读取。
+  // 只在本轮导出内有效，结束即清空，绝不写回 store.canvasSize。
+  let continuousRenderHeight: number | null = null;
+
   const createRepeatedPages = (originalPages: Page[]): Page[] => {
+    // 连续纸：表格按内容撑高、下方元素下移、页面高度取内容底边；
+    // 与设计器共用 store.continuousLayout，保证导出/打印与画布一致。
+    if (store.continuousPaper) {
+      // 只改元素坐标，不动 store.canvasSize：页面高度由 createRepeatedPages
+      // 记录的 continuousRenderHeight 在导出链路里局部使用。
+      const layout = store.continuousLayout;
+      continuousRenderHeight = layout.contentHeight;
+      return cloneDeep(originalPages).map((page) => ({
+        ...page,
+        elements: applyContinuousLayout(page.elements, layout),
+      }));
+    }
+
     // Multi-label batch layout takes over the page-expansion pipeline entirely:
     // it produces the full label grid (across as many pages as the data needs),
     // bypassing the normal header/footer/repeat-per-page cloning below.
@@ -156,10 +177,13 @@ export const usePrint = () => {
     const mutateStore = options.mutateStore === true;
     const setExporting = options.setExporting === true;
 
+    // 每轮导出重新记录，避免上一次的连续纸高度泄漏到本轮。
+    continuousRenderHeight = null;
     const previousSelection = store.selectedElementId;
     const previousShowGrid = store.showGrid;
     const previousZoom = store.zoom;
     const previousPages = cloneDeep(store.pages);
+    const previousCanvasSize = { ...store.canvasSize };
     const previousShowHeaderLine = store.showHeaderLine;
     const previousShowFooterLine = store.showFooterLine;
     const previousShowCornerMarkers = store.showCornerMarkers;
@@ -225,6 +249,7 @@ export const usePrint = () => {
         store.selectElement(previousSelection);
         store.setZoom(previousZoom);
         store.pages = previousPages;
+        store.canvasSize = previousCanvasSize;
         store.setShowHeaderLine(previousShowHeaderLine);
         store.setShowFooterLine(previousShowFooterLine);
       }
@@ -528,6 +553,9 @@ export const usePrint = () => {
       const targetContent =
         content ||
         (Array.from(document.querySelectorAll(".print-page")) as HTMLElement[]);
+      // 画布全程不动，导出时不会抖动。
+      // 连续纸的撑高只在 PDF / 打印链路生效；图片导出保持设计态纸张尺寸，
+      // 避免 DOM 分页与布局调整互相覆盖导致内容错位。
       const restore = await prepareEnvironment({
         mutateStore: false,
         setExporting: false,
@@ -536,8 +564,12 @@ export const usePrint = () => {
         !isShadowDomContent(targetContent),
       );
 
-      const width = store.canvasSize.width;
-      const height = store.canvasSize.height;
+      // 与 PDF 同口径：连续纸时页高取内容底边，图片与 PDF 共用同一条渲染路径。
+      const { width, height } = resolveRenderCanvasSize(
+        store.canvasSize,
+        store.pages[0]?.elements || [],
+        store.continuousPaper,
+      );
 
       let cleanup: (() => void) | null = null;
       const source = await resolveRenderSource(targetContent);
@@ -625,6 +657,9 @@ export const usePrint = () => {
       const targetContent =
         content ||
         (Array.from(document.querySelectorAll(".print-page")) as HTMLElement[]);
+      // 画布全程不动，导出时不会抖动。
+      // 连续纸的撑高只在 PDF / 打印链路生效；图片导出保持设计态纸张尺寸，
+      // 避免 DOM 分页与布局调整互相覆盖导致内容错位。
       const restore = await prepareEnvironment({
         mutateStore: false,
         setExporting: false,
@@ -633,8 +668,12 @@ export const usePrint = () => {
         !isShadowDomContent(targetContent),
       );
 
-      const width = store.canvasSize.width;
-      const height = store.canvasSize.height;
+      // 与 PDF 同口径：连续纸时页高取内容底边，图片与 PDF 共用同一条渲染路径。
+      const { width, height } = resolveRenderCanvasSize(
+        store.canvasSize,
+        store.pages[0]?.elements || [],
+        store.continuousPaper,
+      );
 
       let cleanup: (() => void) | null = null;
       const source = await resolveRenderSource(targetContent);
@@ -882,6 +921,7 @@ export const usePrint = () => {
     const template = buildLabelTemplate({
       pages: store.pages,
       canvasSize: store.canvasSize,
+      continuousPaper: store.continuousPaper,
       canvasBackground: store.canvasBackground,
       canvasBackgroundImage: store.canvasBackgroundImage,
       watermark: store.watermark,
@@ -1082,6 +1122,8 @@ export const usePrint = () => {
           previewContent = JSON.stringify({
             pages: cloneDeep(store.pages),
             canvasSize: cloneDeep(store.canvasSize),
+            // 连续纸开关必须随预览模板下发，否则客户端内嵌内核无法按内容撑高。
+            continuousPaper: store.continuousPaper,
             testData: cloneDeep(store.testData || {}),
             variables: cloneDeep(store.variables || {}),
             headerHeight: store.headerHeight,

@@ -274,6 +274,19 @@ export const pageActions = {
       this.canvasSize = { width, height };
     },
 
+  setContinuousPaper(enabled: boolean) {
+      if (!this.isTemplateEditable) return;
+      this.continuousPaper = Boolean(enabled);
+      try {
+        localStorage.setItem(
+          "print-designer-continuous-paper",
+          String(this.continuousPaper),
+        );
+      } catch {
+        // 写入失败不影响当前会话
+      }
+    },
+
   deletePage(index: number) {
       if (!this.isTemplateEditable) return;
       if (this.pages.length > 1) {

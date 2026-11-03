@@ -346,6 +346,18 @@ export const coreActions = {
       if (typeof data.allowDragOutsideCanvas === "boolean") {
         this.allowDragOutsideCanvas = data.allowDragOutsideCanvas;
       }
+      if (typeof data.continuousPaper === "boolean") {
+        this.continuousPaper = data.continuousPaper;
+        // 模板里带了该字段时，同步到本地，刷新后保持同一状态。
+        try {
+          localStorage.setItem(
+            "print-designer-continuous-paper",
+            String(this.continuousPaper),
+          );
+        } catch {
+          // 写入失败不影响当前会话
+        }
+      }
       if (typeof data.headerHeight === "number") {
         this.headerHeight = data.headerHeight;
       }

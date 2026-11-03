@@ -1,4 +1,5 @@
 import { createApp, h } from "vue";
+import { resolveRenderCanvasSize } from "@/utils/continuousLayout";
 import { createPinia } from "pinia";
 import cloneDeep from "lodash/cloneDeep";
 import { uuidv4 } from "@/utils/uuid";
@@ -255,7 +256,12 @@ export const createIframeRenderer = ({
 
     return {
       pages: createRepeatedPages(sourcePages),
-      canvasSize: { ...store.canvasSize },
+      // 连续纸：渲染页高取内容底边，但不写回 store.canvasSize。
+      canvasSize: resolveRenderCanvasSize(
+        store.canvasSize,
+        sourcePages[0]?.elements || [],
+        store.continuousPaper,
+      ),
       canvasBackground: store.canvasBackground,
       canvasBackgroundImage: cloneDeep(store.canvasBackgroundImage),
       headerHeight: store.headerHeight,

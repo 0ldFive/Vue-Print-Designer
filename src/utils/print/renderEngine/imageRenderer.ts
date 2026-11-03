@@ -1,5 +1,9 @@
 import { pxToMm } from "@/utils/units";
 import {
+  resolveRenderCanvasSize,
+  type ContinuousLayout,
+} from "@/utils/continuousLayout";
+import {
   cleanupForExport,
   cleanElement,
   cloneElementWithStyles,
@@ -379,8 +383,12 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       setExporting: false,
     });
 
-    const width = store.canvasSize.width;
-    const height = store.canvasSize.height;
+    // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
+    const { width, height } = resolveRenderCanvasSize(
+      store.canvasSize,
+      store.pages[0]?.elements || [],
+      store.continuousPaper,
+    );
 
     let resultContainer: HTMLElement | null = null;
     let tempWrapper: HTMLElement | null = null;
@@ -754,6 +762,8 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       onPagePrepared?: (current: number, total: number) => void;
       onPaginationStart?: () => void;
       onPaginationDone?: () => void;
+      // 连续纸布局：只作用于导出的克隆 DOM，绝不改动画布本身。
+      continuousLayout?: ContinuousLayout | null;
     } = {},
   ) => {
     const doc = document;
@@ -853,6 +863,29 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
       // 造成一次代价极高的强制全局重排。
       // cleanElement 只读写 inline style 和 classList，不依赖 DOM 挂载，可安全离线执行。
       cleanElement(clone);
+
+      // 连续纸：把布局烘焙到克隆页面上（表格撑高、下方元素下移、页高取内容高）。
+      // 必须在 cleanElement 之前读取 data-element-id —— 清理会移除这些标记属性。
+      // 只改克隆，设计器画布全程不动，导出时不会出现抖动。
+      const continuousLayout = options.continuousLayout;
+      if (continuousLayout) {
+        clone.style.height = `${continuousLayout.contentHeight}px`;
+        const flowWrappers = Array.from(
+          clone.querySelectorAll<HTMLElement>(".element-wrapper[data-element-id]"),
+        );
+        flowWrappers.forEach((wrapper) => {
+          const id = wrapper.getAttribute("data-element-id") || "";
+          const targetHeight = continuousLayout.heightById.get(id);
+          if (targetHeight !== undefined) {
+            wrapper.style.height = `${targetHeight}px`;
+          }
+          const shift = continuousLayout.shiftById.get(id) || 0;
+          if (shift) {
+            const currentTop = Number.parseFloat(wrapper.style.top || "0");
+            wrapper.style.top = `${(Number.isFinite(currentTop) ? currentTop : 0) + shift}px`;
+          }
+        });
+      }
 
       container.appendChild(clone);
 
@@ -1046,8 +1079,12 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     });
     const restoreViewport = lockViewportScroll(!isShadowDomContent(content));
 
-    const width = store.canvasSize.width;
-    const height = store.canvasSize.height;
+    // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
+    const { width, height } = resolveRenderCanvasSize(
+      store.canvasSize,
+      store.pages[0]?.elements || [],
+      store.continuousPaper,
+    );
     const widthMm = pxToMm(width);
     const heightMm = pxToMm(height);
 
@@ -1111,8 +1148,12 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     });
     const restoreViewport = lockViewportScroll(!isShadowDomContent(content));
 
-    const width = store.canvasSize.width;
-    const height = store.canvasSize.height;
+    // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
+    const { width, height } = resolveRenderCanvasSize(
+      store.canvasSize,
+      store.pages[0]?.elements || [],
+      store.continuousPaper,
+    );
     const widthMm = pxToMm(width);
     const heightMm = pxToMm(height);
 

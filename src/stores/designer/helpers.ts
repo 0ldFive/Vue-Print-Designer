@@ -183,6 +183,22 @@ export const loadPanelEdgeAutoHide = () => {
   return stored === "true";
 };
 
+// 连续纸开关：刷新页面后保持上次选择（模板里若带该字段会覆盖并回写）。
+export const CONTINUOUS_PAPER_STORAGE_KEY = "print-designer-continuous-paper";
+
+export const loadContinuousPaper = () => {
+  const stored = localStorage.getItem(CONTINUOUS_PAPER_STORAGE_KEY);
+  return stored === "true";
+};
+
+export const persistContinuousPaper = (enabled: boolean) => {
+  try {
+    localStorage.setItem(CONTINUOUS_PAPER_STORAGE_KEY, String(Boolean(enabled)));
+  } catch {
+    // 隐私模式等场景写入失败时忽略，不影响功能
+  }
+};
+
 export type LayerMoveMode = "front" | "back" | "forward" | "backward";
 
 export const getElementZIndex = (element: PrintElement) => element.style?.zIndex || 1;

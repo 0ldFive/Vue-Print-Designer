@@ -291,7 +291,7 @@ const updatePaperSettingsMenuPosition = () => {
   if (!trigger) return;
 
   const rect = trigger.getBoundingClientRect();
-  const menuWidth = 256;
+  const menuWidth = 240;
   const viewportPadding = 8;
   const left = Math.min(
     Math.max(rect.left, viewportPadding),
@@ -626,7 +626,7 @@ onUnmounted(() => {
       :title="t('editor.paperSettings')"
     >
       <Settings class="w-4 h-4" />
-      <span class="text-xs w-20 text-center px-2 py-0.5 truncate">
+      <span class="text-[11px] w-20 text-center px-2 py-0.5 truncate">
         {{ selectedPaper === "CUSTOM" ? t("editor.custom") : selectedPaper }}
       </span>
       <ChevronDown class="w-4 h-4" />
@@ -641,26 +641,26 @@ onUnmounted(() => {
 
       <div
         v-if="showPaperSettings"
-        class="fixed w-64 max-h-[calc(100vh-56px)] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl z-[2000] pointer-events-auto flex flex-col overflow-hidden"
+        class="fixed w-60 max-h-[calc(100vh-56px)] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl z-[2000] pointer-events-auto flex flex-col overflow-hidden"
         :style="paperSettingsMenuStyle"
         @click.stop
       >
         <div class="px-4 pt-4 pb-3 shrink-0">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+          <h3 class="text-[13px] font-semibold text-gray-700 dark:text-gray-200">
             {{ t("editor.paperSettings") }}
           </h3>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-2">
           <div>
             <label
-              class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
               >{{ t("editor.sizePreset") }}</label
             >
             <select
               v-model="selectedPaper"
               @change="handlePaperChange"
-              class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+              class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
             >
               <option
                 v-for="(size, key) in PAPER_SIZES"
@@ -682,7 +682,7 @@ onUnmounted(() => {
 
           <div>
             <label
-              class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
               >{{ t("editor.unit") }}</label
             >
             <select
@@ -691,7 +691,7 @@ onUnmounted(() => {
                 (e) =>
                   store.setUnit((e.target as HTMLSelectElement).value as Unit)
               "
-              class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+              class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
             >
               <option value="mm" class="dark:bg-gray-800 dark:text-gray-200">
                 {{ t("common.mm") }}
@@ -713,7 +713,7 @@ onUnmounted(() => {
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                 >{{ t("common.width") }} ({{ unitLabel }})</label
               >
               <input
@@ -728,11 +728,11 @@ onUnmounted(() => {
                     applyCustomSize();
                   }
                 "
-                class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
               />
             </div>
             <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                 >{{ t("common.height") }} ({{ unitLabel }})</label
               >
               <input
@@ -747,14 +747,14 @@ onUnmounted(() => {
                     applyCustomSize();
                   }
                 "
-                class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                 >{{ t("editor.spacingX") }} ({{ unitLabel }})</label
               >
               <input
@@ -765,11 +765,11 @@ onUnmounted(() => {
                     pageSpacingX = Number((e.target as HTMLInputElement).value);
                   }
                 "
-                class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
               />
             </div>
             <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+              <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                 >{{ t("editor.spacingY") }} ({{ unitLabel }})</label
               >
               <input
@@ -780,18 +780,40 @@ onUnmounted(() => {
                     pageSpacingY = Number((e.target as HTMLInputElement).value);
                   }
                 "
-                class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
               />
             </div>
           </div>
 
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
+            t("editor.continuousPaper")
+          }}</span>
+          <button
+            @click="store.setContinuousPaper(!store.continuousPaper)"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            :class="
+              store.continuousPaper
+                ? 'bg-blue-600 dark:bg-blue-500'
+                : 'bg-gray-200 dark:bg-gray-700'
+            "
+          >
+            <span class="sr-only">Toggle continuous paper</span>
+            <span
+              aria-hidden="true"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              :class="store.continuousPaper ? 'translate-x-4' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+
         <div class="mt-4 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("editor.showMarginLines")
           }}</span>
           <button
             @click="store.setShowMarginLines(!store.showMarginLines)"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
             :class="
               store.showMarginLines
                 ? 'bg-blue-600 dark:bg-blue-500'
@@ -801,21 +823,21 @@ onUnmounted(() => {
             <span class="sr-only">Toggle margin lines</span>
             <span
               aria-hidden="true"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
-              :class="store.showMarginLines ? 'translate-x-5' : 'translate-x-0'"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              :class="store.showMarginLines ? 'translate-x-4' : 'translate-x-0'"
             />
           </button>
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("editor.allowDragOutsideCanvas")
           }}</span>
           <button
             @click="
               store.setAllowDragOutsideCanvas(!store.allowDragOutsideCanvas)
             "
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
             :class="
               store.allowDragOutsideCanvas
                 ? 'bg-blue-600 dark:bg-blue-500'
@@ -827,21 +849,21 @@ onUnmounted(() => {
             >
             <span
               aria-hidden="true"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
               :class="
-                store.allowDragOutsideCanvas ? 'translate-x-5' : 'translate-x-0'
+                store.allowDragOutsideCanvas ? 'translate-x-4' : 'translate-x-0'
               "
             />
           </button>
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("settings.textQuickToolbar")
           }}</span>
           <button
             @click="store.setShowTextQuickToolbar(!store.showTextQuickToolbar)"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
             :class="
               store.showTextQuickToolbar
                 ? 'bg-blue-600 dark:bg-blue-500'
@@ -851,21 +873,21 @@ onUnmounted(() => {
             <span class="sr-only">{{ t("settings.textQuickToolbar") }}</span>
             <span
               aria-hidden="true"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
               :class="
-                store.showTextQuickToolbar ? 'translate-x-5' : 'translate-x-0'
+                store.showTextQuickToolbar ? 'translate-x-4' : 'translate-x-0'
               "
             />
           </button>
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("editor.showCornerMarkers")
           }}</span>
           <button
             @click="store.setShowCornerMarkers(!store.showCornerMarkers)"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
             :class="
               store.showCornerMarkers
                 ? 'bg-blue-600 dark:bg-blue-500'
@@ -875,21 +897,21 @@ onUnmounted(() => {
             <span class="sr-only">Toggle corner markers</span>
             <span
               aria-hidden="true"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
               :class="
-                store.showCornerMarkers ? 'translate-x-5' : 'translate-x-0'
+                store.showCornerMarkers ? 'translate-x-4' : 'translate-x-0'
               "
             />
           </button>
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("editor.showGrid")
           }}</span>
           <button
             @click="store.setShowGrid(!store.showGrid)"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
             :class="
               store.showGrid
                 ? 'bg-blue-600 dark:bg-blue-500'
@@ -899,14 +921,14 @@ onUnmounted(() => {
             <span class="sr-only">Toggle grid</span>
             <span
               aria-hidden="true"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
-              :class="store.showGrid ? 'translate-x-5' : 'translate-x-0'"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+              :class="store.showGrid ? 'translate-x-4' : 'translate-x-0'"
             />
           </button>
         </div>
 
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-sm text-gray-700 dark:text-gray-200 font-medium">{{
+          <span class="text-[13px] text-gray-700 dark:text-gray-200 font-medium">{{
             t("editor.backgroundColor")
           }}</span>
           <ColorPicker
@@ -947,7 +969,7 @@ onUnmounted(() => {
 
         <div class="border-t border-gray-200 dark:border-gray-700 my-4 pt-3">
           <div class="mb-3 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+            <h3 class="text-[13px] font-semibold text-gray-700 dark:text-gray-200">
               {{ t("editor.headerFooter") }}
             </h3>
             <button
@@ -960,7 +982,7 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <button
@@ -981,7 +1003,7 @@ onUnmounted(() => {
                     "
                   />
                 </button>
-                <label class="text-xs text-gray-600 dark:text-gray-400">{{
+                <label class="text-[11px] text-gray-600 dark:text-gray-400">{{
                   t("editor.headerLine")
                 }}</label>
               </div>
@@ -998,10 +1020,10 @@ onUnmounted(() => {
                         ),
                       )
                   "
-                  class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none text-right"
+                  class="w-16 px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none text-right"
                   min="0"
                 />
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">{{
                   unitLabel
                 }}</span>
               </div>
@@ -1027,7 +1049,7 @@ onUnmounted(() => {
                     "
                   />
                 </button>
-                <label class="text-xs text-gray-600 dark:text-gray-400">{{
+                <label class="text-[11px] text-gray-600 dark:text-gray-400">{{
                   t("editor.footerLine")
                 }}</label>
               </div>
@@ -1044,10 +1066,10 @@ onUnmounted(() => {
                         ),
                       )
                   "
-                  class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none text-right"
+                  class="w-16 px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none text-right"
                   min="0"
                 />
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">{{
                   unitLabel
                 }}</span>
               </div>
@@ -1065,7 +1087,7 @@ onUnmounted(() => {
                 showPaperSettings = false;
               "
               :disabled="isPageSettingsReadOnly"
-              class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors text-[13px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus class="w-4 h-4" />
               <span>{{ t("editor.addNewPage") }}</span>
@@ -1073,7 +1095,7 @@ onUnmounted(() => {
             <button
               @click="openAdvancedSettings"
               :disabled="isPageSettingsReadOnly"
-              class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-[13px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Settings class="w-4 h-4" />
               <span>{{ t("editor.advancedSettings") }}</span>
@@ -1111,16 +1133,16 @@ onUnmounted(() => {
           <div class="p-4 overflow-y-auto space-y-4">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <p class="text-[13px] font-medium text-gray-700 dark:text-gray-200">
                   {{ t("editor.enableHeaderFooterLineRendering") }}
                 </p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                   {{ t("editor.headerFooterLineDisabledHint") }}
                 </p>
               </div>
               <button
                 @click="toggleHeaderFooterLineRendering"
-                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
                 :class="
                   store.enableHeaderFooterLineRendering
                     ? 'bg-blue-600 dark:bg-blue-500'
@@ -1129,7 +1151,7 @@ onUnmounted(() => {
               >
                 <span
                   aria-hidden="true"
-                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
                   :class="
                     store.enableHeaderFooterLineRendering
                       ? 'translate-x-5'
@@ -1148,14 +1170,14 @@ onUnmounted(() => {
             >
               <div class="flex items-center justify-between">
                 <span
-                  class="text-sm font-medium text-gray-700 dark:text-gray-200"
+                  class="text-[13px] font-medium text-gray-700 dark:text-gray-200"
                 >
                   {{ t("editor.unifiedHeaderFooterLineSettings") }}
                 </span>
                 <button
                   @click="toggleUnifiedHeaderFooterLineSettings"
                   :disabled="!store.enableHeaderFooterLineRendering"
-                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
                   :class="
                     useUnifiedHeaderFooterLineSettings
                       ? 'bg-blue-600 dark:bg-blue-500'
@@ -1164,7 +1186,7 @@ onUnmounted(() => {
                 >
                   <span
                     aria-hidden="true"
-                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+                    class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
                     :class="
                       useUnifiedHeaderFooterLineSettings
                         ? 'translate-x-5'
@@ -1174,10 +1196,10 @@ onUnmounted(() => {
                 </button>
               </div>
 
-              <div v-if="useUnifiedHeaderFooterLineSettings" class="space-y-3">
+              <div v-if="useUnifiedHeaderFooterLineSettings" class="space-y-2">
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                   >
                     {{ t("editor.headerFooterLineStyleLabel") }}
                   </label>
@@ -1194,7 +1216,7 @@ onUnmounted(() => {
                           ),
                         )
                     "
-                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                    class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                   >
                     <option
                       v-for="option in lineStyleOptions"
@@ -1210,7 +1232,7 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineHorizontalWidthModeLabel") }}
                     </label>
@@ -1229,7 +1251,7 @@ onUnmounted(() => {
                             ),
                           )
                       "
-                      class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     >
                       <option
                         v-for="option in lineSpanModeOptions"
@@ -1243,7 +1265,7 @@ onUnmounted(() => {
                   </div>
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineHorizontalWidthLabel") }}
                     </label>
@@ -1274,10 +1296,10 @@ onUnmounted(() => {
                               Number((e.target as HTMLInputElement).value),
                             )
                         "
-                        class="w-full px-2 py-1.5 pr-10 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                        class="w-full px-2 py-1.5 pr-10 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                       />
                       <span
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500 dark:text-gray-400"
                       >
                         {{
                           normalizeHeaderFooterLineSpanMode(
@@ -1293,7 +1315,7 @@ onUnmounted(() => {
 
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                   >
                     {{ t("editor.headerFooterLineWidthLabel") }} ({{
                       unitLabel
@@ -1314,13 +1336,13 @@ onUnmounted(() => {
                           ),
                         )
                     "
-                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                    class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                   />
                 </div>
 
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                   >
                     {{ t("editor.headerFooterLineColorLabel") }}
                   </label>
@@ -1350,16 +1372,16 @@ onUnmounted(() => {
               </div>
 
               <div v-else class="space-y-5">
-                <div class="space-y-3">
+                <div class="space-y-2">
                   <h4
-                    class="text-sm font-medium text-gray-700 dark:text-gray-200"
+                    class="text-[13px] font-medium text-gray-700 dark:text-gray-200"
                   >
                     {{ t("editor.headerLine") }}
                   </h4>
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineStyleLabel") }}
                     </label>
@@ -1376,7 +1398,7 @@ onUnmounted(() => {
                             ),
                           )
                       "
-                      class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     >
                       <option
                         v-for="option in lineStyleOptions"
@@ -1392,7 +1414,7 @@ onUnmounted(() => {
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <label
-                        class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >
                         {{
                           t("editor.headerFooterLineHorizontalWidthModeLabel")
@@ -1413,7 +1435,7 @@ onUnmounted(() => {
                               ),
                             )
                         "
-                        class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                        class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                       >
                         <option
                           v-for="option in lineSpanModeOptions"
@@ -1427,7 +1449,7 @@ onUnmounted(() => {
                     </div>
                     <div>
                       <label
-                        class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >
                         {{ t("editor.headerFooterLineHorizontalWidthLabel") }}
                       </label>
@@ -1458,10 +1480,10 @@ onUnmounted(() => {
                                 Number((e.target as HTMLInputElement).value),
                               )
                           "
-                          class="w-full px-2 py-1.5 pr-10 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                          class="w-full px-2 py-1.5 pr-10 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                         />
                         <span
-                          class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500 dark:text-gray-400"
                         >
                           {{
                             normalizeHeaderFooterLineSpanMode(
@@ -1477,7 +1499,7 @@ onUnmounted(() => {
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineWidthLabel") }} ({{
                         unitLabel
@@ -1498,13 +1520,13 @@ onUnmounted(() => {
                             ),
                           )
                       "
-                      class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineColorLabel") }}
                     </label>
@@ -1534,17 +1556,17 @@ onUnmounted(() => {
                 </div>
 
                 <div
-                  class="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3"
+                  class="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2"
                 >
                   <h4
-                    class="text-sm font-medium text-gray-700 dark:text-gray-200"
+                    class="text-[13px] font-medium text-gray-700 dark:text-gray-200"
                   >
                     {{ t("editor.footerLine") }}
                   </h4>
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineStyleLabel") }}
                     </label>
@@ -1561,7 +1583,7 @@ onUnmounted(() => {
                             ),
                           )
                       "
-                      class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     >
                       <option
                         v-for="option in lineStyleOptions"
@@ -1577,7 +1599,7 @@ onUnmounted(() => {
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <label
-                        class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >
                         {{
                           t("editor.headerFooterLineHorizontalWidthModeLabel")
@@ -1598,7 +1620,7 @@ onUnmounted(() => {
                               ),
                             )
                         "
-                        class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                        class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                       >
                         <option
                           v-for="option in lineSpanModeOptions"
@@ -1612,7 +1634,7 @@ onUnmounted(() => {
                     </div>
                     <div>
                       <label
-                        class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >
                         {{ t("editor.headerFooterLineHorizontalWidthLabel") }}
                       </label>
@@ -1643,10 +1665,10 @@ onUnmounted(() => {
                                 Number((e.target as HTMLInputElement).value),
                               )
                           "
-                          class="w-full px-2 py-1.5 pr-10 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                          class="w-full px-2 py-1.5 pr-10 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                         />
                         <span
-                          class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-500 dark:text-gray-400"
                         >
                           {{
                             normalizeHeaderFooterLineSpanMode(
@@ -1662,7 +1684,7 @@ onUnmounted(() => {
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineWidthLabel") }} ({{
                         unitLabel
@@ -1683,13 +1705,13 @@ onUnmounted(() => {
                             ),
                           )
                       "
-                      class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
 
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >
                       {{ t("editor.headerFooterLineColorLabel") }}
                     </label>
@@ -1720,7 +1742,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <p class="text-xs text-gray-500 dark:text-gray-400">
+            <p class="text-[11px] text-gray-500 dark:text-gray-400">
               {{ t("editor.headerFooterLineAdvancedHint") }}
             </p>
           </div>
@@ -1730,14 +1752,14 @@ onUnmounted(() => {
           >
             <button
               @click="showHeaderFooterLineSettings = false"
-              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-xs"
+              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-[11px]"
             >
               <Save class="w-4 h-4 shrink-0" />
               {{ t("common.save") }}
             </button>
             <button
               @click="showHeaderFooterLineSettings = false"
-              class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
+              class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-[11px] text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
             >
               <X class="w-4 h-4 shrink-0" />
               {{ t("common.close") }}
@@ -1775,20 +1797,20 @@ onUnmounted(() => {
           <div class="p-4 overflow-y-auto space-y-4">
             <div>
               <h3
-                class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3"
+                class="text-[13px] font-semibold text-gray-700 dark:text-gray-200 mb-3"
               >
                 {{ t("editor.watermark") }}
               </h3>
 
-              <div class="space-y-3">
+              <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <span
-                    class="text-sm text-gray-700 dark:text-gray-200 font-medium"
+                    class="text-[13px] text-gray-700 dark:text-gray-200 font-medium"
                     >{{ t("editor.watermarkEnable") }}</span
                   >
                   <button
                     @click="watermarkEnabled = !watermarkEnabled"
-                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
                     :class="
                       watermarkEnabled
                         ? 'bg-blue-600 dark:bg-blue-500'
@@ -1798,9 +1820,9 @@ onUnmounted(() => {
                     <span class="sr-only">Toggle watermark</span>
                     <span
                       aria-hidden="true"
-                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
                       :class="
-                        watermarkEnabled ? 'translate-x-5' : 'translate-x-0'
+                        watermarkEnabled ? 'translate-x-4' : 'translate-x-0'
                       "
                     />
                   </button>
@@ -1808,13 +1830,13 @@ onUnmounted(() => {
 
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >{{ t("editor.watermarkText") }}</label
                   >
                   <input
                     v-model="watermarkText"
                     type="text"
-                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                    class="w-full px-2 py-1.5 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     :placeholder="t('editor.watermarkTextPlaceholder')"
                   />
                 </div>
@@ -1822,18 +1844,18 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.watermarkAngle") }}</label
                     >
                     <input
                       v-model.number="watermarkAngle"
                       type="number"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.watermarkOpacity") }}</label
                     >
                     <input
@@ -1841,7 +1863,7 @@ onUnmounted(() => {
                       type="number"
                       min="0"
                       max="100"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
@@ -1849,19 +1871,19 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.watermarkSize") }} ({{ unitLabel }})</label
                     >
                     <input
                       v-model.number="watermarkSize"
                       type="number"
                       min="1"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.watermarkDensity") }} ({{
                         unitLabel
                       }})</label
@@ -1870,14 +1892,14 @@ onUnmounted(() => {
                       v-model.number="watermarkDensity"
                       type="number"
                       min="20"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >{{ t("editor.watermarkColor") }}</label
                   >
                   <ColorPicker
@@ -1907,23 +1929,23 @@ onUnmounted(() => {
 
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h3
-                class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3"
+                class="text-[13px] font-semibold text-gray-700 dark:text-gray-200 mb-3"
                 :title="t('editor.backgroundImageHint')"
               >
                 {{ t("editor.backgroundImage") }}
               </h3>
 
-              <div class="space-y-3">
+              <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <span
-                    class="text-sm text-gray-700 dark:text-gray-200 font-medium"
+                    class="text-[13px] text-gray-700 dark:text-gray-200 font-medium"
                     >{{ t("editor.backgroundImageVisible") }}</span
                   >
                   <button
                     type="button"
                     :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
                     @click="toggleBackgroundImageVisible"
-                    class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     :class="
                       backgroundImageVisible
                         ? 'bg-blue-600 dark:bg-blue-500'
@@ -1935,9 +1957,9 @@ onUnmounted(() => {
                     }}</span>
                     <span
                       aria-hidden="true"
-                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-100 shadow ring-0 transition duration-200 ease-in-out"
                       :class="
-                        backgroundImageVisible ? 'translate-x-5' : 'translate-x-0'
+                        backgroundImageVisible ? 'translate-x-4' : 'translate-x-0'
                       "
                     />
                   </button>
@@ -1945,7 +1967,7 @@ onUnmounted(() => {
 
                 <div>
                   <label
-                    class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                    class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                     >{{ t("properties.label.imageSource") }}</label
                   >
                   <input
@@ -1956,7 +1978,7 @@ onUnmounted(() => {
                     @change="handleBackgroundImageUrlChange"
                     @focus="handleBackgroundImageUrlFocus"
                     @keydown.enter="handleBackgroundImageUrlEnter"
-                    class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                   />
                 </div>
 
@@ -1981,7 +2003,7 @@ onUnmounted(() => {
                   type="button"
                   :disabled="isPageSettingsReadOnly"
                   @click="clearBackgroundImage"
-                  class="w-full py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-dashed border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs transition-colors"
+                  class="w-full py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-dashed border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-[11px] transition-colors"
                 >
                   <X class="h-3.5 w-3.5" />
                   {{ t("editor.backgroundImageClear") }}
@@ -1998,14 +2020,14 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.backgroundImageFit") }}</label
                     >
                     <select
                       :value="backgroundImageFit"
                       :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
                       @change="handleBackgroundImageFitChange"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                     >
                       <option value="cover">
                         {{ t("editor.backgroundImageFitCover") }}
@@ -2023,7 +2045,7 @@ onUnmounted(() => {
                   </div>
                   <div>
                     <label
-                      class="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1"
                       >{{ t("editor.backgroundImageOpacity") }}</label
                     >
                     <input
@@ -2033,12 +2055,12 @@ onUnmounted(() => {
                       :value="backgroundImageOpacity"
                       :disabled="isPageSettingsReadOnly || !backgroundImageUrl"
                       @change="handleBackgroundImageOpacityChange"
-                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      class="w-full px-2 py-1 text-[13px] border border-gray-300 dark:border-gray-700 rounded focus:border-blue-500 dark:focus:border-blue-400 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                     />
                   </div>
                 </div>
 
-                <p v-if="backgroundImageError" class="text-xs text-red-500 mt-1">
+                <p v-if="backgroundImageError" class="text-[11px] text-red-500 mt-1">
                   {{ backgroundImageError }}
                 </p>
               </div>
@@ -2050,14 +2072,14 @@ onUnmounted(() => {
           >
             <button
               @click="showAdvancedSettings = false"
-              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-xs"
+              class="flex items-center gap-1.5 px-3 py-1.5 theme-bg-strong text-white rounded hover:opacity-90 transition-opacity text-[11px]"
             >
               <Save class="w-4 h-4 shrink-0" />
               {{ t("common.save") }}
             </button>
             <button
               @click="showAdvancedSettings = false"
-              class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
+              class="whitespace-nowrap px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-[11px] text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
             >
               <X class="w-4 h-4 shrink-0" />
               {{ t("common.close") }}

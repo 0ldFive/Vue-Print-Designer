@@ -89,6 +89,7 @@ export interface PrintDesignerElement extends HTMLElement {
     items: DesignerBatchItem[],
     request?: DesignerBatchPrintRequest,
   ): Promise<any>;
+
   getPreviewHtml(request?: DesignerPreviewRequest): Promise<string>;
   preview(
     request?: DesignerClientPreviewRequest,

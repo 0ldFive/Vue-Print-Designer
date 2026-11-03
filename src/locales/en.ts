@@ -104,6 +104,8 @@ export default {
     spacingX: "Horizontal Margin",
     spacingY: "Vertical Margin",
     showMarginLines: "Show Margin Lines",
+    continuousPaper: "Continuous Paper",
+    continuousPaperHint: "Label height grows with content; tables are no longer clipped by the element box",
     allowDragOutsideCanvas: "Allow Elements to Be Dragged Outside Canvas",
     showCornerMarkers: "Show Corner Markers",
     showGrid: "Show Grid",

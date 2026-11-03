@@ -38,8 +38,23 @@ import { normalizeVariableKey } from "../../utils/variables";
 import i18n from "../../locales";
 import { defaultWatermark, defaultBranding, HISTORY_ACTION, hasOwn, inferElementUpdateHistoryAction, loadWatermark, loadDeveloperMode, loadPaginationDebugLogs, loadRenderDebugLogs, loadTextQuickToolbarEnabled, loadStatusBarVisible, getElementZIndex, getLayerSortedElements, buildLayerAssignments, canLayerMoveInPage, normalizeContextMenuConfig, normalizeTemplateModalFields, normalizeTemplateModalFormConfig, inferVariableFromContent, normalizeDesignerFontOptions, getEffectiveTableColumns, getNumericCellStyleHeight, getTableRowExplicitHeight, isHeaderFooterLineStyle, normalizeHeaderFooterLineStyle, normalizeHeaderFooterLineColor, normalizeHeaderFooterLineWidth, normalizeHeaderFooterLineSpanMode, normalizeHeaderFooterLineSpan, normalizeHeaderFooterLineRenderingEnabled, escapeAttributeSelectorValue, getCellBorderInsetRect, querySelectorAcrossDocumentAndShadowRoots } from './helpers';
 import type { LayerMoveMode, HeaderFooterLineStyle, HeaderFooterLineSpanMode, EmbeddedCellBounds, EffectiveTableRows } from './helpers';
+import { computeContinuousLayout } from "@/utils/continuousLayout";
 
 export const getters = {
+    // 连续纸布局：表格按内容撑高、下方元素下移、页面高度随内容增长。
+    // 设计器渲染与导出/打印共用，保证所见即所得。
+    continuousLayout: (state: DesignerState) => {
+      const canvasHeight = state.canvasSize.height;
+      if (!state.continuousPaper) {
+        return {
+          shiftById: new Map<string, number>(),
+          heightById: new Map<string, number>(),
+          contentHeight: canvasHeight,
+        };
+      }
+      return computeContinuousLayout(state.pages[0]?.elements || [], canvasHeight);
+    },
+
     isTemplateEditable: (state: DesignerState) => {
       if (state.editingCustomElementId) return true;
       const templateStore = useTemplateStore();

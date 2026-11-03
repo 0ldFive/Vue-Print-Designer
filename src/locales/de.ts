@@ -104,6 +104,8 @@ export default {
     spacingX: "Horizontaler Rand",
     spacingY: "Vertikaler Rand",
     showMarginLines: "Randlinien anzeigen",
+    continuousPaper: "Endlospapier",
+    continuousPaperHint: "Die Labelhöhe wächst mit dem Inhalt; Tabellen werden nicht mehr am Elementrahmen abgeschnitten",
     allowDragOutsideCanvas: "Elemente außerhalb des Canvas ziehen erlauben",
     showCornerMarkers: "Eckmarkierungen anzeigen",
     showGrid: "Raster anzeigen",

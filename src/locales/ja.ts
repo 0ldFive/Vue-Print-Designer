@@ -104,6 +104,8 @@ export default {
     spacingX: "横余白",
     spacingY: "縦余白",
     showMarginLines: "余白ガイドを表示",
+    continuousPaper: "連続紙",
+    continuousPaperHint: "ラベルの高さが内容に応じて伸び、表が要素枠で切り取られません",
     allowDragOutsideCanvas: "要素をキャンバス外へドラッグ可能にする",
     showCornerMarkers: "コーナーマーカーを表示",
     showGrid: "グリッドを表示",

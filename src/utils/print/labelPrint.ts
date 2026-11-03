@@ -31,7 +31,6 @@ export interface LabelPrintOptions {
   bline?: number;
   offset?: number;
   textMode?: LabelTextMode;
-  continuous?: boolean;
   pageSize?: LabelPageSize;
   background?: LabelBackgroundMode;
   jobName?: string;
@@ -49,6 +48,12 @@ export interface LabelBatchItem {
 export interface LabelTemplatePayload {
   pages: Page[];
   canvasSize: { width: number; height: number };
+  /**
+   * 连续纸开关，始终随模板下发：
+   * true 按内容实测算高；false 按 pageSize / canvasSize 的固定高度。
+   * 老客户端不认识该字段会忽略，行为退回按高度计算。
+   */
+  continuousPaper: boolean;
   canvasBackground?: string;
   canvasBackgroundImage?: any;
   watermark?: any;
@@ -148,6 +153,7 @@ export const expandLabelItems = (
 export const buildLabelTemplate = (params: {
   pages: Page[];
   canvasSize: { width: number; height: number };
+  continuousPaper?: boolean;
   canvasBackground?: string;
   canvasBackgroundImage?: any;
   watermark?: any;
@@ -158,6 +164,8 @@ export const buildLabelTemplate = (params: {
       width: params.canvasSize?.width || 0,
       height: params.canvasSize?.height || 0,
     },
+    // 始终输出：客户端据此判断连续纸，缺失时才退回按高度计算。
+    continuousPaper: params.continuousPaper === true,
   };
 
   // Empty background is omitted on purpose: the client treats a missing value as
@@ -195,7 +203,6 @@ const buildLabelOptions = (
     label.offset = options.offset;
   }
   if (options.textMode) label.textMode = options.textMode;
-  if (options.continuous) label.continuous = true;
   if (options.background) label.background = options.background;
   if (options.pageSize) {
     label.pageSize = {

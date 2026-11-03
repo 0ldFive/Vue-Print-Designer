@@ -424,6 +424,8 @@ const pageStyle = computed(
   () =>
     ({
       width: `${store.canvasSize.width}px`,
+      // 画布始终按模板设定的纸张尺寸渲染；连续纸只影响导出/打印的出纸长度，
+      // 不改变设计态的纸张边界，避免元素坐标与参考线随内容漂移。
       height: `${store.canvasSize.height}px`,
       backgroundColor: store.canvasBackground,
     }) as const,

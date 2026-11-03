@@ -104,6 +104,8 @@ export default {
     spacingX: "가로 여백",
     spacingY: "세로 여백",
     showMarginLines: "여백선 표시",
+    continuousPaper: "연속 용지",
+    continuousPaperHint: "라벨 높이가 내용에 따라 늘어나고 표가 요소 상자에서 잘리지 않습니다",
     allowDragOutsideCanvas: "요소를 캔버스 밖으로 드래그 허용",
     showCornerMarkers: "코너 마커 표시",
     showGrid: "그리드 표시",

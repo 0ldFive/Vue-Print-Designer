@@ -415,6 +415,8 @@ export interface DesignerState {
   highlightedEdge: "left" | "top" | "right" | "bottom" | null;
   highlightedAlignedElementIds: string[];
   canvasSize: Size; // A4 usually
+  /** 连续纸（标签流式）：表格按数据撑高、页面高度随内容增长。 */
+  continuousPaper: boolean;
   unit?: "mm" | "px" | "pt" | "in" | "cm";
   watermark?: WatermarkSettings;
   zoom: number;
