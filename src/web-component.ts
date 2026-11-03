@@ -1305,6 +1305,19 @@ class PrintDesignerElement extends HTMLElement {
     }
     if (data.canvasSize)
       this.designerStore.canvasSize = cloneDeep(data.canvasSize);
+    // 连续纸开关必须随模板恢复：客户端预览窗口等宿主依赖该字段决定导出页高，
+    // 漏掉会让连续纸模板回退成固定纸高并被分页截断。
+    if (data.continuousPaper !== undefined) {
+      this.designerStore.continuousPaper = Boolean(data.continuousPaper);
+      try {
+        localStorage.setItem(
+          "print-designer-continuous-paper",
+          String(this.designerStore.continuousPaper),
+        );
+      } catch {
+        // 隐私模式等场景写入失败时忽略，不影响功能
+      }
+    }
     if (data.guides) this.designerStore.guides = cloneDeep(data.guides);
     if (data.zoom !== undefined) this.designerStore.zoom = data.zoom;
     if (data.showGrid !== undefined)
