@@ -1,3 +1,5 @@
+import type ZhMessages from "./zh";
+
 export default {
   common: {
     save: "저장",
@@ -106,6 +108,8 @@ export default {
     showMarginLines: "여백선 표시",
     continuousPaper: "연속 용지",
     continuousPaperHint: "라벨 높이가 내용에 따라 늘어나고 표가 요소 상자에서 잘리지 않습니다",
+    continuousPaperSinglePageOnly: "연속 용지는 단일 페이지 템플릿만 지원합니다",
+    continuousPaperAutoDisabled: "연속 용지가 꺼졌습니다: 단일 페이지 템플릿만 지원합니다",
     allowDragOutsideCanvas: "요소를 캔버스 밖으로 드래그 허용",
     showCornerMarkers: "코너 마커 표시",
     showGrid: "그리드 표시",
@@ -707,6 +711,13 @@ export default {
     general: "일반",
     editing: "편집",
     manipulation: "조작",
+    themeColor: "테마 색상",
+    themeColorDesc: "프리셋 테마 색상을 선택하면 즉시 적용됩니다.",
+    themePresetDefault: "파란색",
+    themePresetEmerald: "초록색",
+    themePresetAmber: "주황색",
+    themePresetRose: "로즈",
+    themePresetCustom: "사용자 지정",
     newTemplate: "새 템플릿",
     openSettings: "설정 열기",
     openHelp: "도움말 열기",
@@ -1006,4 +1017,4 @@ export default {
       printing: "인쇄 중",
     },
   },
-};
+} satisfies typeof ZhMessages;

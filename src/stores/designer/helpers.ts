@@ -2,6 +2,12 @@ import { defineStore } from "pinia";
 import { uuidv4 } from "@/utils/uuid";
 import cloneDeep from "lodash/cloneDeep";
 import {
+  STORAGE_KEYS,
+  readStoredBoolean,
+  readStoredJson,
+  writeStoredBoolean,
+} from "@/utils/storage";
+import {
   type DesignerState,
   type PrintElement,
   type TableColumn,
@@ -135,68 +141,39 @@ export const inferElementUpdateHistoryAction = (updates: Partial<PrintElement>) 
 };
 
 export const loadWatermark = (): WatermarkSettings => {
-  const stored = localStorage.getItem("print-designer-watermark");
-  if (!stored) return { ...defaultWatermark };
-  try {
-    return {
-      ...defaultWatermark,
-      ...(JSON.parse(stored) as WatermarkSettings),
-    };
-  } catch {
-    return { ...defaultWatermark };
-  }
+  const stored = readStoredJson<Partial<WatermarkSettings> | null>(
+    STORAGE_KEYS.watermark,
+    null,
+  );
+  return { ...defaultWatermark, ...(stored || {}) };
 };
 
-export const loadDeveloperMode = () => {
-  const stored = localStorage.getItem("print-designer-developer-mode");
-  if (stored === null) return true;
-  return stored !== "false";
-};
+export const loadDeveloperMode = () =>
+  readStoredBoolean(STORAGE_KEYS.developerMode, true);
 
-export const loadPaginationDebugLogs = () => {
-  const stored = localStorage.getItem("print-designer-pagination-debug-logs");
-  if (stored === null) return false;
-  return stored === "true";
-};
+export const loadPaginationDebugLogs = () =>
+  readStoredBoolean(STORAGE_KEYS.paginationDebugLogs, false);
 
-export const loadRenderDebugLogs = () => {
-  const stored = localStorage.getItem("print-designer-render-debug-logs");
-  if (stored === null) return false;
-  return stored === "true";
-};
+export const loadRenderDebugLogs = () =>
+  readStoredBoolean(STORAGE_KEYS.renderDebugLogs, false);
 
-export const loadTextQuickToolbarEnabled = () => {
-  const stored = localStorage.getItem("print-designer-show-text-quick-toolbar");
-  if (stored === null) return true;
-  return stored !== "false";
-};
+export const loadTextQuickToolbarEnabled = () =>
+  readStoredBoolean(STORAGE_KEYS.textQuickToolbar, true);
 
-export const loadStatusBarVisible = () => {
-  const stored = localStorage.getItem("print-designer-show-status-bar");
-  if (stored === null) return true;
-  return stored !== "false";
-};
+export const loadStatusBarVisible = () =>
+  readStoredBoolean(STORAGE_KEYS.statusBarVisible, true);
 
-export const loadPanelEdgeAutoHide = () => {
-  const stored = localStorage.getItem("print-designer-panel-edge-auto-hide");
-  if (stored === null) return false;
-  return stored === "true";
-};
+export const loadPanelEdgeAutoHide = () =>
+  readStoredBoolean(STORAGE_KEYS.panelEdgeAutoHide, false);
 
 // 连续纸开关：刷新页面后保持上次选择（模板里若带该字段会覆盖并回写）。
-export const CONTINUOUS_PAPER_STORAGE_KEY = "print-designer-continuous-paper";
+export const CONTINUOUS_PAPER_STORAGE_KEY = STORAGE_KEYS.continuousPaper;
 
-export const loadContinuousPaper = () => {
-  const stored = localStorage.getItem(CONTINUOUS_PAPER_STORAGE_KEY);
-  return stored === "true";
-};
+export const loadContinuousPaper = () =>
+  readStoredBoolean(STORAGE_KEYS.continuousPaper, false);
 
 export const persistContinuousPaper = (enabled: boolean) => {
-  try {
-    localStorage.setItem(CONTINUOUS_PAPER_STORAGE_KEY, String(Boolean(enabled)));
-  } catch {
-    // 隐私模式等场景写入失败时忽略，不影响功能
-  }
+  writeStoredBoolean(STORAGE_KEYS.continuousPaper, enabled);
 };
 
 export type LayerMoveMode = "front" | "back" | "forward" | "backward";

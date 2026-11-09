@@ -2,6 +2,13 @@
 import { defineStore } from "pinia";
 import { uuidv4 } from "@/utils/uuid";
 import cloneDeep from "lodash/cloneDeep";
+import { applyTemplateDataFields } from "../applyTemplateData";
+import {
+  STORAGE_KEYS,
+  writeStored,
+  writeStoredBoolean,
+  writeStoredJson,
+} from "@/utils/storage";
 import {
   type DesignerState,
   type PrintElement,
@@ -111,10 +118,7 @@ export const coreActions = {
 
   setWatermark(update: Partial<WatermarkSettings>) {
       this.watermark = { ...(this.watermark || defaultWatermark), ...update };
-      localStorage.setItem(
-        "print-designer-watermark",
-        JSON.stringify(this.watermark),
-      );
+      writeStoredJson(STORAGE_KEYS.watermark, this.watermark);
     },
 
   setCanvasBackgroundImage(update: Partial<CanvasBackgroundImageSettings>) {
@@ -135,7 +139,7 @@ export const coreActions = {
 
   setUnit(unit: "mm" | "px" | "pt" | "in" | "cm") {
       this.unit = unit;
-      localStorage.setItem("print-designer-unit", unit);
+      writeStored(STORAGE_KEYS.unit, unit);
     },
 
   setDragging(isDragging: boolean) {
@@ -262,59 +266,41 @@ export const coreActions = {
 
   setShowStatusBar(show: boolean) {
       this.showStatusBar = show;
-      localStorage.setItem(
-        "print-designer-show-status-bar",
-        show ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.statusBarVisible, show);
     },
 
   setPanelEdgeAutoHide(enabled: boolean) {
       this.panelEdgeAutoHide = enabled;
-      localStorage.setItem(
-        "print-designer-panel-edge-auto-hide",
-        enabled ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.panelEdgeAutoHide, enabled);
     },
 
   setShowTextQuickToolbar(show: boolean) {
       this.showTextQuickToolbar = show;
-      localStorage.setItem(
-        "print-designer-show-text-quick-toolbar",
-        show ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.textQuickToolbar, show);
     },
 
   setShowDeveloperMode(show: boolean) {
       this.showDeveloperMode = show;
-      localStorage.setItem(
-        "print-designer-developer-mode",
-        show ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.developerMode, show);
 
       if (!show) {
         this.showPaginationDebugLogs = false;
         this.showRenderDebugLogs = false;
-        localStorage.setItem("print-designer-pagination-debug-logs", "false");
-        localStorage.setItem("print-designer-render-debug-logs", "false");
+        writeStoredBoolean(STORAGE_KEYS.paginationDebugLogs, false);
+        writeStoredBoolean(STORAGE_KEYS.renderDebugLogs, false);
       }
     },
 
   setShowPaginationDebugLogs(show: boolean) {
       const next = this.showDeveloperMode && show;
       this.showPaginationDebugLogs = next;
-      localStorage.setItem(
-        "print-designer-pagination-debug-logs",
-        next ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.paginationDebugLogs, next);
     },
 
   setShowRenderDebugLogs(show: boolean) {
       const next = this.showDeveloperMode && show;
       this.showRenderDebugLogs = next;
-      localStorage.setItem(
-        "print-designer-render-debug-logs",
-        next ? "true" : "false",
-      );
+      writeStoredBoolean(STORAGE_KEYS.renderDebugLogs, next);
     },
 
   setShowHelp(show: boolean) {
@@ -326,134 +312,8 @@ export const coreActions = {
     },
 
   applyTemplateJsonToDesigner(data: Record<string, any>) {
-      if (!data || typeof data !== "object" || Array.isArray(data)) return;
-
-      if (Array.isArray(data.pages) && data.pages.length > 0) {
-        this.pages = cloneDeep(data.pages);
-        if (this.currentPageIndex >= data.pages.length) {
-          this.currentPageIndex = Math.max(data.pages.length - 1, 0);
-        }
-      }
-
-      if (data.canvasSize && typeof data.canvasSize === "object") {
-        this.canvasSize = cloneDeep(data.canvasSize);
-      }
-      if (Array.isArray(data.guides)) {
-        this.guides = cloneDeep(data.guides);
-      }
-      if (typeof data.zoom === "number") this.zoom = data.zoom;
-      if (typeof data.showGrid === "boolean") this.showGrid = data.showGrid;
-      if (typeof data.allowDragOutsideCanvas === "boolean") {
-        this.allowDragOutsideCanvas = data.allowDragOutsideCanvas;
-      }
-      if (typeof data.continuousPaper === "boolean") {
-        this.continuousPaper = data.continuousPaper;
-        // 模板里带了该字段时，同步到本地，刷新后保持同一状态。
-        try {
-          localStorage.setItem(
-            "print-designer-continuous-paper",
-            String(this.continuousPaper),
-          );
-        } catch {
-          // 写入失败不影响当前会话
-        }
-      }
-      if (typeof data.headerHeight === "number") {
-        this.headerHeight = data.headerHeight;
-      }
-      if (typeof data.footerHeight === "number") {
-        this.footerHeight = data.footerHeight;
-      }
-      if (typeof data.showHeaderLine === "boolean") {
-        this.showHeaderLine = data.showHeaderLine;
-      }
-      if (typeof data.showFooterLine === "boolean") {
-        this.showFooterLine = data.showFooterLine;
-      }
-      if (typeof data.enableHeaderFooterLineRendering === "boolean") {
-        this.enableHeaderFooterLineRendering =
-          normalizeHeaderFooterLineRenderingEnabled(
-            data.enableHeaderFooterLineRendering,
-          );
-      }
-      if (typeof data.headerLineStyle === "string") {
-        this.headerLineStyle = normalizeHeaderFooterLineStyle(
-          data.headerLineStyle,
-        );
-      }
-      if (typeof data.footerLineStyle === "string") {
-        this.footerLineStyle = normalizeHeaderFooterLineStyle(
-          data.footerLineStyle,
-        );
-      }
-      if (typeof data.headerLineColor === "string") {
-        this.headerLineColor = normalizeHeaderFooterLineColor(
-          data.headerLineColor,
-        );
-      }
-      if (typeof data.footerLineColor === "string") {
-        this.footerLineColor = normalizeHeaderFooterLineColor(
-          data.footerLineColor,
-        );
-      }
-      if (data.headerLineWidth !== undefined) {
-        this.headerLineWidth = normalizeHeaderFooterLineWidth(
-          data.headerLineWidth,
-        );
-      }
-      if (data.footerLineWidth !== undefined) {
-        this.footerLineWidth = normalizeHeaderFooterLineWidth(
-          data.footerLineWidth,
-        );
-      }
-      if (typeof data.headerLineSpanMode === "string") {
-        this.headerLineSpanMode = normalizeHeaderFooterLineSpanMode(
-          data.headerLineSpanMode,
-        );
-      }
-      if (typeof data.footerLineSpanMode === "string") {
-        this.footerLineSpanMode = normalizeHeaderFooterLineSpanMode(
-          data.footerLineSpanMode,
-        );
-      }
-      if (data.headerLineSpan !== undefined) {
-        this.headerLineSpan = normalizeHeaderFooterLineSpan(
-          data.headerLineSpan,
-          this.headerLineSpanMode,
-        );
-      }
-      if (data.footerLineSpan !== undefined) {
-        this.footerLineSpan = normalizeHeaderFooterLineSpan(
-          data.footerLineSpan,
-          this.footerLineSpanMode,
-        );
-      }
-      if (typeof data.showMinimap === "boolean") {
-        this.showMinimap = data.showMinimap;
-      }
-      if (typeof data.showHistoryPanel === "boolean") {
-        this.showHistoryPanel = data.showHistoryPanel;
-      }
-      if (typeof data.canvasBackground === "string") {
-        this.canvasBackground = data.canvasBackground;
-      }
-      if (data.canvasBackgroundImage !== undefined) {
-        this.canvasBackgroundImage = data.canvasBackgroundImage
-          ? cloneDeep(data.canvasBackgroundImage)
-          : null;
-      }
-
-      this.selectedElementId = null;
-      this.selectedElementIds = [];
-      this.selectedGuideId = null;
-      this.highlightedGuideId = null;
-      this.highlightedEdge = null;
-      this.highlightedAlignedElementIds = [];
-      this.tableSelection = null;
-      this.historyPast = [];
-      this.historyFuture = [];
-      this.historyPastActionKeys = [];
-      this.historyFutureActionKeys = [];
+      // 字段级恢复统一由 applyTemplateDataFields 实现（与模板加载共用）。
+      applyTemplateDataFields(this, data);
     },
 
   setShowCornerMarkers(show: boolean) {

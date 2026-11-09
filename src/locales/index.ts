@@ -5,6 +5,7 @@ import ja from "./ja";
 import ko from "./ko";
 import de from "./de";
 import { createI18nInstance as _createI18nCore, setI18nInstance } from "./i18n";
+import { STORAGE_KEYS, readStored } from "@/utils/storage";
 
 export { useI18n } from "./i18n";
 export type { TranslateFn } from "./i18n";
@@ -36,7 +37,7 @@ const messages = {
 };
 
 const getInitialLanguage = () => {
-  const stored = localStorage.getItem("print-designer-language");
+  const stored = readStored(STORAGE_KEYS.language);
   if (stored && isSupportedLanguage(stored)) {
     return stored;
   }

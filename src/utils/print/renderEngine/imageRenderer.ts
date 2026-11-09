@@ -386,7 +386,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
     const { width, height } = resolveRenderCanvasSize(
       store.canvasSize,
-      store.pages[0]?.elements || [],
+      store.pages,
       store.continuousPaper,
     );
 
@@ -1082,7 +1082,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
     const { width, height } = resolveRenderCanvasSize(
       store.canvasSize,
-      store.pages[0]?.elements || [],
+      store.pages,
       store.continuousPaper,
     );
     const widthMm = pxToMm(width);
@@ -1151,7 +1151,7 @@ export const createImageRenderer = (deps: ImageRendererDeps) => {
     // 连续纸：页高取内容底边，仅用于本次渲染，不写回 store。
     const { width, height } = resolveRenderCanvasSize(
       store.canvasSize,
-      store.pages[0]?.elements || [],
+      store.pages,
       store.continuousPaper,
     );
     const widthMm = pxToMm(width);

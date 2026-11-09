@@ -1,3 +1,5 @@
+import type ZhMessages from "./zh";
+
 export default {
   common: {
     save: "Speichern",
@@ -106,6 +108,8 @@ export default {
     showMarginLines: "Randlinien anzeigen",
     continuousPaper: "Endlospapier",
     continuousPaperHint: "Die Labelhöhe wächst mit dem Inhalt; Tabellen werden nicht mehr am Elementrahmen abgeschnitten",
+    continuousPaperSinglePageOnly: "Endlospapier wird nur für einseitige Vorlagen unterstützt",
+    continuousPaperAutoDisabled: "Endlospapier deaktiviert: nur für einseitige Vorlagen",
     allowDragOutsideCanvas: "Elemente außerhalb des Canvas ziehen erlauben",
     showCornerMarkers: "Eckmarkierungen anzeigen",
     showGrid: "Raster anzeigen",
@@ -715,6 +719,13 @@ export default {
     general: "Allgemein",
     editing: "Bearbeitung",
     manipulation: "Manipulation",
+    themeColor: "Themenfarbe",
+    themeColorDesc: "Eine vorgegebene Themenfarbe auswählen – sofort wirksam.",
+    themePresetDefault: "Blau",
+    themePresetEmerald: "Grün",
+    themePresetAmber: "Orange",
+    themePresetRose: "Rosé",
+    themePresetCustom: "Benutzerdefiniert",
     newTemplate: "Neue Vorlage",
     openSettings: "Einstellungen öffnen",
     openHelp: "Hilfe öffnen",
@@ -1028,4 +1039,4 @@ export default {
       printing: "Drucken",
     },
   },
-};
+} satisfies typeof ZhMessages;

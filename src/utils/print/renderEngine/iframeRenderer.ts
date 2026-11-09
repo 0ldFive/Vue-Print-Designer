@@ -259,7 +259,7 @@ export const createIframeRenderer = ({
       // 连续纸：渲染页高取内容底边，但不写回 store.canvasSize。
       canvasSize: resolveRenderCanvasSize(
         store.canvasSize,
-        sourcePages[0]?.elements || [],
+        sourcePages,
         store.continuousPaper,
       ),
       canvasBackground: store.canvasBackground,

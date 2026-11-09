@@ -1,8 +1,7 @@
 import { ref, computed, watch } from "vue";
+import { STORAGE_KEYS, readStored, writeStored } from "@/utils/storage";
 
-const theme = ref<string>(
-  localStorage.getItem("print-designer-theme") || "system",
-);
+const theme = ref<string>(readStored(STORAGE_KEYS.theme) || "system");
 const systemDark = ref(
   window.matchMedia("(prefers-color-scheme: dark)").matches,
 );
@@ -20,7 +19,7 @@ const isDark = computed(() => {
 
 const setTheme = (newTheme: string) => {
   theme.value = newTheme;
-  localStorage.setItem("print-designer-theme", newTheme);
+  writeStored(STORAGE_KEYS.theme, newTheme);
 };
 
 watch(

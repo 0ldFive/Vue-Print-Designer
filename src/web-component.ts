@@ -48,6 +48,16 @@ import {
   mergeExt,
 } from "./utils/entityConstraints";
 import { buildTestDataFromPages } from "./utils/variables";
+import { serializeTemplateData } from "@/utils/templateData";
+import { applyTemplateDataFields } from "@/stores/designer/applyTemplateData";
+import {
+  STORAGE_KEYS,
+  readStored,
+  readStoredJson,
+  removeStored,
+  writeStored,
+  writeStoredJson,
+} from "@/utils/storage";
 
 loader.config({
   "vs/nls": {
@@ -168,7 +178,7 @@ export type DesignerPrintDefaults = {
   remotePrintOptions?: Partial<PrintOptions>;
 };
 
-const designerFontStorageKey = "print-designer-font-family";
+const designerFontStorageKey = STORAGE_KEYS.font;
 
 const supportedLanguages: SupportedLanguage[] = [
   "zh",
@@ -180,22 +190,18 @@ const supportedLanguages: SupportedLanguage[] = [
 ];
 
 const applyStoredBrandVars = () => {
-  const stored = localStorage.getItem("print-designer-brand-vars");
-  if (!stored) return;
-  try {
-    const vars = JSON.parse(stored) as Record<string, string>;
-    if (!vars || typeof vars !== "object") return;
-    const root = document.documentElement;
-    Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
-    });
-  } catch {
-    // Ignore invalid storage
-  }
+  const vars = readStoredJson<Record<string, string> | null>(
+    STORAGE_KEYS.brandVars,
+    null,
+  );
+  if (!vars || typeof vars !== "object") return;
+  const root = document.documentElement;
+  Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
 };
 
-const getStoredDesignerFont = () =>
-  localStorage.getItem(designerFontStorageKey)?.trim() || "";
+const getStoredDesignerFont = () => readStored(STORAGE_KEYS.font)?.trim() || "";
 
 const normalizeTemplateVariableKey = (rawKey: string) => {
   const key = String(rawKey || "").trim();
@@ -330,7 +336,7 @@ class PrintDesignerElement extends HTMLElement {
         // @ts-ignore
         this.i18n.global.locale.value = language;
       }
-      localStorage.setItem("print-designer-language", language);
+      writeStored(STORAGE_KEYS.language, language);
     }
   }
 
@@ -1005,7 +1011,7 @@ class PrintDesignerElement extends HTMLElement {
       root.style.setProperty(key, value);
     });
     if (options.persist !== false) {
-      localStorage.setItem("print-designer-brand-vars", JSON.stringify(vars));
+      writeStoredJson(STORAGE_KEYS.brandVars, vars);
     }
   }
 
@@ -1024,9 +1030,9 @@ class PrintDesignerElement extends HTMLElement {
     }
     if (options.persist !== false) {
       if (normalized) {
-        localStorage.setItem(designerFontStorageKey, normalized);
+        writeStored(STORAGE_KEYS.font, normalized);
       } else {
-        localStorage.removeItem(designerFontStorageKey);
+        removeStored(STORAGE_KEYS.font);
       }
     }
   }
@@ -1146,41 +1152,9 @@ class PrintDesignerElement extends HTMLElement {
 
   getTemplateData() {
     if (!this.designerStore) return null;
+    // 字段清单统一由 serializeTemplateData 派生（单一来源），ext 为宿主专属附加。
     return {
-      pages: cloneDeep(this.designerStore.pages),
-      canvasSize: cloneDeep(this.designerStore.canvasSize),
-      continuousPaper: this.designerStore.continuousPaper,
-      guides: cloneDeep(this.designerStore.guides),
-      zoom: this.designerStore.zoom,
-      showGrid: this.designerStore.showGrid,
-      allowDragOutsideCanvas: this.designerStore.allowDragOutsideCanvas,
-      headerHeight: this.designerStore.headerHeight,
-      footerHeight: this.designerStore.footerHeight,
-      showHeaderLine: this.designerStore.showHeaderLine,
-      showFooterLine: this.designerStore.showFooterLine,
-      enableHeaderFooterLineRendering:
-        this.designerStore.enableHeaderFooterLineRendering,
-      headerLineStyle: this.designerStore.headerLineStyle,
-      footerLineStyle: this.designerStore.footerLineStyle,
-      headerLineColor: this.designerStore.headerLineColor,
-      footerLineColor: this.designerStore.footerLineColor,
-      headerLineWidth: this.designerStore.headerLineWidth,
-      footerLineWidth: this.designerStore.footerLineWidth,
-      headerLineSpanMode: this.designerStore.headerLineSpanMode,
-      footerLineSpanMode: this.designerStore.footerLineSpanMode,
-      headerLineSpan: this.designerStore.headerLineSpan,
-      footerLineSpan: this.designerStore.footerLineSpan,
-      showMinimap: this.designerStore.showMinimap,
-      showHistoryPanel: this.designerStore.showHistoryPanel,
-      canvasBackground: this.designerStore.canvasBackground,
-      canvasBackgroundImage: cloneDeep(
-        this.designerStore.canvasBackgroundImage,
-      ),
-      pageSpacingX: this.designerStore.pageSpacingX,
-      pageSpacingY: this.designerStore.pageSpacingY,
-      unit: this.designerStore.unit,
-      watermark: cloneDeep(this.designerStore.watermark),
-      testData: cloneDeep(this.designerStore.testData || {}),
+      ...serializeTemplateData(this.designerStore),
       ext: {
         availableVariables: cloneDeep(
           this.designerStore.availableVariables || [],
@@ -1300,120 +1274,8 @@ class PrintDesignerElement extends HTMLElement {
     if (!data) return false;
     window.dispatchEvent(new CustomEvent("designer:template-replaced"));
     this.designerStore.resetCanvas();
-    if (Array.isArray(data.pages) && data.pages.length > 0) {
-      this.designerStore.pages = cloneDeep(data.pages);
-    }
-    if (data.canvasSize)
-      this.designerStore.canvasSize = cloneDeep(data.canvasSize);
-    // 连续纸开关必须随模板恢复：客户端预览窗口等宿主依赖该字段决定导出页高，
-    // 漏掉会让连续纸模板回退成固定纸高并被分页截断。
-    if (data.continuousPaper !== undefined) {
-      this.designerStore.continuousPaper = Boolean(data.continuousPaper);
-      try {
-        localStorage.setItem(
-          "print-designer-continuous-paper",
-          String(this.designerStore.continuousPaper),
-        );
-      } catch {
-        // 隐私模式等场景写入失败时忽略，不影响功能
-      }
-    }
-    if (data.guides) this.designerStore.guides = cloneDeep(data.guides);
-    if (data.zoom !== undefined) this.designerStore.zoom = data.zoom;
-    if (data.showGrid !== undefined)
-      this.designerStore.showGrid = data.showGrid;
-    if (data.allowDragOutsideCanvas !== undefined)
-      this.designerStore.allowDragOutsideCanvas = data.allowDragOutsideCanvas;
-    if (data.headerHeight !== undefined)
-      this.designerStore.headerHeight = data.headerHeight;
-    if (data.footerHeight !== undefined)
-      this.designerStore.footerHeight = data.footerHeight;
-    if (data.showHeaderLine !== undefined)
-      this.designerStore.showHeaderLine = data.showHeaderLine;
-    if (data.showFooterLine !== undefined)
-      this.designerStore.showFooterLine = data.showFooterLine;
-    if (data.enableHeaderFooterLineRendering !== undefined)
-      this.designerStore.enableHeaderFooterLineRendering = Boolean(
-        data.enableHeaderFooterLineRendering,
-      );
-    if (data.headerLineStyle !== undefined)
-      this.designerStore.headerLineStyle =
-        data.headerLineStyle === "solid" || data.headerLineStyle === "dotted"
-          ? data.headerLineStyle
-          : "dashed";
-    if (data.footerLineStyle !== undefined)
-      this.designerStore.footerLineStyle =
-        data.footerLineStyle === "solid" || data.footerLineStyle === "dotted"
-          ? data.footerLineStyle
-          : "dashed";
-    if (data.headerLineColor !== undefined)
-      this.designerStore.headerLineColor =
-        typeof data.headerLineColor === "string" && data.headerLineColor.trim()
-          ? data.headerLineColor
-          : "#f87171";
-    if (data.footerLineColor !== undefined)
-      this.designerStore.footerLineColor =
-        typeof data.footerLineColor === "string" && data.footerLineColor.trim()
-          ? data.footerLineColor
-          : "#f87171";
-    if (data.headerLineWidth !== undefined)
-      this.designerStore.headerLineWidth = Math.max(
-        1,
-        Math.round(Number(data.headerLineWidth) || 1),
-      );
-    if (data.footerLineWidth !== undefined)
-      this.designerStore.footerLineWidth = Math.max(
-        1,
-        Math.round(Number(data.footerLineWidth) || 1),
-      );
-    if (data.headerLineSpanMode !== undefined)
-      this.designerStore.headerLineSpanMode =
-        data.headerLineSpanMode === "percent" ? "percent" : "value";
-    if (data.footerLineSpanMode !== undefined)
-      this.designerStore.footerLineSpanMode =
-        data.footerLineSpanMode === "percent" ? "percent" : "value";
-    if (data.headerLineSpan !== undefined) {
-      const numeric = Number(data.headerLineSpan);
-      if (this.designerStore.headerLineSpanMode === "percent") {
-        this.designerStore.headerLineSpan = Number.isFinite(numeric)
-          ? Math.min(100, Math.max(1, Number(numeric.toFixed(2))))
-          : 100;
-      } else {
-        this.designerStore.headerLineSpan = Number.isFinite(numeric)
-          ? Math.max(1, Math.round(numeric))
-          : 100;
-      }
-    }
-    if (data.footerLineSpan !== undefined) {
-      const numeric = Number(data.footerLineSpan);
-      if (this.designerStore.footerLineSpanMode === "percent") {
-        this.designerStore.footerLineSpan = Number.isFinite(numeric)
-          ? Math.min(100, Math.max(1, Number(numeric.toFixed(2))))
-          : 100;
-      } else {
-        this.designerStore.footerLineSpan = Number.isFinite(numeric)
-          ? Math.max(1, Math.round(numeric))
-          : 100;
-      }
-    }
-    if (data.showMinimap !== undefined)
-      this.designerStore.showMinimap = data.showMinimap;
-    if (data.showHistoryPanel !== undefined)
-      this.designerStore.showHistoryPanel = data.showHistoryPanel;
-    if (data.canvasBackground !== undefined)
-      this.designerStore.canvasBackground = data.canvasBackground;
-    if (data.canvasBackgroundImage !== undefined)
-      this.designerStore.canvasBackgroundImage = cloneDeep(
-        data.canvasBackgroundImage,
-      );
-    if (data.pageSpacingX !== undefined)
-      this.designerStore.pageSpacingX = data.pageSpacingX;
-    if (data.pageSpacingY !== undefined)
-      this.designerStore.pageSpacingY = data.pageSpacingY;
-    if (data.unit !== undefined) this.designerStore.unit = data.unit;
-    if (data.watermark !== undefined)
-      this.designerStore.watermark = cloneDeep(data.watermark);
-    this.designerStore.testData = cloneDeep(data.testData || {});
+    // 字段级恢复统一由 applyTemplateDataFields 实现（与粘贴、模板加载共用）。
+    applyTemplateDataFields(this.designerStore, data);
     const availableVariables = Array.isArray(data?.ext?.availableVariables)
       ? cloneDeep(data.ext.availableVariables)
       : [];

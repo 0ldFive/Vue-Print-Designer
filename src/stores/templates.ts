@@ -4,6 +4,8 @@ import { toRaw } from "vue";
 import cloneDeep from "lodash/cloneDeep";
 import isEqual from "lodash/isEqual";
 import { useDesignerStore } from "./designer";
+import { applyTemplateDataFields } from "./designer/applyTemplateData";
+import { STORAGE_KEYS, readStored, writeStoredJson } from "@/utils/storage";
 import { toast } from "../utils/toast";
 import {
   getCrudConfig,
@@ -24,6 +26,7 @@ import {
   sanitizePages,
   sanitizeTemplateData,
   hasMeaningfulTemplateData,
+  serializeTemplateData,
 } from "../utils/templateData";
 
 export interface Template {
@@ -68,40 +71,6 @@ const withExtAvailableVariables = (
   });
 };
 
-const normalizeHeaderFooterLineStyle = (value: unknown) => {
-  return value === "solid" || value === "dotted" ? value : "dashed";
-};
-
-const normalizeHeaderFooterLineColor = (value: unknown) => {
-  if (typeof value !== "string") return "#f87171";
-  const color = value.trim();
-  return color ? color : "#f87171";
-};
-
-const normalizeHeaderFooterLineWidth = (value: unknown) => {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return 1;
-  return Math.max(1, Math.round(numeric));
-};
-
-const normalizeHeaderFooterLineSpanMode = (value: unknown) => {
-  return value === "percent" ? "percent" : "value";
-};
-
-const normalizeHeaderFooterLineSpan = (value: unknown, mode: unknown) => {
-  const nextMode = normalizeHeaderFooterLineSpanMode(mode);
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return nextMode === "percent" ? 100 : 100;
-  if (nextMode === "percent") {
-    return Math.min(100, Math.max(1, Number(numeric.toFixed(2))));
-  }
-  return Math.max(1, Math.round(numeric));
-};
-
-const normalizeHeaderFooterLineRenderingEnabled = (value: unknown) => {
-  return Boolean(value);
-};
-
 export const useTemplateStore = defineStore("templates", {
   state: () => ({
     crudScopeId: "__global__",
@@ -118,78 +87,20 @@ export const useTemplateStore = defineStore("templates", {
       if (!this.lastSavedStateString) return true;
 
       const designerStore = useDesignerStore();
-      const currentString = JSON.stringify({
-        pages: designerStore.pages,
-        canvasSize: designerStore.canvasSize,
-        guides: designerStore.guides,
-        zoom: designerStore.zoom,
-        showGrid: designerStore.showGrid,
-        allowDragOutsideCanvas: designerStore.allowDragOutsideCanvas,
-        headerHeight: designerStore.headerHeight,
-        footerHeight: designerStore.footerHeight,
-        showHeaderLine: designerStore.showHeaderLine,
-        showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering:
-          designerStore.enableHeaderFooterLineRendering,
-        headerLineStyle: designerStore.headerLineStyle,
-        footerLineStyle: designerStore.footerLineStyle,
-        headerLineColor: designerStore.headerLineColor,
-        footerLineColor: designerStore.footerLineColor,
-        headerLineWidth: designerStore.headerLineWidth,
-        footerLineWidth: designerStore.footerLineWidth,
-        headerLineSpanMode: designerStore.headerLineSpanMode,
-        footerLineSpanMode: designerStore.footerLineSpanMode,
-        headerLineSpan: designerStore.headerLineSpan,
-        footerLineSpan: designerStore.footerLineSpan,
-        showMinimap: designerStore.showMinimap,
-        showHistoryPanel: designerStore.showHistoryPanel,
-        canvasBackground: designerStore.canvasBackground,
-        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
-        pageSpacingX: designerStore.pageSpacingX,
-        pageSpacingY: designerStore.pageSpacingY,
-        unit: designerStore.unit,
-        watermark: designerStore.watermark,
-        testData: designerStore.testData || {},
-      });
+      // 脏检测快照必须与保存数据同源：漏字段会导致改动不触发“未保存”提示。
+      const currentString = JSON.stringify(
+        serializeTemplateData(designerStore),
+      );
       return currentString !== this.lastSavedStateString;
     },
   },
   actions: {
     updateLastSavedStateString() {
       const designerStore = useDesignerStore();
-      this.lastSavedStateString = JSON.stringify({
-        pages: designerStore.pages,
-        canvasSize: designerStore.canvasSize,
-        guides: designerStore.guides,
-        zoom: designerStore.zoom,
-        showGrid: designerStore.showGrid,
-        allowDragOutsideCanvas: designerStore.allowDragOutsideCanvas,
-        headerHeight: designerStore.headerHeight,
-        footerHeight: designerStore.footerHeight,
-        showHeaderLine: designerStore.showHeaderLine,
-        showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering:
-          designerStore.enableHeaderFooterLineRendering,
-        headerLineStyle: designerStore.headerLineStyle,
-        footerLineStyle: designerStore.footerLineStyle,
-        headerLineColor: designerStore.headerLineColor,
-        footerLineColor: designerStore.footerLineColor,
-        headerLineWidth: designerStore.headerLineWidth,
-        footerLineWidth: designerStore.footerLineWidth,
-        headerLineSpanMode: designerStore.headerLineSpanMode,
-        footerLineSpanMode: designerStore.footerLineSpanMode,
-        headerLineSpan: designerStore.headerLineSpan,
-        footerLineSpan: designerStore.footerLineSpan,
-        showMinimap: designerStore.showMinimap,
-        showHistoryPanel: designerStore.showHistoryPanel,
-        canvasBackground: designerStore.canvasBackground,
-        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
-        pageSpacingX: designerStore.pageSpacingX,
-        pageSpacingY: designerStore.pageSpacingY,
-        unit: designerStore.unit,
-        watermark: designerStore.watermark,
-        testData: designerStore.testData || {},
-      });
+      // 与 hasUnsavedChanges 使用同一序列化口径，保证比较自洽。
+      this.lastSavedStateString = JSON.stringify(
+        serializeTemplateData(designerStore),
+      );
     },
 
     setCrudScopeId(scopeId: string) {
@@ -327,7 +238,7 @@ export const useTemplateStore = defineStore("templates", {
         }
       }
 
-      const stored = localStorage.getItem("print-designer-templates");
+      const stored = readStored(STORAGE_KEYS.templates);
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -367,10 +278,7 @@ export const useTemplateStore = defineStore("templates", {
     saveToLocalStorage() {
       const { mode } = getCrudConfig(this.crudScopeId);
       if (mode === "remote") return;
-      localStorage.setItem(
-        "print-designer-templates",
-        JSON.stringify(this.templates),
-      );
+      writeStoredJson(STORAGE_KEYS.templates, this.templates);
     },
 
     async saveCurrentTemplate(name: string, isAutoSave = false) {
@@ -390,40 +298,13 @@ export const useTemplateStore = defineStore("templates", {
         return;
       }
 
+      // 字段清单统一由 serializeTemplateData 派生（单一来源）；
+      // 保留旧数据中不在清单内的字段，其余用当前画布状态覆盖。
+      // pages 仍需 sanitizePages 兜底（补页面 id、过滤非法元素），不可省略。
       const data = {
         ...(existingTemplate?.data || {}),
+        ...serializeTemplateData(designerStore),
         pages: sanitizePages(cloneDeep(designerStore.pages)),
-        canvasSize: cloneDeep(designerStore.canvasSize),
-        guides: cloneDeep(designerStore.guides),
-        zoom: designerStore.zoom,
-        showGrid: designerStore.showGrid,
-        allowDragOutsideCanvas: designerStore.allowDragOutsideCanvas,
-        headerHeight: designerStore.headerHeight,
-        footerHeight: designerStore.footerHeight,
-        showHeaderLine: designerStore.showHeaderLine,
-        showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering:
-          designerStore.enableHeaderFooterLineRendering,
-        headerLineStyle: designerStore.headerLineStyle,
-        footerLineStyle: designerStore.footerLineStyle,
-        headerLineColor: designerStore.headerLineColor,
-        footerLineColor: designerStore.footerLineColor,
-        headerLineWidth: designerStore.headerLineWidth,
-        footerLineWidth: designerStore.footerLineWidth,
-        headerLineSpanMode: designerStore.headerLineSpanMode,
-        footerLineSpanMode: designerStore.footerLineSpanMode,
-        headerLineSpan: designerStore.headerLineSpan,
-        footerLineSpan: designerStore.footerLineSpan,
-        showMinimap: designerStore.showMinimap,
-        showHistoryPanel: designerStore.showHistoryPanel,
-        canvasBackground: designerStore.canvasBackground,
-        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
-        pageSpacingX: designerStore.pageSpacingX,
-        pageSpacingY: designerStore.pageSpacingY,
-        unit: designerStore.unit,
-        watermark: cloneDeep(designerStore.watermark),
-        testData: cloneDeep(designerStore.testData || {}),
-        // Add other necessary state here
       };
 
       if (targetId && existingTemplate) {
@@ -625,39 +506,8 @@ export const useTemplateStore = defineStore("templates", {
         this.crudScopeId,
       );
       const designerStore = useDesignerStore();
-      const nextData = data || {
-        pages: cloneDeep(designerStore.pages),
-        canvasSize: cloneDeep(designerStore.canvasSize),
-        pageSpacingX: designerStore.pageSpacingX,
-        pageSpacingY: designerStore.pageSpacingY,
-        unit: designerStore.unit,
-        watermark: cloneDeep(designerStore.watermark),
-        testData: cloneDeep(designerStore.testData || {}),
-        guides: cloneDeep(designerStore.guides),
-        zoom: designerStore.zoom,
-        showGrid: designerStore.showGrid,
-        allowDragOutsideCanvas: designerStore.allowDragOutsideCanvas,
-        headerHeight: designerStore.headerHeight,
-        footerHeight: designerStore.footerHeight,
-        showHeaderLine: designerStore.showHeaderLine,
-        showFooterLine: designerStore.showFooterLine,
-        enableHeaderFooterLineRendering:
-          designerStore.enableHeaderFooterLineRendering,
-        headerLineStyle: designerStore.headerLineStyle,
-        footerLineStyle: designerStore.footerLineStyle,
-        headerLineColor: designerStore.headerLineColor,
-        footerLineColor: designerStore.footerLineColor,
-        headerLineWidth: designerStore.headerLineWidth,
-        footerLineWidth: designerStore.footerLineWidth,
-        headerLineSpanMode: designerStore.headerLineSpanMode,
-        footerLineSpanMode: designerStore.footerLineSpanMode,
-        headerLineSpan: designerStore.headerLineSpan,
-        footerLineSpan: designerStore.footerLineSpan,
-        showMinimap: designerStore.showMinimap,
-        showHistoryPanel: designerStore.showHistoryPanel,
-        canvasBackground: designerStore.canvasBackground,
-        canvasBackgroundImage: cloneDeep(designerStore.canvasBackgroundImage),
-      };
+      // 新建模板的初始数据同样从单一来源派生，避免新模板丢字段。
+      const nextData = data || serializeTemplateData(designerStore);
       const newData = sanitizeTemplateData(nextData);
 
       const templateBase = applyModalExtraValues(
@@ -990,95 +840,9 @@ export const useTemplateStore = defineStore("templates", {
             const designerStore = useDesignerStore();
             designerStore.resetCanvas();
             const data = t.data;
-            if (data.pages && data.pages.length > 0)
-              designerStore.pages = cloneDeep(data.pages);
-            if (data.canvasSize)
-              designerStore.canvasSize = cloneDeep(data.canvasSize);
-            if (data.guides) designerStore.guides = cloneDeep(data.guides);
-            if (data.zoom !== undefined) designerStore.zoom = data.zoom;
-            if (data.showGrid !== undefined)
-              designerStore.showGrid = data.showGrid;
-            if (data.allowDragOutsideCanvas !== undefined)
-              designerStore.allowDragOutsideCanvas =
-                data.allowDragOutsideCanvas;
-            if (data.headerHeight !== undefined)
-              designerStore.headerHeight = data.headerHeight;
-            if (data.footerHeight !== undefined)
-              designerStore.footerHeight = data.footerHeight;
-            if (data.showHeaderLine !== undefined)
-              designerStore.showHeaderLine = data.showHeaderLine;
-            if (data.showFooterLine !== undefined)
-              designerStore.showFooterLine = data.showFooterLine;
-            if (data.enableHeaderFooterLineRendering !== undefined)
-              designerStore.enableHeaderFooterLineRendering =
-                normalizeHeaderFooterLineRenderingEnabled(
-                  data.enableHeaderFooterLineRendering,
-                );
-            if (data.headerLineStyle !== undefined)
-              designerStore.headerLineStyle = normalizeHeaderFooterLineStyle(
-                data.headerLineStyle,
-              );
-            if (data.footerLineStyle !== undefined)
-              designerStore.footerLineStyle = normalizeHeaderFooterLineStyle(
-                data.footerLineStyle,
-              );
-            if (data.headerLineColor !== undefined)
-              designerStore.headerLineColor = normalizeHeaderFooterLineColor(
-                data.headerLineColor,
-              );
-            if (data.footerLineColor !== undefined)
-              designerStore.footerLineColor = normalizeHeaderFooterLineColor(
-                data.footerLineColor,
-              );
-            if (data.headerLineWidth !== undefined)
-              designerStore.headerLineWidth = normalizeHeaderFooterLineWidth(
-                data.headerLineWidth,
-              );
-            if (data.footerLineWidth !== undefined)
-              designerStore.footerLineWidth = normalizeHeaderFooterLineWidth(
-                data.footerLineWidth,
-              );
-            if (data.headerLineSpanMode !== undefined)
-              designerStore.headerLineSpanMode =
-                normalizeHeaderFooterLineSpanMode(data.headerLineSpanMode);
-            if (data.footerLineSpanMode !== undefined)
-              designerStore.footerLineSpanMode =
-                normalizeHeaderFooterLineSpanMode(data.footerLineSpanMode);
-            if (data.headerLineSpan !== undefined)
-              designerStore.headerLineSpan = normalizeHeaderFooterLineSpan(
-                data.headerLineSpan,
-                designerStore.headerLineSpanMode,
-              );
-            if (data.footerLineSpan !== undefined)
-              designerStore.footerLineSpan = normalizeHeaderFooterLineSpan(
-                data.footerLineSpan,
-                designerStore.footerLineSpanMode,
-              );
-            if (data.showMinimap !== undefined)
-              designerStore.showMinimap = data.showMinimap;
-            if (data.showHistoryPanel !== undefined)
-              designerStore.showHistoryPanel = data.showHistoryPanel;
-            if (data.canvasBackground !== undefined)
-              designerStore.canvasBackground = data.canvasBackground;
-            if (data.canvasBackgroundImage !== undefined)
-              designerStore.canvasBackgroundImage = cloneDeep(
-                data.canvasBackgroundImage,
-              );
-            if (data.pageSpacingX !== undefined)
-              designerStore.pageSpacingX = data.pageSpacingX;
-            if (data.pageSpacingY !== undefined)
-              designerStore.pageSpacingY = data.pageSpacingY;
-            if (data.unit !== undefined) designerStore.unit = data.unit;
-            if (data.watermark !== undefined)
-              designerStore.watermark = cloneDeep(data.watermark);
-            designerStore.testData = cloneDeep(data.testData || {});
+            // 字段级恢复统一由 applyTemplateDataFields 实现。
+            applyTemplateDataFields(designerStore, data);
             designerStore.setAvailableVariables(readAvailableVariables(t));
-            designerStore.selectedElementId = null;
-            designerStore.selectedGuideId = null;
-            designerStore.historyPast = [];
-            designerStore.historyFuture = [];
-            designerStore.historyPastActionKeys = [];
-            designerStore.historyFutureActionKeys = [];
             const currentId = t.id || id;
             this.currentTemplateId = currentId;
 
@@ -1132,97 +896,9 @@ export const useTemplateStore = defineStore("templates", {
 
           const data = sanitizeTemplateData(t.data);
 
-          // Restore state
-          if (data.pages && data.pages.length > 0)
-            designerStore.pages = cloneDeep(data.pages);
-          if (data.canvasSize)
-            designerStore.canvasSize = cloneDeep(data.canvasSize);
-          if (data.guides) designerStore.guides = cloneDeep(data.guides);
-          if (data.zoom !== undefined) designerStore.zoom = data.zoom;
-          if (data.showGrid !== undefined)
-            designerStore.showGrid = data.showGrid;
-          if (data.allowDragOutsideCanvas !== undefined)
-            designerStore.allowDragOutsideCanvas = data.allowDragOutsideCanvas;
-          if (data.headerHeight !== undefined)
-            designerStore.headerHeight = data.headerHeight;
-          if (data.footerHeight !== undefined)
-            designerStore.footerHeight = data.footerHeight;
-          if (data.showHeaderLine !== undefined)
-            designerStore.showHeaderLine = data.showHeaderLine;
-          if (data.showFooterLine !== undefined)
-            designerStore.showFooterLine = data.showFooterLine;
-          if (data.enableHeaderFooterLineRendering !== undefined)
-            designerStore.enableHeaderFooterLineRendering =
-              normalizeHeaderFooterLineRenderingEnabled(
-                data.enableHeaderFooterLineRendering,
-              );
-          if (data.headerLineStyle !== undefined)
-            designerStore.headerLineStyle = normalizeHeaderFooterLineStyle(
-              data.headerLineStyle,
-            );
-          if (data.footerLineStyle !== undefined)
-            designerStore.footerLineStyle = normalizeHeaderFooterLineStyle(
-              data.footerLineStyle,
-            );
-          if (data.headerLineColor !== undefined)
-            designerStore.headerLineColor = normalizeHeaderFooterLineColor(
-              data.headerLineColor,
-            );
-          if (data.footerLineColor !== undefined)
-            designerStore.footerLineColor = normalizeHeaderFooterLineColor(
-              data.footerLineColor,
-            );
-          if (data.headerLineWidth !== undefined)
-            designerStore.headerLineWidth = normalizeHeaderFooterLineWidth(
-              data.headerLineWidth,
-            );
-          if (data.footerLineWidth !== undefined)
-            designerStore.footerLineWidth = normalizeHeaderFooterLineWidth(
-              data.footerLineWidth,
-            );
-          if (data.headerLineSpanMode !== undefined)
-            designerStore.headerLineSpanMode =
-              normalizeHeaderFooterLineSpanMode(data.headerLineSpanMode);
-          if (data.footerLineSpanMode !== undefined)
-            designerStore.footerLineSpanMode =
-              normalizeHeaderFooterLineSpanMode(data.footerLineSpanMode);
-          if (data.headerLineSpan !== undefined)
-            designerStore.headerLineSpan = normalizeHeaderFooterLineSpan(
-              data.headerLineSpan,
-              designerStore.headerLineSpanMode,
-            );
-          if (data.footerLineSpan !== undefined)
-            designerStore.footerLineSpan = normalizeHeaderFooterLineSpan(
-              data.footerLineSpan,
-              designerStore.footerLineSpanMode,
-            );
-          if (data.showMinimap !== undefined)
-            designerStore.showMinimap = data.showMinimap;
-          if (data.showHistoryPanel !== undefined)
-            designerStore.showHistoryPanel = data.showHistoryPanel;
-          if (data.canvasBackground !== undefined)
-            designerStore.canvasBackground = data.canvasBackground;
-          if (data.canvasBackgroundImage !== undefined)
-            designerStore.canvasBackgroundImage = cloneDeep(
-              data.canvasBackgroundImage,
-            );
-          if (data.pageSpacingX !== undefined)
-            designerStore.pageSpacingX = data.pageSpacingX;
-          if (data.pageSpacingY !== undefined)
-            designerStore.pageSpacingY = data.pageSpacingY;
-          if (data.unit !== undefined) designerStore.unit = data.unit;
-          if (data.watermark !== undefined)
-            designerStore.watermark = cloneDeep(data.watermark);
-          designerStore.testData = cloneDeep(data.testData || {});
+          // 字段级恢复统一由 applyTemplateDataFields 实现。
+          applyTemplateDataFields(designerStore, data);
           designerStore.setAvailableVariables(readAvailableVariables(t));
-
-          // Reset selection and history
-          designerStore.selectedElementId = null;
-          designerStore.selectedGuideId = null;
-          designerStore.historyPast = [];
-          designerStore.historyFuture = [];
-          designerStore.historyPastActionKeys = [];
-          designerStore.historyFutureActionKeys = [];
 
           this.currentTemplateId = t.id || id;
 

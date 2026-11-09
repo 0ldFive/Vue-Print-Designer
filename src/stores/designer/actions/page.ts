@@ -25,6 +25,7 @@ import {
   buildFetchOptions,
 } from "../../../utils/crudConfig";
 import { toast } from "../../../utils/toast";
+import { STORAGE_KEYS, writeStoredJson } from "../../../utils/storage";
 import {
   canCopyEntity,
   canDeleteEntity,
@@ -36,7 +37,7 @@ import {
 import { useTemplateStore } from "../../templates";
 import { normalizeVariableKey } from "../../../utils/variables";
 import i18n from "../../../locales";
-import { defaultWatermark, defaultBranding, HISTORY_ACTION, hasOwn, inferElementUpdateHistoryAction, loadWatermark, loadDeveloperMode, loadPaginationDebugLogs, loadRenderDebugLogs, loadTextQuickToolbarEnabled, loadStatusBarVisible, getElementZIndex, getLayerSortedElements, buildLayerAssignments, canLayerMoveInPage, normalizeContextMenuConfig, normalizeTemplateModalFields, normalizeTemplateModalFormConfig, inferVariableFromContent, normalizeDesignerFontOptions, getEffectiveTableColumns, getNumericCellStyleHeight, getTableRowExplicitHeight, isHeaderFooterLineStyle, normalizeHeaderFooterLineStyle, normalizeHeaderFooterLineColor, normalizeHeaderFooterLineWidth, normalizeHeaderFooterLineSpanMode, normalizeHeaderFooterLineSpan, normalizeHeaderFooterLineRenderingEnabled, escapeAttributeSelectorValue, getCellBorderInsetRect, querySelectorAcrossDocumentAndShadowRoots } from '../helpers';
+import { defaultWatermark, defaultBranding, HISTORY_ACTION, hasOwn, inferElementUpdateHistoryAction, loadWatermark, loadDeveloperMode, loadPaginationDebugLogs, loadRenderDebugLogs, loadTextQuickToolbarEnabled, loadStatusBarVisible, persistContinuousPaper, getElementZIndex, getLayerSortedElements, buildLayerAssignments, canLayerMoveInPage, normalizeContextMenuConfig, normalizeTemplateModalFields, normalizeTemplateModalFormConfig, inferVariableFromContent, normalizeDesignerFontOptions, getEffectiveTableColumns, getNumericCellStyleHeight, getTableRowExplicitHeight, isHeaderFooterLineStyle, normalizeHeaderFooterLineStyle, normalizeHeaderFooterLineColor, normalizeHeaderFooterLineWidth, normalizeHeaderFooterLineSpanMode, normalizeHeaderFooterLineSpan, normalizeHeaderFooterLineRenderingEnabled, escapeAttributeSelectorValue, getCellBorderInsetRect, querySelectorAcrossDocumentAndShadowRoots } from '../helpers';
 import type { LayerMoveMode, HeaderFooterLineStyle, HeaderFooterLineSpanMode, EmbeddedCellBounds, EffectiveTableRows } from '../helpers';
 
 export const pageActions = {
@@ -50,10 +51,7 @@ export const pageActions = {
 
   resetCanvas() {
       this.watermark = { ...defaultWatermark };
-      localStorage.setItem(
-        "print-designer-watermark",
-        JSON.stringify(this.watermark),
-      );
+      writeStoredJson(STORAGE_KEYS.watermark, this.watermark);
       this.pages = [{ id: uuidv4(), elements: [] }];
       this.currentPageIndex = 0;
       this.testData = {};
@@ -148,6 +146,7 @@ export const pageActions = {
       });
 
       // Insert after targetIndex
+      this.disableContinuousPaperForMultiPage();
       this.pages.splice(targetIndex + 1, 0, newPage);
       this.currentPageIndex = targetIndex + 1;
     },
@@ -155,6 +154,7 @@ export const pageActions = {
   addPage() {
       if (!this.isTemplateEditable) return;
       this.snapshot(HISTORY_ACTION.PAGE_ADD);
+      this.disableContinuousPaperForMultiPage();
       this.pages.push({ id: uuidv4(), elements: [] });
       this.currentPageIndex = this.pages.length - 1;
     },
@@ -276,15 +276,21 @@ export const pageActions = {
 
   setContinuousPaper(enabled: boolean) {
       if (!this.isTemplateEditable) return;
-      this.continuousPaper = Boolean(enabled);
-      try {
-        localStorage.setItem(
-          "print-designer-continuous-paper",
-          String(this.continuousPaper),
-        );
-      } catch {
-        // 写入失败不影响当前会话
+      // 连续纸是整条不间断的纸带，分页没有物理意义：多页模板禁止开启。
+      if (enabled && this.pages.length > 1) {
+        toast.warning(i18n.global.t("editor.continuousPaperSinglePageOnly"));
+        return;
       }
+      this.continuousPaper = Boolean(enabled);
+      persistContinuousPaper(this.continuousPaper);
+    },
+
+  /** 页面数变成多页时自动关闭连续纸：不静默改设置，给出提示。 */
+  disableContinuousPaperForMultiPage() {
+      if (!this.continuousPaper) return;
+      this.continuousPaper = false;
+      persistContinuousPaper(false);
+      toast.info(i18n.global.t("editor.continuousPaperAutoDisabled"));
     },
 
   deletePage(index: number) {

@@ -3,6 +3,11 @@ import { defineStore } from "pinia";
 import { uuidv4 } from "@/utils/uuid";
 import cloneDeep from "lodash/cloneDeep";
 import {
+  STORAGE_KEYS,
+  writeStored,
+  writeStoredJson,
+} from "@/utils/storage";
+import {
   type DesignerState,
   type PrintElement,
   type TableColumn,
@@ -194,14 +199,11 @@ export const elementActions = {
       this.pageSpacingY = snapshot.pageSpacingY ?? this.pageSpacingY;
       this.unit = snapshot.unit || this.unit;
       if (snapshot.unit) {
-        localStorage.setItem("print-designer-unit", snapshot.unit);
+        writeStored(STORAGE_KEYS.unit, snapshot.unit);
       }
       if (snapshot.watermark) {
         this.watermark = cloneDeep(snapshot.watermark);
-        localStorage.setItem(
-          "print-designer-watermark",
-          JSON.stringify(this.watermark),
-        );
+        writeStoredJson(STORAGE_KEYS.watermark, this.watermark);
       }
       this.testData = snapshot.testData || {};
       this.currentPageIndex = snapshot.currentPageIndex;
@@ -908,9 +910,6 @@ export const elementActions = {
   saveCustomElements() {
       const { mode } = getCrudConfig(this.crudScopeId);
       if (mode === "remote") return;
-      localStorage.setItem(
-        "print-designer-custom-elements",
-        JSON.stringify(this.customElements),
-      );
+      writeStoredJson(STORAGE_KEYS.customElements, this.customElements);
     }
 };

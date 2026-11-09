@@ -36,25 +36,24 @@ import {
 } from "../../utils/entityConstraints";
 import { useTemplateStore } from "../templates";
 import { normalizeVariableKey } from "../../utils/variables";
+import {
+  STORAGE_KEYS,
+  readStored,
+  readStoredJson,
+} from "../../utils/storage";
 import i18n from "../../locales";
 import { defaultWatermark, defaultBranding, HISTORY_ACTION, hasOwn, inferElementUpdateHistoryAction, loadWatermark, loadDeveloperMode, loadPaginationDebugLogs, loadRenderDebugLogs, loadTextQuickToolbarEnabled, loadStatusBarVisible, loadPanelEdgeAutoHide, loadContinuousPaper, getElementZIndex, getLayerSortedElements, buildLayerAssignments, canLayerMoveInPage, normalizeContextMenuConfig, normalizeTemplateModalFields, normalizeTemplateModalFormConfig, inferVariableFromContent, normalizeDesignerFontOptions, getEffectiveTableColumns, getNumericCellStyleHeight, getTableRowExplicitHeight, isHeaderFooterLineStyle, normalizeHeaderFooterLineStyle, normalizeHeaderFooterLineColor, normalizeHeaderFooterLineWidth, normalizeHeaderFooterLineSpanMode, normalizeHeaderFooterLineSpan, normalizeHeaderFooterLineRenderingEnabled, escapeAttributeSelectorValue, getCellBorderInsetRect, querySelectorAcrossDocumentAndShadowRoots } from './helpers';
 import type { LayerMoveMode, HeaderFooterLineStyle, HeaderFooterLineSpanMode, EmbeddedCellBounds, EffectiveTableRows } from './helpers';
 
 export const state = (): DesignerState => ({
     unit:
-      (localStorage.getItem("print-designer-unit") as
-        | "mm"
-        | "px"
-        | "pt"
-        | "in"
-        | "cm") || "mm",
+      (readStored(STORAGE_KEYS.unit) as "mm" | "px" | "pt" | "in" | "cm") ||
+      "mm",
     watermark: loadWatermark(),
     branding: { ...defaultBranding },
     pages: [{ id: uuidv4(), elements: [] }],
     currentPageIndex: 0,
-    customElements: JSON.parse(
-      localStorage.getItem("print-designer-custom-elements") || "[]",
-    ),
+    customElements: readStoredJson(STORAGE_KEYS.customElements, []),
     customElementDetailCache: {} as Record<string, any>,
     templateContextMenuConfig: null as ListContextMenuConfig | null,
     customElementContextMenuConfig: null as ListContextMenuConfig | null,

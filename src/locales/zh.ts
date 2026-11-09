@@ -104,6 +104,8 @@ export default {
     showMarginLines: "显示边距线",
     continuousPaper: "连续纸",
     continuousPaperHint: "标签高度随内容增长，表格不再被元素框裁剪",
+    continuousPaperSinglePageOnly: "连续纸仅支持单页模板",
+    continuousPaperAutoDisabled: "已关闭连续纸：连续纸仅支持单页模板",
     allowDragOutsideCanvas: "允许元素拖拽出画布",
     showCornerMarkers: "显示角标",
     showGrid: "显示网格",

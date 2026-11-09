@@ -1,3 +1,5 @@
+import type ZhMessages from "./zh";
+
 export default {
   common: {
     save: "保存",
@@ -104,6 +106,8 @@ export default {
     showMarginLines: "顯示邊距線",
     continuousPaper: "連續紙",
     continuousPaperHint: "標籤高度隨內容增長，表格不再被元素框裁剪",
+    continuousPaperSinglePageOnly: "連續紙僅支援單頁範本",
+    continuousPaperAutoDisabled: "已關閉連續紙：連續紙僅支援單頁範本",
     allowDragOutsideCanvas: "允許元素拖拽出畫布",
     showCornerMarkers: "顯示角標",
     showGrid: "顯示網格",
@@ -975,4 +979,4 @@ export default {
       printing: "列印中",
     },
   },
-};
+} satisfies typeof ZhMessages;

@@ -11,6 +11,7 @@ import {
 } from "vue";
 import { useDesignerStore } from "@/stores/designer";
 import { useFeatureFlags } from "@/composables/useFeatureFlags";
+import { STORAGE_KEYS, writeStored } from "@/utils/storage";
 import Printer from "~icons/material-symbols/print";
 import Preview from "~icons/material-symbols/preview";
 import HtmlIcon from "~icons/material-symbols/html";
@@ -1268,7 +1269,7 @@ const applyLanguage = (language: LanguageCode) => {
     return;
   }
   locale.value = language;
-  localStorage.setItem("print-designer-language", language);
+  writeStored(STORAGE_KEYS.language, language);
   showLanguageMenu.value = false;
 };
 

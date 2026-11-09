@@ -5,6 +5,7 @@ import { useDesignerStore } from "@/stores/designer";
 import { useTemplateStore } from "@/stores/templates";
 import { toast } from "@/utils/toast";
 import { canEditEntity } from "@/utils/entityConstraints";
+import { serializeTemplateData } from "@/utils/templateData";
 
 export interface UseJsonBlobModalOptions {
   getPages: () => HTMLElement[] | null | undefined;
@@ -65,35 +66,9 @@ export const useJsonBlobModal = (options: UseJsonBlobModalOptions) => {
   };
 
   const handleViewJson = () => {
-    const data = {
-      pages: cloneDeep(store.pages),
-      canvasSize: cloneDeep(store.canvasSize),
-      guides: cloneDeep(store.guides),
-      zoom: store.zoom,
-      showGrid: store.showGrid,
-      allowDragOutsideCanvas: store.allowDragOutsideCanvas,
-      headerHeight: store.headerHeight,
-      footerHeight: store.footerHeight,
-      showHeaderLine: store.showHeaderLine,
-      showFooterLine: store.showFooterLine,
-      enableHeaderFooterLineRendering: store.enableHeaderFooterLineRendering,
-      headerLineStyle: store.headerLineStyle,
-      footerLineStyle: store.footerLineStyle,
-      headerLineColor: store.headerLineColor,
-      footerLineColor: store.footerLineColor,
-      headerLineWidth: store.headerLineWidth,
-      footerLineWidth: store.footerLineWidth,
-      headerLineSpanMode: store.headerLineSpanMode,
-      footerLineSpanMode: store.footerLineSpanMode,
-      headerLineSpan: store.headerLineSpan,
-      footerLineSpan: store.footerLineSpan,
-      showMinimap: store.showMinimap,
-      showHistoryPanel: store.showHistoryPanel,
-      canvasBackground: store.canvasBackground,
-      canvasBackgroundImage: cloneDeep(store.canvasBackgroundImage),
-      pageSpacingX: store.pageSpacingX,
-      pageSpacingY: store.pageSpacingY,
-    };
+    // 字段清单统一由 serializeTemplateData 派生（单一来源）；
+    // 粘贴回填走 applyTemplateJsonToDesigner，展示内容均可原样恢复。
+    const data = serializeTemplateData(store);
 
     openModal(JSON.stringify(data, null, 2), t("preview.templateJson"), "json");
   };

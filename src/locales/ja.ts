@@ -1,3 +1,5 @@
+import type ZhMessages from "./zh";
+
 export default {
   common: {
     save: "保存",
@@ -106,6 +108,8 @@ export default {
     showMarginLines: "余白ガイドを表示",
     continuousPaper: "連続紙",
     continuousPaperHint: "ラベルの高さが内容に応じて伸び、表が要素枠で切り取られません",
+    continuousPaperSinglePageOnly: "連続紙は単一ページのテンプレートのみ対応しています",
+    continuousPaperAutoDisabled: "連続紙をオフにしました：単一ページのテンプレートのみ対応しています",
     allowDragOutsideCanvas: "要素をキャンバス外へドラッグ可能にする",
     showCornerMarkers: "コーナーマーカーを表示",
     showGrid: "グリッドを表示",
@@ -708,6 +712,13 @@ export default {
     general: "一般",
     editing: "編集",
     manipulation: "操作",
+    themeColor: "テーマカラー",
+    themeColorDesc: "プリセットのテーマカラーを選ぶと即座に反映されます。",
+    themePresetDefault: "ブルー",
+    themePresetEmerald: "グリーン",
+    themePresetAmber: "オレンジ",
+    themePresetRose: "ローズ",
+    themePresetCustom: "カスタム",
     newTemplate: "新規テンプレート",
     openSettings: "設定を開く",
     openHelp: "ヘルプを開く",
@@ -1010,4 +1021,4 @@ export default {
       printing: "印刷中",
     },
   },
-};
+} satisfies typeof ZhMessages;

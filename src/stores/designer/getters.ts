@@ -52,7 +52,11 @@ export const getters = {
           contentHeight: canvasHeight,
         };
       }
-      return computeContinuousLayout(state.pages[0]?.elements || [], canvasHeight);
+      // 全页参与计算：元素 id 全局唯一，合并后按最大页高统一导出尺寸。
+      return computeContinuousLayout(state.pages, canvasHeight, {
+        canvasWidth: state.canvasSize.width,
+        pageSpacingX: state.pageSpacingX,
+      });
     },
 
     isTemplateEditable: (state: DesignerState) => {

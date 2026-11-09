@@ -18,6 +18,13 @@ import { useDesignerStore } from "@/stores/designer";
 import ColorPicker from "@/components/common/ColorPicker.vue";
 import PasswordInput from "@/components/common/PasswordInput.vue";
 import { parseColor, hsvToRgb, expandBrandVars } from "@/utils/color";
+import {
+  STORAGE_KEYS,
+  readStored,
+  readStoredJson,
+  writeStored,
+  writeStoredJson,
+} from "@/utils/storage";
 import X from "~icons/material-symbols/close";
 import SettingsIcon from "~icons/material-symbols/settings";
 import TranslateIcon from "~icons/material-symbols/translate";
@@ -156,7 +163,7 @@ const selectedLang = ref<LanguageCode>(
   normalizeLanguage(locale.value as string),
 );
 const selectedBrandKey = ref<string>(
-  localStorage.getItem("print-designer-brand-key") || "default",
+  readStored(STORAGE_KEYS.brandKey) || "default",
 );
 const customBrandHex = ref<string>(
   localStorage.getItem("print-designer-brand-custom-hex") || "#3b82f6",
@@ -356,7 +363,7 @@ const applyBrandVars = (vars: Record<string, string>) => {
 };
 
 const persistBrandVars = (vars: Record<string, string>) => {
-  localStorage.setItem("print-designer-brand-vars", JSON.stringify(vars));
+  writeStoredJson(STORAGE_KEYS.brandVars, vars);
 };
 
 const applyBrandPreset = (presetKey: string) => {
@@ -366,19 +373,16 @@ const applyBrandPreset = (presetKey: string) => {
   if (!preset.colors) return;
   applyBrandVars(preset.colors);
   persistBrandVars(preset.colors);
-  localStorage.setItem("print-designer-brand-key", preset.key);
+  writeStored(STORAGE_KEYS.brandKey, preset.key);
 };
 
 const loadStoredBrandVars = () => {
-  const stored = localStorage.getItem("print-designer-brand-vars");
-  if (!stored) return;
-  try {
-    const vars = JSON.parse(stored) as Record<string, string>;
-    if (vars && typeof vars === "object") {
-      applyBrandVars(vars);
-    }
-  } catch {
-    // Ignore invalid storage
+  const vars = readStoredJson<Record<string, string> | null>(
+    STORAGE_KEYS.brandVars,
+    null,
+  );
+  if (vars && typeof vars === "object") {
+    applyBrandVars(vars);
   }
 };
 
@@ -418,7 +422,7 @@ const handleRemoteConnection = async () => {
 
 watch(selectedLang, (val) => {
   locale.value = val;
-  localStorage.setItem("print-designer-language", val);
+  writeStored(STORAGE_KEYS.language, val);
 });
 
 watch(locale, (val) => {

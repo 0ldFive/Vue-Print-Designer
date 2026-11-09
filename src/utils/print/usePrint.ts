@@ -567,7 +567,7 @@ export const usePrint = () => {
       // 与 PDF 同口径：连续纸时页高取内容底边，图片与 PDF 共用同一条渲染路径。
       const { width, height } = resolveRenderCanvasSize(
         store.canvasSize,
-        store.pages[0]?.elements || [],
+        store.pages,
         store.continuousPaper,
       );
 
@@ -671,7 +671,7 @@ export const usePrint = () => {
       // 与 PDF 同口径：连续纸时页高取内容底边，图片与 PDF 共用同一条渲染路径。
       const { width, height } = resolveRenderCanvasSize(
         store.canvasSize,
-        store.pages[0]?.elements || [],
+        store.pages,
         store.continuousPaper,
       );
 

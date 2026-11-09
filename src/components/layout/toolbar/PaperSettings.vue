@@ -29,6 +29,11 @@ const store = useDesignerStore();
 const modalContainer = inject("modal-container", ref<HTMLElement | null>(null));
 
 const selectedPaper = ref<PaperSizeKey>("A4");
+
+// 连续纸仅支持单页模板：多页时禁止开启（已开启时仍允许关闭）。
+const isContinuousPaperLocked = computed(
+  () => store.pages.length > 1 && !store.continuousPaper,
+);
 const customWidth = ref(PAPER_SIZES.A4.width);
 const customHeight = ref(PAPER_SIZES.A4.height);
 const showPaperSettings = ref(false);
@@ -791,12 +796,21 @@ onUnmounted(() => {
           }}</span>
           <button
             @click="store.setContinuousPaper(!store.continuousPaper)"
-            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-            :class="
+            :disabled="isContinuousPaperLocked"
+            :title="
+              isContinuousPaperLocked
+                ? t('editor.continuousPaperSinglePageOnly')
+                : undefined
+            "
+            class="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            :class="[
               store.continuousPaper
                 ? 'bg-blue-600 dark:bg-blue-500'
-                : 'bg-gray-200 dark:bg-gray-700'
-            "
+                : 'bg-gray-200 dark:bg-gray-700',
+              isContinuousPaperLocked
+                ? 'opacity-40 cursor-not-allowed'
+                : 'cursor-pointer',
+            ]"
           >
             <span class="sr-only">Toggle continuous paper</span>
             <span

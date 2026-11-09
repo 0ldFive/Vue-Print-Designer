@@ -5,6 +5,7 @@ import "./style.css";
 import App from "./App.vue";
 import { useTheme } from "./composables/useTheme";
 import { expandBrandVars } from "./utils/color";
+import { STORAGE_KEYS, readStoredJson } from "./utils/storage";
 import { loader } from "@guolao/vue-monaco-editor";
 
 loader.config({
@@ -22,18 +23,15 @@ const app = createApp(App);
 useTheme();
 
 const applyStoredBrandVars = () => {
-  const stored = localStorage.getItem("print-designer-brand-vars");
-  if (!stored) return;
-  try {
-    const vars = JSON.parse(stored) as Record<string, string>;
-    if (!vars || typeof vars !== "object") return;
-    const root = document.documentElement;
-    Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
-    });
-  } catch {
-    // Ignore invalid storage
-  }
+  const vars = readStoredJson<Record<string, string> | null>(
+    STORAGE_KEYS.brandVars,
+    null,
+  );
+  if (!vars || typeof vars !== "object") return;
+  const root = document.documentElement;
+  Object.entries(expandBrandVars(vars)).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
 };
 
 applyStoredBrandVars();

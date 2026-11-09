@@ -39,6 +39,10 @@ import KeyboardArrowDown from "~icons/material-symbols/keyboard-arrow-down";
 import InputModal from "@/components/common/InputModal.vue";
 import CodeEditorModal from "@/components/common/CodeEditorModal.vue";
 import { buildTestDataFromPages } from "@/utils/variables";
+import {
+  TEMPLATE_DATA_KEYS,
+  serializeTemplateData,
+} from "@/utils/templateData";
 
 const { t } = useI18n();
 const templateStore = useTemplateStore();
@@ -589,25 +593,9 @@ const handleViewJson = async (template: Template) => {
   jsonTarget.value = detail || template;
   let targetData = jsonTarget.value.data;
   if (templateStore.currentTemplateId === jsonTarget.value.id) {
-    targetData = {
-      pages: JSON.parse(JSON.stringify(designerStore.pages)),
-      canvasSize: JSON.parse(JSON.stringify(designerStore.canvasSize)),
-      guides: JSON.parse(JSON.stringify(designerStore.guides)),
-      zoom: designerStore.zoom,
-      showGrid: designerStore.showGrid,
-      allowDragOutsideCanvas: designerStore.allowDragOutsideCanvas,
-      headerHeight: designerStore.headerHeight,
-      footerHeight: designerStore.footerHeight,
-      showHeaderLine: designerStore.showHeaderLine,
-      showFooterLine: designerStore.showFooterLine,
-      enableHeaderFooterLineRendering: designerStore.enableHeaderFooterLineRendering,
-      headerLineStyle: designerStore.headerLineStyle,
-      footerLineStyle: designerStore.footerLineStyle,
-      canvasBackground: designerStore.canvasBackground,
-      canvasBackgroundImage: JSON.parse(
-        JSON.stringify(designerStore.canvasBackgroundImage ?? null),
-      ),
-    };
+    // 字段清单统一由 serializeTemplateData 派生（单一来源），
+    // 与模版 JSON 对话框、模板保存保持一致；粘贴回填走 applyTemplateJsonToDesigner。
+    targetData = serializeTemplateData(designerStore);
   }
   jsonContent.value = JSON.stringify(targetData, null, 2);
   showJsonModal.value = true;
@@ -800,34 +788,8 @@ const handleTestDataSave = () => {
   showTestDataModal.value = false;
 };
 
-// 与 applyTemplateJsonToDesigner 实际支持的字段保持一致，仅用于拦截完全无关的 JSON。
-const DESIGN_JSON_KEYS = [
-  "pages",
-  "canvasSize",
-  "guides",
-  "zoom",
-  "showGrid",
-  "allowDragOutsideCanvas",
-  "headerHeight",
-  "footerHeight",
-  "showHeaderLine",
-  "showFooterLine",
-  "enableHeaderFooterLineRendering",
-  "headerLineStyle",
-  "footerLineStyle",
-  "headerLineColor",
-  "footerLineColor",
-  "headerLineWidth",
-  "footerLineWidth",
-  "headerLineSpanMode",
-  "footerLineSpanMode",
-  "headerLineSpan",
-  "footerLineSpan",
-  "showMinimap",
-  "showHistoryPanel",
-  "canvasBackground",
-  "canvasBackgroundImage",
-] as const;
+// 与序列化单一来源同源，仅用于拦截完全无关的 JSON。
+const DESIGN_JSON_KEYS = TEMPLATE_DATA_KEYS;
 
 const handleJsonSave = async () => {
   const target = jsonTarget.value;

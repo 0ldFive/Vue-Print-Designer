@@ -1,3 +1,5 @@
+import type ZhMessages from "./zh";
+
 export default {
   common: {
     save: "Save",
@@ -106,6 +108,8 @@ export default {
     showMarginLines: "Show Margin Lines",
     continuousPaper: "Continuous Paper",
     continuousPaperHint: "Label height grows with content; tables are no longer clipped by the element box",
+    continuousPaperSinglePageOnly: "Continuous paper supports single-page templates only",
+    continuousPaperAutoDisabled: "Continuous paper disabled: it only supports single-page templates",
     allowDragOutsideCanvas: "Allow Elements to Be Dragged Outside Canvas",
     showCornerMarkers: "Show Corner Markers",
     showGrid: "Show Grid",
@@ -709,6 +713,13 @@ export default {
     general: "General",
     editing: "Editing",
     manipulation: "Manipulation",
+    themeColor: "Theme Color",
+    themeColorDesc: "Pick a preset theme color and it applies instantly.",
+    themePresetDefault: "Blue",
+    themePresetEmerald: "Green",
+    themePresetAmber: "Orange",
+    themePresetRose: "Rose",
+    themePresetCustom: "Custom",
     newTemplate: "New Template",
     openSettings: "Open Settings",
     openHelp: "Open Help",
@@ -1008,4 +1019,4 @@ export default {
       printing: "Printing",
     },
   },
-};
+} satisfies typeof ZhMessages;
