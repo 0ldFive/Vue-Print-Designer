@@ -5,12 +5,12 @@
 <h1 align="center">Vue Print Designer</h1>
 
 <p align="center">
-  <b>可视化打印设计器  ·  标签 / 票据 / 表单全场景覆盖</b><br/>
-  <sub>模板化与变量化  ·  静默打印与云打印一体化  ·  多技术栈零依赖接入</sub>
+  <b>Visual Print Designer &nbsp;&middot;&nbsp; Labels / Receipts / Forms — All Covered</b><br/>
+  <sub>Templating and variables &nbsp;&middot;&nbsp; Silent print and cloud print in one &nbsp;&middot;&nbsp; Zero-dependency integration for any stack</sub>
 </p>
 
 <p align="center">
-  <kbd>标签</kbd> <kbd>票据</kbd> <kbd>表单</kbd> <kbd>快递单</kbd> <kbd>静默打印</kbd> <kbd>云打印</kbd> <kbd>RAW 直出</kbd>
+  <kbd>Labels</kbd> <kbd>Receipts</kbd> <kbd>Forms</kbd> <kbd>Waybills</kbd> <kbd>Silent Print</kbd> <kbd>Cloud Print</kbd> <kbd>RAW Output</kbd>
 </p>
 
 <p align="center">
@@ -26,268 +26,247 @@
 </p>
 
 <p align="center">
-  <a href="https://0ldfive.github.io/Vue-Print-Designer/"><b>在线演示</b></a>
-   · 
-  <a href="https://printdot.cc/docs"><b>使用文档</b></a>
-   · 
-  <a href="https://printdot.cc/client"><b>客户端下载</b></a>
-   · 
-  <a href="https://github.com/0ldFive/vue-designer-sample"><b>集成示例</b></a>
-   · 
-  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README_EN.md">English</a>
+  <a href="https://0ldfive.github.io/Vue-Print-Designer/"><b>Live Demo</b></a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/docs/en/guide/web-components-guide.md"><b>Docs</b></a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://printdot.cc/en/client"><b>Client Download</b></a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/vue-designer-sample"><b>Integration Example</b></a>
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Vue Print Designer 设计器主界面" width="100%" />
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.zh-CN.md">简体中文</a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.md">English</a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.zh-TW.md">繁體中文</a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.ja.md">日本語</a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.ko.md">한국어</a>
+  &nbsp;&middot;&nbsp;
+  <a href="https://github.com/0ldFive/Vue-Print-Designer/blob/master/README.de.md">Deutsch</a>
 </p>
-
-<p align="center"><sub>设计器主界面  ·  画布视图 / 属性面板 / 图层面板</sub></p>
-
-<table width="100%">
-  <tr>
-    <td align="center" width="20%"><b>首屏体积 −65%</b></td>
-    <td align="center" width="20%"><b>ES 包体积 300 KB</b></td>
-    <td align="center" width="20%"><b>单页渲染 80 ms</b></td>
-    <td align="center" width="20%"><b>内置语言 6 种</b></td>
-    <td align="center" width="20%"><b>标签指令集 4 种</b></td>
-  </tr>
-  <tr>
-    <td align="center" valign="top"><sub>移除 6 个第三方大包，首屏加载更轻</sub></td>
-    <td align="center" valign="top"><sub>Web Components 构建产物，接入成本更低</sub></td>
-    <td align="center" valign="top"><sub>自研渲染引擎，较旧版提速约 73%</sub></td>
-    <td align="center" valign="top"><sub>按浏览器环境自动适配，也可 API 手动设置</sub></td>
-    <td align="center" valign="top"><sub>支持 TSPL / ZPL / ESC-POS / CPCL</sub></td>
-  </tr>
-</table>
-
-<p align="center"><sub>拖拽排版  →  绑定变量  →  预览校验  →  浏览器 / 客户端 / 标签机输出</sub></p>
-
----
-
-## 一分钟了解
-
-<table width="100%">
-  <tr>
-    <td align="center" width="33%"><b>设计</b></td>
-    <td align="center" width="34%"><b>打印</b></td>
-    <td align="center" width="33%"><b>集成</b></td>
-  </tr>
-  <tr>
-    <td align="center" valign="top"><sub>拖拽完成排版，支持文本 / 图片 / 表格 / 条码 / 二维码 / 形状，内置标尺网格与对齐。</sub></td>
-    <td align="center" valign="top"><sub>浏览器原生打印、PDF 与图片导出、客户端静默 / 云打印、标签机 RAW 直出。</sub></td>
-    <td align="center" valign="top"><sub>基于 Web Components，零依赖适配 Vue / React / Angular 与原生 HTML，支持 Vue 2。</sub></td>
-  </tr>
-</table>
-
----
-
-## 社区交流
-
-欢迎加入 QQ 群，交流功能使用、二次开发与问题排查。QQ 群号：**1038069636**
 
 <p align="center">
-  <img src="./docs/images/qq_group.jpg" alt="Vue Print Designer QQ 群二维码（1038069636）" width="120" />
+  <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/1.png" alt="Vue Print Designer main view" width="80%" />
 </p>
+
+<p align="center"><sub>Designer main view &nbsp;&middot;&nbsp; canvas / property panel / layer panel</sub></p>
+
+<table width="100%">
+  <tr>
+    <td align="center" width="20%"><b>First-load −65%</b></td>
+    <td align="center" width="20%"><b>ES Bundle 300 KB</b></td>
+    <td align="center" width="20%"><b>Render 80 ms</b></td>
+    <td align="center" width="20%"><b>Languages 6</b></td>
+    <td align="center" width="20%"><b>Command Sets 4</b></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top"><sub>6 heavy third-party packages removed, lighter first load</sub></td>
+    <td align="center" valign="top"><sub>Built as Web Components, lower integration cost</sub></td>
+    <td align="center" valign="top"><sub>In-house rendering engine, about 73% faster per page</sub></td>
+    <td align="center" valign="top"><sub>Auto-detected from the browser, or set via API</sub></td>
+    <td align="center" valign="top"><sub>Supports TSPL / ZPL / ESC-POS / CPCL</sub></td>
+  </tr>
+</table>
+
+<p align="center"><sub>Drag &amp; drop &nbsp;→&nbsp; bind variables &nbsp;→&nbsp; preview &nbsp;→&nbsp; browser / client / label printer output</sub></p>
 
 ---
 
-## 核心能力
+## Core Features
+
+<p align="center"><b>AI Assistant · generate and edit templates in natural language</b><br/><sub>A built-in natural-language chat panel that generates invoice, delivery note, and waybill templates from a description, with multi-turn edits and image reference input; results appear as a change preview before you apply them to the canvas in one click. Works with OpenAI-compatible endpoints, including self-hosted or third-party model services, with multi-model profiles and advanced sampling parameters.</sub></p>
 
 <table width="100%">
   <tr>
-    <td colspan="3" align="center"><b>AI 助手 · 用自然语言直接生成与修改模板</b><br/><sub>内置自然语言对话面板，描述需求即可生成发票、发货单、面单等模板，支持多轮修改与图片参考输入；生成结果先以变更预览呈现，确认后一键应用到画布。兼容 OpenAI 协议接口，可接入自建或第三方模型服务，支持多模型配置与高级采样参数。</sub></td>
+    <td align="center" width="33%"><b>Visual Design</b></td>
+    <td align="center" width="34%"><b>Smart Pagination</b></td>
+    <td align="center" width="33%"><b>Cross-Framework</b></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><b>可视化设计</b></td>
-    <td align="center" width="34%"><b>智能分页</b></td>
-    <td align="center" width="33%"><b>跨框架支持</b></td>
+    <td align="center" valign="top"><sub>Drag-and-drop layout with rulers, grids and alignment for text, images, tables, barcodes, QR codes and shapes — no more eyeballing element positions.</sub></td>
+    <td align="center" valign="top"><sub>Handles long table pagination automatically with header/footer repetition — no complex manual logic, WYSIWYG.</sub></td>
+    <td align="center" valign="top"><sub>Web Components based, zero-dependency with Vue / React / Angular / native HTML, and supports Vue 2.</sub></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>拖拽完成排版，标尺、网格与辅助对齐让版式对齐不再靠目测。</sub></td>
-    <td align="center" valign="top"><sub>自动处理长表格分页，表头 / 表尾可重复，无需手写复杂逻辑，所见即所得。</sub></td>
-    <td align="center" valign="top"><sub>Web Components 封装，Vue / React / Angular / 原生 HTML 均可直接嵌入。</sub></td>
+    <td align="center" width="33%"><b>Enterprise Ready</b></td>
+    <td align="center" width="34%"><b>Print &amp; Labels</b></td>
+    <td align="center" width="33%"><b>i18n</b></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><b>企业级功能</b></td>
-    <td align="center" width="34%"><b>标签打印</b></td>
-    <td align="center" width="33%"><b>国际化</b></td>
-  </tr>
-  <tr>
-    <td align="center" valign="top"><sub>自定义纸张、API 数据对接、模板导入导出，打印机 / 份数 / 单双面 / DPI 可控。</sub></td>
-    <td align="center" valign="top"><sub>模板直接转标签机原生指令，经系统打印队列 RAW 直出，条码与二维码保持矢量锐度。</sub></td>
-    <td align="center" valign="top"><sub>中文简繁、英、日、韩、德 6 种语言，按浏览器环境自动检测，也可通过 API 手动设置。</sub></td>
+    <td align="center" valign="top"><sub>Custom paper sizes, API data integration, template import/export, and printer / copies / duplex / DPI controls.</sub></td>
+    <td align="center" valign="top"><sub>Browser print, PDF / image export, silent / cloud print, plus native label commands sent as RAW through the system print queue, keeping barcodes and QR codes vector-sharp.</sub></td>
+    <td align="center" valign="top"><sub>Simplified / Traditional Chinese, English, Japanese, Korean and German — auto-detected from the browser or set via API.</sub></td>
   </tr>
 </table>
 
-## 界面预览
+## UI Preview
 
 <table width="100%">
   <tr>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png?v=2" alt="AI 助手对话面板" width="100%" /></td>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png?v=2" alt="模板市场" width="100%" /></td>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/3.png?v=2" alt="AI assistant panel" width="100%" /></td>
+    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/6.png?v=2" alt="Template market" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>AI 助手 · 自然语言生成模板</b></td>
-    <td align="center"><b>模板市场</b></td>
+    <td align="center"><b>AI assistant &#183; template generation in natural language</b></td>
+    <td align="center"><b>Template market</b></td>
   </tr>
 </table>
 
 <table width="100%">
   <tr>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png?v=2" alt="AI 模型配置" width="100%" /></td>
-    <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="快捷键说明" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="打印预览" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/4.png" alt="AI model configuration" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/5.png" alt="Shortcut reference" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2.png" alt="Print preview" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/qq_group.jpg" alt="Vue Print Designer QQ Group QR Code (1038069636)" width="96" /></td>
   </tr>
   <tr>
-    <td align="center"><b>AI 助手 · 模型接入配置</b></td>
-    <td align="center"><b>快捷键说明</b></td>
-    <td align="center"><b>打印预览</b></td>
+    <td align="center"><b>AI assistant &#183; model endpoint setup</b></td>
+    <td align="center"><b>Shortcut reference</b></td>
+    <td align="center"><b>Print preview</b></td>
+    <td align="center"><b>Community &middot; QQ Group 1038069636</b></td>
   </tr>
 </table>
 
-## 打印与导出
+## Print &amp; Export
 
 <table width="100%" style="width: 100%;">
   <tr>
-    <td align="center" width="25%" style="width: 25%;"><b>浏览器打印</b></td>
-    <td align="center" width="25%" style="width: 25%;"><b>导出</b></td>
-    <td align="center" width="25%" style="width: 25%;"><b>静默 / 云打印</b></td>
-    <td align="center" width="25%" style="width: 25%;"><b>标签 RAW 直出</b></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Browser Print</b></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Export</b></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Silent / Cloud Print</b></td>
+    <td align="center" width="25%" style="width: 25%;"><b>Label RAW Output</b></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><sub>原生预览与打印，支持打印机 / 份数 / 单双面 / DPI 参数控制</sub></td>
-    <td align="center" valign="top"><sub>生成 PDF、图片（拼接 / 分片）、HTML 与 Blob，可自定义文件名</sub></td>
-    <td align="center" valign="top"><sub>静默打印无弹窗直打，云打印远程任务下发，由本地客户端执行</sub></td>
-    <td align="center" valign="top"><sub>模板转原生指令，经系统打印队列 RAW 直出，支持批量与连续纸</sub></td>
+    <td align="center" valign="top"><sub>Native preview and print, with printer / copies / duplex / DPI controls</sub></td>
+    <td align="center" valign="top"><sub>Generate PDF, images (merge / split), HTML and Blob with custom filenames</sub></td>
+    <td align="center" valign="top"><sub>Silent print without dialogs, cloud print with remote task dispatch, run by the local client</sub></td>
+    <td align="center" valign="top"><sub>Templates to native commands, sent as RAW through the system queue, batch and continuous paper</sub></td>
   </tr>
 </table>
 
-## 配套打印客户端（PrintDot Client）
+## Companion Print Client (PrintDot Client)
 
-PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印机并执行静默打印任务。安装后，即可在浏览器中直接发起打印而无需弹窗确认。它提供服务控制、连接配置、打印记录、版本更新与打印预览等功能，帮助你在本地快速完成打印闭环。
+PrintDot Client is the companion desktop app for this project. It connects to your local printers and handles silent print jobs, so you can print straight from the browser without any pop-up dialogs. It provides service control, connection settings, print history, update notifications, and print preview to help you complete the local print workflow.
 
-- **支持平台**：Windows / macOS / Linux
-- **关键能力**：自动发现并识别设备、稳定连接维护与转发队列、轻量后台运行、打印任务记录与版本更新提示
-- **下载地址**：[https://printdot.cc/client](https://printdot.cc/client)
+- **Platforms**: Windows / macOS / Linux
+- **Key capabilities**: Automatic device discovery, stable connection &amp; forwarding queue, lightweight background mode, print job history and update notifications
+- **Download**: [https://printdot.cc/en/client](https://printdot.cc/en/client)
 
 <table width="100%">
   <tr>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot 主界面" width="100%" /></td>
-    <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 设置页面" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 版本更新" width="100%" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot print preview" height="110" /></td>
   </tr>
   <tr>
-    <td align="center"><b>主界面 · 服务控制与可用打印机</b></td>
-    <td align="center"><b>设置 · 云打印中转与连接配置</b></td>
-    <td align="center"><b>版本更新 · 一键检测最新客户端</b></td>
+    <td align="center"><b>Main view &#183; service control and available printers</b></td>
+    <td align="center"><b>Settings &#183; cloud relay and connection config</b></td>
+    <td align="center"><b>Update notification &#183; check for latest client</b></td>
+    <td align="center"><b>Job history &#183; task status and retry</b></td>
+    <td align="center"><b>Print preview &#183; real-time preview in local client</b></td>
   </tr>
 </table>
+
+### Label Printing (Native RAW Commands)
+
+Thermal and thermal-transfer label printers (TSC, Gprinter, Zebra, HPRT, Deli, Xprinter and others) are command-driven: a PDF can only be rasterized page by page, meaning slower output, lower barcode scan rates and misalignment on custom paper. The client adds a dedicated label path that parses the template JSON, generates native commands, and writes them as RAW to the system print queue.
 
 <table width="100%">
   <tr>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot 打印记录" width="100%" /></td>
-    <td align="center" width="50%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 打印预览" width="100%" /></td>
+    <td align="center" width="20%"><b>Four command languages</b></td>
+    <td align="center" width="20%"><b>Faithful element rendering</b></td>
+    <td align="center" width="20%"><b>Controllable print options</b></td>
+    <td align="center" width="20%"><b>Batch and multi-page</b></td>
+    <td align="center" width="20%"><b>Print history</b></td>
   </tr>
   <tr>
-    <td align="center"><b>打印记录 · 任务状态与重试</b></td>
-    <td align="center"><b>打印预览 · 本地客户端实时预览</b></td>
+    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL, inferred from printer and driver names by default, or set explicitly when detection fails.</sub></td>
+    <td align="center" valign="top"><sub>Text, barcodes, QR codes, tables (merged cells, headers / footers), images (dithered black and white), shapes and rotation.</sub></td>
+    <td align="center" valign="top"><sub>Label width and height (height 0 for continuous paper), DPI, speed, density, gap / black mark / offset, bitmaps or built-in fonts.</sub></td>
+    <td align="center" valign="top"><sub>One page per label; <code>labels[]</code> submits a whole batch with per-record copy counts and an optional interval.</sub></td>
+    <td align="center" valign="top"><sub>Every label job is recorded in the client history with printer, copies, status and time, and failed jobs can be retried.</sub></td>
   </tr>
 </table>
 
-### 标签打印（RAW 指令直出）
+#### Two entry points
 
-热敏 / 热转印标签机（TSC、佳博、斑马、汉印、得力、芯烨等）是指令集打印机，用 PDF 只能整页栅格化：出标慢、条码识别率下降、自定义纸张易错位。客户端提供独立的标签通道：解析模板 JSON 生成原生指令，以 RAW 投递到系统打印队列，驱动原样透传。
+- Send a `print_label` message and forward the template JSON exported by the designer as-is, with no extra processing;
+- Tick "Label printing" in the client's print preview window to print locally (the designer's preview mode must be JSON). When a label printer is selected, the command language is detected and enabled automatically, and the result can always be overridden.
 
-<table width="100%">
-  <tr>
-    <td align="center" width="20%"><b>四种指令集</b></td>
-    <td align="center" width="20%"><b>元素完整还原</b></td>
-    <td align="center" width="20%"><b>打印参数可控</b></td>
-    <td align="center" width="20%"><b>批量与多页</b></td>
-    <td align="center" width="20%"><b>打印记录</b></td>
-  </tr>
-  <tr>
-    <td align="center" valign="top"><sub>TSPL / ZPL / ESC-POS / CPCL，默认按打印机名与驱动名自动推断，识别不到时可显式指定。</sub></td>
-    <td align="center" valign="top"><sub>文本、条码、二维码、表格（合并、表头表尾）、图片（抖动黑白）、图形与旋转。</sub></td>
-    <td align="center" valign="top"><sub>标签纸宽高（高度 0 为连续纸）、DPI、速度、浓度、间隙 / 黑标 / 偏移、位图或机内字库。</sub></td>
-    <td align="center" valign="top"><sub>模板一页即一张标签；<code>labels[]</code> 可整批提交，每条独立设置份数，标签间可配间隔。</sub></td>
-    <td align="center" valign="top"><sub>每次标签打印都会记入客户端打印记录，可查看打印机、份数、状态与时间，失败任务可重试。</sub></td>
-  </tr>
-</table>
+#### Rendering Consistency Comparison
 
-#### 两条使用路径
-
-- 业务端发送 `print_label` 消息，把设计器导出的模板 JSON 原样转发即可，无需二次加工；
-- 在客户端打印预览窗口勾选「标签打印」即可本地出标（需设计器预览模式为 JSON）；选中标签机时会自动识别指令集并勾选，识别结果可随时手动推翻。
-
-#### 打印效果一致性比对
-
-下图为同一张 60 × 40 mm 仓库标签的三种呈现：设计器导出的原始效果、Zebra 官方 Labelary 服务按 ZPL 指令解析出的固件模拟结果，以及客户端本地按同一批指令重绘的结果。右下角将三者分别以红、黄、蓝三层叠加，重合区域呈深紫灰，可据此检查文本位置、字号与条码模块是否对齐。
+The images below show the same 60 × 40 mm warehouse label in three forms: the original output exported from the designer, the firmware simulation produced by Zebra's official Labelary service from the ZPL commands, and the client's local redraw of the same commands. The bottom-right pane overlays all three in red, yellow and blue, so overlapping areas appear deep purple-grey and positions, font sizes and barcode modules can be checked for alignment.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-comparison.png" alt="标签打印三路对比" width="72%" />
+  <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-comparison.png" alt="Label printing three-way comparison" width="45%" />
 </p>
 
-<p align="center"><b>四路对照：设计器原图 / 厂商 API 模拟 / 客户端指令渲染 / 三方叠加</b></p>
+<p align="center"><b>Four panes: designer output / vendor API simulation / client command rendering / three-way overlay</b></p>
 
 <table width="100%">
   <tr>
-    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-designer.png" alt="设计器原图" width="100%" /></td>
-    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-api.png" alt="厂商 API 模拟" width="100%" /></td>
-    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-local.png" alt="客户端指令渲染" width="100%" /></td>
-    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-overlay.png" alt="三方叠加" width="100%" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-designer.png" alt="Designer output" height="130" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-api.png" alt="Vendor API simulation" height="130" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-local.png" alt="Client command rendering" height="130" /></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/label-compare-overlay.png" alt="Three-way overlay" height="130" /></td>
   </tr>
   <tr>
-    <td align="center"><b>设计器原图</b></td>
-    <td align="center"><b>厂商 API 模拟</b></td>
-    <td align="center"><b>客户端指令渲染</b></td>
-    <td align="center"><b>三方叠加（diff）</b></td>
+    <td align="center"><b>Designer output</b></td>
+    <td align="center"><b>Vendor API simulation</b></td>
+    <td align="center"><b>Client command rendering</b></td>
+    <td align="center"><b>Three-way overlay (diff)</b></td>
   </tr>
 </table>
 
-> 说明：标签纸只能打印黑白，彩色图片会自动转成黑白效果。页码、水印、渐变和阴影在标签上不会显示。使用 ESC/POS 指令集的打印机需支持 page mode。文字排版在不同电脑上保持一致，位置误差不超过 0.06 mm（203 dpi 下）。
+> Note: Label paper prints in black and white only, so colour images are converted automatically. Page numbers, watermarks, gradients and shadows are not printed on labels. ESC/POS printers need to support page mode. Text layout stays consistent across computers, with a position error of no more than 0.06 mm at 203 dpi.
 
 ---
 
-## 集成示例
+## Integration Example
 
-基于 **Vue 3 + Element Plus** 的完整集成示例，演示如何在实际业务系统中嵌入打印设计器。
+A complete integration example based on **Vue 3 + Element Plus**, demonstrating how to embed the print designer into a real-world business application.
 
 <table width="100%">
   <tr>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/11.png" alt="参数调试" width="100%" /></td>
-    <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/12.png" alt="设计器" width="100%" /></td>
-    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/13.png" alt="暗色模式" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/11.png" alt="Parameter debugging" width="100%" /></td>
+    <td align="center" width="34%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/12.png" alt="Designer" width="100%" /></td>
+    <td align="center" width="33%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/13.png" alt="Dark mode" width="100%" /></td>
   </tr>
   <tr>
-    <td align="center"><b>参数调试</b></td>
-    <td align="center"><b>设计器</b></td>
-    <td align="center"><b>暗色模式</b></td>
+    <td align="center"><b>Parameter Debugging</b></td>
+    <td align="center"><b>Designer</b></td>
+    <td align="center"><b>Dark Mode</b></td>
   </tr>
 </table>
 
-- **项目地址**：[https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
-- **在线演示**：[https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
-- **技术栈**：Vue 3, TypeScript, Element Plus, Vite
+- **Repository**: [https://github.com/0ldFive/vue-designer-sample](https://github.com/0ldFive/vue-designer-sample)
+- **Live Demo**: [https://0ldfive.github.io/vue-designer-sample/#/designer](https://0ldfive.github.io/vue-designer-sample/#/designer)
+- **Tech Stack**: Vue 3, TypeScript, Element Plus, Vite
 
-## 快速开始
+## Quick Start
 
-### 方式一：npm 组件（Web Components）
+### Option A: npm Package (Web Components) [Learn Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 
-适合任何技术栈（Vue / React / Angular / 原生）。Web Components 方式**支持 Vue 2**（作为自定义元素使用），无需 Vue 2 组件适配。详细参数、CRUD 与 JSON 示例请查看：[Web Components API 用户手册](https://printdot.cc/docs)。
+Works with any stack (Vue / React / Angular / Vanilla). Web Components **supports Vue 2** as a custom element — no Vue 2 component adapter required. Parameters, CRUD, and JSON examples: [Web Components API Guide](https://github.com/0ldFive/Vue-Print-Designer/blob/master/docs/en/guide/web-components-guide.md).
 
 ```bash
 npm i vue-print-designer
-# 或
+# or
 pnpm add vue-print-designer
-# 或
+# or
 yarn add vue-print-designer
 ```
 
 <details>
-<summary><b>展开：Vue 3 / Vite 接入示例</b>（引入 · 初始化 · 打印导出 · 事件监听）</summary>
+<summary><b>Expand: Vue 3 / Vite integration example</b> (import · init · print / export · events)</summary>
 
-**1) 在 Vue 3 / Vite 中使用**
+**1) Use in Vue 3 / Vite**
 
 ```ts
 // main.ts
@@ -301,18 +280,18 @@ import "vue-print-designer/style.css";
 </template>
 ```
 
-**2) 初始化与调用分离（Vue 3 选项式 API）**
+**2) Separate init from usage (Vue 3 Options API)**
 
-设计器页面（初始化与编辑）：
+Designer page (init and editing):
 
 ```vue
 <script lang="ts">
 export default {
   mounted() {
     const el = this.$refs.designerRef as any;
-    el.setBranding({ title: "业务打印设计器", showLogo: true });
+    el.setBranding({ title: "Business Print Designer", showLogo: true });
     el.setTheme("light");
-    el.loadTemplateData(/* 从你的 API 获取的数据 */);
+    el.loadTemplateData(/* data from your API */);
     el.setVariables({ orderNo: "A001" }, { merge: true });
   },
 };
@@ -323,21 +302,21 @@ export default {
 </template>
 ```
 
-业务页面（打印 / 导出调用）：
+Business pages (print / export anywhere):
 
 ```ts
 const el = document.querySelector("print-designer") as any;
 
-// 打印
+// Print
 await el.print({ mode: "browser" });
 
-// 导出 PDF / 图片 / HTML / Blob
+// Export PDF / image / HTML / Blob
 await el.export({ type: "pdf", filename: "order-20240223.pdf" });
 await el.export({ type: "html", filename: "order-20240223.html" });
 const pdfBlob = await el.export({ type: "pdfBlob" });
 ```
 
-**3) 事件监听**
+**3) Event listeners**
 
 ```ts
 el.addEventListener("ready", () => {});
@@ -352,27 +331,27 @@ el.addEventListener("error", (e) => {
 
 </details>
 
-### 方式二：下载源码自行改造与集成 API
+### Option B: Build from Source and Integrate Your API
 
-适合有深度定制需求的团队。环境要求：
+Best for teams with deep customization requirements. Requirements:
 
 - Node.js >= 16.0.0
-- npm >= 7.0.0 或 yarn / pnpm
+- npm >= 7.0.0 or yarn / pnpm
 
-建议接入点：
+Recommended integration points:
 
-- 模板 CRUD：`useTemplateStore`（可替换为接口读写）
-- 自定义元素 CRUD：`useDesignerStore` 中的 `customElements`
-- 变量与模板数据：组件实例方法 `setVariables` / `loadTemplateData`
+- Template CRUD: `useTemplateStore` (replace with your API)
+- Custom elements CRUD: `customElements` in `useDesignerStore`
+- Variables and template data: instance methods `setVariables` / `loadTemplateData`
 
-自定义元素扩展请查看：[自定义元素扩展指南](https://printdot.cc/docs)。
+Custom element extension guide: [custom-element.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/docs/en/guide/custom-element.md).
 
-## 国际化
+## i18n
 
-项目内置 6 种语言，默认根据浏览器语言自动检测，也可通过 API 手动设置：
+Built-in support for 6 languages, automatically detected from the browser language by default and also configurable via API:
 
 <p align="center">
-  <kbd>中文简体 zh</kbd> <kbd>中文繁体 zh-Hant</kbd> <kbd>English en</kbd> <kbd>日本語 ja</kbd> <kbd>한국어 ko</kbd> <kbd>Deutsch de</kbd>
+  <kbd>Simplified Chinese zh</kbd> <kbd>Traditional Chinese zh-Hant</kbd> <kbd>English en</kbd> <kbd>Japanese ja</kbd> <kbd>Korean ko</kbd> <kbd>German de</kbd>
 </p>
 
 ---
@@ -381,4 +360,4 @@ el.addEventListener("error", (e) => {
 
 AGPL-3.0-only
 
-品牌与 Logo 使用请遵循 [TRADEMARKS.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/TRADEMARKS.md)。如需移除或替换品牌标识，请参考 [COMMERCIAL_LICENSE.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/COMMERCIAL_LICENSE.md)。
+Please follow [TRADEMARKS.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/TRADEMARKS.md) for brand and logo usage. For removing or replacing branding, see [COMMERCIAL_LICENSE.md](https://github.com/0ldFive/Vue-Print-Designer/blob/master/COMMERCIAL_LICENSE.md).

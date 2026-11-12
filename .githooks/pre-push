@@ -1,0 +1,4 @@
+#!/bin/sh
+# 推送前校验 README 的中英文件结构：README.md 必须为英文，README.zh-CN.md 必须为中文。
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+node "$ROOT/scripts/check-readme.cjs" || exit 1
