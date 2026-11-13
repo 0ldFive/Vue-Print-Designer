@@ -1,10 +1,12 @@
-﻿<h1 align="center">
-  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
-  Vue Print Designer
-</h1>
+﻿<table align="center" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td valign="middle"><img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52"></td>
+    <td valign="middle"><h1 style="margin:0;border-bottom:none;padding:0;">&nbsp;Vue Print Designer</h1></td>
+  </tr>
+</table>
 
 <p align="center">
-  <img src="docs/images/banner-en.gif" alt="Web Print Control" width="100%" />
+  <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/banner-en.gif" alt="Web Print Control" width="100%" />
 </p>
 
 <p align="center">
