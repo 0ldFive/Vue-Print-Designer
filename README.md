@@ -1,9 +1,4 @@
-﻿<table align="center" border="0" cellspacing="0" cellpadding="0">
-  <tr>
-    <td valign="middle"><img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52"></td>
-    <td valign="middle"><h1 style="margin:0;border-bottom:none;padding:0;">&nbsp;Vue Print Designer</h1></td>
-  </tr>
-</table>
+﻿<h1 align="center">Vue Print Designer</h1>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/banner-en.gif" alt="Web Print Control" width="100%" />
