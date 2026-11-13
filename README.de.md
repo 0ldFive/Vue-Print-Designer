@@ -1,16 +1,15 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/src/assets/logo.png" alt="Vue Print Designer" width="72" height="72" />
-</p>
+﻿<h1 align="center">
+  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
+  Vue Print Designer
+</h1>
 
-<h1 align="center">Vue Print Designer</h1>
+<p align="center">
+  <img src="docs/images/banner-de.gif" alt="Web-Drucksteuerung" width="100%" />
+</p>
 
 <p align="center">
   <b>Visueller Druckdesigner &nbsp;&middot;&nbsp; Etiketten / Belege / Formulare — alles abgedeckt</b><br/>
   <sub>Vorlagen und Variablen &nbsp;&middot;&nbsp; Stilles Drucken und Cloud-Druck in einem &nbsp;&middot;&nbsp; Zero-Dependency-Integration für jeden Stack</sub>
-</p>
-
-<p align="center">
-  <kbd>Etiketten</kbd> <kbd>Belege</kbd> <kbd>Formulare</kbd> <kbd>Frachtbriefe</kbd> <kbd>Stilles Drucken</kbd> <kbd>Cloud-Druck</kbd> <kbd>RAW-Ausgabe</kbd>
 </p>
 
 <p align="center">
@@ -158,11 +157,11 @@ PrintDot Client ist die begleitende Desktop-App zu diesem Projekt. Sie verbindet
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot Hauptansicht" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot Einstellungen" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot Update-Hinweis" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot Auftragsverlauf" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot Druckvorschau" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot Hauptansicht" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot Einstellungen" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot Update-Hinweis" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot Auftragsverlauf" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot Druckvorschau" height="92" /></td>
   </tr>
   <tr>
     <td align="center"><b>Hauptansicht &#183; Dienststeuerung und verfügbare Drucker</b></td>

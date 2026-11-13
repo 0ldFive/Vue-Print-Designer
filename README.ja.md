@@ -1,16 +1,15 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/src/assets/logo.png" alt="Vue Print Designer" width="72" height="72" />
-</p>
+﻿<h1 align="center">
+  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
+  Vue Print Designer
+</h1>
 
-<h1 align="center">Vue Print Designer</h1>
+<p align="center">
+  <img src="docs/images/banner-ja.gif" alt="Web 印刷コントロール" width="100%" />
+</p>
 
 <p align="center">
   <b>ビジュアル印刷デザイナー &nbsp;&middot;&nbsp; ラベル / レシート / フォームをすべてカバー</b><br/>
   <sub>テンプレートと変数 &nbsp;&middot;&nbsp; サイレント印刷とクラウド印刷を一体化 &nbsp;&middot;&nbsp; あらゆる技術スタックにゼロ依存で組み込み</sub>
-</p>
-
-<p align="center">
-  <kbd>ラベル</kbd> <kbd>レシート</kbd> <kbd>フォーム</kbd> <kbd>送り状</kbd> <kbd>サイレント印刷</kbd> <kbd>クラウド印刷</kbd> <kbd>RAW 出力</kbd>
 </p>
 
 <p align="center">
@@ -158,11 +157,11 @@ PrintDot Client は本プロジェクトのデスクトップクライアント�
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot メイン画面" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 設定画面" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 更新通知" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot ジョブ履歴" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 印刷プレビュー" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot メイン画面" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 設定画面" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 更新通知" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot ジョブ履歴" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 印刷プレビュー" height="92" /></td>
   </tr>
   <tr>
     <td align="center"><b>メイン画面 &#183; サービス制御と利用可能なプリンター</b></td>

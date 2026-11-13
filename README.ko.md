@@ -1,16 +1,15 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/src/assets/logo.png" alt="Vue Print Designer" width="72" height="72" />
-</p>
+﻿<h1 align="center">
+  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
+  Vue Print Designer
+</h1>
 
-<h1 align="center">Vue Print Designer</h1>
+<p align="center">
+  <img src="docs/images/banner-ko.gif" alt="웹 인쇄 컨트롤" width="100%" />
+</p>
 
 <p align="center">
   <b>비주얼 인쇄 디자이너 &nbsp;&middot;&nbsp; 라벨 / 영수증 / 양식 전부 지원</b><br/>
   <sub>템플릿과 변수 &nbsp;&middot;&nbsp; 무음 인쇄와 클라우드 인쇄 일체화 &nbsp;&middot;&nbsp; 모든 기술 스택에 제로 의존성 연동</sub>
-</p>
-
-<p align="center">
-  <kbd>라벨</kbd> <kbd>영수증</kbd> <kbd>양식</kbd> <kbd>운송장</kbd> <kbd>무음 인쇄</kbd> <kbd>클라우드 인쇄</kbd> <kbd>RAW 출력</kbd>
 </p>
 
 <p align="center">
@@ -158,11 +157,11 @@ PrintDot Client 는 이 프로젝트의 데스크톱 클라이언트입니다. �
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot 메인 화면" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 설정 화면" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 업데이트 알림" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot 작업 기록" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 인쇄 미리보기" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot 메인 화면" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 설정 화면" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 업데이트 알림" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot 작업 기록" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 인쇄 미리보기" height="92" /></td>
   </tr>
   <tr>
     <td align="center"><b>메인 화면 &#183; 서비스 제어와 사용 가능한 프린터</b></td>

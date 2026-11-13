@@ -1,16 +1,15 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/src/assets/logo.png" alt="Vue Print Designer" width="72" height="72" />
-</p>
+﻿<h1 align="center">
+  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
+  Vue Print Designer
+</h1>
 
-<h1 align="center">Vue Print Designer</h1>
+<p align="center">
+  <img src="docs/images/banner-en.gif" alt="Web Print Control" width="100%" />
+</p>
 
 <p align="center">
   <b>Visual Print Designer &nbsp;&middot;&nbsp; Labels / Receipts / Forms — All Covered</b><br/>
   <sub>Templating and variables &nbsp;&middot;&nbsp; Silent print and cloud print in one &nbsp;&middot;&nbsp; Zero-dependency integration for any stack</sub>
-</p>
-
-<p align="center">
-  <kbd>Labels</kbd> <kbd>Receipts</kbd> <kbd>Forms</kbd> <kbd>Waybills</kbd> <kbd>Silent Print</kbd> <kbd>Cloud Print</kbd> <kbd>RAW Output</kbd>
 </p>
 
 <p align="center">
@@ -158,11 +157,11 @@ PrintDot Client is the companion desktop app for this project. It connects to yo
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot print preview" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot main view" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot settings" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot update notification" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot job history" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot print preview" height="92" /></td>
   </tr>
   <tr>
     <td align="center"><b>Main view &#183; service control and available printers</b></td>

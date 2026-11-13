@@ -1,0 +1,218 @@
+﻿[
+  {
+    "lang": "zh-CN",
+    "font": "Microsoft YaHei",
+    "title": "网页打印控件",
+    "subtitle": "打印模板设计器 · 一次接入，静默出纸",
+    "quote": "好的设计是尽可能少的设计，少一点，但更好。",
+    "quoteBy": "—— 迪特·拉姆斯《设计十诫》",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "AI 助手 · 一句话生成模板",
+      "可视化拖拽 · 文本 / 表格 / 条码",
+      "智能分页 · 表头表尾自动重复",
+      "静默打印 · 云打印 · RAW 直出"
+    ]
+  },
+  {
+    "lang": "zh-TW",
+    "font": "Microsoft JhengHei",
+    "title": "網頁列印控件",
+    "subtitle": "列印模板設計器 · 一次接入，靜默出紙",
+    "quote": "好的設計是盡可能少的設計，少一點，但更好。",
+    "quoteBy": "—— 迪特·拉姆斯《設計十誡》",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "AI 助手 · 一句話生成模板",
+      "可視化拖曳 · 文字 / 表格 / 條碼",
+      "智慧分頁 · 表頭表尾自動重複",
+      "靜默列印 · 雲端列印 · RAW 直出"
+    ]
+  },
+  {
+    "lang": "en",
+    "font": "Segoe UI",
+    "title": "Web Print Control",
+    "subtitle": "Print template designer · silent printing",
+    "quote": "Good design is as little design as possible – less, but better.",
+    "quoteBy": "— Dieter Rams, Ten Principles of Good Design",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "AI assistant · templates from a prompt",
+      "Drag & drop · text, table, barcode",
+      "Smart pagination · repeating headers",
+      "Silent & cloud print · RAW output"
+    ]
+  },
+  {
+    "lang": "ja",
+    "font": "Yu Gothic UI",
+    "title": "Web 印刷コントロール",
+    "subtitle": "テンプレートデザイナー · 一度の組み込みで静かに出力",
+    "quote": "良いデザインは可能な限り少ない。より少なく、しかしより良く。",
+    "quoteBy": "— ディーター・ラムス『良いデザインの10原則』",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "AI アシスタント · 文章からテンプレート生成",
+      "ドラッグ＆ドロップ · テキスト / 表 / バーコード",
+      "スマート改ページ · 見出しの自動繰り返し",
+      "サイレント / クラウド印刷 · RAW 出力"
+    ]
+  },
+  {
+    "lang": "ko",
+    "font": "Malgun Gothic",
+    "title": "웹 인쇄 컨트롤",
+    "subtitle": "템플릿 디자이너 · 한 번 연동하고 조용히 출력",
+    "quote": "좋은 디자인은 가능한 한 적은 디자인이다. 더 적게, 그러나 더 좋게.",
+    "quoteBy": "— 디터 람스, 『좋은 디자인의 10원칙』",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "AI 어시스턴트 · 문장으로 템플릿 생성",
+      "드래그 앤 드롭 · 텍스트 / 표 / 바코드",
+      "스마트 페이지 분할 · 머리글 자동 반복",
+      "무음 / 클라우드 인쇄 · RAW 출력"
+    ]
+  },
+  {
+    "lang": "de",
+    "font": "Segoe UI",
+    "title": "Web-Drucksteuerung",
+    "subtitle": "Vorlagen-Designer · einmal einbinden, still drucken",
+    "quote": "Gutes Design ist so wenig Design wie möglich – weniger, aber besser.",
+    "quoteBy": "— Dieter Rams, Zehn Prinzipien guten Designs",
+    "tags": [
+      {
+        "label": "Vue 2",
+        "icon": "vue"
+      },
+      {
+        "label": "Vue 3",
+        "icon": "vue"
+      },
+      {
+        "label": "React",
+        "icon": "react"
+      },
+      {
+        "label": "Angular",
+        "icon": "angular"
+      },
+      {
+        "label": "HTML",
+        "icon": "html5"
+      }
+    ],
+    "features": [
+      "KI-Assistent · Vorlagen aus Text",
+      "Drag & Drop · Text, Tabelle, Barcode",
+      "Intelligente Umbrüche · Kopfzeilen",
+      "Stiller & Cloud-Druck · RAW-Ausgabe"
+    ]
+  }
+]

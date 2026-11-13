@@ -1,16 +1,15 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/src/assets/logo.png" alt="Vue Print Designer" width="72" height="72" />
-</p>
+﻿<h1 align="center">
+  <img src="src/assets/logo.png" alt="Vue Print Designer" width="52" height="52" style="vertical-align: middle; margin-right: 10px;" />
+  Vue Print Designer
+</h1>
 
-<h1 align="center">Vue Print Designer</h1>
+<p align="center">
+  <img src="docs/images/banner-zh-CN.gif" alt="网页打印控件" width="100%" />
+</p>
 
 <p align="center">
   <b>可视化打印设计器  ·  标签 / 票据 / 表单全场景覆盖</b><br/>
   <sub>模板化与变量化  ·  静默打印与云打印一体化  ·  多技术栈零依赖接入</sub>
-</p>
-
-<p align="center">
-  <kbd>标签</kbd> <kbd>票据</kbd> <kbd>表单</kbd> <kbd>快递单</kbd> <kbd>静默打印</kbd> <kbd>云打印</kbd> <kbd>RAW 直出</kbd>
 </p>
 
 <p align="center">
@@ -158,11 +157,11 @@ PrintDot Client 是本项目的配套桌面客户端，用于连接本地打印�
 
 <table width="100%">
   <tr>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot 主界面" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 设置页面" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 版本更新" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot 打印记录" height="110" /></td>
-    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 打印预览" height="110" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-1.png" alt="PrintDot 主界面" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-2.png" alt="PrintDot 设置页面" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-4.png" alt="PrintDot 版本更新" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-3.png" alt="PrintDot 打印记录" height="92" /></td>
+    <td align="center" width="20%"><img src="https://raw.githubusercontent.com/0ldFive/Vue-Print-Designer/master/docs/images/2-5.png" alt="PrintDot 打印预览" height="92" /></td>
   </tr>
   <tr>
     <td align="center"><b>主界面 · 服务控制与可用打印机</b></td>
