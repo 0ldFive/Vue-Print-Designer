@@ -247,7 +247,7 @@ PrintDot Client 是本項目的配套桌面客戶端，用於連接本地打印�
 
 ## 快速開始
 
-### 方式一：npm 組件（Web Components）
+### 方式一：npm 組件（Web Components）[了解 Web Components](https://developer.mozilla.org/zh-CN/docs/Web/API/Web_components)
 
 適合任何技術棧（Vue / React / Angular / 原生）。Web Components 方式**支持 Vue 2**（作為自定義元素使用），無需 Vue 2 組件適配。詳細參數、CRUD 與 JSON 示例請查看：[Web Components API 用戶手冊](https://printdot.cc/zh-tw/docs)。
 
